@@ -2,7 +2,7 @@
 
 > Persisted hand-off from the first **Plan Mode deploy** (lesson Module 1, L5). Source of the decision: `@context/foundation/infrastructure.md`; stack: `@context/foundation/tech-stack.md`.
 
-## Status — Supabase wired, auth-capable production deployment · 2026-06-06
+## Status — Git → GitHub → Vercel integration wired · 2026-06-07
 
 - **Platform:** Vercel (Hobby) · scope `kamilps-projects` · project **`mathshop`**
 - **Adapter:** `@astrojs/vercel@10.0.7` · Astro 6 SSR (`output: "server"`)
@@ -41,8 +41,24 @@ Initial deploy verified Astro 6 SSR runs on Vercel, EU region pinned, and the nu
 
 - `astro.config.mjs` — `adapter: vercel()` (`@astrojs/vercel` v10), `output: "server"`
 - `vercel.json` — `{ "regions": ["fra1"] }`
-- `.gitignore` — ignores `.vercel`; stale Cloudflare ignores removed
+- `.gitignore` — ignores `.vercel`, `.env`, `supabase password.txt`, `.wrangler/` (legacy)
 - `.vercel/project.json` — links cwd to `kamilps-projects/mathshop`
+
+## Git integration (2026-06-07)
+
+- **Repo:** https://github.com/vince307/mathshop · **PRIVATE** · default branch `main`
+- **Owner:** `vince307` · remote `origin` uses SSH (`git@github.com:vince307/mathshop.git`)
+- **Initial commit:** `7de02bc` — "chore: bootstrap MathShop scaffold" (Conventional Commits convention established)
+- **Vercel ↔ GitHub:** connected (`vercel git connect` confirmed *"vince307/mathshop is already connected"*). From now on:
+  - push to a non-`main` branch / open a PR → **preview deploy** with a unique URL
+  - merge to `main` → **production deploy** to `mathshop.vercel.app`
+  - `vercel deploy` from CLI continues to work; with Git connected, deploys are linked back to commit SHAs
+- **GitHub Actions CI** (`.github/workflows/ci.yml`): runs `lint` + `build` on push/PR to `main`; secrets configured at the repo level:
+  | Secret | Source |
+  |---|---|
+  | `SUPABASE_URL` | same as Vercel env |
+  | `SUPABASE_KEY` | same as Vercel env (anon public) |
+- **`master` → `main`:** ci.yml branch targets updated from the scaffold's `master` to the modern `main`.
 
 ## Deviation from the approved plan
 
@@ -61,24 +77,27 @@ Local mirror: `vercel env pull --environment=development .env` produced a gitign
 
 ## Explicitly deferred (not done yet)
 
-- `git init` + GitHub → Vercel Git integration (preview-per-PR, auto-deploy-on-merge — the recorded CI flow in `tech-stack.md`). This also restores real preview/prod separation; today every CLI deploy still lands on production.
 - **Vercel Pro** upgrade (Hobby is non-commercial; required before a public commercial launch).
 - Custom domain.
 - End-to-end auth flow check with a real sign-up (Supabase **email confirmation is on by default**, so a brand-new sign-up redirects to "check your inbox" rather than logging in directly — that's correct behavior; turn it off in Supabase → Authentication → Email if undesired for local testing).
 - First Supabase migration (`supabase/migrations/`) for the parent-account/child-profile schema. **The moment any table is added, RLS policies (per-operation, per-role) must land in the same migration** — the project's #1 correctness requirement per `CLAUDE.md` (FR-012/FR-015).
+- Local cleanup: delete the on-disk `.wrangler/` cache (gitignored, but no longer needed) and consider moving `supabase password.txt` into a password manager (also gitignored).
+- Smoke-test the preview pipeline: push a throwaway branch (e.g. `chore/preview-smoke`) to confirm Vercel creates a preview URL and comments it on a PR.
 
 ## Follow-up commands (next session)
 
 ```bash
-# 1. Put the project under Git for PR previews + auto-deploy-on-merge
-git init && git add -A && git commit -m "chore: scaffold + Vercel adapter + Supabase wiring"
-# create a GitHub repo, push, then connect it in Vercel → Settings → Git
-# From this point, `vercel deploy` creates a preview; merges to main publish prod.
-
-# 2. First migration — must include RLS policies for any table added
+# 1. First migration — must include RLS policies for any table added
 npx supabase link --project-ref hozkukbsfdcrbszgdxbg     # link the local CLI to the hosted project
 npx supabase migration new <name>                        # author the migration + RLS in the same file
 npx supabase db push                                     # apply to the hosted project
+
+# 2. Smoke-test the preview pipeline (any throwaway change works)
+git checkout -b chore/preview-smoke
+# ... make a trivial edit ...
+git commit -am "chore: trigger preview"
+git push -u origin chore/preview-smoke
+gh pr create --fill                                      # Vercel should comment the preview URL on the PR
 ```
 
 ## Ops quick-reference
