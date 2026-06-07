@@ -171,3 +171,6 @@ GitHub Actions runs lint + build on every push and PR to `master`. Configure `SU
 ## License
 
 MIT
+
+<!-- preview-flow smoke-test: 2026-06-07 — verify Vercel auto-creates a preview deploy on PR open -->
+
