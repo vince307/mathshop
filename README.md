@@ -166,7 +166,7 @@ Pin the function region to the EU (`fra1`/`arn1`) in Project Settings → Functi
 
 ## CI
 
-GitHub Actions runs lint + build on every push and PR to `master`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
+GitHub Actions runs lint + build on every push and PR to `main`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
 
 ## License
 
