@@ -446,24 +446,24 @@ behavior given child data is meaningless without the parent and carries no indep
 
 #### Automated
 
-- [x] 3.1 CI workflow YAML valid; job parses and starts
-- [ ] 3.2 CI run executes `npm run test` and reports the isolation result
-- [ ] 3.3 A weakened-policy spike shows CI red
+- [x] 3.1 CI workflow YAML valid; job parses and starts — 1706678
+- [x] 3.2 CI run executes `npm run test` and reports the isolation result — 1706678
+- [x] 3.3 A weakened-policy spike shows CI red — 1706678
 
 #### Manual
 
-- [ ] 3.4 CI wall-clock increase acceptable (~2–4 min cold)
-- [ ] 3.5 Test configured as merge-blocking (branch protection / required check)
+- [x] 3.4 CI wall-clock increase acceptable (~2–4 min cold) — 1706678
+- [ ] 3.5 Test configured as merge-blocking (branch protection / required check) — BLOCKED: requires GitHub Pro or a public repo (Free+private returns 403 for branch protection and rulesets). CI gate runs and reports on every PR (3.2/3.3 verified) but is not yet enforced as merge-blocking. Accepted risk; revisit on plan upgrade or repo visibility change.
 
 ### Phase 4: Contract docs + name registry
 
 #### Automated
 
-- [ ] 4.1 New docs exist (template, guide, registry)
-- [ ] 4.2 Markdown is Prettier-clean
-- [ ] 4.3 Registry policy names exactly match the migration
+- [x] 4.1 New docs exist (template, guide, registry)
+- [x] 4.2 Markdown is Prettier-clean
+- [x] 4.3 Registry policy names exactly match the migration
 
 #### Manual
 
-- [ ] 4.4 A reader can produce a second compliant migration from template + guide
-- [ ] 4.5 `contract-surfaces.md` lists every F-01 load-bearing name
+- [x] 4.4 A reader can produce a second compliant migration from template + guide
+- [x] 4.5 `contract-surfaces.md` lists every F-01 load-bearing name
