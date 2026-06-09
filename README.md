@@ -141,6 +141,22 @@ Users can then sign in immediately after sign-up without clicking a confirmation
 
 Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
 
+## Testing
+
+Tests run on [Vitest](https://vitest.dev/). The current suite is an integration test that proves the per-account data-isolation (RLS) contract — one parent's child profiles must never be readable or writable by another (`tests/child-profiles-isolation.test.ts`).
+
+It needs the **local Supabase stack** running. Running the isolation test:
+
+1. Start the stack: `npx supabase start`
+2. Apply migrations to a fresh DB: `npx supabase db reset`
+3. Copy the local keys into `.env.test` (copy `.env.test.example` first), mapping `npx supabase status -o env` output:
+   - `API_URL` → `SUPABASE_URL`
+   - `ANON_KEY` → `SUPABASE_ANON_KEY`
+   - `SERVICE_ROLE_KEY` → `SUPABASE_SERVICE_ROLE_KEY`
+4. Run the suite: `npm run test`
+
+The local-stack anon/service-role keys are fixed **public demo** JWTs (the same on every machine) — they are not secrets, so CI reads them straight from `supabase status` and `.env.test` is gitignored. Never reuse these keys for any deployed environment.
+
 ## Deployment
 
 This project deploys to [Vercel](https://vercel.com/) via the `@astrojs/vercel` adapter (SSR routes compile to Vercel Functions). See `context/foundation/infrastructure.md` for the full decision and risk register.
