@@ -432,21 +432,21 @@ behavior given child data is meaningless without the parent and carries no indep
 
 #### Automated
 
-- [x] 2.1 `npm run test` is a valid script and Vitest resolves
-- [x] 2.2 With stack up + DB reset, `npm run test` passes (all five assertions)
-- [x] 2.3 Removing any one policy makes the test fail (reset + re-run)
-- [x] 2.4 `npm run lint` passes on new TS files
+- [x] 2.1 `npm run test` is a valid script and Vitest resolves — b78477f
+- [x] 2.2 With stack up + DB reset, `npm run test` passes (all five assertions) — b78477f
+- [x] 2.3 Removing any one policy makes the test fail (reset + re-run) — b78477f
+- [x] 2.4 `npm run lint` passes on new TS files — b78477f
 
 #### Manual
 
-- [x] 2.5 Fresh contributor can run the suite from README steps
-- [x] 2.6 Test output names the failing operation when a policy is missing
+- [x] 2.5 Fresh contributor can run the suite from README steps — b78477f
+- [x] 2.6 Test output names the failing operation when a policy is missing — b78477f
 
 ### Phase 3: CI gate
 
 #### Automated
 
-- [ ] 3.1 CI workflow YAML valid; job parses and starts
+- [x] 3.1 CI workflow YAML valid; job parses and starts
 - [ ] 3.2 CI run executes `npm run test` and reports the isolation result
 - [ ] 3.3 A weakened-policy spike shows CI red
 

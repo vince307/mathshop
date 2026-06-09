@@ -22,3 +22,27 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+      # Per-account data-isolation gate (Foundation F-01). Spins up only the
+      # services the isolation test needs — postgres + gotrue (auth) + postgrest
+      # (rest) + kong (gateway) — and runs the cross-account RLS test as a
+      # merge-blocking check. The local-stack keys are fixed public demo JWTs,
+      # so no GitHub secrets are required here. Docker is preinstalled on the
+      # ubuntu-latest runner.
+      - name: Start Supabase (local stack — db + auth + rest only)
+        run: >-
+          npx supabase start -x
+          realtime,storage-api,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - name: Export local Supabase test env
+        run: |
+          npx supabase status -o env \
+            | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' > sb.env
+          . ./sb.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+          rm -f sb.env
+      - name: Run per-account isolation test
+        run: npm run test
