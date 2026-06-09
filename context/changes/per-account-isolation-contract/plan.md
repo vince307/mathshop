@@ -459,11 +459,11 @@ behavior given child data is meaningless without the parent and carries no indep
 
 #### Automated
 
-- [x] 4.1 New docs exist (template, guide, registry)
-- [x] 4.2 Markdown is Prettier-clean
-- [x] 4.3 Registry policy names exactly match the migration
+- [x] 4.1 New docs exist (template, guide, registry) — 1ef0e6b
+- [x] 4.2 Markdown is Prettier-clean — 1ef0e6b
+- [x] 4.3 Registry policy names exactly match the migration — 1ef0e6b
 
 #### Manual
 
-- [x] 4.4 A reader can produce a second compliant migration from template + guide
-- [x] 4.5 `contract-surfaces.md` lists every F-01 load-bearing name
+- [x] 4.4 A reader can produce a second compliant migration from template + guide — 1ef0e6b
+- [x] 4.5 `contract-surfaces.md` lists every F-01 load-bearing name — 1ef0e6b
