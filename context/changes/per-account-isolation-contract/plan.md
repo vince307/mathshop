@@ -418,29 +418,29 @@ behavior given child data is meaningless without the parent and carries no indep
 
 #### Automated
 
-- [x] 1.1 Migration applies to a fresh DB: `npx supabase db reset` exits 0
-- [x] 1.2 RLS enabled on `child_profiles` (`pg_class.relrowsecurity` true)
-- [x] 1.3 Exactly four policies exist (`pg_policies` count = 4)
-- [x] 1.4 `npm run lint` passes
+- [x] 1.1 Migration applies to a fresh DB: `npx supabase db reset` exits 0 — 1d4f2a0
+- [x] 1.2 RLS enabled on `child_profiles` (`pg_class.relrowsecurity` true) — 1d4f2a0
+- [x] 1.3 Exactly four policies exist (`pg_policies` count = 4) — 1d4f2a0
+- [x] 1.4 `npm run lint` passes — 1d4f2a0
 
 #### Manual
 
-- [x] 1.5 Studio shows RLS on + four named policies
-- [x] 1.6 Migration header reads as a usable copy template
+- [x] 1.5 Studio shows RLS on + four named policies — 1d4f2a0
+- [x] 1.6 Migration header reads as a usable copy template — 1d4f2a0
 
 ### Phase 2: Test harness + cross-account isolation test
 
 #### Automated
 
-- [ ] 2.1 `npm run test` is a valid script and Vitest resolves
-- [ ] 2.2 With stack up + DB reset, `npm run test` passes (all five assertions)
-- [ ] 2.3 Removing any one policy makes the test fail (reset + re-run)
-- [ ] 2.4 `npm run lint` passes on new TS files
+- [x] 2.1 `npm run test` is a valid script and Vitest resolves
+- [x] 2.2 With stack up + DB reset, `npm run test` passes (all five assertions)
+- [x] 2.3 Removing any one policy makes the test fail (reset + re-run)
+- [x] 2.4 `npm run lint` passes on new TS files
 
 #### Manual
 
-- [ ] 2.5 Fresh contributor can run the suite from README steps
-- [ ] 2.6 Test output names the failing operation when a policy is missing
+- [x] 2.5 Fresh contributor can run the suite from README steps
+- [x] 2.6 Test output names the failing operation when a policy is missing
 
 ### Phase 3: CI gate
 
