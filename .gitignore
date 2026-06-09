@@ -31,3 +31,6 @@ supabase password.txt
 
 # legacy build caches (left over from removed adapters)
 .wrangler/
+
+# Claude Code config, skills, and local settings (do not VCS)
+.claude/
