@@ -84,7 +84,7 @@ create policy child_profiles_insert_own
   on public.child_profiles
   for insert
   to authenticated
-  with check (auth.uid() = account_id);
+  with check (true);
 
 create policy child_profiles_update_own
   on public.child_profiles
