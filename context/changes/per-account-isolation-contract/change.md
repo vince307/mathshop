@@ -2,9 +2,9 @@
 change_id: per-account-isolation-contract
 roadmap_id: F-01
 title: Per-account data isolation contract
-status: implemented
+status: impl_reviewed
 created: 2026-06-09
-updated: 2026-06-10
+updated: 2026-06-11
 prd_refs: [Access Control, FR-012, FR-015]
 ---
 
