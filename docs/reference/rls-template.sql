@@ -16,7 +16,7 @@
 -- (Shown here only so a standalone copy of this template is self-contained;
 -- delete this block when the function is already present in the database.)
 -- create or replace function public.set_updated_at()
--- returns trigger language plpgsql as $$
+-- returns trigger language plpgsql set search_path = '' as $$
 -- begin new.updated_at = now(); return new; end; $$;
 
 create table public.<table> (
