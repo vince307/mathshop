@@ -8,8 +8,12 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("astro:env/server", () => ({ SUPABASE_URL: undefined, SUPABASE_KEY: undefined }));
 
 import { onRequest } from "@/middleware";
+import { POST as signinPOST } from "@/pages/api/auth/signin";
+import { POST as signupPOST } from "@/pages/api/auth/signup";
 import { POST as signoutPOST } from "@/pages/api/auth/signout";
 import { buildContext, createCookieJar, runMiddleware } from "./helpers/astro";
+
+const NOT_CONFIGURED = encodeURIComponent("Supabase is not configured");
 
 describe("Risk #3 — env missing / null client", () => {
   it("fail-closed: a protected route still redirects when Supabase is unconfigured", async () => {
@@ -34,5 +38,31 @@ describe("Risk #3 — env missing / null client", () => {
 
     expect(response.headers.get("Location")).toBe("/");
     expect(jar.get("sb-localhost-auth-token")?.value).toBe("stale-value");
+  });
+});
+
+describe("Risk #4 — auth routes, unconfigured branch", () => {
+  it("signin redirects with 'Supabase is not configured' when unconfigured", async () => {
+    const context = buildContext({
+      url: "https://test.local/api/auth/signin",
+      method: "POST",
+      formData: { email: "a@example.test", password: "whatever" },
+    });
+
+    const response = await signinPOST(context);
+
+    expect(response.headers.get("Location")).toBe(`/auth/signin?error=${NOT_CONFIGURED}`);
+  });
+
+  it("signup redirects with 'Supabase is not configured' when unconfigured", async () => {
+    const context = buildContext({
+      url: "https://test.local/api/auth/signup",
+      method: "POST",
+      formData: { email: "a@example.test", password: "whatever" },
+    });
+
+    const response = await signupPOST(context);
+
+    expect(response.headers.get("Location")).toBe(`/auth/signup?error=${NOT_CONFIGURED}`);
   });
 });

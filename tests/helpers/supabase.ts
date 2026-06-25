@@ -63,3 +63,14 @@ export async function createSignedInUser(prefix = "auth-test"): Promise<TestAcco
 export async function deleteUser(id: string): Promise<void> {
   await admin.auth.admin.deleteUser(id);
 }
+
+/**
+ * Tear down a user by email — for users created through the signup route (which
+ * returns only a redirect, never the new id). listUsers is paginated; on the
+ * fresh local test DB the user is on the first page. No-op if not found.
+ */
+export async function deleteUserByEmail(email: string): Promise<void> {
+  const { data } = await admin.auth.admin.listUsers();
+  const user = data.users.find((candidate) => candidate.email === email);
+  if (user) await admin.auth.admin.deleteUser(user.id);
+}

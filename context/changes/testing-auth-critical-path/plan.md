@@ -452,32 +452,32 @@ test is behavior-preserving and guarded by re-running it.
 
 #### Automated
 
-- [x] 2.1 Anon → /auth/signin; authenticated → pass; sign-out → gate re-triggers
-- [x] 2.2 Protected-set guard + startsWith boundary pin pass
-- [x] 2.3 Null-client and signout-no-op pins pass
-- [x] 2.4 Durable-session assertion (getUser re-read) passes — not just redirect absence
-- [x] 2.5 Lint + typecheck pass
+- [x] 2.1 Anon → /auth/signin; authenticated → pass; sign-out → gate re-triggers — 2b1a8a7
+- [x] 2.2 Protected-set guard + startsWith boundary pin pass — 2b1a8a7
+- [x] 2.3 Null-client and signout-no-op pins pass — 2b1a8a7
+- [x] 2.4 Durable-session assertion (getUser re-read) passes — not just redirect absence — 2b1a8a7
+- [x] 2.5 Lint + typecheck pass — 2b1a8a7
 
 #### Manual
 
-- [x] 2.6 Protected-set guard would fail if a new protected route were added but not to the test set
-- [x] 2.7 Known-issue comments (startsWith, signout no-op) are clear enough to act on later
+- [x] 2.6 Protected-set guard would fail if a new protected route were added but not to the test set — 2b1a8a7
+- [x] 2.7 Known-issue comments (startsWith, signout no-op) are clear enough to act on later — 2b1a8a7
 
 ### Phase 3: Risk #4 — auth route contract integration tests
 
 #### Automated
 
-- [ ] 3.1 signin success → / with durable session; bad creds → ?error=
-- [ ] 3.2 signup success → /auth/confirm-email; duplicate → ?error=
-- [ ] 3.3 Unconfigured branch (both routes) → "Supabase is not configured"
-- [ ] 3.4 No-validation behavior pinned (missing fields → error redirect, no crash)
-- [ ] 3.5 English-leak pin passes (raw message present in ?error=)
-- [ ] 3.6 Lint + typecheck pass
+- [x] 3.1 signin success → / with durable session; bad creds → ?error=
+- [x] 3.2 signup success → /auth/confirm-email; duplicate → ?error=
+- [x] 3.3 Unconfigured branch (both routes) → "Supabase is not configured"
+- [x] 3.4 No-validation behavior pinned (missing fields → error redirect, no crash)
+- [x] 3.5 English-leak pin passes (raw message present in ?error=)
+- [x] 3.6 Lint + typecheck pass
 
 #### Manual
 
-- [ ] 3.7 Suite reads as the canonical auth-route example for cookbook §6.3
-- [ ] 3.8 English-leak known-issue note is actionable for the future mapping change
+- [x] 3.7 Suite reads as the canonical auth-route example for cookbook §6.3
+- [x] 3.8 English-leak known-issue note is actionable for the future mapping change
 
 ### Phase 4: Test-plan correction + cookbook
 
