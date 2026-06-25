@@ -439,29 +439,29 @@ test is behavior-preserving and guarded by re-running it.
 
 #### Automated
 
-- [x] 1.1 Existing isolation suite still green after refactor
-- [x] 1.2 Harness smoke test passes (real src/middleware.ts imports + runs)
-- [x] 1.3 Lint + typecheck pass
-- [x] 1.4 `@/lib/...` resolves under Vitest
+- [x] 1.1 Existing isolation suite still green after refactor — 8792a84
+- [x] 1.2 Harness smoke test passes (real src/middleware.ts imports + runs) — 8792a84
+- [x] 1.3 Lint + typecheck pass — 8792a84
+- [x] 1.4 `@/lib/...` resolves under Vitest — 8792a84
 
 #### Manual
 
-- [ ] 1.5 tests/helpers/ reads as a reusable module a second engineer could follow
+- [x] 1.5 tests/helpers/ reads as a reusable module a second engineer could follow — 8792a84
 
 ### Phase 2: Risk #3 — session gating integration tests
 
 #### Automated
 
-- [ ] 2.1 Anon → /auth/signin; authenticated → pass; sign-out → gate re-triggers
-- [ ] 2.2 Protected-set guard + startsWith boundary pin pass
-- [ ] 2.3 Null-client and signout-no-op pins pass
-- [ ] 2.4 Durable-session assertion (getUser re-read) passes — not just redirect absence
-- [ ] 2.5 Lint + typecheck pass
+- [x] 2.1 Anon → /auth/signin; authenticated → pass; sign-out → gate re-triggers
+- [x] 2.2 Protected-set guard + startsWith boundary pin pass
+- [x] 2.3 Null-client and signout-no-op pins pass
+- [x] 2.4 Durable-session assertion (getUser re-read) passes — not just redirect absence
+- [x] 2.5 Lint + typecheck pass
 
 #### Manual
 
-- [ ] 2.6 Protected-set guard would fail if a new protected route were added but not to the test set
-- [ ] 2.7 Known-issue comments (startsWith, signout no-op) are clear enough to act on later
+- [x] 2.6 Protected-set guard would fail if a new protected route were added but not to the test set
+- [x] 2.7 Known-issue comments (startsWith, signout no-op) are clear enough to act on later
 
 ### Phase 3: Risk #4 — auth route contract integration tests
 

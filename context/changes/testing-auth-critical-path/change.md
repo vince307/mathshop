@@ -3,7 +3,7 @@ change_id: testing-auth-critical-path
 title: Testing auth critical path
 status: implementing
 created: 2026-06-19
-updated: 2026-06-25
+updated: 2026-06-26
 archived_at: null
 ---
 
