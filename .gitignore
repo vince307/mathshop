@@ -35,3 +35,7 @@ supabase password.txt
 
 # Claude Code config, skills, and local settings (do not VCS)
 .claude/
+
+# scratch / design reference material (mockups, scraped pages, minified vendor
+# JS) — not source; must not be linted or committed
+assets/

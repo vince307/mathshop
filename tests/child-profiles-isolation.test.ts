@@ -1,6 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { admin, createSignedInUser, type TestAccount } from "./helpers/supabase";
 
 /**
  * Cross-account data-isolation contract test (Foundation F-01).
@@ -15,7 +14,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * acts as *signed-in users* for every assertion — never the service-role
  * client — so RLS is genuinely exercised (auth.uid() is non-null). The
  * service-role admin client is used ONLY to provision and tear down the two
- * test users.
+ * test users. Provisioning helpers live in `tests/helpers/supabase.ts`.
  *
  * Requires the local Supabase stack (`npx supabase start` + `npx supabase db
  * reset`) and `.env.test` (see .env.test.example).
@@ -31,50 +30,6 @@ interface ChildProfileRow {
   theme: string;
   created_at: string;
   updated_at: string;
-}
-
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!SUPABASE_URL || !ANON_KEY || !SERVICE_ROLE_KEY) {
-  throw new Error(
-    "Missing SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY. " +
-      "Copy .env.test.example to .env.test and fill from `npx supabase status -o env`.",
-  );
-}
-
-const url = SUPABASE_URL;
-const anonKey = ANON_KEY;
-const PASSWORD = "test-password-123!";
-
-// Admin client (service role) — provisioning only, bypasses RLS.
-const admin = createClient(url, SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
-
-interface TestAccount {
-  id: string;
-  client: SupabaseClient;
-}
-
-/** Create a confirmed user and return an anon client already signed in as them. */
-async function createSignedInUser(): Promise<TestAccount> {
-  const email = `isolation-${randomUUID()}@example.test`;
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: PASSWORD,
-    email_confirm: true,
-  });
-  if (error) throw error;
-
-  const client = createClient(url, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-  const { error: signInError } = await client.auth.signInWithPassword({ email, password: PASSWORD });
-  if (signInError) throw signInError;
-
-  return { id: data.user.id, client };
 }
 
 describe("child_profiles per-account isolation (RLS contract)", () => {
