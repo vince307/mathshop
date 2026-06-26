@@ -17,6 +17,19 @@ import { t } from "@/i18n";
 // The unconfigured branch now returns the Polish "not configured" message (FR-013).
 const NOT_CONFIGURED = encodeURIComponent(t.auth.serverError.notConfigured);
 
+/**
+ * Assert a response carries the anti-CDN-cache headers (Phase 3). Any response
+ * that sets or clears auth cookies must be non-cacheable on Vercel's CDN, or a
+ * cached auth-cookie response could serve one user's session to another. Checked
+ * here on the offline (unconfigured) path — the headers are response-level and
+ * don't depend on a live Supabase round-trip.
+ */
+function expectNoStore(response: Response) {
+  expect(response.headers.get("Cache-Control")).toBe("private, no-cache, no-store, must-revalidate, max-age=0");
+  expect(response.headers.get("Pragma")).toBe("no-cache");
+  expect(response.headers.get("Expires")).toBe("0");
+}
+
 describe("Risk #3 — env missing / null client", () => {
   it("fail-closed: a protected route still redirects when Supabase is unconfigured", async () => {
     // The null-client branch must NOT fail open — locals.user stays null and the
@@ -27,19 +40,27 @@ describe("Risk #3 — env missing / null client", () => {
 
     expect(response.headers.get("Location")).toBe("/auth/signin");
     expect(context.locals.user).toBeNull();
+    // The gate redirect sets/clears no cookies here, but it is an auth-path
+    // response and must still be non-cacheable on the CDN.
+    expectNoStore(response);
   });
 
-  it("KNOWN ISSUE: sign-out is a silent no-op when Supabase is unconfigured (cookies survive)", async () => {
-    // createClient is null → signOut() is skipped → the redirect happens but the
-    // auth cookie is never cleared. Pinned as current behavior (stale-session
-    // surface); fix by clearing cookies even on the unconfigured path.
+  it("sign-out clears the auth cookies even when Supabase is unconfigured", async () => {
+    // createClient is null → there is no client to call signOut(), so the route
+    // clears the `sb-…-auth-token` cookies directly. Sign-out must never be a
+    // silent no-op that leaves a stale session behind. (Previously pinned as the
+    // known-issue no-op; Phase 3 fixes it.)
     const jar = createCookieJar({ "sb-localhost-auth-token": "stale-value" });
     const context = buildContext({ url: "https://test.local/api/auth/signout", method: "POST", cookies: jar });
 
     const response = await signoutPOST(context);
 
     expect(response.headers.get("Location")).toBe("/");
-    expect(jar.get("sb-localhost-auth-token")?.value).toBe("stale-value");
+    // Cleared = set to an empty value; the harness jar drops empty cookies from a
+    // replayed `Cookie:` header, so the session no longer travels.
+    expect(jar.get("sb-localhost-auth-token")?.value).toBe("");
+    expect(jar.toCookieHeader()).toBe("");
+    expectNoStore(response);
   });
 });
 
@@ -54,6 +75,7 @@ describe("Risk #4 — auth routes, unconfigured branch", () => {
     const response = await signinPOST(context);
 
     expect(response.headers.get("Location")).toBe(`/auth/signin?error=${NOT_CONFIGURED}`);
+    expectNoStore(response);
   });
 
   it("signup redirects with the Polish 'not configured' message when unconfigured", async () => {
@@ -66,5 +88,6 @@ describe("Risk #4 — auth routes, unconfigured branch", () => {
     const response = await signupPOST(context);
 
     expect(response.headers.get("Location")).toBe(`/auth/signup?error=${NOT_CONFIGURED}`);
+    expectNoStore(response);
   });
 });

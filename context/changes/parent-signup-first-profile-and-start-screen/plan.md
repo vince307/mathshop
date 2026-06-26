@@ -391,26 +391,26 @@ Provider decided: **Brevo** (EU/GDPR + signable DPA, free 300/day, officially Su
 
 #### Automated
 
-- [x] 2.1 Lint passes
-- [x] 2.2 Full suite green incl. updated error-mapping assertions
-- [x] 2.3 Bad-creds signin ?error= decodes to Polish (no English)
+- [x] 2.1 Lint passes — 5121964
+- [x] 2.2 Full suite green incl. updated error-mapping assertions — 5121964
+- [x] 2.3 Bad-creds signin ?error= decodes to Polish (no English) — 5121964
 
 #### Manual
 
-- [x] 2.4 Bad signin / duplicate signup show Polish error copy end-to-end
+- [x] 2.4 Bad signin / duplicate signup show Polish error copy end-to-end — 5121964
 
 ### Phase 3: Auth-spine hardening
 
 #### Automated
 
-- [ ] 3.1 Lint passes
-- [ ] 3.2 Full suite green incl. flipped signout assertion
-- [ ] 3.3 Build passes
-- [ ] 3.4 Auth-cookie responses include anti-cache headers (harness test)
+- [x] 3.1 Lint passes
+- [x] 3.2 Full suite green incl. flipped signout assertion
+- [x] 3.3 Build passes
+- [x] 3.4 Auth-cookie responses include anti-cache headers (harness test)
 
 #### Manual
 
-- [ ] 3.5 Sign out clears the session; no stale-session survives
+- [x] 3.5 Sign out clears the session; no stale-session survives
 
 ### Phase 4: Full email verification
 
