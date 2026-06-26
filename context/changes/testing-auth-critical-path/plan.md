@@ -485,10 +485,10 @@ test is behavior-preserving and guarded by re-running it.
 
 #### Automated
 
-- [x] 4.1 Markdown lint/format passes (if wired)
-- [x] 4.2 Full suite still green
+- [x] 4.1 Markdown lint/format passes (if wired) — d00a604
+- [x] 4.2 Full suite still green — d00a604
 
 #### Manual
 
-- [x] 4.3 §4 no longer claims "no config file yet"; §6.1/§6.3 read as followable recipes
-- [x] 4.4 Coverage debt + the three known issues are recorded discoverably
+- [x] 4.3 §4 no longer claims "no config file yet"; §6.1/§6.3 read as followable recipes — d00a604
+- [x] 4.4 Coverage debt + the three known issues are recorded discoverably — d00a604
