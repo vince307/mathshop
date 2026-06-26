@@ -84,6 +84,21 @@ How Vercel actually operates day to day for this project. One concrete answer pe
 - **Approval**: human-gate promotion to production (`vercel --prod`) and rotation of the Supabase service key. An agent may create preview deploys, read logs, and run `vercel env pull` unattended.
 - **Logs**: `vercel logs <deployment-url> --follow` for runtime (5-min live cap), `vercel inspect` for build details. The Vercel MCP server (beta, read-only) exposes deploys and logs as structured tools for Claude Code.
 
+## Email Delivery (Supabase Auth)
+
+Researched 2026-06-26 — full 9-provider comparison, no-domain matrix, and sources in `context/changes/parent-signup-first-profile-and-start-screen/research.md` → "Follow-up Research".
+
+Transactional email (parent **email verification**, resend, future password reset) is sent via **Supabase Auth custom SMTP**, not the built-in mailer. Supabase's built-in SMTP only delivers to pre-authorized team addresses and is rate-limited to **2 messages/hour** (explicitly non-production), so a custom SMTP provider is **mandatory before launch**. Enabling custom SMTP raises the default to **30 messages/hour** (adjustable: Auth → Rate Limits).
+
+**Provider decision: Brevo.** For this profile — <1k emails/mo, free-tier preferred, EU data residency + a signable DPA preferred (Polish children's app), and **no sending domain yet** — Brevo is the only provider that satisfies all four at once: free (**300/day**), EU/GDPR with a signable DPA, officially Supabase-listed, **and uniquely able to send to real recipients with zero DNS** (it rewrites `From` → `@brevosend.com` until a domain is authenticated). SMTP settings for the Supabase dashboard: Host `smtp-relay.brevo.com`, Port `587` (STARTTLS), Username = Brevo login, Password = SMTP master key.
+
+**Launch prerequisites (blockers before production verification works):**
+- Acquire + authenticate a **sending domain** (SPF + DKIM; DMARC recommended) — needed for the product regardless, and it removes Brevo's `@brevosend.com` From-rewrite + free-tier footer (both hurt parent trust + deliverability).
+- Author the **Polish** confirmation/resend email templates in the dashboard (Auth → Email Templates; Supabase has no built-in localization — FR-013). The token_hash confirm route expects a link of the form `{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=signup`.
+- Add the prod + preview `/api/auth/confirm` and `/app` URLs to the hosted project's **Redirect URLs** allow-list (local `supabase/config.toml` currently only allows `127.0.0.1:3000`).
+
+**Cheaper steady-state swap (optional, once a domain exists):** **Amazon SES (Frankfurt / eu-central-1)** — ~$0.10/mo at this volume, EU region, AWS DPA — after the one-time sandbox-exit + DKIM work. **Mailjet** if ISO 27701 / SOC 2 certifications become decisive. **Avoid** SendGrid (no real free tier + KYC suspension risk); Resend/Scaleway can't send to real users without a verified domain (reconsider Resend's strong DX once a domain exists).
+
 ## Risk Register
 
 | Risk | Source | Likelihood | Impact | Mitigation |
@@ -95,6 +110,7 @@ How Vercel actually operates day to day for this project. One concrete answer pe
 | Env-var mis-wire (`vercel env` vs `astro:env/server`) → 500 on undefined `SUPABASE_URL` | Devil's advocate | M | H | Set vars in all three Vercel scopes; verify on a preview deploy before prod; keep the `astro:env` schema as the single typed source of truth. |
 | Per-account data isolation leak (RLS) — the project's #1 correctness requirement | Research finding (platform-independent) | M | H | Enforce Supabase RLS with per-operation/per-role policies in the same migration (CLAUDE.md rule). Independent of platform; remains the top correctness item on any host. |
 | Adapter divergence unreconciled (scaffold still on Cloudflare) blocks the first deploy | Research finding | H | M | Before any deploy/CI work: swap `astro.config.mjs` to `@astrojs/vercel`, remove `@astrojs/cloudflare`/`wrangler`/`wrangler.jsonc`, update `tech-stack.md` + the CLAUDE.md divergence note. |
+| Production email delivery not configured (no SMTP provider/domain/Polish templates) blocks email verification at launch | Research finding (S-01a) | H | H | Wire **Brevo** custom SMTP (EU, free, zero-DNS) for dev; before launch acquire+authenticate a sending domain, author Polish templates, add prod `/api/auth/confirm` + `/app` redirect URLs. See §Email Delivery. |
 
 ## Getting Started
 
