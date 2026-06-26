@@ -1,10 +1,10 @@
 ---
 change_id: testing-auth-critical-path
 title: Testing auth critical path
-status: impl_reviewed
+status: archived
 created: 2026-06-19
 updated: 2026-06-26
-archived_at: null
+archived_at: 2026-06-26T11:11:55Z
 ---
 
 ## Notes
