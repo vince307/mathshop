@@ -365,7 +365,8 @@ Provider decided: **Brevo** (EU/GDPR + signable DPA, free 300/day, officially Su
 
 ### Follow-ups
 
-- **Part B (S-01b):** open via `/10x-new` — schema migration + avatar registry + profile wizard (incl. the parent-approved child-name field, handled as RLS-isolated, zod-validated, HTML-escaped PII) + create-profile API + start screen + the `/app` profile-count router.
+- **MatmaVerse design system (next change — AFTER S-01a, BEFORE Part B; decided 2026-06-26):** a dedicated change to override the starter "cosmic" theme with the MatmaVerse visual language from `assets/matma-verse/`. Scope: establish the design tokens (palette / typography / radii in `src/styles/global.css` + the Tailwind theme + shadcn "new-york" component styles), restyle the existing auth surfaces (signin/signup/confirm/`/app`) to the `auth-v2` mockups, and provide shared child-friendly component primitives (buttons, cards, oversized tap targets per `prd-v2.md:146`) that Part B + gameplay reuse. Sequenced before Part B so the child surfaces are built on the real design, not restyled twice. S-01a deliberately shipped on the starter theme (localization/behavior only).
+- **Part B (S-01b) — after the design-system change:** open via `/10x-new` — schema migration + avatar registry + profile wizard (incl. the parent-approved child-name field, handled as RLS-isolated, zod-validated, HTML-escaped PII) + create-profile API + start screen + the `/app` profile-count router, all built on the MatmaVerse design tokens.
 - **Decision of record (PRD override):** the product owner chose to collect the child's first name, **overriding the PRD privacy guardrail** "No PII tied to children / no real names." Update `prd-v2.md` to reflect this so spec and code agree (otherwise reviews will flag it). Captured here and in Part B.
 - **Brand rename:** MathShop → **MatmaVerse** across `context/foundation/*` + `CLAUDE.md`.
 
@@ -377,10 +378,10 @@ Provider decided: **Brevo** (EU/GDPR + signable DPA, free 300/day, officially Su
 
 #### Automated
 
-- [ ] 1.1 Lint passes
-- [ ] 1.2 Build passes
-- [ ] 1.3 Full existing suite still green
-- [ ] 1.4 No `lang="en"` remains in Layout.astro
+- [x] 1.1 Lint passes
+- [x] 1.2 Build passes
+- [x] 1.3 Full existing suite still green
+- [x] 1.4 No `lang="en"` remains in Layout.astro
 
 #### Manual
 

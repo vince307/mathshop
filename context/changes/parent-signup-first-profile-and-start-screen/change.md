@@ -1,7 +1,7 @@
 ---
 change_id: parent-signup-first-profile-and-start-screen
 title: "S-01a: Parent signup + email verification + Polish auth foundation"
-status: plan_reviewed
+status: implementing
 created: 2026-06-26
 updated: 2026-06-26
 archived_at: null

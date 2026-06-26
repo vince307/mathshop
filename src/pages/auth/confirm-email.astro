@@ -1,21 +1,10 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { t } from "@/i18n";
 
 const isAutoConfirmed = import.meta.env.DEV;
 
-const content = isAutoConfirmed
-  ? {
-      emoji: "✅",
-      heading: "Registration successful",
-      description: "Your account has been created. You can now sign in.",
-      linkText: "Go to sign in",
-    }
-  : {
-      emoji: "📧",
-      heading: "Check your email",
-      description: "We've sent a confirmation link to your email address. Click it to activate your account.",
-      linkText: "Back to sign in",
-    };
+const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.checkEmail;
 ---
 
 <Layout title={content.heading}>
