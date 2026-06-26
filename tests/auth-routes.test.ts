@@ -5,6 +5,7 @@ import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { POST as signupPOST } from "@/pages/api/auth/signup";
 import { createSignedInUser, deleteUser, findUserIdByEmail, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
+import { t } from "@/i18n";
 
 /**
  * Risk #4 — built leg of onboarding (test-plan §2): the signup/signin API route
@@ -117,10 +118,10 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
     expect(response.headers.get("Location")).toMatch(/^\/auth\/signin\?error=/);
   });
 
-  it("KNOWN ISSUE: the raw (English) Supabase error message leaks through ?error=", async () => {
-    // FR-013 leak: there is no Polish-mapping layer, so the verbatim Supabase
-    // message is surfaced. Pinned as a single coarse assertion (test-plan §7
-    // forbids per-phrase tests); fix by adding an error-mapping layer.
+  it("maps the Supabase error to a Polish message (no English leak — FR-013)", async () => {
+    // The route boundary maps error.code -> Polish (src/lib/auth-errors.ts), so
+    // the raw English Supabase message never reaches ?error=. Single coarse
+    // assertion (test-plan §7 forbids per-phrase tests).
     const context = buildContext({
       url: "https://test.local/api/auth/signin",
       method: "POST",
@@ -131,6 +132,6 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
     const location = response.headers.get("Location") ?? "";
     const error = decodeURIComponent(new URL(location, "https://test.local").searchParams.get("error") ?? "");
 
-    expect(error).toBe("Invalid login credentials"); // raw English, verbatim from Supabase
+    expect(error).toBe(t.auth.serverError.invalidCredentials); // Polish, mapped from error.code
   });
 });

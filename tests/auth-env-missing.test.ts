@@ -12,8 +12,10 @@ import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { POST as signupPOST } from "@/pages/api/auth/signup";
 import { POST as signoutPOST } from "@/pages/api/auth/signout";
 import { buildContext, createCookieJar, runMiddleware } from "./helpers/astro";
+import { t } from "@/i18n";
 
-const NOT_CONFIGURED = encodeURIComponent("Supabase is not configured");
+// The unconfigured branch now returns the Polish "not configured" message (FR-013).
+const NOT_CONFIGURED = encodeURIComponent(t.auth.serverError.notConfigured);
 
 describe("Risk #3 — env missing / null client", () => {
   it("fail-closed: a protected route still redirects when Supabase is unconfigured", async () => {
@@ -42,7 +44,7 @@ describe("Risk #3 — env missing / null client", () => {
 });
 
 describe("Risk #4 — auth routes, unconfigured branch", () => {
-  it("signin redirects with 'Supabase is not configured' when unconfigured", async () => {
+  it("signin redirects with the Polish 'not configured' message when unconfigured", async () => {
     const context = buildContext({
       url: "https://test.local/api/auth/signin",
       method: "POST",
@@ -54,7 +56,7 @@ describe("Risk #4 — auth routes, unconfigured branch", () => {
     expect(response.headers.get("Location")).toBe(`/auth/signin?error=${NOT_CONFIGURED}`);
   });
 
-  it("signup redirects with 'Supabase is not configured' when unconfigured", async () => {
+  it("signup redirects with the Polish 'not configured' message when unconfigured", async () => {
     const context = buildContext({
       url: "https://test.local/api/auth/signup",
       method: "POST",

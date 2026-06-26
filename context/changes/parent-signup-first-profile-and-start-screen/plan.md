@@ -378,26 +378,26 @@ Provider decided: **Brevo** (EU/GDPR + signable DPA, free 300/day, officially Su
 
 #### Automated
 
-- [x] 1.1 Lint passes
-- [x] 1.2 Build passes
-- [x] 1.3 Full existing suite still green
-- [x] 1.4 No `lang="en"` remains in Layout.astro
+- [x] 1.1 Lint passes — b8cb08c
+- [x] 1.2 Build passes — b8cb08c
+- [x] 1.3 Full existing suite still green — b8cb08c
+- [x] 1.4 No `lang="en"` remains in Layout.astro — b8cb08c
 
 #### Manual
 
-- [ ] 1.5 Auth pages render Polish; brand "MatmaVerse"; layout matches mockups 01/02
+- [x] 1.5 Auth pages render Polish; brand "MatmaVerse"; layout matches mockups 01/02 — b8cb08c
 
 ### Phase 2: Polish error-mapping (close the English leak)
 
 #### Automated
 
-- [ ] 2.1 Lint passes
-- [ ] 2.2 Full suite green incl. updated error-mapping assertions
-- [ ] 2.3 Bad-creds signin ?error= decodes to Polish (no English)
+- [x] 2.1 Lint passes
+- [x] 2.2 Full suite green incl. updated error-mapping assertions
+- [x] 2.3 Bad-creds signin ?error= decodes to Polish (no English)
 
 #### Manual
 
-- [ ] 2.4 Bad signin / duplicate signup show Polish error copy end-to-end
+- [x] 2.4 Bad signin / duplicate signup show Polish error copy end-to-end
 
 ### Phase 3: Auth-spine hardening
 

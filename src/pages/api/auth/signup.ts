@@ -1,5 +1,7 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
+import { mapAuthError } from "@/lib/auth-errors";
+import { t } from "@/i18n";
 
 export const POST: APIRoute = async (context) => {
   const form = await context.request.formData();
@@ -8,12 +10,12 @@ export const POST: APIRoute = async (context) => {
 
   const supabase = createClient(context.request.headers, context.cookies);
   if (!supabase) {
-    return context.redirect(`/auth/signup?error=${encodeURIComponent("Supabase is not configured")}`);
+    return context.redirect(`/auth/signup?error=${encodeURIComponent(t.auth.serverError.notConfigured)}`);
   }
   const { error } = await supabase.auth.signUp({ email, password });
 
   if (error) {
-    return context.redirect(`/auth/signup?error=${encodeURIComponent(error.message)}`);
+    return context.redirect(`/auth/signup?error=${encodeURIComponent(mapAuthError(error))}`);
   }
 
   return context.redirect("/auth/confirm-email");
