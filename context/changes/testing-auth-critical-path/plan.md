@@ -44,9 +44,9 @@ What exists (verified against `git_commit f23d493`):
 What's missing (the true Phase-1 harness delta):
 
 1. `@/*` alias into Vitest. 2. An `APIContext` builder (fake `request`/`cookies`/`locals`/
-`redirect`/`url`/`next`). 3. A `Request`-with-cookies builder for middleware. 4. A middleware
-runner. 5. An extracted Supabase test-client/session helper. 6. Handling for the
-`astro:middleware` / `astro:env/server` virtual imports.
+   `redirect`/`url`/`next`). 3. A `Request`-with-cookies builder for middleware. 4. A middleware
+   runner. 5. An extracted Supabase test-client/session helper. 6. Handling for the
+   `astro:middleware` / `astro:env/server` virtual imports.
 
 What does **not** exist (Risk #4 coverage debt, out of scope — see "What We're NOT Doing"):
 email-verification code exchange, first-profile creation, the MathShop start screen.
@@ -87,7 +87,7 @@ isolation test and the new suites; test-plan §4/§6.1/§6.3 updated.
 - **Not** fixing the three latent issues in production code — Phase 1 **pins current
   behavior** with tests + known-issue notes (`signout.ts prerender`, `startsWith` boundary,
   raw-error English leak). Fixes are separate changes.
-- **Not** adding zod / server validation — tests assert *current* no-validation behavior.
+- **Not** adding zod / server validation — tests assert _current_ no-validation behavior.
 - **Not** a testability/DI refactor of middleware or routes — `vi.mock` of the two virtual
   ids keeps production code untouched.
 - **Not** adding Playwright/e2e, React Testing Library, or a DOM env — request-level
@@ -110,7 +110,7 @@ local session. The only mocks are the two pure virtual modules.
   route modules are imported (Vitest hoists `vi.mock`; use a shared setup or top-of-file
   mocks, and dynamic `import()` of the modules under test if ordering needs to be explicit).
   `astro:env/server` must map `SUPABASE_KEY → process.env.SUPABASE_ANON_KEY` and `SUPABASE_URL
-  → process.env.SUPABASE_URL`; to exercise the null-client / env-missing branch, a test
+→ process.env.SUPABASE_URL`; to exercise the null-client / env-missing branch, a test
   overrides the mock to return `undefined`.
 - **Cookie round-trip is the crux.** `@supabase/ssr`'s `getAll` reads the request's `Cookie`
   header; `setAll` writes to `cookies.set`. The fake cookies jar must (a) record `set`/
@@ -225,8 +225,9 @@ intended protected set is guarded, and the env-missing path behaves as observed.
 via the real auth routes.
 
 **Contract**: Cover —
+
 - **Anon → redirect**: no session cookie + request `/dashboard` → 302 `Location:
-  /auth/signin`.
+/auth/signin`.
 - **Authenticated → pass**: provision a confirmed user; drive the real signin route to mint
   session cookies into the jar; replay them on a `/dashboard` request → `next()` reached (no
   redirect). Assert a **durable session** exists (e.g. `getUser()` via the replayed cookies
@@ -289,13 +290,14 @@ unconfigured branch, and current no-validation behavior — with the English-lea
 **Intent**: Exercise the real `signup`/`signin` route handlers against local Supabase.
 
 **Contract**: Cover —
+
 - **signin success → `/`** and a **durable session** is established (the jar holds session
   cookies; `getUser()` via them returns the user — L-002).
 - **signin bad credentials** → 302 `/auth/signin?error=<message>`.
 - **signup success** (fresh unique email) → 302 `/auth/confirm-email`.
 - **signup duplicate/error** → 302 `/auth/signup?error=<message>`.
 - **Unconfigured branch** (env mock `undefined`) → signin → `/auth/signin?error=Supabase is
-  not configured`; signup → `/auth/signup?error=Supabase is not configured`.
+not configured`; signup → `/auth/signup?error=Supabase is not configured`.
 - **Current no-validation behavior**: missing/empty email or password produces a Supabase
   error redirect (no crash, no 500) — pins that there is no server-side zod today.
 
@@ -467,26 +469,26 @@ test is behavior-preserving and guarded by re-running it.
 
 #### Automated
 
-- [x] 3.1 signin success → / with durable session; bad creds → ?error=
-- [x] 3.2 signup success → /auth/confirm-email; duplicate → ?error=
-- [x] 3.3 Unconfigured branch (both routes) → "Supabase is not configured"
-- [x] 3.4 No-validation behavior pinned (missing fields → error redirect, no crash)
-- [x] 3.5 English-leak pin passes (raw message present in ?error=)
-- [x] 3.6 Lint + typecheck pass
+- [x] 3.1 signin success → / with durable session; bad creds → ?error= — 89dbba0
+- [x] 3.2 signup success → /auth/confirm-email; duplicate → ?error= — 89dbba0
+- [x] 3.3 Unconfigured branch (both routes) → "Supabase is not configured" — 89dbba0
+- [x] 3.4 No-validation behavior pinned (missing fields → error redirect, no crash) — 89dbba0
+- [x] 3.5 English-leak pin passes (raw message present in ?error=) — 89dbba0
+- [x] 3.6 Lint + typecheck pass — 89dbba0
 
 #### Manual
 
-- [x] 3.7 Suite reads as the canonical auth-route example for cookbook §6.3
-- [x] 3.8 English-leak known-issue note is actionable for the future mapping change
+- [x] 3.7 Suite reads as the canonical auth-route example for cookbook §6.3 — 89dbba0
+- [x] 3.8 English-leak known-issue note is actionable for the future mapping change — 89dbba0
 
 ### Phase 4: Test-plan correction + cookbook
 
 #### Automated
 
-- [ ] 4.1 Markdown lint/format passes (if wired)
-- [ ] 4.2 Full suite still green
+- [x] 4.1 Markdown lint/format passes (if wired)
+- [x] 4.2 Full suite still green
 
 #### Manual
 
-- [ ] 4.3 §4 no longer claims "no config file yet"; §6.1/§6.3 read as followable recipes
-- [ ] 4.4 Coverage debt + the three known issues are recorded discoverably
+- [x] 4.3 §4 no longer claims "no config file yet"; §6.1/§6.3 read as followable recipes
+- [x] 4.4 Coverage debt + the three known issues are recorded discoverably
