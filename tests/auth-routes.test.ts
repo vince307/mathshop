@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient as createAppClient } from "@/lib/supabase";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { POST as signupPOST } from "@/pages/api/auth/signup";
-import { createSignedInUser, deleteUser, deleteUserByEmail, PASSWORD, type TestAccount } from "./helpers/supabase";
+import { createSignedInUser, deleteUser, findUserIdByEmail, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
 
 /**
@@ -32,7 +32,7 @@ async function userFromJar(jar: CookieJar): Promise<{ id: string } | null> {
 
 describe("Risk #4 — auth route contracts (real Supabase)", () => {
   let account: TestAccount;
-  const createdEmails: string[] = [];
+  const createdIds: string[] = [];
 
   beforeAll(async () => {
     account = await createSignedInUser("routes");
@@ -40,7 +40,7 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
 
   afterAll(async () => {
     if (account.id) await deleteUser(account.id);
-    for (const email of createdEmails) await deleteUserByEmail(email);
+    for (const id of createdIds) await deleteUser(id);
   });
 
   it("signin success redirects to / and establishes a durable session", async () => {
@@ -73,7 +73,6 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
 
   it("signup success redirects to /auth/confirm-email", async () => {
     const email = `signup-${randomUUID()}@example.test`;
-    createdEmails.push(email);
     const context = buildContext({
       url: "https://test.local/api/auth/signup",
       method: "POST",
@@ -83,11 +82,16 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
     const response = await signupPOST(context);
 
     expect(response.headers.get("Location")).toBe("/auth/confirm-email");
+    // Capture the id now (the route returns only a redirect) for deterministic teardown.
+    const id = await findUserIdByEmail(email);
+    if (id) createdIds.push(id);
   });
 
   it("signup error (weak password) redirects to /auth/signup?error=", async () => {
+    // Depends on GoTrue's minimum_password_length (supabase/config.toml, default 6).
+    // If that minimum is lowered below 4, "123" would be accepted and this test
+    // would (correctly) fail — adjust the password to stay below the configured min.
     const email = `weak-${randomUUID()}@example.test`;
-    createdEmails.push(email); // harmless if never created
     const context = buildContext({
       url: "https://test.local/api/auth/signup",
       method: "POST",

@@ -38,8 +38,8 @@ describe("child_profiles per-account isolation (RLS contract)", () => {
   let aRowId: string;
 
   beforeAll(async () => {
-    accountA = await createSignedInUser();
-    accountB = await createSignedInUser();
+    accountA = await createSignedInUser("isolation");
+    accountB = await createSignedInUser("isolation");
 
     // Account A creates a profile it owns (positive control for INSERT + SELECT).
     const { data, error } = await accountA.client

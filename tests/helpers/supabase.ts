@@ -65,12 +65,18 @@ export async function deleteUser(id: string): Promise<void> {
 }
 
 /**
- * Tear down a user by email — for users created through the signup route (which
- * returns only a redirect, never the new id). listUsers is paginated; on the
- * fresh local test DB the user is on the first page. No-op if not found.
+ * Resolve the id of a user created through the signup route (which returns only
+ * a redirect, never the new id). Paginates listUsers so it stays correct even
+ * when stale users from earlier local runs have accumulated past one page.
+ * Returns null if not found. Capture the id right after signup, then tear the
+ * user down with `deleteUser(id)` — deterministic, no end-of-run lookup.
  */
-export async function deleteUserByEmail(email: string): Promise<void> {
-  const { data } = await admin.auth.admin.listUsers();
-  const user = data.users.find((candidate) => candidate.email === email);
-  if (user) await admin.auth.admin.deleteUser(user.id);
+export async function findUserIdByEmail(email: string): Promise<string | null> {
+  const perPage = 1000;
+  for (let page = 1; ; page++) {
+    const { data } = await admin.auth.admin.listUsers({ page, perPage });
+    const user = data.users.find((candidate) => candidate.email === email);
+    if (user) return user.id;
+    if (data.users.length < perPage) return null;
+  }
 }

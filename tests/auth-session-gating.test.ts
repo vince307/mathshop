@@ -84,18 +84,20 @@ describe("Risk #3 — session gating (real middleware + Supabase)", () => {
   });
 
   it("protected-set guard: only the intended routes gate; other paths stay public", async () => {
-    // The gate is opt-in (fail-open by default). This guards the *intended*
-    // protected set: /dashboard gates, but a public path and a future play
-    // surface do NOT — so adding a protected route without listing it here (or
-    // in PROTECTED_ROUTES) surfaces as a failing expectation.
+    // The gate is opt-in (fail-open by default). This pins the *intended*
+    // protected set: /dashboard gates, and any non-listed path stays public — so
+    // changing PROTECTED_ROUTES (adding or removing a route) surfaces here as a
+    // failing expectation. (Meta-check: temporarily adding a path to
+    // PROTECTED_ROUTES turns the matching assertion below red.)
     const dashboard = await runMiddleware(onRequest, buildContext({ url: "https://test.local/dashboard" }));
     expect(dashboard.headers.get("Location")).toBe("/auth/signin");
 
     const root = await runMiddleware(onRequest, buildContext({ url: "https://test.local/" }));
     expect(reachedNext(root)).toBe(true);
 
-    const play = await runMiddleware(onRequest, buildContext({ url: "https://test.local/play" }));
-    expect(reachedNext(play)).toBe(true); // currently public (not yet a protected surface)
+    // A representative non-listed path stays public (asserts it is NOT gated).
+    const other = await runMiddleware(onRequest, buildContext({ url: "https://test.local/play" }));
+    expect(reachedNext(other)).toBe(true);
   });
 
   it("KNOWN ISSUE: the startsWith gate over-matches sibling paths (/dashboardXYZ)", async () => {
