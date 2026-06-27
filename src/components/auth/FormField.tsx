@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-
-const inputBase =
-  "w-full rounded-lg bg-background border px-3 py-2 pl-10 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-colors";
 
 interface FormFieldProps {
   id: string;
@@ -34,12 +33,14 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="text-foreground mb-1 block text-sm">
+      <Label htmlFor={id} className="text-foreground mb-1">
         {label}
-      </label>
+      </Label>
       <div className="relative">
-        <span className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2">{icon}</span>
-        <input
+        <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2">
+          {icon}
+        </span>
+        <Input
           id={id}
           name={name ?? id}
           type={type}
@@ -48,10 +49,8 @@ export function FormField({
             onChange(e.target.value);
           }}
           placeholder={placeholder}
-          className={cn(
-            inputBase,
-            error ? "border-destructive focus:ring-destructive" : "border-input focus:ring-ring",
-          )}
+          aria-invalid={Boolean(error)}
+          className={cn("h-11 pl-10", endContent && "pr-10")}
         />
         {endContent}
       </div>

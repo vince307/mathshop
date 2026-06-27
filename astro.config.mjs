@@ -12,6 +12,10 @@ export default defineConfig({
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      // Allow Cloudflare quick-tunnel hosts (rotate on each restart)
+      allowedHosts: [".trycloudflare.com"],
+    },
   },
   adapter: vercel(),
   env: {

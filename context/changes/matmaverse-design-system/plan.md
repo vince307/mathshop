@@ -315,25 +315,25 @@ None — no schema/data/route changes. Purely presentational; `config.toml` and 
 
 #### Automated
 
-- [x] 2.1 Build passes (assets resolve)
-- [x] 2.2 Lint passes
-- [x] 2.3 public/illustrations/ contains sliced files + slice-map.md
+- [x] 2.1 Build passes (assets resolve) — ca3b7d8
+- [x] 2.2 Lint passes — ca3b7d8
+- [x] 2.3 public/illustrations/ contains sliced files + slice-map.md — ca3b7d8
 
 #### Manual
 
-- [x] 2.4 Each sliced image is the correct crop with acceptable edge quality
+- [x] 2.4 Each sliced image is the correct crop with acceptable edge quality — ca3b7d8
 
 ### Phase 3: shadcn primitives + auth-component refactor
 
 #### Automated
 
-- [ ] 3.1 Lint passes
-- [ ] 3.2 Build passes
-- [ ] 3.3 Full suite green
+- [x] 3.1 Lint passes
+- [x] 3.2 Build passes
+- [x] 3.3 Full suite green
 
 #### Manual
 
-- [ ] 3.4 Signin/signup forms render with themed primitives (no glass); fields/toggle/submit/server-error all function
+- [x] 3.4 Signin/signup forms render with themed primitives (no glass); fields/toggle/submit/server-error all function
 
 ### Phase 4: signin reference restyle
 
