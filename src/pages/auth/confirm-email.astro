@@ -2,8 +2,14 @@
 import Layout from "@/layouts/Layout.astro";
 import { t } from "@/i18n";
 
-const isAutoConfirmed = import.meta.env.DEV;
+const email = Astro.url.searchParams.get("email");
+const resent = Astro.url.searchParams.get("resent") === "1";
+const resendError = Astro.url.searchParams.get("error");
 
+// With no email in the URL (direct nav, or a dev stack with confirmations off) we
+// can't drive a resend, so show the simpler "account created" message. The real
+// post-signup flow always carries ?email= and shows the check-your-email panel.
+const isAutoConfirmed = import.meta.env.DEV && !email;
 const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.checkEmail;
 ---
 
@@ -16,7 +22,46 @@ const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.
       <h1 class="mb-3 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
         {content.heading}
       </h1>
-      <p class="mb-6 text-blue-100/80">{content.description}</p>
+      <p class="mb-4 text-blue-100/80">{content.description}</p>
+
+      {
+        email && !isAutoConfirmed && (
+          <p class="mb-6 text-sm break-all text-blue-100/60">
+            {t.confirmEmail.checkEmail.sentToPrefix} <span class="font-medium text-blue-100">{email}</span>
+          </p>
+        )
+      }
+
+      {
+        resent && (
+          <p class="mb-4 rounded-lg border border-green-500/30 bg-green-900/30 px-3 py-2 text-sm text-green-300">
+            {t.confirmEmail.checkEmail.resentNotice}
+          </p>
+        )
+      }
+
+      {
+        resendError && (
+          <p class="mb-4 rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+            {resendError}
+          </p>
+        )
+      }
+
+      {
+        email && !isAutoConfirmed && (
+          <form method="POST" action="/api/auth/resend" class="mb-6">
+            <input type="hidden" name="email" value={email} />
+            <button
+              type="submit"
+              class="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+            >
+              {t.confirmEmail.checkEmail.resendButton}
+            </button>
+          </form>
+        )
+      }
+
       <a href="/auth/signin" class="text-sm text-purple-300 hover:underline">
         {content.linkText}
       </a>

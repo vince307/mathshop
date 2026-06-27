@@ -1,0 +1,124 @@
+import { randomUUID } from "node:crypto";
+import { afterAll, describe, expect, it } from "vitest";
+import { createClient as createAppClient } from "@/lib/supabase";
+import { GET as confirmGET } from "@/pages/api/auth/confirm";
+import { admin, deleteUser, PASSWORD } from "./helpers/supabase";
+import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
+import { t } from "@/i18n";
+
+/**
+ * Email-verification confirm route (`src/pages/api/auth/confirm.ts`). Exercises
+ * the real `verifyOtp({ type: "signup", token_hash })` path against the local
+ * Supabase stack WITHOUT an email round-trip: `admin.generateLink` mints a real
+ * `hashed_token` (spike-verified — works even with enable_confirmations = false).
+ * The route writes the session cookie via the SSR client's hardened `setAll`,
+ * so success is proved by re-reading the jar (a durable `getUser`, L-002), not
+ * just the redirect Location. The failure case pins the Polish error mapping
+ * (no English leak — FR-013).
+ *
+ * Requires the local Supabase stack + `.env.test`.
+ */
+
+/** Re-read the session a route minted into the jar — a durable check (L-002). */
+async function userFromJar(jar: CookieJar): Promise<{ id: string } | null> {
+  const headers = new Headers();
+  const cookieHeader = jar.toCookieHeader();
+  if (cookieHeader) headers.set("Cookie", cookieHeader);
+  const supabase = createAppClient(headers, jar);
+  if (!supabase) return null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+}
+
+/** Mint a real signup `token_hash` (and the new user's id) with no email round-trip. */
+async function generateSignupToken(email: string): Promise<{ tokenHash: string; userId: string }> {
+  const { data, error } = await admin.auth.admin.generateLink({ type: "signup", email, password: PASSWORD });
+  if (error) throw error;
+  return { tokenHash: data.properties.hashed_token, userId: data.user.id };
+}
+
+describe("Risk #4 — email verification confirm route (real Supabase)", () => {
+  const createdIds: string[] = [];
+
+  afterAll(async () => {
+    for (const id of createdIds) await deleteUser(id);
+  });
+
+  it("a generated signup token_hash establishes a durable session and redirects to /app", async () => {
+    const email = `confirm-${randomUUID()}@example.test`;
+    const { tokenHash, userId } = await generateSignupToken(email);
+    createdIds.push(userId);
+
+    const jar = createCookieJar();
+    const context = buildContext({
+      url: `https://test.local/api/auth/confirm?token_hash=${tokenHash}&type=signup`,
+      cookies: jar,
+    });
+
+    const response = await confirmGET(context);
+
+    // Single source of the post-confirm target → default /app (no `next` here).
+    expect(response.headers.get("Location")).toBe("/app");
+    // L-002: prove the session is durable (re-read), not merely the redirect.
+    expect((await userFromJar(jar))?.id).toBe(userId);
+  });
+
+  it("honors a same-origin `next` path as the post-confirm target", async () => {
+    const email = `confirm-next-${randomUUID()}@example.test`;
+    const { tokenHash, userId } = await generateSignupToken(email);
+    createdIds.push(userId);
+
+    const jar = createCookieJar();
+    const context = buildContext({
+      url: `https://test.local/api/auth/confirm?token_hash=${tokenHash}&type=signup&next=${encodeURIComponent("/app/profiles")}`,
+      cookies: jar,
+    });
+
+    const response = await confirmGET(context);
+
+    expect(response.headers.get("Location")).toBe("/app/profiles");
+    expect((await userFromJar(jar))?.id).toBe(userId);
+  });
+
+  it("rejects an off-origin `next`, falling back to /app", async () => {
+    const email = `confirm-evil-${randomUUID()}@example.test`;
+    const { tokenHash, userId } = await generateSignupToken(email);
+    createdIds.push(userId);
+
+    const jar = createCookieJar();
+    const context = buildContext({
+      url: `https://test.local/api/auth/confirm?token_hash=${tokenHash}&type=signup&next=${encodeURIComponent("//evil.example/phish")}`,
+      cookies: jar,
+    });
+
+    const response = await confirmGET(context);
+
+    expect(response.headers.get("Location")).toBe("/app");
+  });
+
+  it("a bad/expired token_hash redirects to a Polish ?error= and mints no session", async () => {
+    const jar = createCookieJar();
+    const context = buildContext({
+      url: `https://test.local/api/auth/confirm?token_hash=not-a-real-token&type=signup`,
+      cookies: jar,
+    });
+
+    const response = await confirmGET(context);
+    const location = response.headers.get("Location") ?? "";
+    expect(location).toMatch(/^\/auth\/signin\?error=/);
+    const error = decodeURIComponent(new URL(location, "https://test.local").searchParams.get("error") ?? "");
+    expect(error).toBe(t.auth.serverError.linkInvalid); // Polish, mapped from otp_expired
+    expect(await userFromJar(jar)).toBeNull();
+  });
+
+  it("missing token_hash redirects to a Polish ?error=", async () => {
+    const context = buildContext({ url: `https://test.local/api/auth/confirm?type=signup` });
+
+    const response = await confirmGET(context);
+    const location = response.headers.get("Location") ?? "";
+    const error = decodeURIComponent(new URL(location, "https://test.local").searchParams.get("error") ?? "");
+    expect(error).toBe(t.auth.serverError.linkInvalid);
+  });
+});

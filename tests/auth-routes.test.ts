@@ -72,7 +72,7 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
     expect(response.headers.get("Location")).toMatch(/^\/auth\/signin\?error=/);
   });
 
-  it("signup success redirects to /auth/confirm-email", async () => {
+  it("signup success redirects to the confirm-email interstitial (carrying the email)", async () => {
     const email = `signup-${randomUUID()}@example.test`;
     const context = buildContext({
       url: "https://test.local/api/auth/signup",
@@ -82,7 +82,8 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
 
     const response = await signupPOST(context);
 
-    expect(response.headers.get("Location")).toBe("/auth/confirm-email");
+    // The interstitial carries the email so its resend control knows the address.
+    expect(response.headers.get("Location")).toBe(`/auth/confirm-email?email=${encodeURIComponent(email)}`);
     // Capture the id now (the route returns only a redirect) for deterministic teardown.
     const id = await findUserIdByEmail(email);
     if (id) createdIds.push(id);

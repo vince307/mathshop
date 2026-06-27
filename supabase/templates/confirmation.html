@@ -1,0 +1,15 @@
+<!--
+  Local-only confirmation email template (Polish). Points at the token_hash
+  confirm route, NOT the default {{ .ConfirmationURL }} PKCE link. `{{ .SiteURL }}`
+  is the local app origin (config.toml `auth.site_url`); `{{ .RedirectTo }}` is the
+  signup `emailRedirectTo` (/app). Production templates are authored in the hosted
+  dashboard (launch prerequisite) — this file only serves the local stack.
+-->
+<h2>Potwierdź swój adres e-mail</h2>
+<p>Cześć! Kliknij poniższy link, aby aktywować konto w MatmaVerse:</p>
+<p>
+  <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next={{ .RedirectTo }}">
+    Aktywuj konto
+  </a>
+</p>
+<p>Jeśli to nie Ty zakładałeś/aś konto, zignoruj tę wiadomość.</p>

@@ -56,6 +56,8 @@ export const pl = {
       weakPassword: "Hasło jest za słabe — użyj co najmniej 6 znaków.",
       rateLimited: "Zbyt wiele prób. Spróbuj ponownie za chwilę.",
       notConfigured: "Usługa logowania jest chwilowo niedostępna.",
+      linkInvalid:
+        "Link aktywacyjny jest nieprawidłowy lub wygasł. Zarejestruj się ponownie lub wyślij link jeszcze raz.",
       default: "Coś poszło nie tak. Spróbuj ponownie.",
     },
   },
@@ -72,6 +74,10 @@ export const pl = {
       heading: "Potwierdź e-mail",
       description: "Wysłaliśmy link aktywacyjny na Twój adres e-mail. Kliknij go, aby aktywować konto.",
       linkText: "Wróć do logowania",
+      sentToPrefix: "Adres:",
+      resendButton: "Wyślij link ponownie",
+      resentNotice: "Link aktywacyjny został wysłany ponownie.",
+      resendError: "Nie udało się wysłać linku. Spróbuj ponownie za chwilę.",
     },
   },
 

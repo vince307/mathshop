@@ -403,27 +403,27 @@ Provider decided: **Brevo** (EU/GDPR + signable DPA, free 300/day, officially Su
 
 #### Automated
 
-- [x] 3.1 Lint passes
-- [x] 3.2 Full suite green incl. flipped signout assertion
-- [x] 3.3 Build passes
-- [x] 3.4 Auth-cookie responses include anti-cache headers (harness test)
+- [x] 3.1 Lint passes — 5ac881e
+- [x] 3.2 Full suite green incl. flipped signout assertion — 5ac881e
+- [x] 3.3 Build passes — 5ac881e
+- [x] 3.4 Auth-cookie responses include anti-cache headers (harness test) — 5ac881e
 
 #### Manual
 
-- [x] 3.5 Sign out clears the session; no stale-session survives
+- [x] 3.5 Sign out clears the session; no stale-session survives — 5ac881e
 
 ### Phase 4: Full email verification
 
 #### Automated
 
-- [ ] 4.1 Lint + build pass
-- [ ] 4.2 Confirm route establishes a durable session from a generated token_hash → /app
-- [ ] 4.3 Bad token_hash → Polish ?error=
-- [ ] 4.4 Full suite green
+- [x] 4.1 Lint + build pass
+- [x] 4.2 Confirm route establishes a durable session from a generated token_hash → /app
+- [x] 4.3 Bad token_hash → Polish ?error=
+- [x] 4.4 Full suite green
 
 #### Manual
 
-- [ ] 4.5 Local end-to-end: signup → inbucket link → confirmed session on /app; resend works
+- [x] 4.5 Local end-to-end: signup → inbucket link → confirmed session on /app; resend works
 
 ### Phase 5: Authenticated landing + routing scaffolding
 

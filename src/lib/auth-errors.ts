@@ -20,6 +20,9 @@ const messageByCode: Record<string, string> = {
   weak_password: t.auth.serverError.weakPassword,
   over_request_rate_limit: t.auth.serverError.rateLimited,
   over_email_send_rate_limit: t.auth.serverError.rateLimited,
+  // Email-verification (token_hash + verifyOtp) failures — expired or already-used link.
+  otp_expired: t.auth.serverError.linkInvalid,
+  otp_disabled: t.auth.serverError.linkInvalid,
 };
 
 export function mapAuthError(error: AuthError): string {
