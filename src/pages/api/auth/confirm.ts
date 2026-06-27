@@ -11,21 +11,38 @@ export const prerender = false;
 // `verifyOtp` and rejects an arbitrary injected `type` value.
 const EMAIL_OTP_TYPES = ["signup", "email", "recovery", "invite", "magiclink", "email_change"] as const;
 
+/** True if the string contains any ASCII control char (0x00–0x1F) — some user
+ * agents strip these before parsing a URL, which can resurrect an off-site target. */
+function hasControlChars(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    if (value.charCodeAt(i) < 0x20) return true;
+  }
+  return false;
+}
+
+/**
+ * Validate the post-confirm redirect target as a same-origin path.
+ *
+ * Accept only a single leading "/". Reject "//" and "/\" — browsers normalize
+ * "\"→"/", so both are protocol-relative and resolve off-site — and reject any
+ * control char. Anything else falls back to "/app". Keeps a crafted confirm link
+ * from bouncing the freshly-confirmed session to an attacker origin.
+ */
+function safeNext(next: string | null): string {
+  if (next && next.startsWith("/") && !/^\/[/\\]/.test(next) && !hasControlChars(next)) {
+    return next;
+  }
+  return "/app";
+}
+
 /**
  * Email-verification confirm route. The confirmation email links here with a
  * `token_hash` + `type` (the `verifyOtp` server-confirm pattern, not PKCE
  * `?code=`). On success `verifyOtp` writes the session cookie via the hardened
  * `setAll`, and we land the parent on `next`. The single source of the redirect
  * target is the `next` query param (populated from `{{ .RedirectTo }}` =
- * signup's `emailRedirectTo`); we still validate it as a same-origin path so a
- * crafted link can't bounce the user off-site.
+ * signup's `emailRedirectTo`).
  */
-function safeNext(next: string | null): string {
-  // Same-origin absolute path only: leading "/" but not "//" (protocol-relative).
-  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
-  return "/app";
-}
-
 export const GET: APIRoute = async (context) => {
   const params = context.url.searchParams;
   const token_hash = params.get("token_hash");

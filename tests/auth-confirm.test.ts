@@ -82,14 +82,21 @@ describe("Risk #4 — email verification confirm route (real Supabase)", () => {
     expect((await userFromJar(jar))?.id).toBe(userId);
   });
 
-  it("rejects an off-origin `next`, falling back to /app", async () => {
+  // Open-redirect vectors that must all fall back to /app, not bounce off-site.
+  // "//" is canonical protocol-relative; "/\\" relies on browsers normalizing
+  // "\\"→"/"; the others are control-char strips. One token per case (single-use).
+  it.each([
+    ["protocol-relative //", "//evil.example/phish"],
+    ["backslash /\\", "/\\evil.example/phish"],
+    ["leading tab", "/\tevil"],
+  ])("rejects an off-origin `next` (%s), falling back to /app", async (_label, payload) => {
     const email = `confirm-evil-${randomUUID()}@example.test`;
     const { tokenHash, userId } = await generateSignupToken(email);
     createdIds.push(userId);
 
     const jar = createCookieJar();
     const context = buildContext({
-      url: `https://test.local/api/auth/confirm?token_hash=${tokenHash}&type=signup&next=${encodeURIComponent("//evil.example/phish")}`,
+      url: `https://test.local/api/auth/confirm?token_hash=${tokenHash}&type=signup&next=${encodeURIComponent(payload)}`,
       cookies: jar,
     });
 
