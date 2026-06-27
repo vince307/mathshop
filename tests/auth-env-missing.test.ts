@@ -34,7 +34,7 @@ describe("Risk #3 — env missing / null client", () => {
   it("fail-closed: a protected route still redirects when Supabase is unconfigured", async () => {
     // The null-client branch must NOT fail open — locals.user stays null and the
     // gate redirects, even though no GoTrue round-trip happened.
-    const context = buildContext({ url: "https://test.local/dashboard" });
+    const context = buildContext({ url: "https://test.local/app" });
 
     const response = await runMiddleware(onRequest, context);
 

@@ -21,5 +21,5 @@ export const POST: APIRoute = async (context) => {
     return applyNoStore(context.redirect(`/auth/signin?error=${encodeURIComponent(mapAuthError(error))}`));
   }
 
-  return applyNoStore(context.redirect("/"));
+  return applyNoStore(context.redirect("/app"));
 };

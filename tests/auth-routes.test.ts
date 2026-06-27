@@ -44,7 +44,7 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
     for (const id of createdIds) await deleteUser(id);
   });
 
-  it("signin success redirects to / and establishes a durable session", async () => {
+  it("signin success redirects to /app and establishes a durable session", async () => {
     const jar = createCookieJar();
     const context = buildContext({
       url: "https://test.local/api/auth/signin",
@@ -55,7 +55,7 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
 
     const response = await signinPOST(context);
 
-    expect(response.headers.get("Location")).toBe("/");
+    expect(response.headers.get("Location")).toBe("/app");
     // L-002: prove the session is durable (re-read), not just the redirect.
     expect((await userFromJar(jar))?.id).toBe(account.id);
   });

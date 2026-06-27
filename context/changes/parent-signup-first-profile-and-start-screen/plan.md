@@ -416,24 +416,24 @@ Provider decided: **Brevo** (EU/GDPR + signable DPA, free 300/day, officially Su
 
 #### Automated
 
-- [x] 4.1 Lint + build pass
-- [x] 4.2 Confirm route establishes a durable session from a generated token_hash → /app
-- [x] 4.3 Bad token_hash → Polish ?error=
-- [x] 4.4 Full suite green
+- [x] 4.1 Lint + build pass — 3ed227e
+- [x] 4.2 Confirm route establishes a durable session from a generated token_hash → /app — 3ed227e
+- [x] 4.3 Bad token_hash → Polish ?error= — 3ed227e
+- [x] 4.4 Full suite green — 3ed227e
 
 #### Manual
 
-- [x] 4.5 Local end-to-end: signup → inbucket link → confirmed session on /app; resend works
+- [x] 4.5 Local end-to-end: signup → inbucket link → confirmed session on /app; resend works — 3ed227e
 
 ### Phase 5: Authenticated landing + routing scaffolding
 
 #### Automated
 
-- [ ] 5.1 Lint + build pass
-- [ ] 5.2 /app gating + authed→/app redirects assert green
-- [ ] 5.3 signin/confirm land on /app
-- [ ] 5.4 Full suite green
+- [x] 5.1 Lint + build pass
+- [x] 5.2 /app gating + authed→/app redirects assert green
+- [x] 5.3 signin/confirm land on /app
+- [x] 5.4 Full suite green
 
 #### Manual
 
-- [ ] 5.5 After verify/sign-in the parent reaches a Polish /app; authed visit to /auth/signin bounces to /app
+- [x] 5.5 After verify/sign-in the parent reaches a Polish /app; authed visit to /auth/signin bounces to /app

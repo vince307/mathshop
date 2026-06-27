@@ -1,0 +1,37 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { t } from "@/i18n";
+
+// Gated by middleware (`/app` ∈ PROTECTED_ROUTES) — an anonymous request never
+// reaches here. `locals.user` is therefore always set, but we read defensively.
+const { user } = Astro.locals;
+
+// --- Part B extension point ---------------------------------------------------
+// S-01b replaces this placeholder body with the profile-count router: read the
+// parent's `child_profiles` count and branch 0 → create-first-profile wizard,
+// 1 → straight into that child's start screen, 2+ → profile picker. The gating +
+// the post-auth funnel into `/app` (signin + confirm both land here) stay as-is.
+// -----------------------------------------------------------------------------
+---
+
+<Layout title={t.landing.title}>
+  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
+    <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
+      <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+        {t.brand}
+      </h1>
+      <p class="text-blue-100/80">
+        {t.landing.signedIn}
+        <span class="block font-semibold text-white">{user?.email}</span>
+      </p>
+      <form method="POST" action="/api/auth/signout" class="mt-6">
+        <button
+          type="submit"
+          class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
+        >
+          {t.landing.signOut}
+        </button>
+      </form>
+    </div>
+  </div>
+</Layout>
