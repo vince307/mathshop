@@ -2,12 +2,12 @@
 
 > Persisted hand-off from the first **Plan Mode deploy** (lesson Module 1, L5). Source of the decision: `@context/foundation/infrastructure.md`; stack: `@context/foundation/tech-stack.md`.
 
-## Status — Git → GitHub → Vercel integration wired · 2026-06-07
+## Status — preview pipeline smoke-tested · main now served from the Git integration · 2026-06-07
 
 - **Platform:** Vercel (Hobby) · scope `kamilps-projects` · project **`mathshop`**
 - **Adapter:** `@astrojs/vercel@10.0.7` · Astro 6 SSR (`output: "server"`)
 - **Public URL:** https://mathshop.vercel.app → **HTTP 200**
-- **Deployment target:** `production` (current deployment id: `dpl_C2UPURzQzUd5Ngw4FtmymwGgXzpW`; first deploy was `dpl_B2hYavrnMpu5JMMMvKvct1mNRYdp` on 2026-05-23)
+- **Deployment target:** `production` (current id: `dpl_2oxy2xotxy1VH1F6KbXwGrZ6juyZ` — `mathshop-oe9569cmp-…`, the first deploy triggered by a Git push to `main` with the corrected commit author; earlier ids: `dpl_C2UPURzQzUd5Ngw4FtmymwGgXzpW` for the Supabase wire-up on 2026-06-06, `dpl_B2hYavrnMpu5JMMMvKvct1mNRYdp` for the smoke test on 2026-05-23)
 - **SSR function `_render` region:** **`fra1`** (Frankfurt) — pinned via `vercel.json`
 - **Supabase project:** `mathshop` · ref `hozkukbsfdcrbszgdxbg` · region **Central EU (Frankfurt = `eu-central-1`)** — co-located with `fra1`
   - URL: https://hozkukbsfdcrbszgdxbg.supabase.co
@@ -48,17 +48,30 @@ Initial deploy verified Astro 6 SSR runs on Vercel, EU region pinned, and the nu
 
 - **Repo:** https://github.com/vince307/mathshop · **PRIVATE** · default branch `main`
 - **Owner:** `vince307` · remote `origin` uses SSH (`git@github.com:vince307/mathshop.git`)
-- **Initial commit:** `7de02bc` — "chore: bootstrap MathShop scaffold" (Conventional Commits convention established)
-- **Vercel ↔ GitHub:** connected (`vercel git connect` confirmed *"vince307/mathshop is already connected"*). From now on:
-  - push to a non-`main` branch / open a PR → **preview deploy** with a unique URL
-  - merge to `main` → **production deploy** to `mathshop.vercel.app`
-  - `vercel deploy` from CLI continues to work; with Git connected, deploys are linked back to commit SHAs
-- **GitHub Actions CI** (`.github/workflows/ci.yml`): runs `lint` + `build` on push/PR to `main`; secrets configured at the repo level:
+- **Vercel ↔ GitHub:** connected. From now on:
+  - push to a non-`main` branch / open a PR → **preview deploy** with a unique URL (verified end-to-end — see smoke-test below)
+  - merge to `main` → **production deploy** to `mathshop.vercel.app` (verified — current prod is the first Git-pipeline deploy)
+- **GitHub Actions CI** (`.github/workflows/ci.yml`): runs `lint` + `build` on push/PR to `main`; secrets at the repo level:
   | Secret | Source |
   |---|---|
   | `SUPABASE_URL` | same as Vercel env |
   | `SUPABASE_KEY` | same as Vercel env (anon public) |
-- **`master` → `main`:** ci.yml branch targets updated from the scaffold's `master` to the modern `main`.
+- **Commit author identity** (binding for *all* repos via global git config): `vince307 <12682540+vince307@users.noreply.github.com>`. The original local config used `kamil.piecuch@mycit.ie`, which GitHub maps to a **different** account (`kamil-pe`). On a private repo, Vercel refuses to build commits from authors who aren't members of the project's Vercel team — every pre-fix build failed with `nextCommitStatus: FAILED` and an "@kamil-pe is attempting to deploy" warning on the PR. The repo-local history was rewritten with `git filter-branch` to scrub the old email, the orphaned objects were dropped (reflog expire + `git gc --prune=now`), and the global git config was switched so this can't happen again on any future repo. The two pre-fix commit SHAs (`7de02bc`, `b3e7456`) survive only on GitHub's server-side garbage-collection schedule (reachable by direct SHA URL until GitHub GCs them — typical timeframe is days to weeks; for a private solo repo this is effectively zero-risk).
+- **Branch convention:** `master` → `main` everywhere (`ci.yml`, README CI section).
+
+## Preview pipeline smoke-test (PR #1, closed)
+
+Verified the full chain end-to-end:
+
+| Signal | Result |
+|---|---|
+| Push `chore/preview-smoke` → Vercel | new build, **target: `preview`** (distinct from prod) |
+| Build outcome | **Ready** in 25s (`mathshop-3ltdhbf6k-…`, alias `mathshop-git-chore-preview-smoke-…`) |
+| Vercel bot PR comment | posted + edited in place with the deployment status |
+| GitHub Actions CI | triggered on `pull_request` event |
+| Preview URL anon access | **401** — Deployment Protection guards previews by default (correct posture for an unreleased children's app; team members can reach it via Vercel auth) |
+
+PR was closed without merging once the chain was verified. The branch was deleted on both remote and local.
 
 ## Deviation from the approved plan
 
@@ -77,12 +90,11 @@ Local mirror: `vercel env pull --environment=development .env` produced a gitign
 
 ## Explicitly deferred (not done yet)
 
+- **First Supabase migration** (`supabase/migrations/`) for the parent-account/child-profile schema. **The moment any table is added, RLS policies (per-operation, per-role) must land in the same migration** — the project's #1 correctness requirement per `CLAUDE.md` (FR-012/FR-015).
+- End-to-end auth flow check with a real sign-up (Supabase **email confirmation is on by default**, so a brand-new sign-up redirects to "check your inbox" rather than logging in directly — that's correct behavior; turn it off in Supabase → Authentication → Email if undesired for local testing).
 - **Vercel Pro** upgrade (Hobby is non-commercial; required before a public commercial launch).
 - Custom domain.
-- End-to-end auth flow check with a real sign-up (Supabase **email confirmation is on by default**, so a brand-new sign-up redirects to "check your inbox" rather than logging in directly — that's correct behavior; turn it off in Supabase → Authentication → Email if undesired for local testing).
-- First Supabase migration (`supabase/migrations/`) for the parent-account/child-profile schema. **The moment any table is added, RLS policies (per-operation, per-role) must land in the same migration** — the project's #1 correctness requirement per `CLAUDE.md` (FR-012/FR-015).
 - Local cleanup: delete the on-disk `.wrangler/` cache (gitignored, but no longer needed) and consider moving `supabase password.txt` into a password manager (also gitignored).
-- Smoke-test the preview pipeline: push a throwaway branch (e.g. `chore/preview-smoke`) to confirm Vercel creates a preview URL and comments it on a PR.
 
 ## Follow-up commands (next session)
 

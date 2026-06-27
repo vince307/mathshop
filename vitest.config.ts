@@ -8,6 +8,10 @@ import { defineConfig } from "vitest/config";
 loadEnv({ path: ".env.test" });
 
 export default defineConfig({
+  server: {
+    host: true,
+    allowedHosts: ["*.trycloudflare.com", ".trycloudflare.com"], // lub true, żeby wpuszczać wszystko
+  },
   resolve: {
     alias: {
       // Mirror the tsconfig `@/*` → `./src/*` path alias so route/middleware

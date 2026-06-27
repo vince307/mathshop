@@ -302,26 +302,26 @@ None — no schema/data/route changes. Purely presentational; `config.toml` and 
 
 #### Automated
 
-- [x] 1.1 Lint passes
-- [x] 1.2 Build passes
-- [x] 1.3 Full suite still green
-- [x] 1.4 No `bg-cosmic` remains in src/
+- [x] 1.1 Lint passes — 2a846cc
+- [x] 1.2 Build passes — 2a846cc
+- [x] 1.3 Full suite still green — 2a846cc
+- [x] 1.4 No `bg-cosmic` remains in src/ — 2a846cc
 
 #### Manual
 
-- [x] 1.5 All surfaces render on the light base with Nunito; no dark cosmic / contrast issues
+- [x] 1.5 All surfaces render on the light base with Nunito; no dark cosmic / contrast issues — 2a846cc
 
 ### Phase 2: Illustration asset pipeline
 
 #### Automated
 
-- [ ] 2.1 Build passes (assets resolve)
-- [ ] 2.2 Lint passes
-- [ ] 2.3 public/illustrations/ contains sliced files + slice-map.md
+- [x] 2.1 Build passes (assets resolve)
+- [x] 2.2 Lint passes
+- [x] 2.3 public/illustrations/ contains sliced files + slice-map.md
 
 #### Manual
 
-- [ ] 2.4 Each sliced image is the correct crop with acceptable edge quality
+- [x] 2.4 Each sliced image is the correct crop with acceptable edge quality
 
 ### Phase 3: shadcn primitives + auth-component refactor
 
