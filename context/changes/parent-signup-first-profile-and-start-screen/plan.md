@@ -429,11 +429,11 @@ Provider decided: **Brevo** (EU/GDPR + signable DPA, free 300/day, officially Su
 
 #### Automated
 
-- [x] 5.1 Lint + build pass
-- [x] 5.2 /app gating + authed→/app redirects assert green
-- [x] 5.3 signin/confirm land on /app
-- [x] 5.4 Full suite green
+- [x] 5.1 Lint + build pass — e7427d7
+- [x] 5.2 /app gating + authed→/app redirects assert green — e7427d7
+- [x] 5.3 signin/confirm land on /app — e7427d7
+- [x] 5.4 Full suite green — e7427d7
 
 #### Manual
 
-- [x] 5.5 After verify/sign-in the parent reaches a Polish /app; authed visit to /auth/signin bounces to /app
+- [x] 5.5 After verify/sign-in the parent reaches a Polish /app; authed visit to /auth/signin bounces to /app — e7427d7
