@@ -15,19 +15,19 @@ const { user } = Astro.locals;
 ---
 
 <Layout title={t.landing.title}>
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
-      <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+  <div class="bg-background flex min-h-screen items-center justify-center p-4">
+    <div class="bg-card text-card-foreground border-border rounded-2xl border p-8 text-center shadow-sm">
+      <h1 class="text-primary mb-4 text-3xl font-bold">
         {t.brand}
       </h1>
-      <p class="text-blue-100/80">
+      <p class="text-muted-foreground">
         {t.landing.signedIn}
-        <span class="block font-semibold text-white">{user?.email}</span>
+        <span class="text-foreground block font-semibold">{user?.email}</span>
       </p>
       <form method="POST" action="/api/auth/signout" class="mt-6">
         <button
           type="submit"
-          class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
+          class="border-input text-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm transition-colors"
         >
           {t.landing.signOut}
         </button>

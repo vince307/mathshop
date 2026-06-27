@@ -14,27 +14,27 @@ const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.
 ---
 
 <Layout title={content.heading}>
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
+  <div class="bg-background flex min-h-screen items-center justify-center p-4">
     <div
-      class="w-full max-w-sm rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl"
+      class="bg-card text-card-foreground border-border w-full max-w-sm rounded-2xl border p-8 text-center shadow-sm"
     >
       <div class="mb-4 text-5xl">{content.emoji}</div>
-      <h1 class="mb-3 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-2xl font-bold text-transparent">
+      <h1 class="text-foreground mb-3 text-2xl font-bold">
         {content.heading}
       </h1>
-      <p class="mb-4 text-blue-100/80">{content.description}</p>
+      <p class="text-muted-foreground mb-4">{content.description}</p>
 
       {
         email && !isAutoConfirmed && (
-          <p class="mb-6 text-sm break-all text-blue-100/60">
-            {t.confirmEmail.checkEmail.sentToPrefix} <span class="font-medium text-blue-100">{email}</span>
+          <p class="text-muted-foreground mb-6 text-sm break-all">
+            {t.confirmEmail.checkEmail.sentToPrefix} <span class="text-foreground font-medium">{email}</span>
           </p>
         )
       }
 
       {
         resent && (
-          <p class="mb-4 rounded-lg border border-green-500/30 bg-green-900/30 px-3 py-2 text-sm text-green-300">
+          <p class="mb-4 rounded-lg border border-green-600/30 bg-green-50 px-3 py-2 text-sm text-green-700">
             {t.confirmEmail.checkEmail.resentNotice}
           </p>
         )
@@ -42,7 +42,7 @@ const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.
 
       {
         resendError && (
-          <p class="mb-4 rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+          <p class="border-destructive/30 text-destructive mb-4 rounded-lg border bg-red-50 px-3 py-2 text-sm">
             {resendError}
           </p>
         )
@@ -54,7 +54,7 @@ const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.
             <input type="hidden" name="email" value={email} />
             <button
               type="submit"
-              class="w-full rounded-lg border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+              class="border-input text-foreground hover:bg-muted w-full rounded-lg border px-4 py-2 text-sm font-medium transition"
             >
               {t.confirmEmail.checkEmail.resendButton}
             </button>
@@ -62,7 +62,7 @@ const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.
         )
       }
 
-      <a href="/auth/signin" class="text-sm text-purple-300 hover:underline">
+      <a href="/auth/signin" class="text-primary text-sm hover:underline">
         {content.linkText}
       </a>
     </div>
