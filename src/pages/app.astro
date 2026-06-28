@@ -9,6 +9,9 @@ import { countChildProfiles, resolveLandingPath } from "@/lib/services/child-pro
 //   1 profile   → that child's start screen (/app/start)
 //   2+ profiles → most-recent profile's start screen (the picker UI is S-07)
 const supabase = createClient(Astro.request.headers, Astro.cookies);
-const count = supabase ? await countChildProfiles(supabase) : 0;
+// Env-missing: don't silently funnel everyone into the wizard — send them to
+// signin, which renders the missing-config banner (matches the auth routes).
+if (!supabase) return Astro.redirect("/auth/signin");
+const count = await countChildProfiles(supabase);
 return Astro.redirect(resolveLandingPath(count));
 ---

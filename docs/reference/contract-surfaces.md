@@ -8,7 +8,7 @@ Each H2 below is a surface name. New account-owned tables must add an entry here
 
 ## public.child_profiles
 
-The first account-owned table. Child play-profiles owned by a parent account; carries no child PII.
+The first account-owned table. Child play-profiles owned by a parent account. Carries consciously-collected child PII (`name`, `age` — a deliberate S-01b override of the PRD no-PII guardrail), RLS-isolated per account; see the Columns note below.
 
 - **Defined in:** `supabase/migrations/20260609120000_child_profiles_isolation.sql`; identity columns added in `supabase/migrations/20260628120000_child_profiles_add_identity.sql` (S-01b).
 - **Owner column:** `account_id uuid not null references auth.users(id) on delete cascade` — RLS predicate `auth.uid() = account_id`.

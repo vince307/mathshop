@@ -1,3 +1,4 @@
+import type { AstroCookies } from "astro";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient as createAppClient } from "@/lib/supabase";
@@ -23,7 +24,7 @@ async function userFromJar(jar: CookieJar): Promise<{ id: string } | null> {
   const headers = new Headers();
   const cookieHeader = jar.toCookieHeader();
   if (cookieHeader) headers.set("Cookie", cookieHeader);
-  const supabase = createAppClient(headers, jar);
+  const supabase = createAppClient(headers, jar as unknown as AstroCookies);
   if (!supabase) return null;
   const {
     data: { user },

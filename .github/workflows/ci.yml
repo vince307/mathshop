@@ -17,6 +17,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx astro sync
+      # Type-check .astro + .ts via the canonical Astro tool. Restores the
+      # .astro type coverage ESLint can't provide (type-checked rules are
+      # disabled for .astro — astro-eslint-parser crashes on frontmatter returns).
+      - run: npm run check
       - run: npm run lint
       - run: npm run build
         env:
