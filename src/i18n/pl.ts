@@ -122,6 +122,52 @@ export const pl = {
     ],
   },
 
+  // Create-first-child-profile wizard (S-01b). Placeholders {current}/{total}/{name}
+  // are interpolated in the components.
+  profileWizard: {
+    title: "Dodaj profil dziecka",
+    subtitle: "Dopasujemy poziom do wieku i umiejętności",
+    stepProgress: "Krok {current} z {total}",
+    steps: {
+      identity: "Dane dziecka",
+      profile: "Avatar i świat",
+      confirm: "Podsumowanie",
+    },
+    nameLabel: "Imię dziecka",
+    namePlaceholder: "Wpisz imię dziecka",
+    ageLabel: "Wiek",
+    agePlaceholder: "Wybierz wiek",
+    ageUnit: "lat",
+    avatarLabel: "Wybierz avatar",
+    interestLabel: "Zainteresowania",
+    startingLevelLabel: "Poziom startowy",
+    levelNames: { "1": "Podstawy", "2": "Podstawy plus" },
+    levelDescription: "Podstawy matematyki i ekonomii",
+    note: "Świat możesz zmienić później. Skupiamy się na nauce przez praktykę i decyzje.",
+    back: "Wstecz",
+    next: "Dalej",
+    create: "Utwórz profil",
+    creating: "Tworzenie…",
+    reviewIntro: "Sprawdź dane profilu:",
+    validation: {
+      nameRequired: "Wpisz imię dziecka",
+      nameTooLong: "Imię może mieć maksymalnie 30 znaków",
+      ageRequired: "Wybierz wiek",
+      avatarRequired: "Wybierz avatar",
+      interestRequired: "Wybierz świat",
+    },
+    error: "Nie udało się utworzyć profilu. Spróbuj ponownie.",
+  },
+
+  // Child start screen (S-01b). The tap is a friendly no-op until the shift loop (S-02+).
+  start: {
+    greeting: "Cześć, {name}!",
+    subtitle: "Twój sklep jest gotowy.",
+    open: "Czas otworzyć sklep!",
+    comingSoonTitle: "Już niedługo!",
+    comingSoon: "Twój sklep otworzy się wkrótce. Przygotuj się na pierwszą zmianę!",
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",

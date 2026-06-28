@@ -342,28 +342,28 @@ One additive migration on an empty (pre-launch) `child_profiles`; NOT NULL colum
 
 #### Automated
 
-- [x] 1.1 Migrations apply cleanly (`npx supabase db reset`)
-- [x] 1.2 Isolation test green (`npm test`)
-- [x] 1.3 Lint passes
-- [x] 1.4 Build passes
-- [x] 1.5 `zod` present in package.json dependencies
+- [x] 1.1 Migrations apply cleanly (`npx supabase db reset`) — da54631
+- [x] 1.2 Isolation test green (`npm test`) — da54631
+- [x] 1.3 Lint passes — da54631
+- [x] 1.4 Build passes — da54631
+- [x] 1.5 `zod` present in package.json dependencies — da54631
 
 #### Manual
 
-- [x] 1.6 Studio shows name/age/starting_level + age 6–9 check; RLS policies intact
+- [x] 1.6 Studio shows name/age/starting_level + age 6–9 check; RLS policies intact — da54631
 
 ### Phase 2: Avatar registry + child-primitive tier + i18n
 
 #### Automated
 
-- [ ] 2.1 Build passes (assets + imports resolve)
-- [ ] 2.2 Lint passes
-- [ ] 2.3 Full suite green
-- [ ] 2.4 public/avatars/ has 6 PNGs + slice-map; AVATARS exports incl. lis/wilk/kot
+- [x] 2.1 Build passes (assets + imports resolve)
+- [x] 2.2 Lint passes
+- [x] 2.3 Full suite green
+- [x] 2.4 public/avatars/ has 4 avatar PNGs + slice-map; AVATARS exports the mockup faces (kuba/zosia/tomek/ola) — adapted from "6 incl. lis/wilk/kot" per mockup reality
 
 #### Manual
 
-- [ ] 2.5 Each avatar slice is the correct crop; child primitives render oversized with clear selected state
+- [x] 2.5 Each avatar slice is the correct crop; child primitives render oversized with clear selected state (crops confirmed; primitive visual validated at the Phase 4 wizard gate)
 
 ### Phase 3: Create-profile service + API route + route tests
 
