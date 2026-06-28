@@ -342,15 +342,15 @@ One additive migration on an empty (pre-launch) `child_profiles`; NOT NULL colum
 
 #### Automated
 
-- [ ] 1.1 Migrations apply cleanly (`npx supabase db reset`)
-- [ ] 1.2 Isolation test green (`npm test`)
-- [ ] 1.3 Lint passes
-- [ ] 1.4 Build passes
-- [ ] 1.5 `zod` present in package.json dependencies
+- [x] 1.1 Migrations apply cleanly (`npx supabase db reset`)
+- [x] 1.2 Isolation test green (`npm test`)
+- [x] 1.3 Lint passes
+- [x] 1.4 Build passes
+- [x] 1.5 `zod` present in package.json dependencies
 
 #### Manual
 
-- [ ] 1.6 Studio shows name/age/starting_level + age 6–9 check; RLS policies intact
+- [x] 1.6 Studio shows name/age/starting_level + age 6–9 check; RLS policies intact
 
 ### Phase 2: Avatar registry + child-primitive tier + i18n
 

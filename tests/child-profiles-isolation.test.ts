@@ -28,6 +28,9 @@ interface ChildProfileRow {
   account_id: string;
   avatar: string;
   theme: string;
+  name: string;
+  age: number;
+  starting_level: number;
   created_at: string;
   updated_at: string;
 }
@@ -42,9 +45,10 @@ describe("child_profiles per-account isolation (RLS contract)", () => {
     accountB = await createSignedInUser("isolation");
 
     // Account A creates a profile it owns (positive control for INSERT + SELECT).
+    // name/age are NOT NULL since the S-01b identity migration, so they're set here.
     const { data, error } = await accountA.client
       .from("child_profiles")
-      .insert({ account_id: accountA.id, avatar: "lis" })
+      .insert({ account_id: accountA.id, avatar: "lis", name: "Ala", age: 7 })
       .select()
       .overrideTypes<ChildProfileRow[], { merge: false }>();
     expect(error).toBeNull();
@@ -68,6 +72,10 @@ describe("child_profiles per-account isolation (RLS contract)", () => {
     if (!data) throw new Error("account A read returned no data");
     expect(data[0].id).toBe(aRowId);
     expect(data[0].account_id).toBe(accountA.id);
+    // The PII identity columns round-trip and are readable by their owner.
+    expect(data[0].name).toBe("Ala");
+    expect(data[0].age).toBe(7);
+    expect(data[0].starting_level).toBe(1);
   });
 
   it("SELECT isolation: account B cannot see account A's row", async () => {
@@ -123,7 +131,11 @@ describe("child_profiles per-account isolation (RLS contract)", () => {
     // No `.select()` here on purpose: a read-back would be hidden by the SELECT
     // policy regardless of the INSERT WITH CHECK, so chaining it would conflate
     // the two policies and let a broken WITH CHECK pass silently.
-    const { error } = await accountB.client.from("child_profiles").insert({ account_id: accountA.id, avatar: "kot" });
+    // name/age are supplied so the ONLY possible rejection reason is the RLS
+    // WITH CHECK — not a NOT NULL violation (which would be a false green).
+    const { error } = await accountB.client
+      .from("child_profiles")
+      .insert({ account_id: accountA.id, avatar: "kot", name: "Czarek", age: 9 });
     // The WITH CHECK predicate must reject the on-behalf insert outright.
     expect(error).not.toBeNull();
 
