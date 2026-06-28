@@ -356,26 +356,26 @@ One additive migration on an empty (pre-launch) `child_profiles`; NOT NULL colum
 
 #### Automated
 
-- [x] 2.1 Build passes (assets + imports resolve)
-- [x] 2.2 Lint passes
-- [x] 2.3 Full suite green
-- [x] 2.4 public/avatars/ has 4 avatar PNGs + slice-map; AVATARS exports the mockup faces (kuba/zosia/tomek/ola) — adapted from "6 incl. lis/wilk/kot" per mockup reality
+- [x] 2.1 Build passes (assets + imports resolve) — e0822c5
+- [x] 2.2 Lint passes — e0822c5
+- [x] 2.3 Full suite green — e0822c5
+- [x] 2.4 public/avatars/ has 4 avatar PNGs + slice-map; AVATARS exports the mockup faces (kuba/zosia/tomek/ola) — adapted from "6 incl. lis/wilk/kot" per mockup reality — e0822c5
 
 #### Manual
 
-- [x] 2.5 Each avatar slice is the correct crop; child primitives render oversized with clear selected state (crops confirmed; primitive visual validated at the Phase 4 wizard gate)
+- [x] 2.5 Each avatar slice is the correct crop; child primitives render oversized with clear selected state (crops confirmed; primitive visual validated at the Phase 4 wizard gate) — e0822c5
 
 ### Phase 3: Create-profile service + API route + route tests
 
 #### Automated
 
-- [ ] 3.1 Lint passes
-- [ ] 3.2 Build passes
-- [ ] 3.3 New route tests + full suite green
+- [x] 3.1 Lint passes
+- [x] 3.2 Build passes
+- [x] 3.3 New route tests + full suite green
 
 #### Manual
 
-- [ ] 3.4 Valid POST creates a profile → /app; invalid input round-trips with Polish error and writes nothing
+- [x] 3.4 Valid POST creates a profile → /app; invalid input round-trips with Polish error and writes nothing (live curl confirmed: valid→/app + row, invalid→/app/new-profile?error, no write)
 
 ### Phase 4: Create-profile wizard UI
 
