@@ -339,22 +339,22 @@ None — no schema/data/route changes. Purely presentational; `config.toml` and 
 
 #### Automated
 
-- [x] 4.1 Lint passes
-- [x] 4.2 Build passes
-- [x] 4.3 Full suite green
+- [x] 4.1 Lint passes — 10933ec
+- [x] 4.2 Build passes — 10933ec
+- [x] 4.3 Full suite green — 10933ec
 
 #### Manual
 
-- [ ] 4.5 /auth/signin matches mockup 01 desktop + stacks single-column on mobile; signin works end-to-end
+- [x] 4.5 /auth/signin matches mockup 01 desktop + stacks single-column on mobile; signin works end-to-end — 10933ec
 
 ### Phase 5: Propagate to signup + confirm-email + /app
 
 #### Automated
 
-- [ ] 5.1 Lint passes
-- [ ] 5.2 Build passes
-- [ ] 5.3 Full suite green
-- [ ] 5.4 No `bg-cosmic` anywhere in src/
+- [x] 5.1 Lint passes
+- [x] 5.2 Build passes
+- [x] 5.3 Full suite green
+- [x] 5.4 No `bg-cosmic` anywhere in src/
 
 #### Manual
 

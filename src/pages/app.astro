@@ -1,5 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { buttonVariants } from "@/components/ui/button";
+import { ShoppingCart, LogOut } from "lucide-react";
 import { t } from "@/i18n";
 
 // Gated by middleware (`/app` ∈ PROTECTED_ROUTES) — an anonymous request never
@@ -16,8 +18,15 @@ const { user } = Astro.locals;
 
 <Layout title={t.landing.title}>
   <div class="bg-background flex min-h-screen items-center justify-center p-4">
-    <div class="bg-card text-card-foreground border-border rounded-2xl border p-8 text-center shadow-sm">
-      <h1 class="text-primary mb-4 text-3xl font-bold">
+    <div
+      class="bg-card text-card-foreground border-border w-full max-w-md rounded-2xl border p-8 text-center shadow-sm"
+    >
+      <span
+        class="bg-primary text-primary-foreground mx-auto mb-4 inline-flex size-12 items-center justify-center rounded-2xl shadow-sm"
+      >
+        <ShoppingCart className="size-6" />
+      </span>
+      <h1 class="text-foreground mb-4 text-3xl font-extrabold">
         {t.brand}
       </h1>
       <p class="text-muted-foreground">
@@ -25,10 +34,8 @@ const { user } = Astro.locals;
         <span class="text-foreground block font-semibold">{user?.email}</span>
       </p>
       <form method="POST" action="/api/auth/signout" class="mt-6">
-        <button
-          type="submit"
-          class="border-input text-foreground hover:bg-muted rounded-lg border px-4 py-2 text-sm transition-colors"
-        >
+        <button type="submit" class:list={buttonVariants({ variant: "outline", size: "lg", className: "font-medium" })}>
+          <LogOut className="size-4" />
           {t.landing.signOut}
         </button>
       </form>

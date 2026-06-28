@@ -1,22 +1,42 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AuthShell from "@/components/auth/AuthShell.astro";
 import SignUpForm from "@/components/auth/SignUpForm";
+import { buttonVariants } from "@/components/ui/button";
+import { UserPlus, LogIn } from "lucide-react";
 import { t } from "@/i18n";
 
 const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout title={t.auth.signup.title}>
-  <div class="bg-background flex min-h-screen items-center justify-center p-4">
-    <div class="bg-card text-card-foreground border-border w-full max-w-sm rounded-2xl border p-8 shadow-sm">
-      <h1 class="text-foreground mb-6 text-center text-2xl font-bold">
-        {t.auth.signup.heading}
-      </h1>
-      <SignUpForm serverError={error} client:load />
-      <p class="text-muted-foreground mt-4 text-center text-sm">
-        {t.auth.signup.hasAccount}
-        <a href="/auth/signin" class="text-primary hover:underline">{t.auth.signup.signinLink}</a>
-      </p>
+  <AuthShell heading={t.marketing.parentPanel} accent={t.auth.signup.heading}>
+    <div class="bg-card text-card-foreground border-border rounded-2xl border p-8 shadow-sm">
+      <div class="flex flex-col items-center text-center">
+        <span class="bg-primary/10 text-primary inline-flex size-14 items-center justify-center rounded-2xl">
+          <UserPlus className="size-7" />
+        </span>
+        <h1 class="text-foreground mt-4 text-2xl font-bold">{t.auth.signup.heading}</h1>
+        <p class="text-muted-foreground mt-1 text-sm">{t.marketing.parentPanel}</p>
+      </div>
+
+      <div class="mt-6">
+        <SignUpForm serverError={error} client:load />
+      </div>
+
+      <div class="my-5 flex items-center gap-3">
+        <span class="bg-border h-px flex-1"></span>
+        <span class="text-muted-foreground text-xs">{t.marketing.or}</span>
+        <span class="bg-border h-px flex-1"></span>
+      </div>
+
+      <a
+        href="/auth/signin"
+        class:list={buttonVariants({ variant: "outline", size: "lg", className: "w-full font-medium" })}
+      >
+        <LogIn className="size-4" />
+        {t.auth.signup.signinLink}
+      </a>
     </div>
-  </div>
+  </AuthShell>
 </Layout>
