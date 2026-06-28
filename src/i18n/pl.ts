@@ -92,6 +92,36 @@ export const pl = {
     or: "lub",
   },
 
+  // App chrome / navigation (Topbar).
+  nav: {
+    app: "Aplikacja",
+    signIn: "Zaloguj się",
+    signUp: "Utwórz konto",
+    signOut: "Wyloguj się",
+    notSignedIn: "Niezalogowany",
+  },
+
+  // Unauthenticated `/` scaffold (Welcome.astro). Placeholder landing — no `/`
+  // mockup exists yet; strings live here so the page is Polish + locale-swappable.
+  welcome: {
+    heroSubtitle:
+      "Nauka matematyki przez prowadzenie własnego sklepu — z uwierzytelnianiem i nowoczesnymi narzędziami.",
+    features: [
+      {
+        title: "Gotowe uwierzytelnianie",
+        description: "Wbudowane logowanie Supabase z rejestracją i chronionymi trasami.",
+      },
+      {
+        title: "Nowoczesny stack",
+        description: "Astro, React, Tailwind i TypeScript — najnowsze narzędzia, gotowe do pracy.",
+      },
+      {
+        title: "Komfort pracy",
+        description: "ESLint, Prettier i hooki pre-commit utrzymują porządek w kodzie od pierwszego dnia.",
+      },
+    ],
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",
