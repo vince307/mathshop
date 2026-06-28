@@ -29,6 +29,7 @@ Verify: `npm run lint` + `npm run build` green; `npm test` green (existing 29 + 
 ## What We're NOT Doing
 
 - **No multi-profile picker UI / add-second-profile entry point** — S-07. S-01b only detects count and routes; it never creates a 2nd profile.
+- **No server-side profiles-per-account cap.** `POST /api/profiles/create` is directly callable and unbounded; the router only sends count-0 parents to the wizard, so the happy path creates exactly one. A "max profiles" / "already has a profile" guard is **deferred to S-07** (which owns the add-2nd flow). Accepted as a known, harmless unbounded write for S-01b (the 2+ branch routes to most-recent).
 - **No shift/gameplay/tasks/scoring/results/persistence** — S-02/S-03/S-04. The start-screen tap is a friendly no-op.
 - **No coins/level UI or gameplay-state columns** — S-04 extends the schema later. S-01b adds only identity columns (name/age/starting_level).
 - **No world-selection screen** (`01-world-selection`) or child dashboard panels (`02-child-dashboard` beyond the hero) — later slices.
@@ -45,6 +46,7 @@ Bottom-up so each phase is independently committable and keeps the suite green: 
 - **NOT NULL ALTER ordering.** Adding `name`/`age` as `NOT NULL` to `child_profiles` makes the existing isolation test's `{account_id, avatar}` inserts fail. Phase 1 must update those inserts (and any helper) in lockstep with the migration. `child_profiles` carries no production data pre-launch, so a direct `NOT NULL` add (no backfill) is safe; `starting_level` gets a default to be defensive.
 - **PII discipline (conscious guardrail break).** `name`/`age` are child PII collected per D1. Validate with zod (length/range/trim), render the name only via auto-escaped text interpolation (never `set:html`), never include it in logs or error messages, and rely on the F-01 RLS predicate for isolation. Record the override prominently (it contradicts `prd-v2.md:51,168`).
 - **Never trust a client-supplied `account_id`.** The create route derives `account_id` from `context.locals.user.id` / `supabase.auth.getUser()`; the `with check` policy is the backstop (L-002).
+- **Theme/interest value set is closed and art-aligned.** The four valid `theme` slugs are exactly the committed illustration stems: `kawiarnia`, `piekarnia`, `galaktyczna-baza`, `sklep-ksiegarnia` (plus the table default `default` → renders as `kawiarnia`). The start screen resolves art as `world-<theme>.png`. The wizard's interest tiles label these in Polish via `t.marketing.worlds`; reconcile the mockup's "Sklep kolekcjonera" wording to the `sklep-ksiegarnia` slug/art (one label↔slug↔art row per world). The zod schema in Phase 3 validates `theme` against this closed set.
 
 ## Phase 1: Data layer — identity columns + migration + isolation coverage
 
@@ -274,12 +276,21 @@ Wire the end-to-end flow: `/app` routes by profile count, and the child start sc
 
 **Contract**: Frontmatter loads `getMostRecentProfile`; if none, redirect to `/app/new-profile`. Renders a greeting (`t.start` with the escaped `name`), a themed business card using `world-<theme>.png` (default → `world-kawiarnia.png`), and `<StartShiftButton client:load />` — an oversized `ChildButton` labeled "Czas otworzyć sklep!" whose tap shows a friendly in-world "coming soon" message (no navigation, no bare-math framing per `prd-v2.md:158`). No coins/level UI (S-04).
 
+#### 3. Router-branch request test
+
+**File**: `tests/app-router.test.ts` (new)
+
+**Intent**: Lock the core routing behavior (the slice's load-bearing new logic) with an automated regression test, since the end-to-end flow is otherwise manual-only.
+
+**Contract**: Using the request harness (`tests/helpers/astro.ts` + `createSignedInUser`/`admin` from `tests/helpers/supabase.ts`, mirroring `tests/auth-session-gating.test.ts`): seed 0, 1, and 2 profiles for an account via the service-role `admin` client, drive `/app`, and assert the redirect target each time (0 → `/app/new-profile`; 1 → `/app/start`; 2 → `/app/start`, most-recent). Unique accounts per case; cleanup via `deleteUser`.
+
 ### Success Criteria:
 
 #### Automated Verification:
 
 - Lint passes: `npm run lint`
 - Build passes: `npm run build`
+- Router-branch test green (0/1/2 → correct redirect): `npm test`
 - Full suite green: `npm test`
 
 #### Manual Verification:
@@ -291,6 +302,8 @@ Wire the end-to-end flow: `/app` routes by profile count, and the child start sc
 ---
 
 ## Testing Strategy
+
+> **Local-stack dependency:** the migration-apply check (`npx supabase db reset`) and every `npm test` run that touches `child_profiles` (isolation, create-route, app-router tests) require the local Supabase stack (Docker) to be running. In a Docker-less sandbox or cloud agent these fail with `fetch failed` against `127.0.0.1:54321` — that's environmental, not a regression. `npm run lint` / `npm run build` have no such dependency.
 
 ### Unit / Integration Tests:
 
@@ -382,8 +395,9 @@ One additive migration on an empty (pre-launch) `child_profiles`; NOT NULL colum
 
 - [ ] 5.1 Lint passes
 - [ ] 5.2 Build passes
-- [ ] 5.3 Full suite green
+- [ ] 5.3 Router-branch test green (0 → /app/new-profile, 1 & 2+ → /app/start)
+- [ ] 5.4 Full suite green
 
 #### Manual
 
-- [ ] 5.4 Fresh signup → /app → wizard → themed start screen greeting by name; tap shows in-world coming-soon; reload skips wizard; profiles stay account-isolated
+- [ ] 5.5 Fresh signup → /app → wizard → themed start screen greeting by name; tap shows in-world coming-soon; reload skips wizard; profiles stay account-isolated

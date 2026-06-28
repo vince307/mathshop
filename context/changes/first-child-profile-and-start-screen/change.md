@@ -1,7 +1,7 @@
 ---
 change_id: first-child-profile-and-start-screen
 title: First child profile wizard and child start screen (S-01b)
-status: planned
+status: plan_reviewed
 created: 2026-06-28
 updated: 2026-06-28
 archived_at: null
