@@ -351,11 +351,11 @@ None — no schema/data/route changes. Purely presentational; `config.toml` and 
 
 #### Automated
 
-- [x] 5.1 Lint passes
-- [x] 5.2 Build passes
-- [x] 5.3 Full suite green
-- [x] 5.4 No `bg-cosmic` anywhere in src/
+- [x] 5.1 Lint passes — f324b80
+- [x] 5.2 Build passes — f324b80
+- [x] 5.3 Full suite green — f324b80
+- [x] 5.4 No `bg-cosmic` anywhere in src/ — f324b80
 
 #### Manual
 
-- [ ] 5.5 signup (02) + confirm-email (03, resend works) + /app on-brand; app visually coherent end-to-end
+- [x] 5.5 signup (02) + confirm-email (03, resend works) + /app on-brand; app visually coherent end-to-end — f324b80
