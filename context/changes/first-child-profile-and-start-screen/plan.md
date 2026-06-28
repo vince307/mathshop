@@ -393,11 +393,11 @@ One additive migration on an empty (pre-launch) `child_profiles`; NOT NULL colum
 
 #### Automated
 
-- [x] 5.1 Lint passes
-- [x] 5.2 Build passes
-- [x] 5.3 Router-branch test green (0 → /app/new-profile, 1 & 2+ → /app/start)
-- [x] 5.4 Full suite green
+- [x] 5.1 Lint passes — 074de6e
+- [x] 5.2 Build passes — 074de6e
+- [x] 5.3 Router-branch test green (0 → /app/new-profile, 1 & 2+ → /app/start) — 074de6e
+- [x] 5.4 Full suite green — 074de6e
 
 #### Manual
 
-- [x] 5.5 Fresh signup → /app → wizard → themed start screen greeting by name; tap shows in-world coming-soon; reload skips wizard; profiles stay account-isolated (live-confirmed; parent signout added to start screen)
+- [x] 5.5 Fresh signup → /app → wizard → themed start screen greeting by name; tap shows in-world coming-soon; reload skips wizard; profiles stay account-isolated (live-confirmed; parent signout added to start screen) — 074de6e
