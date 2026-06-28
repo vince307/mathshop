@@ -369,25 +369,25 @@ One additive migration on an empty (pre-launch) `child_profiles`; NOT NULL colum
 
 #### Automated
 
-- [x] 3.1 Lint passes
-- [x] 3.2 Build passes
-- [x] 3.3 New route tests + full suite green
+- [x] 3.1 Lint passes — 2788ad2
+- [x] 3.2 Build passes — 2788ad2
+- [x] 3.3 New route tests + full suite green — 2788ad2
 
 #### Manual
 
-- [x] 3.4 Valid POST creates a profile → /app; invalid input round-trips with Polish error and writes nothing (live curl confirmed: valid→/app + row, invalid→/app/new-profile?error, no write)
+- [x] 3.4 Valid POST creates a profile → /app; invalid input round-trips with Polish error and writes nothing (live curl confirmed: valid→/app + row, invalid→/app/new-profile?error, no write) — 2788ad2
 
 ### Phase 4: Create-profile wizard UI
 
 #### Automated
 
-- [ ] 4.1 Lint passes
-- [ ] 4.2 Build passes
-- [ ] 4.3 Full suite green
+- [x] 4.1 Lint passes
+- [x] 4.2 Build passes
+- [x] 4.3 Full suite green
 
 #### Manual
 
-- [ ] 4.4 /app/new-profile matches mockup 05 (multi-step, oversized non-adjacent targets); completing it creates a profile and lands on /app
+- [x] 4.4 /app/new-profile matches mockup 05 (multi-step, oversized non-adjacent targets); completing it creates a profile and lands on /app
 
 ### Phase 5: `/app` profile-count router + child start screen
 

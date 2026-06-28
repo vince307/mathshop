@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+export { deriveStartingLevel } from "@/data/leveling";
+
 /**
  * Child-profile data access. Every function takes the request-scoped SSR client
  * (built from the parent's session cookie), so queries run AS the authenticated
@@ -27,11 +29,6 @@ export interface ChildProfile {
   starting_level: number;
   created_at: string;
   updated_at: string;
-}
-
-/** Age band → starting difficulty level (6–7 → 1, 8–9 → 2). Leveling proper is S-04. */
-export function deriveStartingLevel(age: number): number {
-  return age >= 8 ? 2 : 1;
 }
 
 export function createChildProfile(client: SupabaseClient, p: NewChildProfile) {

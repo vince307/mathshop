@@ -1,0 +1,26 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import CreateProfileWizard from "@/components/child/CreateProfileWizard";
+import { ShoppingCart } from "lucide-react";
+import { t } from "@/i18n";
+
+// Gated: /app/* is in PROTECTED_ROUTES (middleware). An anonymous request never
+// reaches here. Reached from the /app profile-count router when count === 0.
+const error = Astro.url.searchParams.get("error");
+---
+
+<Layout title={t.profileWizard.title}>
+  <div class="bg-background min-h-screen px-4 py-8 sm:px-6">
+    <div class="mx-auto w-full max-w-2xl">
+      <div class="mb-6 flex items-center justify-center gap-3">
+        <span
+          class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
+        >
+          <ShoppingCart className="size-5" />
+        </span>
+        <p class="text-foreground text-lg font-extrabold">{t.brand}</p>
+      </div>
+      <CreateProfileWizard serverError={error} client:load />
+    </div>
+  </div>
+</Layout>
