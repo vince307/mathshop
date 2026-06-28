@@ -48,6 +48,16 @@ export async function countChildProfiles(client: SupabaseClient): Promise<number
   return count ?? 0;
 }
 
+/**
+ * Where the `/app` router sends an authenticated parent based on their profile
+ * count: 0 → the create-first-profile wizard; ≥1 → the start screen (which loads
+ * the most-recent profile). The multi-profile picker for ≥2 is S-07 — until then
+ * 2+ also lands on the most-recent profile's start screen (no dead-end).
+ */
+export function resolveLandingPath(profileCount: number): string {
+  return profileCount === 0 ? "/app/new-profile" : "/app/start";
+}
+
 /** The parent's most-recently-created profile (RLS-scoped), or null if none. */
 export async function getMostRecentProfile(client: SupabaseClient): Promise<ChildProfile | null> {
   const { data } = await client.from("child_profiles").select("*").order("created_at", { ascending: false }).limit(1);

@@ -61,6 +61,12 @@ const reactConfig = tseslint.config({
 
 const astroConfig = tseslint.config({
   files: ["**/*.astro"],
+  // Type-aware rules (strictTypeChecked) crash on .astro frontmatter `return`s
+  // (e.g. redirect pages) — astro-eslint-parser's type-service mapping is
+  // incomplete for these. Disable type-checked rules for .astro only; syntactic
+  // rules + the astro/* rules below still apply, and the build (astro check) /
+  // tsc cover types.
+  extends: [tseslint.configs.disableTypeChecked],
   rules: {
     "astro/no-set-html-directive": "error",
     "astro/no-unused-css-selector": "warn",

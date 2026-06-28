@@ -381,23 +381,23 @@ One additive migration on an empty (pre-launch) `child_profiles`; NOT NULL colum
 
 #### Automated
 
-- [x] 4.1 Lint passes
-- [x] 4.2 Build passes
-- [x] 4.3 Full suite green
+- [x] 4.1 Lint passes — 34d90cc
+- [x] 4.2 Build passes — 34d90cc
+- [x] 4.3 Full suite green — 34d90cc
 
 #### Manual
 
-- [x] 4.4 /app/new-profile matches mockup 05 (multi-step, oversized non-adjacent targets); completing it creates a profile and lands on /app
+- [x] 4.4 /app/new-profile matches mockup 05 (multi-step, oversized non-adjacent targets); completing it creates a profile and lands on /app — 34d90cc
 
 ### Phase 5: `/app` profile-count router + child start screen
 
 #### Automated
 
-- [ ] 5.1 Lint passes
-- [ ] 5.2 Build passes
-- [ ] 5.3 Router-branch test green (0 → /app/new-profile, 1 & 2+ → /app/start)
-- [ ] 5.4 Full suite green
+- [x] 5.1 Lint passes
+- [x] 5.2 Build passes
+- [x] 5.3 Router-branch test green (0 → /app/new-profile, 1 & 2+ → /app/start)
+- [x] 5.4 Full suite green
 
 #### Manual
 
-- [ ] 5.5 Fresh signup → /app → wizard → themed start screen greeting by name; tap shows in-world coming-soon; reload skips wizard; profiles stay account-isolated
+- [x] 5.5 Fresh signup → /app → wizard → themed start screen greeting by name; tap shows in-world coming-soon; reload skips wizard; profiles stay account-isolated (live-confirmed; parent signout added to start screen)
