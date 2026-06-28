@@ -3,7 +3,7 @@ project: MathShop
 version: 1
 status: draft
 created: 2026-06-09
-updated: 2026-06-11
+updated: 2026-06-28
 prd_version: 2
 main_goal: speed
 top_blocker: time
@@ -30,7 +30,7 @@ MathShop teaches math to Polish children (ages 6–8 in v1) by wrapping every op
 | ID    | Change ID                                    | Outcome (user can …)                                                                                | Prerequisites | PRD refs                                              | Status   |
 | ----- | -------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------- | -------- |
 | F-01  | per-account-isolation-contract               | (foundation) RLS template + first migration + isolation verification pattern                        | —             | §Access Control, FR-012, FR-015                       | done     |
-| S-01  | parent-signup-first-profile-and-start-screen | Parent signs up in Polish, creates the first child profile, child reaches start screen              | F-01          | US-01, FR-001, FR-002, FR-003, FR-004, FR-013, FR-014 | in progress (S-01a done) |
+| S-01  | parent-signup-first-profile-and-start-screen | Parent signs up in Polish, creates the first child profile, child reaches start screen              | F-01          | US-01, FR-001, FR-002, FR-003, FR-004, FR-013, FR-014 | done     |
 | S-02  | counting-task-in-business-context            | Child completes a single counting task wrapped in shop narrative with soft retry                    | S-01          | US-02 (partial), FR-006, FR-007, FR-008, FR-009       | proposed |
 | S-03  | change-making-task-in-business-context       | Child completes a single change-making task wrapped in shop narrative with soft retry               | S-01          | US-02 (partial), FR-006, FR-007, FR-008, FR-009       | proposed |
 | S-04  | full-shift-with-results                      | Child completes a 5–10 task shift, sees results screen, state persists across same-browser sessions | S-02, S-03    | US-02, FR-006, FR-008, FR-010, FR-011, FR-012         | proposed |
@@ -88,8 +88,8 @@ What's already in place in the codebase as of `2026-06-09` (auto-researched + us
 - **Unknowns:**
   - Verification mechanism (magic-link vs password vs both) — PRD §Open Questions #1. Owner: user. Block: no (the v1 default is the existing password scaffold; switching later is straightforward).
 - **Risk:** This slice introduces three load-bearing v1 patterns: (a) Polish content authored as content, not hardcoded strings, to satisfy FR-013's "no source-code changes for v2 locales"; (b) the avatar-as-profile-identity pattern (no text input, per FR-001's accessibility rationale); (c) the first write under the F-01 RLS contract. Getting (a) wrong invalidates v2 locale expansion; getting (c) wrong means cross-account profile leaks. Largest slice in the must-have path — flagged for `/10x-plan` to weigh splitting if it exceeds plannable scope.
-- **Split during planning:** **S-01a** (auth + email verification + Polish foundation) — implemented + reviewed (APPROVED), archived 2026-06-27 → `context/archive/2026-06-26-parent-signup-first-profile-and-start-screen/`. **S-01b** (child-profile schema + avatar registry + profile wizard + start screen + `/app` profile-count router) — pending, to be opened as a separate change after the MatmaVerse design-system change.
-- **Status:** in progress — S-01a done, S-01b pending
+- **Split during planning:** **S-01a** (auth + email verification + Polish foundation) — implemented + reviewed (APPROVED), archived 2026-06-27 → `context/archive/2026-06-26-parent-signup-first-profile-and-start-screen/`. **S-01b** (child-profile schema + avatar registry + profile wizard + start screen + `/app` profile-count router) — implemented + reviewed (APPROVED), archived 2026-06-28 → `context/archive/2026-06-28-first-child-profile-and-start-screen/` (change id `first-child-profile-and-start-screen`). The MatmaVerse light design system (archived 2026-06-27) was sequenced between the two halves.
+- **Status:** done — S-01a + S-01b both archived
 
 ### S-02: Child completes a counting task in business context
 
@@ -215,3 +215,4 @@ What's already in place in the codebase as of `2026-06-09` (auto-researched + us
 ## Done
 
 - **F-01: (foundation) RLS template + first migration + isolation verification pattern** — Archived 2026-06-11 → `context/archive/2026-06-09-per-account-isolation-contract/`. Lesson: L-001/L-002 (lessons.md).
+- **S-01: Parent signs up in Polish and creates the first child profile** — Split into S-01a (auth + verification + Polish foundation, archived 2026-06-27) and S-01b (child-profile schema + avatar registry + wizard + start screen + `/app` router, archived 2026-06-28 → `context/archive/2026-06-28-first-child-profile-and-start-screen/`). Both APPROVED. Lesson: L-003 (i18n strings; lessons.md). Note: D1 product-owner override collects child name/age as RLS-isolated PII.
