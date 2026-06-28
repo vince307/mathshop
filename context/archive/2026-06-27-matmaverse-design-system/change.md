@@ -1,10 +1,10 @@
 ---
 change_id: matmaverse-design-system
 title: "MatmaVerse design system — light theme + auth-surface restyle"
-status: impl_reviewed
+status: archived
 created: 2026-06-27
 updated: 2026-06-28
-archived_at: null
+archived_at: 2026-06-28T10:13:16Z
 ---
 
 ## Notes
