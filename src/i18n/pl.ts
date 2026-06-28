@@ -62,6 +62,36 @@ export const pl = {
     },
   },
 
+  // Marketing panel shown beside the auth forms (the AuthShell two-column layout).
+  // Net-new surface — copy faithful to the auth-v2 mockups, sourced here per FR-013.
+  marketing: {
+    brandTagline: "Matematyka · Ekonomia · Przyszłość",
+    parentPanel: "Panel rodzica",
+    heroTagline: "Matematyka przez decyzje, handel i praktykę",
+    features: [
+      {
+        title: "Bezpieczna nauka",
+        description: "Oddzielne konta rodzica i dziecka oraz nauka bez reklam.",
+      },
+      {
+        title: "Świat zainteresowań",
+        description: "Wybierz tematy bliskie dziecku i motywuj je do nauki.",
+      },
+      {
+        title: "Postępy dziecka",
+        description: "Śledź rozwój, raporty i osiągnięcia w czasie rzeczywistym.",
+      },
+    ],
+    worlds: [
+      { name: "Piekarnia", image: "/illustrations/world-piekarnia.png" },
+      { name: "Kawiarnia", image: "/illustrations/world-kawiarnia.png" },
+      { name: "Galaktyczna baza", image: "/illustrations/world-galaktyczna-baza.png" },
+      { name: "Sklep księgarnia", image: "/illustrations/world-sklep-ksiegarnia.png" },
+    ],
+    security: "Twoje dane są chronione zgodnie z najlepszymi standardami bezpieczeństwa.",
+    or: "lub",
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",

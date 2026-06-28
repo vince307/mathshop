@@ -1,0 +1,103 @@
+---
+import { t } from "@/i18n";
+import { ShoppingCart, ShieldCheck, Globe, TrendingUp } from "lucide-react";
+
+/**
+ * Two-column auth layout (mockup `01`): a left marketing panel — brand,
+ * hero, three feature cards, four world cards, decorative coins, security
+ * footer — beside a right-hand slot for the page's form card. Built once
+ * here; reused by signup in Phase 5. Pure presentation, no behavior.
+ *
+ * Responsive: two columns on `lg+`; below that it stacks to a single column
+ * (form first, then the marketing essentials). Marketing copy comes from
+ * `t.marketing`; illustrations from committed `public/illustrations/` assets.
+ */
+interface Props {
+  /** Hero heading, e.g. "Panel rodzica". */
+  heading: string;
+  /** Blue accent line under the hero, e.g. "Zaloguj się". */
+  accent: string;
+  /** Sub-tagline; defaults to the shared marketing tagline. */
+  tagline?: string;
+}
+
+const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
+const featureIcons = [ShieldCheck, Globe, TrendingUp];
+---
+
+<div class="bg-background min-h-screen px-4 py-8 sm:px-6 lg:px-10">
+  <div class="mx-auto w-full max-w-6xl">
+    {/* Brand */}
+    <div class="mb-8 flex items-center justify-center gap-3 lg:justify-start">
+      <span
+        class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
+      >
+        <ShoppingCart className="size-5" />
+      </span>
+      <div>
+        <p class="text-foreground text-lg leading-none font-extrabold">{t.brand}</p>
+        <p class="text-muted-foreground mt-1 text-xs">{t.marketing.brandTagline}</p>
+      </div>
+    </div>
+
+    <div class="grid items-center gap-10 lg:grid-cols-2">
+      {/* Marketing panel */}
+      <section class="relative order-2 lg:order-1">
+        {/* Decorative coin */}
+        <img
+          src="/illustrations/coin.png"
+          alt=""
+          aria-hidden="true"
+          class="pointer-events-none absolute -top-6 right-4 hidden size-14 rotate-12 lg:block"
+        />
+
+        <div class="hidden lg:block">
+          <h2 class="text-foreground text-4xl font-extrabold tracking-tight">{heading}</h2>
+          <p class="text-primary mt-1 text-2xl font-bold">{accent}</p>
+          <p class="text-muted-foreground mt-3 text-base">{tagline}</p>
+        </div>
+
+        {/* Feature cards */}
+        <div class="mt-8 grid gap-4 sm:grid-cols-3">
+          {
+            t.marketing.features.map((feature, i) => {
+              const Icon = featureIcons[i];
+              return (
+                <div class="bg-card border-border rounded-2xl border p-4 shadow-sm">
+                  <span class="bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl">
+                    <Icon className="size-5" />
+                  </span>
+                  <p class="text-foreground mt-3 text-sm font-bold">{feature.title}</p>
+                  <p class="text-muted-foreground mt-1 text-xs leading-snug">{feature.description}</p>
+                </div>
+              );
+            })
+          }
+        </div>
+
+        {/* World cards (desktop only — mobile mockup omits them) */}
+        <div class="mt-6 hidden grid-cols-4 gap-3 lg:grid">
+          {
+            t.marketing.worlds.map((world) => (
+              <div class="bg-card border-border overflow-hidden rounded-2xl border shadow-sm">
+                <img src={world.image} alt={world.name} loading="lazy" class="aspect-square w-full object-cover" />
+                <p class="text-foreground px-2 py-2 text-center text-xs font-semibold">{world.name}</p>
+              </div>
+            ))
+          }
+        </div>
+
+        {/* Security footer */}
+        <div class="text-muted-foreground mt-6 flex items-center justify-center gap-2 text-xs lg:justify-start">
+          <ShieldCheck className="text-primary size-4 shrink-0" />
+          {t.marketing.security}
+        </div>
+      </section>
+
+      {/* Form slot */}
+      <div class="order-1 mx-auto w-full max-w-md lg:order-2">
+        <slot />
+      </div>
+    </div>
+  </div>
+</div>

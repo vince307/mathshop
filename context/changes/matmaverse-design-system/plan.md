@@ -327,21 +327,21 @@ None — no schema/data/route changes. Purely presentational; `config.toml` and 
 
 #### Automated
 
-- [x] 3.1 Lint passes
-- [x] 3.2 Build passes
-- [x] 3.3 Full suite green
+- [x] 3.1 Lint passes — c31ecb9
+- [x] 3.2 Build passes — c31ecb9
+- [x] 3.3 Full suite green — c31ecb9
 
 #### Manual
 
-- [x] 3.4 Signin/signup forms render with themed primitives (no glass); fields/toggle/submit/server-error all function
+- [x] 3.4 Signin/signup forms render with themed primitives (no glass); fields/toggle/submit/server-error all function — c31ecb9
 
 ### Phase 4: signin reference restyle
 
 #### Automated
 
-- [ ] 4.1 Lint passes
-- [ ] 4.2 Build passes
-- [ ] 4.3 Full suite green
+- [x] 4.1 Lint passes
+- [x] 4.2 Build passes
+- [x] 4.3 Full suite green
 
 #### Manual
 
