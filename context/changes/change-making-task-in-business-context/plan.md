@@ -253,32 +253,32 @@ None — stateless slice, no migration. (Gameplay state is S-04.)
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run check`
-- [x] 1.2 Linting passes (incl. no-inline-literal rule): `npm run lint`
-- [x] 1.3 Unit tests pass: `npm test`
-- [x] 1.4 Build passes: `npm run build`
+- [x] 1.1 Type checking passes: `npm run check` — 44b1608
+- [x] 1.2 Linting passes (incl. no-inline-literal rule): `npm run lint` — 44b1608
+- [x] 1.3 Unit tests pass: `npm test` — 44b1608
+- [x] 1.4 Build passes: `npm run build` — 44b1608
 
 #### Manual
 
-- [x] 1.5 `src/types.ts` exports `ChangeMakingTask` + `Task`; `CountingTask` untouched
-- [x] 1.6 `generateChangeMakingTask` spot-check: `change = paid − price`, change within tier cap, `availableCount > change`
-- [x] 1.7 All new copy lives in `pl.ts` (grep new files — no inline literals)
-- [x] 1.8 Polish copy reads naturally for a 6–8-year-old (pending native-speaker confirmation)
+- [x] 1.5 `src/types.ts` exports `ChangeMakingTask` + `Task`; `CountingTask` untouched — 44b1608
+- [x] 1.6 `generateChangeMakingTask` spot-check: `change = paid − price`, change within tier cap, `availableCount > change` — 44b1608
+- [x] 1.7 All new copy lives in `pl.ts` (grep new files — no inline literals) — 44b1608
+- [x] 1.8 Polish copy reads naturally for a 6–8-year-old (pending native-speaker confirmation) — 44b1608
 
 ### Phase 2: UI — shared core + change-making island + polymorphic page
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run check`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Unit tests pass: `npm test`
-- [ ] 2.4 Build passes: `npm run build`
+- [x] 2.1 Type checking passes: `npm run check`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Unit tests pass: `npm test`
+- [x] 2.4 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 2.5 Counting regression: a counting task plays exactly as in S-02 (tap, tally, retry, pile hint, success → `/app/start`)
-- [ ] 2.6 Change-making: story (paid + price) + coin tray render; tapping builds the tally; correct change → success → `/app/start`
-- [ ] 2.7 Wrong change → gentle retry with taps preserved; 2nd miss → count-up hint highlights price→paid; no red flash/buzzer/dead-end
-- [ ] 2.8 Over several `/app/task` visits, both task types appear (random dispatch)
-- [ ] 2.9 No coins/score persisted; reloading `/app/start` shows unchanged state
-- [ ] 2.10 Animation smooth; coin tap targets don't cross-register
+- [x] 2.5 Counting regression: a counting task plays exactly as in S-02 (tap, tally, retry, pile hint, success → `/app/start`)
+- [x] 2.6 Change-making: story (paid + price) + coin tray render; tapping builds the tally; correct change → success → `/app/start`
+- [x] 2.7 Wrong change → gentle retry with taps preserved; 2nd miss → count-up hint highlights price→paid; no red flash/buzzer/dead-end
+- [x] 2.8 Over several `/app/task` visits, both task types appear (random dispatch)
+- [x] 2.9 No coins/score persisted; reloading `/app/start` shows unchanged state
+- [x] 2.10 Animation smooth; coin tap targets don't cross-register

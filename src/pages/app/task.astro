@@ -1,19 +1,20 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import CountingTask from "@/components/child/CountingTask";
+import ChangeMakingTask from "@/components/child/ChangeMakingTask";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { getMostRecentProfile } from "@/lib/services/child-profiles";
 import { worldForTheme } from "@/data/worlds";
-import { generateCountingTask } from "@/data/counting-tasks";
+import { generateTask } from "@/data/tasks";
 import { t } from "@/i18n";
 
-// Counting-task surface (S-02). Gated under /app. Loads the active profile,
-// generates a counting task from its starting_level (procedural, grades 1–2
-// band), and mounts the tap-to-count island. Stateless — nothing is persisted
-// (coins/level are S-04). Defensive fallbacks mirror the start screen: no SSR
-// client → sign-in; no profile → back to the /app router, which resolves where
-// the parent belongs (no dead-end).
+// Task surface (S-02 counting + S-03 change-making). Gated under /app. Loads the
+// active profile, generates a task from its starting_level — randomly counting
+// or change-making (procedural, grades 1–2 band) — and mounts the matching
+// island. Stateless — nothing is persisted (coins/level are S-04). Defensive
+// fallbacks mirror the start screen: no SSR client → sign-in; no profile → back
+// to the /app router, which resolves where the parent belongs (no dead-end).
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (!supabase) return Astro.redirect("/auth/signin");
 
@@ -21,7 +22,7 @@ const profile = await getMostRecentProfile(supabase);
 if (!profile) return Astro.redirect("/app");
 
 const world = worldForTheme(profile.theme);
-const task = generateCountingTask(profile.starting_level);
+const task = generateTask(profile.starting_level);
 ---
 
 <Layout title={t.brand}>
@@ -39,6 +40,12 @@ const task = generateCountingTask(profile.starting_level);
       </form>
     </div>
 
-    <CountingTask client:load task={task} world={world} />
+    {
+      task.type === "counting" ? (
+        <CountingTask client:load task={task} world={world} />
+      ) : (
+        <ChangeMakingTask client:load task={task} world={world} />
+      )
+    }
   </div>
 </Layout>
