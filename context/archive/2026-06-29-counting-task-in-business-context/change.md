@@ -1,10 +1,10 @@
 ---
 change_id: counting-task-in-business-context
 title: Counting task in business context
-status: impl_reviewed
+status: archived
 created: 2026-06-29
 updated: 2026-06-29
-archived_at: null
+archived_at: 2026-06-29T19:55:29Z
 ---
 
 ## Notes
