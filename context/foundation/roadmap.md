@@ -38,6 +38,7 @@ MathShop teaches math to Polish children (ages 6–8 in v1) by wrapping every op
 | S-06  | cross-device-login                           | Parent logs in from a new device and sees the same profiles + per-profile progress                  | S-04          | FR-015, §Success Criteria (cross-device)              | proposed |
 | S-07  | multi-profile-picker                         | Parent adds a second child profile; on next launch a profile-picker scoped to the account appears   | S-01          | FR-002, FR-015 (multi-profile)                        | proposed |
 | S-08  | network-loss-handling                        | A network drop mid-shift halts the shift gracefully with a Polish in-world message                  | S-04          | FR-016                                                | proposed |
+| S-09  | child-ui-polish                              | Built child surfaces (start, task, results) brought to MatmaVerse mockup fidelity + a child-primitive library | S-04          | §NFR (anim, tap targets), §Persona; ui-v2 mockups     | proposed |
 
 ## Streams
 
@@ -46,7 +47,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | Stream | Theme                   | Chain                                              | Note                                                                              |
 | ------ | ----------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------- |
 | A      | Wedge & shift           | `F-01` → `S-01` → (`S-02` ∥ `S-03`) → `S-04`       | The must-have path to the north star — sequenced first under `main_goal: speed`.  |
-| B      | Post-shift extensions   | `S-04` → {`S-05` / `S-06` / `S-08`} (all parallel) | Three sibling extensions that depend only on S-04; agents can fan out across them. |
+| B      | Post-shift extensions   | `S-04` → {`S-05` / `S-06` / `S-08` / `S-09`} (parallel) | Extensions that depend only on S-04. S-09 (UI polish) touches shared child surfaces — sequence it last in the stream so it polishes settled screens, not moving ones. |
 | C      | Multi-profile lifecycle | `S-01` → `S-07`                                    | Independent of the shift loop — can be planned in parallel with Stream A from S-01. |
 
 ## Baseline
@@ -180,6 +181,20 @@ What's already in place in the codebase as of `2026-06-09` (auto-researched + us
 - **Risk:** Last must-have FR; small but listed in PRD §Success Criteria's resilience clause. v1 does NOT attempt offline queueing (explicit PRD non-goal) — the slice is intentionally narrow: detect, halt, in-world message, no retry, no queue.
 - **Status:** proposed
 
+### S-09: Child UI/UX polish to mockup fidelity (design-system Part B)
+
+- **Outcome:** The child surfaces built across S-01b–S-04 (start screen, counting task, change-making task, full-shift + results) are brought up to the canonical MatmaVerse mockup fidelity. Two parts: (a) a reusable **child-primitive component library** — the deferred design-system "Part B" — that absorbs and supersedes the ad-hoc primitives already shipped (`ChildButton`, `SelectTile`, and the counting-task's hand-built coin/tally/feedback visuals); (b) a visual/UX pass on each built child screen against the `assets/matma-verse` ui-v2 mockups (child-dashboard, change-mission, pricing-inventory as references). Pure visual/UX — no behavior, copy, or routing change (mirrors how the MatmaVerse design-system foundation restyled the auth surfaces without touching logic).
+- **Change ID:** child-ui-polish
+- **PRD refs:** §Non-Functional Requirements (smooth animation, oversized non-adjacently-hittable tap targets — prd-v2.md:145–148), §Persona (early-reader reliance on icons/animation/minimal text). Design source of truth: `assets/matma-verse/math-economy-ui-v2-{web,mobile}/` (CLAUDE.md).
+- **Prerequisites:** S-04
+- **Parallel with:** S-05, S-06, S-08 (sibling post-S-04 extensions) — but S-09 touches the same child surfaces, so sequence it **after** the others settle to avoid re-polishing.
+- **Blockers:** —
+- **Unknowns:**
+  - Fidelity bar: pixel-faithful vs spirit-faithful, and which screens are in the v1 polish scope vs deferred. — Owner: user. Block: no (start with the core-loop surfaces — start, task, results — at spirit-faithful, iterate).
+  - The mockups are **gitignored / local-only** (CLAUDE.md): a fresh clone / CI / cloud-agent session won't have them. — Owner: maintainer must share the relevant ui-v2 mockups for any agent doing this slice. Block: no (degrade to the maintainer describing the target).
+- **Risk:** This is the design-system "Part B" finally tracked rather than leaking into each functional slice as just-enough UI. Sequenced post-S-04 deliberately: polishing before the core loop's surfaces exist means re-polishing. The net-new component library must **fold in** the existing ad-hoc primitives (don't fork a second button/tile system). Pure-visual scope keeps behavioral risk low, but it touches many files — best done when the core loop is stable and its screens have stopped moving.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                                    | Suggested issue title                                                | Ready for `/10x-plan` | Notes                                                       |
@@ -193,6 +208,7 @@ What's already in place in the codebase as of `2026-06-09` (auto-researched + us
 | S-06       | cross-device-login                           | Cross-device login restores per-profile progress + isolation test    | no                    | Unblocks when S-04 is done; load-bearing isolation gate     |
 | S-07       | multi-profile-picker                         | Add second profile + profile-picker for accounts with ≥2 profiles    | no                    | Unblocks when S-01 is done; parallel with the shift loop    |
 | S-08       | network-loss-handling                        | Network-loss mid-shift halts gracefully with Polish in-world message | no                    | Unblocks when S-04 is done                                  |
+| S-09       | child-ui-polish                              | Child UI/UX polish to mockup fidelity + child-primitive library      | no                    | Unblocks when S-04 is done; sequence last in Stream B       |
 
 ## Open Roadmap Questions
 
