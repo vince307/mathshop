@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { ChildButton } from "@/components/child/ChildButton";
 import { isCorrect } from "@/data/counting-tasks";
@@ -33,6 +33,19 @@ export default function CountingTask({ task, world }: CountingTaskProps) {
   const showHint = status !== "correct" && misses >= RETRY_HINT_THRESHOLD;
   const isGrid = task.arrangement === "rows_of_5";
 
+  // On a correct answer, briefly hold the acknowledgment, then return to the
+  // start screen (no shift loop in v1). The timer is cleared on unmount so a
+  // fast navigation can't fire a stale redirect.
+  useEffect(() => {
+    if (status !== "correct") return;
+    const timer = window.setTimeout(() => {
+      window.location.href = "/app/start";
+    }, 1400);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [status]);
+
   function toggle(index: number) {
     if (status === "correct") return;
     setStatus("idle"); // clear the gentle-retry message the moment they adjust
@@ -41,11 +54,7 @@ export default function CountingTask({ task, world }: CountingTaskProps) {
 
   function check() {
     if (isCorrect(task, tally)) {
-      setStatus("correct");
-      // Brief acknowledgment, then back to the start screen (no shift loop in v1).
-      window.setTimeout(() => {
-        window.location.href = "/app/start";
-      }, 1400);
+      setStatus("correct"); // the redirect is owned by the effect keyed on status
     } else {
       setStatus("wrong");
       setMisses((m) => m + 1);
@@ -77,10 +86,10 @@ export default function CountingTask({ task, world }: CountingTaskProps) {
               toggle(index);
             }}
             aria-pressed={isCounted}
-            aria-label={t.task.coinLabel}
+            aria-label={t.task.coinLabel.replace("{n}", String(index + 1))}
             disabled={status === "correct"}
             className={cn(
-              "relative inline-flex size-14 items-center justify-center rounded-full border-2 transition-all",
+              "relative inline-flex size-16 items-center justify-center rounded-full border-2 transition-all",
               "focus-visible:ring-ring focus-visible:ring-4 focus-visible:outline-none",
               isCounted ? "border-primary ring-primary/30 ring-4" : "border-border hover:border-primary/50",
             )}
