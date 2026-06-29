@@ -181,6 +181,14 @@ export const pl = {
       success: "Świetnie! Wiesz, ile masz w kasie.",
       hint: "Dotknij każdą monetę po kolei i licz.",
     },
+    // Change-making (S-03). `{paid}`/`{price}` interpolated in the island. The
+    // hint cues the count-up strategy (from price up to the paid amount).
+    give_change: {
+      story: "Klient zapłacił {paid} zł za zakup za {price} zł.",
+      question: "Ile reszty mu wydasz?",
+      success: "Brawo! Wydałeś poprawną resztę.",
+      hint: "Policz od ceny w górę aż do zapłaconej kwoty.",
+    },
   },
 
   confirmEmail: {

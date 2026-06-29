@@ -35,3 +35,39 @@ export interface CountingTask {
   arrangement: "scatter" | "rows_of_5";
   difficultyTier: 1 | 2;
 }
+
+/**
+ * Change-making scenarios. v1 (S-03) ships only `give_change` — give the
+ * customer their change. Like `CountingScenario`, the value doubles as the i18n
+ * content key (`t.task[scenario]`), so the type carries no literal copy.
+ */
+export type ChangeMakingScenario = "give_change";
+
+/**
+ * A single change-making-task instance: the child gives `change` (= `paid − price`)
+ * by tapping 1-zł coins from a tray of `availableCount` coins (`availableCount > change`,
+ * so the child must stop at the right number rather than tapping everything).
+ */
+export interface ChangeMakingTask {
+  type: "change_making";
+  scenario: ChangeMakingScenario;
+  objectType: "coin";
+  /** Amount the customer paid (zł), within the grades 1–2 band. */
+  paid: number;
+  /** Item price (zł); `price < paid`. */
+  price: number;
+  /** Correct answer: the change to give = `paid − price`, kept small for the age band. */
+  change: number;
+  /** Coins offered in the tray to give from; `> change` so tapping-all isn't auto-correct. */
+  availableCount: number;
+  /** Layout hint for the coin tray: ≤ 5 scattered; larger groups into rows of 5. */
+  arrangement: "scatter" | "rows_of_5";
+  difficultyTier: 1 | 2;
+}
+
+/**
+ * Any procedurally-generated task. The `type` discriminant lets one page, one
+ * shared interaction core, and (S-04) one shift hold either task without
+ * reshaping consumers.
+ */
+export type Task = CountingTask | ChangeMakingTask;

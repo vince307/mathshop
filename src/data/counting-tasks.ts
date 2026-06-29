@@ -15,8 +15,8 @@ export const COUNT_RANGE: Record<1 | 2, { min: number; max: number }> = {
   2: { min: 6, max: 20 },
 };
 
-/** Count at/below which objects are scattered; above it they group into rows of 5 (subitizing aid). */
-const SCATTER_MAX = 5;
+/** Count at/below which objects are scattered; above it they group into rows of 5 (subitizing aid). Shared with the change-making generator. */
+export const SCATTER_MAX = 5;
 
 /**
  * Map a profile's stored `starting_level` (1|2 today, see `deriveStartingLevel`)
