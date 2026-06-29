@@ -159,14 +159,11 @@ export const pl = {
     error: "Nie udało się utworzyć profilu. Spróbuj ponownie.",
   },
 
-  // Child start screen (S-01b). The tap is a friendly no-op until the counting
-  // task is wired in (S-02, Phase 2); the comingSoon* keys retire with that rewire.
+  // Child start screen (S-01b). The tap opens the counting task (S-02).
   start: {
     greeting: "Cześć, {name}!",
     subtitle: "Twój sklep jest gotowy.",
     open: "Czas otworzyć sklep!",
-    comingSoonTitle: "Już niedługo!",
-    comingSoon: "Twój sklep otworzy się wkrótce. Przygotuj się na pierwszą zmianę!",
   },
 
   // Counting task in shop narrative (S-02). Copy is keyed by scenario so the
@@ -177,6 +174,7 @@ export const pl = {
     check: "Sprawdź",
     tally: "Naliczono: {count}",
     retry: "Spróbuj jeszcze raz!",
+    coinLabel: "Moneta",
     count_till: {
       prompt: "Policz monety w kasie, zanim otworzysz sklep.",
       question: "Ile monet jest w kasie?",

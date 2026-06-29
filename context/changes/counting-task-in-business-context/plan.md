@@ -235,25 +235,25 @@ None — this slice persists nothing and ships no migration. (Gameplay state is 
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run check`
-- [x] 1.2 Linting passes (incl. no-inline-literal rule): `npm run lint`
-- [x] 1.3 Unit tests pass: `npm test`
-- [x] 1.4 Build passes: `npm run build`
+- [x] 1.1 Type checking passes: `npm run check` — 97b6238
+- [x] 1.2 Linting passes (incl. no-inline-literal rule): `npm run lint` — 97b6238
+- [x] 1.3 Unit tests pass: `npm test` — 97b6238
+- [x] 1.4 Build passes: `npm run build` — 97b6238
 
 #### Manual
 
-- [x] 1.5 `src/types.ts` exports `CountingTask` + `RETRY_HINT_THRESHOLD`; type not redefined inline elsewhere
-- [x] 1.6 Every new user-visible string lives in `pl.ts` (grep new files — no inline literals)
-- [x] 1.7 Polish copy reads naturally for a 6–8-year-old (pending native-speaker confirmation)
+- [x] 1.5 `src/types.ts` exports `CountingTask` + `RETRY_HINT_THRESHOLD`; type not redefined inline elsewhere — 97b6238
+- [x] 1.6 Every new user-visible string lives in `pl.ts` (grep new files — no inline literals) — 97b6238
+- [x] 1.7 Polish copy reads naturally for a 6–8-year-old (pending native-speaker confirmation) — 97b6238
 
 ### Phase 2: Task UI + entry wiring (page, island, start-screen rewire)
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run check`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Unit tests pass: `npm test`
-- [ ] 2.4 Build passes: `npm run build`
+- [x] 2.1 Type checking passes: `npm run check`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Unit tests pass: `npm test`
+- [x] 2.4 Build passes: `npm run build`
 
 #### Manual
 
