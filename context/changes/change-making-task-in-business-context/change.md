@@ -1,7 +1,7 @@
 ---
 change_id: change-making-task-in-business-context
 title: Child completes a change-making task in business context
-status: implementing
+status: implemented
 created: 2026-06-29
 updated: 2026-06-29
 archived_at: null

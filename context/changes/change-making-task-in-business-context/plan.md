@@ -269,16 +269,16 @@ None — stateless slice, no migration. (Gameplay state is S-04.)
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run check`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Unit tests pass: `npm test`
-- [x] 2.4 Build passes: `npm run build`
+- [x] 2.1 Type checking passes: `npm run check` — 3744831
+- [x] 2.2 Linting passes: `npm run lint` — 3744831
+- [x] 2.3 Unit tests pass: `npm test` — 3744831
+- [x] 2.4 Build passes: `npm run build` — 3744831
 
 #### Manual
 
-- [x] 2.5 Counting regression: a counting task plays exactly as in S-02 (tap, tally, retry, pile hint, success → `/app/start`)
-- [x] 2.6 Change-making: story (paid + price) + coin tray render; tapping builds the tally; correct change → success → `/app/start`
-- [x] 2.7 Wrong change → gentle retry with taps preserved; 2nd miss → count-up hint highlights price→paid; no red flash/buzzer/dead-end
-- [x] 2.8 Over several `/app/task` visits, both task types appear (random dispatch)
-- [x] 2.9 No coins/score persisted; reloading `/app/start` shows unchanged state
-- [x] 2.10 Animation smooth; coin tap targets don't cross-register
+- [x] 2.5 Counting regression: a counting task plays exactly as in S-02 (tap, tally, retry, pile hint, success → `/app/start`) — 3744831
+- [x] 2.6 Change-making: story (paid + price) + coin tray render; tapping builds the tally; correct change → success → `/app/start` — 3744831
+- [x] 2.7 Wrong change → gentle retry with taps preserved; 2nd miss → count-up hint highlights price→paid; no red flash/buzzer/dead-end — 3744831
+- [x] 2.8 Over several `/app/task` visits, both task types appear (random dispatch) — 3744831
+- [x] 2.9 No coins/score persisted; reloading `/app/start` shows unchanged state — 3744831
+- [x] 2.10 Animation smooth; coin tap targets don't cross-register — 3744831
