@@ -250,16 +250,16 @@ None — this slice persists nothing and ships no migration. (Gameplay state is 
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run check`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Unit tests pass: `npm test`
-- [x] 2.4 Build passes: `npm run build`
+- [x] 2.1 Type checking passes: `npm run check` — 155b74f
+- [x] 2.2 Linting passes: `npm run lint` — 155b74f
+- [x] 2.3 Unit tests pass: `npm test` — 155b74f
+- [x] 2.4 Build passes: `npm run build` — 155b74f
 
 #### Manual
 
-- [ ] 2.5 Tapping the business on `/app/start` navigates to `/app/task`; signed-out hit on `/app/task` redirects to sign-in
-- [ ] 2.6 Coins render themed to the profile's business; count matches `targetCount`; tap targets don't cross-register
-- [ ] 2.7 Tapping toggles counted state both ways; tally tracks taps
-- [ ] 2.8 Correct submit → success acknowledgment → returns to `/app/start`; wrong submit → gentle retry with taps preserved; 2nd miss → coin-pile hint; no red flash/buzzer/dead-end
-- [ ] 2.9 No coins/score persisted; reloading `/app/start` shows unchanged state
-- [ ] 2.10 Animation smooth with no visible per-tap lag on a mid-range tablet
+- [x] 2.5 Tapping the business on `/app/start` navigates to `/app/task`; signed-out hit on `/app/task` redirects to sign-in
+- [x] 2.6 Coins render themed to the profile's business; count matches `targetCount`; tap targets don't cross-register
+- [x] 2.7 Tapping toggles counted state both ways; tally tracks taps
+- [x] 2.8 Correct submit → success acknowledgment → returns to `/app/start`; wrong submit → gentle retry with taps preserved; 2nd miss → coin-pile hint; no red flash/buzzer/dead-end
+- [x] 2.9 No coins/score persisted; reloading `/app/start` shows unchanged state
+- [x] 2.10 Animation smooth with no visible per-tap lag on a mid-range tablet
