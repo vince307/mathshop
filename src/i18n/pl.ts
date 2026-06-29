@@ -159,13 +159,30 @@ export const pl = {
     error: "Nie udało się utworzyć profilu. Spróbuj ponownie.",
   },
 
-  // Child start screen (S-01b). The tap is a friendly no-op until the shift loop (S-02+).
+  // Child start screen (S-01b). The tap is a friendly no-op until the counting
+  // task is wired in (S-02, Phase 2); the comingSoon* keys retire with that rewire.
   start: {
     greeting: "Cześć, {name}!",
     subtitle: "Twój sklep jest gotowy.",
     open: "Czas otworzyć sklep!",
     comingSoonTitle: "Już niedługo!",
     comingSoon: "Twój sklep otworzy się wkrótce. Przygotuj się na pierwszą zmianę!",
+  },
+
+  // Counting task in shop narrative (S-02). Copy is keyed by scenario so the
+  // island resolves it via `t.task[scenario]`; shared CTA/feedback/tally sit
+  // alongside. `{count}` is interpolated in the island. Polish copy is draft —
+  // pending native-speaker review.
+  task: {
+    check: "Sprawdź",
+    tally: "Naliczono: {count}",
+    retry: "Spróbuj jeszcze raz!",
+    count_till: {
+      prompt: "Policz monety w kasie, zanim otworzysz sklep.",
+      question: "Ile monet jest w kasie?",
+      success: "Świetnie! Wiesz, ile masz w kasie.",
+      hint: "Dotknij każdą monetę po kolei i licz.",
+    },
   },
 
   confirmEmail: {
