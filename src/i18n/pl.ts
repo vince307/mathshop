@@ -159,11 +159,14 @@ export const pl = {
     error: "Nie udało się utworzyć profilu. Spróbuj ponownie.",
   },
 
-  // Child start screen (S-01b). The tap opens the counting task (S-02).
+  // Child start screen (S-01b). The tap opens the counting task (S-02). The
+  // coins/level HUD (S-04) surfaces the persisted balance + business level.
   start: {
     greeting: "Cześć, {name}!",
     subtitle: "Twój sklep jest gotowy.",
     open: "Czas otworzyć sklep!",
+    coinsLabel: "Monety",
+    levelLabel: "Poziom sklepu {level}",
   },
 
   // Counting task in shop narrative (S-02). Copy is keyed by scenario so the

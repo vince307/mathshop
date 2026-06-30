@@ -329,30 +329,30 @@ One additive migration (`child_profiles` + four columns with safe defaults; no b
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run check`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Build passes: `npm run build`
-- [x] 2.4 Unit tests pass: `npm test` (no regressions)
+- [x] 2.1 Type checking passes: `npm run check` — 9169939
+- [x] 2.2 Linting passes: `npm run lint` — 9169939
+- [x] 2.3 Build passes: `npm run build` — 9169939
+- [x] 2.4 Unit tests pass: `npm test` (no regressions) — 9169939
 
 #### Manual
 
-- [x] 2.5 Shift runs level-appropriate length (≈6 lvl1 / ≈9 lvl2), mixes both task types, auto-advances
-- [x] 2.6 Counting + change-making play identically to S-02/S-03 within the shift
-- [x] 2.7 Results show coins + correct stars; clean shift = 3 stars; sloppy = fewer but warm (no red/buzzer)
-- [x] 2.8 Result persists across "back to shop" + reopen / re-login (cross-session)
-- [x] 2.9 Simulated persist failure → gentle in-world message → return to start, no crash
+- [x] 2.5 Shift runs level-appropriate length (≈6 lvl1 / ≈9 lvl2), mixes both task types, auto-advances — 9169939
+- [x] 2.6 Counting + change-making play identically to S-02/S-03 within the shift — 9169939
+- [x] 2.7 Results show coins + correct stars; clean shift = 3 stars; sloppy = fewer but warm (no red/buzzer) — 9169939
+- [x] 2.8 Result persists across "back to shop" + reopen / re-login (cross-session) — 9169939
+- [x] 2.9 Simulated persist failure → gentle in-world message → return to start, no crash — 9169939
 
 ### Phase 3: Start-screen coin/level HUD
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run check`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Build passes: `npm run build`
-- [ ] 3.4 Unit tests pass: `npm test`
+- [x] 3.1 Type checking passes: `npm run check`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Build passes: `npm run build`
+- [x] 3.4 Unit tests pass: `npm test`
 
 #### Manual
 
-- [ ] 3.5 Start screen shows current coins + business level for the active profile
-- [ ] 3.6 After a shift, the start-screen HUD reflects updated coins (and level if changed)
-- [ ] 3.7 A fresh profile (0 shifts) shows 0 coins / level 1 cleanly
+- [x] 3.5 Start screen shows current coins + business level for the active profile
+- [x] 3.6 After a shift, the start-screen HUD reflects updated coins (and level if changed)
+- [x] 3.7 A fresh profile (0 shifts) shows 0 coins / level 1 cleanly

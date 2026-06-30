@@ -12,9 +12,10 @@ import { t } from "@/i18n";
 // Child start screen (S-01b). Gated under /app. Loads the parent's most-recent
 // profile; the /app router only sends parents here when one exists, so the
 // no-profile branch is a defensive fallback (direct nav with 0 profiles).
-// Single themed business + an in-world tap prompt — no map, no coins/level UI
-// (those are S-04). profile.name is consciously-collected PII — rendered ONLY as
-// auto-escaped text (interpolation), never set:html.
+// Single themed business + an in-world tap prompt — no map. The coins/level HUD
+// (S-04) surfaces the persisted balance + business level loaded with the profile.
+// profile.name is consciously-collected PII — rendered ONLY as auto-escaped text
+// (interpolation), never set:html.
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 const profile = supabase ? await getMostRecentProfile(supabase) : null;
 
@@ -53,6 +54,18 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
             <div>
               <h1 class="text-foreground text-2xl font-extrabold">{greeting}</h1>
               <p class="text-muted-foreground text-sm">{t.start.subtitle}</p>
+            </div>
+          </div>
+
+          {/* Coins + business-level HUD (S-04) — persisted, cross-session totals */}
+          <div class="mt-6 flex items-center gap-3">
+            <div class="bg-card border-border flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-sm">
+              <img src="/illustrations/coin.png" alt="" class="size-6 object-contain" loading="lazy" />
+              <span class="sr-only">{t.start.coinsLabel}</span>
+              <span class="text-accent text-lg font-extrabold">{profile.coins}</span>
+            </div>
+            <div class="bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-sm font-bold">
+              {t.start.levelLabel.replace("{level}", String(profile.business_level))}
             </div>
           </div>
 
