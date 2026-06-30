@@ -1,4 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import { businessLevelForShifts, coinsForShift } from "@/data/shift";
 
 export { deriveStartingLevel } from "@/data/leveling";
 
@@ -27,6 +28,12 @@ export interface ChildProfile {
   avatar: string;
   theme: string;
   starting_level: number;
+  // Gameplay state (S-04). business_level is mutable progression, distinct from
+  // the frozen starting_level difficulty band.
+  coins: number;
+  completed_shift_count: number;
+  business_level: number;
+  shop_state: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -62,4 +69,45 @@ export function resolveLandingPath(profileCount: number): string {
 export async function getMostRecentProfile(client: SupabaseClient): Promise<ChildProfile | null> {
   const { data } = await client.from("child_profiles").select("*").order("created_at", { ascending: false }).limit(1);
   return (data?.[0] as ChildProfile | undefined) ?? null;
+}
+
+export interface ShiftResult {
+  coinsEarned: number;
+  businessLevel: number;
+  leveledUp: boolean;
+}
+
+/**
+ * Persist a completed shift onto the parent's own profile (S-04). Coins are
+ * recomputed server-side from the reported accuracy (`coinsForShift`), so the
+ * client never supplies a coin amount — it cannot inflate the balance. The row
+ * is reached by `id` and the F-01 `child_profiles_update_own` RLS policy gates
+ * ownership (a non-owner read returns no row, a non-owner update affects 0 rows);
+ * `account_id` is NEVER taken from the caller (L-002). Returns the earned coins +
+ * new level, or `{ error }` if the profile isn't readable/owned.
+ */
+export async function recordShiftResult(
+  client: SupabaseClient,
+  profileId: string,
+  shift: { taskCount: number; cleanCount: number },
+): Promise<ShiftResult | { error: PostgrestError | Error }> {
+  // Read the row AS the parent (RLS-scoped): a non-owner sees no row. Use limit(1)
+  // + data?.[0] (mirrors getMostRecentProfile) rather than .single() so the result
+  // stays typed for the ChildProfile cast under the strict lint.
+  const { data, error: readErr } = await client.from("child_profiles").select("*").eq("id", profileId).limit(1);
+  if (readErr) return { error: readErr };
+  const current = (data[0] as ChildProfile | undefined) ?? null;
+  if (!current) return { error: new Error("profile not found") };
+
+  const coinsEarned = coinsForShift(shift.taskCount, shift.cleanCount);
+  const newCount = current.completed_shift_count + 1;
+  const businessLevel = businessLevelForShifts(newCount);
+
+  const { error: updateErr } = await client
+    .from("child_profiles")
+    .update({ coins: current.coins + coinsEarned, completed_shift_count: newCount, business_level: businessLevel })
+    .eq("id", profileId);
+  if (updateErr) return { error: updateErr };
+
+  return { coinsEarned, businessLevel, leveledUp: businessLevel > current.business_level };
 }

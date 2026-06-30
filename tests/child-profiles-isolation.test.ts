@@ -31,6 +31,10 @@ interface ChildProfileRow {
   name: string;
   age: number;
   starting_level: number;
+  coins: number;
+  completed_shift_count: number;
+  business_level: number;
+  shop_state: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -106,6 +110,28 @@ describe("child_profiles per-account isolation (RLS contract)", () => {
       .single()
       .overrideTypes<Pick<ChildProfileRow, "avatar">, { merge: false }>();
     expect(aData?.avatar).toBe("lis");
+  });
+
+  it("UPDATE isolation (gameplay state): account B cannot bump account A's coins", async () => {
+    // The gameplay-state columns (S-04) ride the same row + same four policies as
+    // identity, so this directly exercises the new write surface through RLS.
+    const { data, error } = await accountB.client
+      .from("child_profiles")
+      .update({ coins: 999 })
+      .eq("id", aRowId)
+      .select()
+      .overrideTypes<ChildProfileRow[], { merge: false }>();
+    expect(error).toBeNull();
+    expect(data).toHaveLength(0); // USING filtered the row out — no rows affected
+
+    // A's coins remain at the default 0.
+    const { data: aData } = await accountA.client
+      .from("child_profiles")
+      .select("coins")
+      .eq("id", aRowId)
+      .single()
+      .overrideTypes<Pick<ChildProfileRow, "coins">, { merge: false }>();
+    expect(aData?.coins).toBe(0);
   });
 
   it("DELETE isolation: account B cannot delete account A's row", async () => {
