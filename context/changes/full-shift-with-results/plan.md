@@ -346,13 +346,13 @@ One additive migration (`child_profiles` + four columns with safe defaults; no b
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run check`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Build passes: `npm run build`
-- [x] 3.4 Unit tests pass: `npm test`
+- [x] 3.1 Type checking passes: `npm run check` — b2c48da
+- [x] 3.2 Linting passes: `npm run lint` — b2c48da
+- [x] 3.3 Build passes: `npm run build` — b2c48da
+- [x] 3.4 Unit tests pass: `npm test` — b2c48da
 
 #### Manual
 
-- [x] 3.5 Start screen shows current coins + business level for the active profile
-- [x] 3.6 After a shift, the start-screen HUD reflects updated coins (and level if changed)
-- [x] 3.7 A fresh profile (0 shifts) shows 0 coins / level 1 cleanly
+- [x] 3.5 Start screen shows current coins + business level for the active profile — b2c48da
+- [x] 3.6 After a shift, the start-screen HUD reflects updated coins (and level if changed) — b2c48da
+- [x] 3.7 A fresh profile (0 shifts) shows 0 coins / level 1 cleanly — b2c48da
