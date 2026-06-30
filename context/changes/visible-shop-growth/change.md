@@ -1,0 +1,28 @@
+---
+change_id: visible-shop-growth
+title: Visible shop change when a completed shift crosses a level threshold
+status: preparing
+created: 2026-06-30
+updated: 2026-06-30
+archived_at: null
+---
+
+## Notes
+
+Roadmap slice **S-05** (`context/foundation/roadmap.md`). Prereq **S-04** done (full-shift-with-results, archived `context/archive/2026-06-29-full-shift-with-results/`).
+
+**Outcome:** When a completed shift crosses a level threshold, the child sees a visible change to the shop (new shelf, new sign element, or new decoration) on the results screen and on the next start-screen visit. The level number is tracked internally but the UI shows the literal shop *growth*, not an abstract integer.
+
+PRD refs: US-02 AC ("a visible shop change when a level threshold was crossed"), FR-011 (visible shop-change clause).
+
+Ground already laid by S-04:
+- `business_level` (smallint, default 1) + `shop_state jsonb` columns persist on `child_profiles` (`shop_state` was explicitly reserved for S-05). `businessLevelForShifts(completedShiftCount) = 1 + floor(count / SHIFTS_PER_LEVEL=3)` in `src/data/shift.ts`.
+- Shift-end already computes `leveledUp` server-side (`recordShiftResult`) and the route returns it; `ShiftResults.tsx` shows a "level up!" *text* (`t.results.levelUp`) but **no shop art** — that text is the S-05 hook.
+- Start screen HUD (S-04) shows `business_level` as a level chip; this slice should make the *shop image itself* reflect the level.
+
+Open design questions to resolve in research/plan:
+- What visual axis grows? (shelf/sign/decoration overlay vs. swapped base art per level.) Mockups may live in `assets/matma-verse/` (local-only — ask maintainer).
+- Is the visible change driven by `business_level` alone, or does `shop_state` jsonb store which decorations are unlocked?
+- Results-screen reveal animation for the level-up moment (FR-008 celebration tie-in).
+
+Likely worth `/10x-research` first (asset pipeline + where shop art is rendered on both results and start screens), then `/10x-plan`.
