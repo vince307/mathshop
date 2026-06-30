@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ChildButton } from "@/components/child/ChildButton";
 import { CoinBoard } from "@/components/child/CoinBoard";
-import { useCoinTask } from "@/components/hooks/useCoinTask";
+import { useCoinTask, type TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
 interface TaskScreenProps {
@@ -15,6 +15,8 @@ interface TaskScreenProps {
   /** Scaffolding-hint copy shown in the retry card after RETRY_HINT_THRESHOLD misses. */
   hintCopy: string;
   successCopy: string;
+  /** On success: default returns to /app/start; a shift passes a cursor-advance callback. */
+  onComplete?: (outcome: TaskOutcome) => void;
 }
 
 /**
@@ -23,8 +25,16 @@ interface TaskScreenProps {
  * feedback. Counting and change-making differ only in header, hint, target, and
  * success copy — everything here is one implementation both types drive.
  */
-export function TaskScreen({ coinCount, target, arrangement, renderHeader, hintCopy, successCopy }: TaskScreenProps) {
-  const { counted, tally, status, showHint, toggle, check } = useCoinTask({ coinCount, target });
+export function TaskScreen({
+  coinCount,
+  target,
+  arrangement,
+  renderHeader,
+  hintCopy,
+  successCopy,
+  onComplete,
+}: TaskScreenProps) {
+  const { counted, tally, status, showHint, toggle, check } = useCoinTask({ coinCount, target, onComplete });
 
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-6">

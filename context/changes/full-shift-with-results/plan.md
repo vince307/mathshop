@@ -312,35 +312,35 @@ One additive migration (`child_profiles` + four columns with safe defaults; no b
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run check`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 Build passes: `npm run build`
-- [x] 1.4 Pure shift/scoring unit tests pass: `npx vitest run tests/shift.test.ts`
-- [x] 1.5 Migration applies cleanly: `npx supabase db reset`
-- [x] 1.6 Isolation + route tests pass: `npm test` (hardened isolation + new `shifts-complete`)
+- [x] 1.1 Type checking passes: `npm run check` — 32657b5
+- [x] 1.2 Linting passes: `npm run lint` — 32657b5
+- [x] 1.3 Build passes: `npm run build` — 32657b5
+- [x] 1.4 Pure shift/scoring unit tests pass: `npx vitest run tests/shift.test.ts` — 32657b5
+- [x] 1.5 Migration applies cleanly: `npx supabase db reset` — 32657b5
+- [x] 1.6 Isolation + route tests pass: `npm test` (hardened isolation + new `shifts-complete`) — 32657b5
 
 #### Manual
 
-- [x] 1.7 L-002 meta-check: weakening the update policy / RLS gate turns the spoof test red, then restored
-- [x] 1.8 `contract-surfaces.md` updated; migration adds no new RLS policy (grep)
-- [x] 1.9 `business_level` and `starting_level` are separate columns
+- [x] 1.7 L-002 meta-check: weakening the update policy / RLS gate turns the spoof test red, then restored — 32657b5
+- [x] 1.8 `contract-surfaces.md` updated; migration adds no new RLS policy (grep) — 32657b5
+- [x] 1.9 `business_level` and `starting_level` are separate columns — 32657b5
 
 ### Phase 2: Shift loop + results
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run check`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Build passes: `npm run build`
-- [ ] 2.4 Unit tests pass: `npm test` (no regressions)
+- [x] 2.1 Type checking passes: `npm run check`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Build passes: `npm run build`
+- [x] 2.4 Unit tests pass: `npm test` (no regressions)
 
 #### Manual
 
-- [ ] 2.5 Shift runs level-appropriate length (≈6 lvl1 / ≈9 lvl2), mixes both task types, auto-advances
-- [ ] 2.6 Counting + change-making play identically to S-02/S-03 within the shift
-- [ ] 2.7 Results show coins + correct stars; clean shift = 3 stars; sloppy = fewer but warm (no red/buzzer)
-- [ ] 2.8 Result persists across "back to shop" + reopen / re-login (cross-session)
-- [ ] 2.9 Simulated persist failure → gentle in-world message → return to start, no crash
+- [x] 2.5 Shift runs level-appropriate length (≈6 lvl1 / ≈9 lvl2), mixes both task types, auto-advances
+- [x] 2.6 Counting + change-making play identically to S-02/S-03 within the shift
+- [x] 2.7 Results show coins + correct stars; clean shift = 3 stars; sloppy = fewer but warm (no red/buzzer)
+- [x] 2.8 Result persists across "back to shop" + reopen / re-login (cross-session)
+- [x] 2.9 Simulated persist failure → gentle in-world message → return to start, no crash
 
 ### Phase 3: Start-screen coin/level HUD
 

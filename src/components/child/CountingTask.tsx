@@ -1,11 +1,13 @@
 import type { CountingTask as CountingTaskInstance } from "@/types";
 import type { World } from "@/data/worlds";
 import { TaskScreen } from "@/components/child/TaskScreen";
+import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
 interface CountingTaskProps {
   task: CountingTaskInstance;
   world: World;
+  onComplete?: (outcome: TaskOutcome) => void;
 }
 
 /**
@@ -14,7 +16,7 @@ interface CountingTaskProps {
  * shown. Behavior is unchanged from the original island — TaskScreen now owns
  * the tap/tally/retry/success mechanic.
  */
-export default function CountingTask({ task, world }: CountingTaskProps) {
+export default function CountingTask({ task, world, onComplete }: CountingTaskProps) {
   const copy = t.task[task.scenario];
   return (
     <TaskScreen
@@ -23,6 +25,7 @@ export default function CountingTask({ task, world }: CountingTaskProps) {
       arrangement={task.arrangement}
       hintCopy={copy.hint}
       successCopy={copy.success}
+      onComplete={onComplete}
       renderHeader={() => (
         <div className="text-center">
           <p className="text-primary text-sm font-bold tracking-wide uppercase">{world.name}</p>

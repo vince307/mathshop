@@ -1,12 +1,14 @@
 import type { ChangeMakingTask as ChangeMakingTaskInstance } from "@/types";
 import type { World } from "@/data/worlds";
 import { TaskScreen } from "@/components/child/TaskScreen";
+import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
 interface ChangeMakingTaskProps {
   task: ChangeMakingTaskInstance;
   world: World;
+  onComplete?: (outcome: TaskOutcome) => void;
 }
 
 /**
@@ -16,7 +18,7 @@ interface ChangeMakingTaskProps {
  * story line is highlighted to cue the count-up-from-price strategy (FR-009),
  * alongside the hint copy in the retry card.
  */
-export default function ChangeMakingTask({ task, world }: ChangeMakingTaskProps) {
+export default function ChangeMakingTask({ task, world, onComplete }: ChangeMakingTaskProps) {
   const copy = t.task.give_change;
   const story = copy.story.replace("{paid}", String(task.paid)).replace("{price}", String(task.price));
   return (
@@ -26,6 +28,7 @@ export default function ChangeMakingTask({ task, world }: ChangeMakingTaskProps)
       arrangement={task.arrangement}
       hintCopy={copy.hint}
       successCopy={copy.success}
+      onComplete={onComplete}
       renderHeader={(showHint) => (
         <div className="text-center">
           <p className="text-primary text-sm font-bold tracking-wide uppercase">{world.name}</p>

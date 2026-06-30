@@ -191,6 +191,24 @@ export const pl = {
     },
   },
 
+  // Shift surface (S-04): per-task progress, the saving beat, and the shift-end
+  // results celebration. `{current}/{total}/{coins}/{earned}` are interpolated in
+  // the island. Polish copy is draft — pending native-speaker review.
+  results: {
+    progress: "Zadanie {current} z {total}",
+    saving: "Zapisuję…",
+    heading: "Koniec zmiany!",
+    coinsLabel: "Zarobione monety: {coins}",
+    starsLabel: "Gwiazdki: {earned} z 3",
+    star0: "Sklep otwarty! Następnym razem pójdzie lepiej.",
+    star1: "Dobra robota — ćwiczysz i Ci idzie!",
+    star2: "Świetna robota!",
+    star3: "Idealna zmiana! Wszystko za pierwszym razem.",
+    levelUp: "Twój sklep rośnie!",
+    backToStart: "Wróć do sklepu",
+    saveError: "Nie udało się zapisać zmiany. Spróbuj później.",
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",
