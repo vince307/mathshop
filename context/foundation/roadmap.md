@@ -3,7 +3,7 @@ project: MathShop
 version: 1
 status: draft
 created: 2026-06-09
-updated: 2026-06-29
+updated: 2026-06-30
 prd_version: 2
 main_goal: speed
 top_blocker: time
@@ -33,7 +33,7 @@ MathShop teaches math to Polish children (ages 6–8 in v1) by wrapping every op
 | S-01  | parent-signup-first-profile-and-start-screen | Parent signs up in Polish, creates the first child profile, child reaches start screen              | F-01          | US-01, FR-001, FR-002, FR-003, FR-004, FR-013, FR-014 | done     |
 | S-02  | counting-task-in-business-context            | Child completes a single counting task wrapped in shop narrative with soft retry                    | S-01          | US-02 (partial), FR-006, FR-007, FR-008, FR-009       | done     |
 | S-03  | change-making-task-in-business-context       | Child completes a single change-making task wrapped in shop narrative with soft retry               | S-01          | US-02 (partial), FR-006, FR-007, FR-008, FR-009       | done     |
-| S-04  | full-shift-with-results                      | Child completes a 5–10 task shift, sees results screen, state persists across same-browser sessions | S-02, S-03    | US-02, FR-006, FR-008, FR-010, FR-011, FR-012         | proposed |
+| S-04  | full-shift-with-results                      | Child completes a 5–10 task shift, sees results screen, state persists across same-browser sessions | S-02, S-03    | US-02, FR-006, FR-008, FR-010, FR-011, FR-012         | done     |
 | S-05  | visible-shop-growth                          | Child sees the shop visibly grow (new shelf / sign / decoration) when crossing a level threshold    | S-04          | US-02 AC, FR-011 (shop-change clause)                 | proposed |
 | S-06  | cross-device-login                           | Parent logs in from a new device and sees the same profiles + per-profile progress                  | S-04          | FR-015, §Success Criteria (cross-device)              | proposed |
 | S-07  | multi-profile-picker                         | Parent adds a second child profile; on next launch a profile-picker scoped to the account appears   | S-01          | FR-002, FR-015 (multi-profile)                        | proposed |
@@ -130,7 +130,7 @@ What's already in place in the codebase as of `2026-06-09` (auto-researched + us
 - **Unknowns:**
   - How is "level" defined for the first profile (default starting level, threshold function)? — Owner: user. Block: no (ship a sensible default — level=1 maps to ~5 tasks, ~70% counting / ~30% change-making — iterate after observation).
 - **Risk:** The validation milestone. Extends the `child_profiles` schema (or adds a sibling `profile_state` table) under F-01's RLS contract — the second test of whether the isolation pattern propagates. Combines two task types, shift-length adaptation, scoring, results-screen rendering, and persistence in one slice; if `/10x-plan` finds the scope too large, candidate split is "shift loop + persistence" then "results screen". But the user-visible outcome is one capability (a complete shift) — splitting would break vertical-first.
-- **Status:** proposed
+- **Status:** done
 
 ### S-05: Visible shop change on level-up
 
@@ -234,3 +234,4 @@ What's already in place in the codebase as of `2026-06-09` (auto-researched + us
 - **S-01: Parent signs up in Polish and creates the first child profile** — Split into S-01a (auth + verification + Polish foundation, archived 2026-06-27) and S-01b (child-profile schema + avatar registry + wizard + start screen + `/app` router, archived 2026-06-28 → `context/archive/2026-06-28-first-child-profile-and-start-screen/`). Both APPROVED. Lesson: L-003 (i18n strings; lessons.md). Note: D1 product-owner override collects child name/age as RLS-isolated PII.
 - **S-02: Child completes a counting task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-counting-task-in-business-context/`. Impl-review APPROVED (F1/F2/F3 fixed). Established the reusable task contract (spec → render → answer → feedback) S-03 and S-04 inherit. Lesson: —.
 - **S-03: Child completes a change-making task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-change-making-task-in-business-context/`. Impl-review APPROVED (0 warnings). Generalized the task contract: `Task` union + shared `useCoinTask`/`CoinBoard`/`TaskScreen` core + polymorphic `/app/task` (counting ∥ change-making). Both task types + the rendering core now ready for the S-04 shift. Lesson: —.
+- **S-04: Child completes a full shift end-to-end with results (NORTH STAR)** — Archived 2026-06-30 → `context/archive/2026-06-29-full-shift-with-results/`. Lesson: —.
