@@ -2,7 +2,7 @@
 change_id: full-shift-with-results
 title: Child completes a full shift end-to-end with results and persistence
 created: 2026-06-29
-status: implemented
+status: impl_reviewed
 updated: 2026-06-30
 archived_at: null
 ---
