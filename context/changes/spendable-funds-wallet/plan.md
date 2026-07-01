@@ -276,15 +276,15 @@ The rename is non-destructive (`rename column` preserves data) and the app is pr
 
 #### Automated
 
-- [x] 3.1 Linting passes: `npm run lint`
-- [x] 3.2 Unit tests still pass: `npm test`
-- [x] 3.3 Production build succeeds: `npm run build`
-- [x] 3.4 No leftover balance-"Monety" key references (`grep coinsLabel src` empty)
+- [x] 3.1 Linting passes: `npm run lint` — 4c16893
+- [x] 3.2 Unit tests still pass: `npm test` — 4c16893
+- [x] 3.3 Production build succeeds: `npm run build` — 4c16893
+- [x] 3.4 No leftover balance-"Monety" key references (`grep coinsLabel src` empty) — 4c16893
 
 #### Manual
 
-- [x] 3.5 Start screen shows the balance as "Portfel" with savings hint
-- [x] 3.6 Results screen shows earnings landing in the wallet
-- [x] 3.7 Balance persists across reload and sign-out/sign-in
-- [x] 3.8 Task screens still call the tappable coins "monety"
-- [x] 3.9 Copy reads as encouraging savings; no urgency/scarcity language
+- [x] 3.5 Start screen shows the balance as "Portfel" with savings hint — 4c16893
+- [x] 3.6 Results screen shows earnings landing in the wallet — 4c16893
+- [x] 3.7 Balance persists across reload and sign-out/sign-in — 4c16893
+- [x] 3.8 Task screens still call the tappable coins "monety" — 4c16893
+- [x] 3.9 Copy reads as encouraging savings; no urgency/scarcity language — 4c16893
