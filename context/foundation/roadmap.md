@@ -34,7 +34,7 @@ MathShop teaches math to Polish children (6–9) by framing every operation as r
 | S-02 | counting-task-in-business-context | Child completes a counting task in shop narrative with soft retry                | S-01          | FR-003                                | done     |
 | S-03 | change-making-task-in-business-context | Child completes a change-making task in shop narrative with soft retry       | S-01          | FR-003                                | done     |
 | S-04 | full-shift-with-results      | Child completes a full shift, sees results (coins + stars), state persists            | S-02, S-03    | FR-004, FR-005                        | done     |
-| S-05 | spendable-funds-wallet       | Child earns spendable funds and sees a wallet that carries across shifts              | S-04          | FR-007, FR-008                        | ready    |
+| S-05 | spendable-funds-wallet       | Child earns spendable funds and sees a wallet that carries across shifts              | S-04          | FR-007, FR-008                        | done     |
 | S-06 | upgrade-choice-and-growth    | Child chooses an affordable upgrade; the shop changes visibly + functionally          | S-05          | US-01, FR-010, FR-011, FR-012, FR-013, FR-014 | proposed |
 | S-07 | skill-path-upgrade-gate      | Child's upgrades gate on skill progress; growth stays synced to learning              | S-06          | FR-015, FR-010                        | proposed |
 | S-08 | upper-band-task-difficulty   | Older child (up to 9) gets appropriately harder counting / change-making tasks        | S-04          | FR-009                                | ready    |
@@ -143,7 +143,7 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
   - Non-destructive migration of existing profiles' coins → wallet with a rollback path — Owner: planning. Block: no.
   - Exact funds formula (accuracy × length) vs. the shipped coin formula — Owner: planning. Block: no.
 - **Risk:** The precursor to the whole economy. Small and self-contained, but it re-keys the shipped coin field; the migration must not drop existing progress. Sequenced first in Stream A because S-06 can't offer a purchase without a spendable balance. Extends `recordShiftResult` rather than adding a parallel write path.
-- **Status:** ready
+- **Status:** done
 
 ### S-06: Child chooses an upgrade that visibly + functionally grows the shop  **(NORTH STAR)**
 
@@ -300,3 +300,4 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **S-02: Child completes a counting task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-counting-task-in-business-context/`.
 - **S-03: Child completes a change-making task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-change-making-task-in-business-context/`.
 - **S-04: Child completes a full shift end-to-end with results** — Archived 2026-06-30 → `context/archive/2026-06-29-full-shift-with-results/`.
+- **S-05: Child earns spendable funds and sees a wallet that carries across shifts** — Archived 2026-07-01 → `context/archive/2026-07-01-spendable-funds-wallet/`. Lesson: —.
