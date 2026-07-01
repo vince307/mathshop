@@ -17,6 +17,22 @@ Source: `assets/matma-verse/math-economy-auth-v2-web/01-parent-login-web.png` (1
 | `coin.png` | (658, 284, 740, 366) | Single gold "zł" coin |
 | `coin-stack.png` | (1400, 888, 1536, 1024) | Gold "zł" coin stack (decorative) |
 
+## Upgrade icons (S-06)
+
+Copied **as-is** (not cropped) from the local-only progression asset pack
+`assets/atomic-assets-v3-progression/svg/icons/` (gitignored) into committed
+`public/illustrations/` so the upgrade catalog art ships to Vercel. SVG — scalable,
+theme-neutral, swappable for per-world art later.
+
+| Output file | Source (`assets/atomic-assets-v3-progression/svg/icons/`) | Upgrade |
+| --- | --- | --- |
+| `upgrade-sign.svg` | `upgrade-spark.svg` | Szyld (sign / decoration) |
+| `upgrade-shelf.svg` | `shelf-upgrade.svg` | Półka (shelf) |
+| `upgrade-register.svg` | `cash-register-upgrade.svg` | Lepsza kasa (register) |
+| `upgrade-slot.svg` | `plus-product-slot.svg` | Miejsce na produkt (product slot) |
+| `upgrade-storage.svg` | `inventory-box.svg` | Magazynek (storage) |
+| `upgrade-customers.svg` | `customer-happy.svg` | Więcej klientów (customers) |
+
 ## Notes
 
 - The small feature-bullet icons (shield / globe / chart) and the form-panel avatar-lock

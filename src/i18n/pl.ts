@@ -197,6 +197,18 @@ export const pl = {
     },
   },
 
+  // Upgrade catalog names (S-06). Keyed by upgrade id (`t.upgrades[id]`), so the
+  // catalog (src/data/upgrades.ts) carries no literal copy (L-003). Draft Polish —
+  // pending native-speaker review.
+  upgrades: {
+    sign: { name: "Szyld", desc: "Nowy szyld przyciąga wzrok." },
+    shelf: { name: "Półka", desc: "Więcej miejsca na towar." },
+    register: { name: "Lepsza kasa", desc: "Sprawniejsza obsługa klientów." },
+    slot: { name: "Miejsce na produkt", desc: "Dodatkowy produkt w ofercie." },
+    storage: { name: "Magazynek", desc: "Zapas towaru pod ręką." },
+    customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
+  },
+
   // Shift surface (S-04): per-task progress, the saving beat, and the shift-end
   // results celebration. `{current}/{total}/{earned}` are interpolated in the
   // island (`{earned}` is reused for both the wallet payout and the star count in

@@ -1,4 +1,5 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
+import type { ShopState } from "@/types";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 
 export { deriveStartingLevel } from "@/data/leveling";
@@ -34,7 +35,7 @@ export interface ChildProfile {
   wallet_balance: number;
   completed_shift_count: number;
   business_level: number;
-  shop_state: Record<string, unknown>;
+  shop_state: ShopState;
   created_at: string;
   updated_at: string;
 }

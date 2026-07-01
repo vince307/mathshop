@@ -71,3 +71,14 @@ export interface ChangeMakingTask {
  * reshaping consumers.
  */
 export type Task = CountingTask | ChangeMakingTask;
+
+/**
+ * Persisted shop-customization state (S-06) held in `child_profiles.shop_state`
+ * jsonb. v1 stores only the ids of purchased upgrades; art layers, capacity
+ * effects, and progression are all derived from the catalog (`src/data/upgrades.ts`)
+ * by id — the catalog is the single source of truth. Pre-S-06 rows default to
+ * `{}` (no `purchased`); `readPurchased` normalizes a missing key to `[]`.
+ */
+export interface ShopState {
+  purchased: string[];
+}
