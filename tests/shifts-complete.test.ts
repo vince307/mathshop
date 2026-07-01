@@ -92,7 +92,7 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const jar = await mintSession(accountA.email);
     const before = await readState(aProfileId);
     const res = await completePOST(
-      completeContext(jar, { profileId: aProfileId, taskCount: "5", cleanCount: "0", coins: "99999" }),
+      completeContext(jar, { profileId: aProfileId, taskCount: "5", cleanCount: "0", wallet_balance: "99999" }),
     );
     expect(res.status).toBe(200);
     const after = await readState(aProfileId);

@@ -1,7 +1,7 @@
 /**
  * Shift composition + scoring (S-04). Pure and client-safe (mirrors
  * `src/data/counting-tasks.ts`): imported by the client for the results
- * celebration AND by the shift-completion route for the authoritative coin/level
+ * celebration AND by the shift-completion route for the authoritative wallet/level
  * write, so both sides agree by construction. All tunables are named constants —
  * first-guess defaults, adjust after kid-testing.
  */
