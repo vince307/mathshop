@@ -1,6 +1,7 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState } from "@/types";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
+import { canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
 
 export { deriveStartingLevel } from "@/data/leveling";
 
@@ -116,4 +117,60 @@ export async function recordShiftResult(
   if (updateErr) return { error: updateErr };
 
   return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
+}
+
+/** Why a buy could not proceed. `not-found` = the row isn't readable/owned (RLS). */
+export type BuyFailure = "owned" | "locked" | "insufficient" | "unknown" | "not-found";
+
+export type BuyUpgradeResult =
+  | { walletBalance: number; purchased: string[] }
+  | { failure: BuyFailure }
+  | { error: PostgrestError | Error };
+
+/**
+ * Purchase an upgrade onto the parent's own profile (S-06) — the ONLY
+ * currency-moving spend path, server-authoritative like `recordShiftResult`.
+ * The row is read by `id` under RLS (a non-owner sees no row → `not-found`,
+ * never A's data); `account_id` is NEVER taken from the caller (L-002).
+ * Affordability, world-level and ownership are recomputed from the TRUSTED row
+ * via the shared `canBuy` (the client only names an `upgradeId`), so a tampered
+ * client cannot buy what it can't afford, hasn't unlocked, or already owns. On
+ * success one UPDATE debits `wallet_balance` by the catalog cost and appends the
+ * id to `shop_state.purchased`; the wallet non-negative DB constraint backstops
+ * overspend. Returns the new wallet + owned list, a `failure` reason, or `{ error }`.
+ */
+export async function buyUpgrade(
+  client: SupabaseClient,
+  profileId: string,
+  upgradeId: string,
+): Promise<BuyUpgradeResult> {
+  const upgrade = getUpgrade(upgradeId);
+  // Unknown-id short-circuit: no DB round-trip needed for a value not in the catalog.
+  if (!upgrade) return { failure: "unknown" };
+
+  // Read AS the parent (RLS-scoped): a non-owner sees no row. limit(1) + data?.[0]
+  // (mirrors recordShiftResult) keeps the result typed under the strict lint.
+  const { data, error: readErr } = await client.from("child_profiles").select("*").eq("id", profileId).limit(1);
+  if (readErr) return { error: readErr };
+  const current = (data[0] as ChildProfile | undefined) ?? null;
+  if (!current) return { failure: "not-found" };
+
+  const purchased = readPurchased(current.shop_state);
+  const check = canBuy(upgrade, {
+    walletBalance: current.wallet_balance,
+    businessLevel: current.business_level,
+    purchased,
+  });
+  if (!check.ok) return { failure: check.reason };
+
+  const nextPurchased = [...purchased, upgrade.id];
+  const walletBalance = current.wallet_balance - upgrade.cost;
+
+  const { error: updateErr } = await client
+    .from("child_profiles")
+    .update({ wallet_balance: walletBalance, shop_state: { purchased: nextPurchased } })
+    .eq("id", profileId);
+  if (updateErr) return { error: updateErr };
+
+  return { walletBalance, purchased: nextPurchased };
 }

@@ -318,31 +318,31 @@ One profile read already loads `shop_state` (`select("*")`) — no new query for
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npx vitest run tests/upgrades.test.ts`
-- [x] 1.2 Type checking passes: `npm run check`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Production build succeeds: `npm run build`
-- [x] 1.5 Every catalog `art` path exists under `public/illustrations/`
+- [x] 1.1 Unit tests pass: `npx vitest run tests/upgrades.test.ts` — 6e85501
+- [x] 1.2 Type checking passes: `npm run check` — 6e85501
+- [x] 1.3 Linting passes: `npm run lint` — 6e85501
+- [x] 1.4 Production build succeeds: `npm run build` — 6e85501
+- [x] 1.5 Every catalog `art` path exists under `public/illustrations/` — 6e85501
 
 #### Manual
 
-- [x] 1.6 Committed upgrade art renders and is acceptable as v1 art
-- [x] 1.7 Catalog ladder reads sensibly (costs/levels increase; first upgrade affordable within a few shifts)
+- [x] 1.6 Committed upgrade art renders and is acceptable as v1 art — 6e85501
+- [x] 1.7 Catalog ladder reads sensibly (costs/levels increase; first upgrade affordable within a few shifts) — 6e85501
 
 ### Phase 2: Server-authoritative buy endpoint
 
 #### Automated
 
-- [ ] 2.1 Migration + buy test pass against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`)
-- [ ] 2.2 Unit tests still pass: `npx vitest run tests/upgrades.test.ts`
-- [ ] 2.3 Type checking passes: `npm run check`
-- [ ] 2.4 Linting passes: `npm run lint`
-- [ ] 2.5 Build succeeds: `npm run build`
+- [x] 2.1 Migration + buy test pass against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`)
+- [x] 2.2 Unit tests still pass: `npx vitest run tests/upgrades.test.ts`
+- [x] 2.3 Type checking passes: `npm run check`
+- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.5 Build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 2.6 A buy debits the wallet by exactly the cost and records the upgrade
-- [ ] 2.7 No path lets the wallet go negative or an upgrade be bought twice
+- [x] 2.6 A buy debits the wallet by exactly the cost and records the upgrade
+- [x] 2.7 No path lets the wallet go negative or an upgrade be bought twice
 
 ### Phase 3: Dedicated /app/upgrades screen
 
