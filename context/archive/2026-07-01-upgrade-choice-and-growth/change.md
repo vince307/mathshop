@@ -1,10 +1,10 @@
 ---
 change_id: upgrade-choice-and-growth
 title: Child chooses an upgrade that visibly + functionally grows the shop (north star)
-status: impl_reviewed
+status: archived
 created: 2026-07-01
 updated: 2026-07-01
-archived_at: null
+archived_at: 2026-07-01T19:27:58Z
 ---
 
 ## Notes
