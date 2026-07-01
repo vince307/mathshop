@@ -1,11 +1,15 @@
 ---
 change_id: visible-shop-growth
 title: Visible shop change when a completed shift crosses a level threshold
-status: preparing
+status: paused
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-01
 archived_at: null
 ---
+
+## Status: PAUSED (2026-07-01)
+
+Paused pending a product **re-baseline**. The `assets/` v2 doc set ("MathMarket / Math Economy" — `app-docs-v2-llm-handoff/`, `atomic-assets-v3-progression/`, `math-economy-missing-screens-v3-*/`) reframes shop growth from *passive decorative level art* (this change's current scope) to the **visible tip of an upgrade economy**: the child earns `virtualBalance`, *chooses* an upgrade (itself a math/decision mission), and the world grows because they decided. Per maintainer decision (2026-07-01), the PRD + roadmap are being re-baselined toward that fuller vision; S-05 will be re-planned against the new roadmap rather than the old passive-growth spec. Existing `research.md` below stays valid for the *render path / RLS / persistence* facts but its passive-growth framing is superseded.
 
 ## Notes
 

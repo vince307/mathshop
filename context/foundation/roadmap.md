@@ -2,236 +2,301 @@
 project: MathShop
 version: 1
 status: draft
-created: 2026-06-09
-updated: 2026-06-30
-prd_version: 2
-main_goal: speed
-top_blocker: time
+created: 2026-07-01
+updated: 2026-07-01
+prd_version: 3
+main_goal: market-feedback
+top_blocker: capacity
 ---
 
-# Roadmap: MathShop
+# Roadmap: MathShop (MathMarket re-baseline)
 
-> Derived from `context/foundation/prd-v2.md` (v2) + auto-researched codebase baseline.
-> Edit-in-place; archive when superseded.
-> Slices below are listed in dependency order. The "At a glance" table is the index.
+> Derived from `context/foundation/prd-v3.md` (v3, MathMarket brownfield re-baseline) + verified codebase baseline.
+> Supersedes the v1-wedge roadmap archived at `context/foundation/archive/2026-07-01-roadmap.md`.
+> Edit-in-place; archive when superseded. Slices are listed in dependency order; the "At a glance" table is the index.
 
 ## Vision recap
 
-MathShop teaches math to Polish children (ages 6–8 in v1) by wrapping every operation inside a coherent business narrative: the child runs a small shop, and every counting, change-making, or pricing task is a purposeful business moment, not a bare equation. The dual-track payoff — math fluency plus early financial literacy (value-of-money, decision-making) — is what makes a parent pick this app over a generic quiz drill, and what makes a child come back without being nagged. The hard product rule: math never appears decontextualized, even in onboarding.
+MathShop teaches math to Polish children (6–9) by framing every operation as running a small shop — math is never a bare equation. The shipped thin slice (S-01…S-04) proved a child will finish a shift, but it delivered the thinnest cut of the pedagogy: shop growth was passive and decorative. This re-baseline makes growth an **earned decision** — the child spends what they earn on upgrades they *choose*, and each choice is itself a math/decision moment — synchronized with what they've actually learned. Delivery is **tranched** with no fixed date; the economy loop ships first, then breadth (worlds, grade-3, pricing, audio, theme).
 
 ## North star
 
-**S-04: Child completes a full shift end-to-end with results (coins + stars + persistence)** — the smallest slice whose successful delivery would prove the core product hypothesis (entrepreneurship-framed practice makes a 6-year-old finish a shift and want to come back). Tied to PRD §Success Criteria primary.
+**S-06: Child chooses an upgrade that visibly + functionally grows the shop** — the smallest end-to-end slice that proves the core hypothesis: that *deciding how to grow the business with earned funds* is what makes the math feel purposeful (US-01 + prd-v3 Primary criterion).
 
-> The **north star** here is the smallest end-to-end slice whose successful delivery proves the product's core hypothesis — placed as early as Prerequisites allow, because everything else only matters if this one works. Visible shop growth on level-up (S-05) follows as the ownership-payoff polish; the validation milestone itself is S-04.
+> "North star" here means the smallest end-to-end slice whose successful delivery would prove the product's core hypothesis — placed as early as its prerequisites allow, because everything else only matters if this one works. S-06 needs the wallet (S-05) first, so S-05 is the immediate move; S-06 is the milestone it unlocks.
 
 ## At a glance
 
-| ID    | Change ID                                    | Outcome (user can …)                                                                                | Prerequisites | PRD refs                                              | Status   |
-| ----- | -------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------- | -------- |
-| F-01  | per-account-isolation-contract               | (foundation) RLS template + first migration + isolation verification pattern                        | —             | §Access Control, FR-012, FR-015                       | done     |
-| S-01  | parent-signup-first-profile-and-start-screen | Parent signs up in Polish, creates the first child profile, child reaches start screen              | F-01          | US-01, FR-001, FR-002, FR-003, FR-004, FR-013, FR-014 | done     |
-| S-02  | counting-task-in-business-context            | Child completes a single counting task wrapped in shop narrative with soft retry                    | S-01          | US-02 (partial), FR-006, FR-007, FR-008, FR-009       | done     |
-| S-03  | change-making-task-in-business-context       | Child completes a single change-making task wrapped in shop narrative with soft retry               | S-01          | US-02 (partial), FR-006, FR-007, FR-008, FR-009       | done     |
-| S-04  | full-shift-with-results                      | Child completes a 5–10 task shift, sees results screen, state persists across same-browser sessions | S-02, S-03    | US-02, FR-006, FR-008, FR-010, FR-011, FR-012         | done     |
-| S-05  | visible-shop-growth                          | Child sees the shop visibly grow (new shelf / sign / decoration) when crossing a level threshold    | S-04          | US-02 AC, FR-011 (shop-change clause)                 | proposed |
-| S-06  | cross-device-login                           | Parent logs in from a new device and sees the same profiles + per-profile progress                  | S-04          | FR-015, §Success Criteria (cross-device)              | proposed |
-| S-07  | multi-profile-picker                         | Parent adds a second child profile; on next launch a profile-picker scoped to the account appears   | S-01          | FR-002, FR-015 (multi-profile)                        | proposed |
-| S-08  | network-loss-handling                        | A network drop mid-shift halts the shift gracefully with a Polish in-world message                  | S-04          | FR-016                                                | proposed |
-| S-09  | child-ui-polish                              | Built child surfaces (start, task, results) brought to MatmaVerse mockup fidelity + a child-primitive library | S-04          | §NFR (anim, tap targets), §Persona; ui-v2 mockups     | proposed |
+| ID   | Change ID                    | Outcome (user can …)                                                                 | Prerequisites | PRD refs                              | Status   |
+| ---- | ---------------------------- | ------------------------------------------------------------------------------------ | ------------- | ------------------------------------- | -------- |
+| F-01 | per-account-isolation-contract | (foundation) RLS isolation contract + first migration + isolation verification pattern | —             | §Access Control, FR-001–006 preserved | done     |
+| S-01 | parent-signup-first-profile-and-start-screen | Parent signs up in Polish, creates first child profile, child reaches start screen | F-01          | FR-001, FR-002, FR-006                | done     |
+| S-02 | counting-task-in-business-context | Child completes a counting task in shop narrative with soft retry                | S-01          | FR-003                                | done     |
+| S-03 | change-making-task-in-business-context | Child completes a change-making task in shop narrative with soft retry       | S-01          | FR-003                                | done     |
+| S-04 | full-shift-with-results      | Child completes a full shift, sees results (coins + stars), state persists            | S-02, S-03    | FR-004, FR-005                        | done     |
+| S-05 | spendable-funds-wallet       | Child earns spendable funds and sees a wallet that carries across shifts              | S-04          | FR-007, FR-008                        | ready    |
+| S-06 | upgrade-choice-and-growth    | Child chooses an affordable upgrade; the shop changes visibly + functionally          | S-05          | US-01, FR-010, FR-011, FR-012, FR-013, FR-014 | proposed |
+| S-07 | skill-path-upgrade-gate      | Child's upgrades gate on skill progress; growth stays synced to learning              | S-06          | FR-015, FR-010                        | proposed |
+| S-08 | upper-band-task-difficulty   | Older child (up to 9) gets appropriately harder counting / change-making tasks        | S-04          | FR-009                                | ready    |
+| S-09 | minimal-parent-weekly-report | Parent reads a minimal weekly report of their own child's practice + unlocks          | S-06, S-07    | FR-016                                | proposed |
+| S-10 | cross-device-economy-restore | Parent logs in on a new device and sees the same funds, upgrades, and grown shop      | S-06          | FR-001, FR-005, FR-012                | proposed |
+| S-11 | multi-profile-picker         | Parent adds a 2nd child profile; a scoped profile-picker appears on next launch        | S-01          | FR-002                                | ready    |
+| S-12 | network-loss-handling        | A network drop mid-shift halts gracefully with a Polish in-world message               | S-04          | FR-017                                | ready    |
+| S-13 | child-ui-polish              | Built child surfaces (incl. the new economy screens) brought to mockup fidelity        | S-06          | US-01, §Non-Functional Requirements   | proposed |
 
 ## Streams
 
-Navigation aid — groups items that share a Prerequisites chain. Canonical ordering still lives in the dependency graph below; this table is the proposed reading order across parallel tracks.
+Navigation aid — groups items that share a Prerequisites chain. Canonical ordering lives in the dependency graph below; this table is the proposed reading order across parallel tracks. Because the #1 blocker is **capacity**, the parallel tracks (B, C, D) matter: their `ready` heads (S-08, S-11, S-12) can be picked up alongside the economy chain.
 
-| Stream | Theme                   | Chain                                              | Note                                                                              |
-| ------ | ----------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------- |
-| A      | Wedge & shift           | `F-01` → `S-01` → (`S-02` ∥ `S-03`) → `S-04`       | The must-have path to the north star — sequenced first under `main_goal: speed`.  |
-| B      | Post-shift extensions   | `S-04` → {`S-05` / `S-06` / `S-08` / `S-09`} (parallel) | Extensions that depend only on S-04. S-09 (UI polish) touches shared child surfaces — sequence it last in the stream so it polishes settled screens, not moving ones. |
-| C      | Multi-profile lifecycle | `S-01` → `S-07`                                    | Independent of the shift loop — can be planned in parallel with Stream A from S-01. |
+| Stream | Theme                    | Chain                                                          | Note                                                                                       |
+| ------ | ------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| A      | Economy loop (the bet)   | `F-01` → `S-01` → (`S-02` ∥ `S-03`) → `S-04` → `S-05` → `S-06`★ → `S-07` → `S-09` | The must-do path to the north star (★). Sequenced first under `main_goal: market-feedback`. |
+| B      | Task difficulty          | `S-08`                                                        | Parallel from `S-04`; independent of the economy state — a `ready` capacity lever.          |
+| C      | Account lifecycle & sync | `S-11` · `S-10`                                               | `S-11` parallel from `S-01` (ready now); `S-10` joins after `S-06` (restores economy state).|
+| D      | Resilience & polish      | `S-12` · `S-13`                                               | `S-12` parallel from `S-04` (ready now); `S-13` sequenced last — polishes settled surfaces. |
 
 ## Baseline
 
-What's already in place in the codebase as of `2026-06-09` (auto-researched + user-confirmed). Foundations below assume these are present and do NOT re-scaffold them.
+What's in place as of `2026-07-01` (verified). Foundations/slices below assume these and do NOT re-scaffold them.
 
-- **Frontend:** present — Astro 6.3.1 + React 19 + Tailwind 4 + shadcn/ui Button; `src/pages/{index,dashboard}.astro`, `src/pages/auth/{signin,signup,confirm-email}.astro`, `src/components/auth/SignInForm.tsx`, `src/components/ui/button.tsx`.
-- **Backend / API:** partial — Astro SSR (`output: "server"`) + 3 auth endpoints (`src/pages/api/auth/{signin,signup,signout}.ts`); no zod, no `src/lib/services/`, no other API surface.
-- **Data:** absent — `supabase/config.toml` declares migrations but the directory is empty; no schema, no `child_profiles`, no ORM/query-builder dep in `package.json`.
-- **Auth:** present (password-based) — `src/lib/supabase.ts` configures `@supabase/ssr`; `src/middleware.ts` gates `PROTECTED_ROUTES = ["/dashboard"]`; Supabase email confirmation enabled by default. Magic-link vs password is PRD Open Q#1 — the v1 default here is the existing password scaffold (see `## Open Roadmap Questions`).
-- **Deploy / infra:** present — `@astrojs/vercel@10.0.7` adapter; `vercel.json` pins region `fra1`; GitHub → Vercel auto-deploy live; `.github/workflows/ci.yml` runs `npm run lint` + `npm run build` on push/PR to `main`; production at `https://mathshop.vercel.app` returns HTTP 200.
-- **Observability:** absent — no logger, no Sentry/Datadog/OTel deps. Parked for v1 (see `## Parked`).
+- **Frontend:** present — Astro 6 SSR + React 19 islands; child surfaces in `src/components/child/*` (task, shift, results, start); i18n in `src/i18n/pl.ts`.
+- **Backend / API:** present — auth routes + `src/pages/api/profiles/create.ts` + `src/pages/api/shifts/complete.ts` (server-authoritative shift scoring).
+- **Data:** present — 3 migrations (`child_profiles` isolation → identity → gameplay_state incl. reserved `shop_state`); `src/lib/services/child-profiles.ts`; domain in `src/data/{shift,leveling,worlds,...}.ts`.
+- **Auth:** present — `src/lib/supabase.ts` (@supabase/ssr) + `src/middleware.ts` + per-account RLS policies.
+- **Deploy / infra:** present — `.github/workflows/ci.yml`; Vercel `fra1`.
+- **Observability:** absent — no logger/Sentry/OTel. Parked for now.
 
 ## Foundations
 
 ### F-01: Per-account data isolation contract
 
-- **Outcome:** (foundation) RLS policy template established, first Supabase migration ships the `child_profiles` table with per-operation per-role RLS policies in the same file, and a reusable isolation verification test asserts that one parent's profiles are never readable by another. The pattern locks the contract every subsequent migration must follow.
+- **Outcome:** (foundation) RLS policy template established; first migration shipped `child_profiles` with per-operation per-role RLS in the same file; a reusable isolation verification test asserts one parent's profiles are never readable by another. The contract every later migration follows.
 - **Change ID:** per-account-isolation-contract
-- **PRD refs:** §Access Control, FR-012 (per-profile state preserved), FR-015 (cross-device login restoring the same profile set), §Success Criteria guardrail "No PII tied to children"
-- **Unlocks:** S-01 (needs the first table with RLS in place to write a profile); isolation verification path used by S-06 (cross-device negative test) and revalidated whenever S-04 extends the schema with shift state
+- **PRD refs:** §Access Control Changes, FR-001–006 (preserved), Constraints & Compatibility (isolation inviolable)
+- **Unlocks:** every DB-touching slice; the isolation negative-test path re-exercised by S-06 (new economy state) and S-09/S-10 (parent read + cross-device)
 - **Prerequisites:** —
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** RLS is `CLAUDE.md`'s named highest-risk correctness invariant — wrong policies mean a silent data leak, not a crash. Sequencing this as a discrete foundation (rather than folding into S-01) makes the pattern visible to every later migration author, and ensures the negative isolation test exists before any user-facing slice can rely on it.
+- **Risk:** RLS is the project's named highest-risk invariant — wrong policies are a silent data leak. Establishing the pattern as a discrete foundation makes it visible to every later migration author. Each new economy table (S-05…S-09) ships its RLS in-migration under this contract (L-001) rather than a big shared migration.
 - **Status:** done
 
 ## Slices
 
 ### S-01: Parent signs up in Polish and creates the first child profile
 
-- **Outcome:** A first-time parent reaches `mathshop.vercel.app`, sees a Polish sign-up surface, completes email verification, picks one of ~6 pre-set avatars in the "create first child profile" flow, and the child lands on the start screen with the lemonade-stand business visible and an in-world tap-to-start prompt.
+- **Outcome:** A first-time parent signs up (email + verification) in Polish, picks a pre-set avatar in the create-first-profile flow, and the child lands on the start screen.
 - **Change ID:** parent-signup-first-profile-and-start-screen
-- **PRD refs:** US-01, FR-001, FR-002 (single-profile case — skip picker), FR-003, FR-004, FR-013, FR-014
+- **PRD refs:** FR-001, FR-002, FR-006
 - **Prerequisites:** F-01
 - **Parallel with:** —
 - **Blockers:** —
-- **Unknowns:**
-  - Verification mechanism (magic-link vs password vs both) — PRD §Open Questions #1. Owner: user. Block: no (the v1 default is the existing password scaffold; switching later is straightforward).
-- **Risk:** This slice introduces three load-bearing v1 patterns: (a) Polish content authored as content, not hardcoded strings, to satisfy FR-013's "no source-code changes for v2 locales"; (b) the avatar-as-profile-identity pattern (no text input, per FR-001's accessibility rationale); (c) the first write under the F-01 RLS contract. Getting (a) wrong invalidates v2 locale expansion; getting (c) wrong means cross-account profile leaks. Largest slice in the must-have path — flagged for `/10x-plan` to weigh splitting if it exceeds plannable scope.
-- **Split during planning:** **S-01a** (auth + email verification + Polish foundation) — implemented + reviewed (APPROVED), archived 2026-06-27 → `context/archive/2026-06-26-parent-signup-first-profile-and-start-screen/`. **S-01b** (child-profile schema + avatar registry + profile wizard + start screen + `/app` profile-count router) — implemented + reviewed (APPROVED), archived 2026-06-28 → `context/archive/2026-06-28-first-child-profile-and-start-screen/` (change id `first-child-profile-and-start-screen`). The MatmaVerse light design system (archived 2026-06-27) was sequenced between the two halves.
-- **Status:** done — S-01a + S-01b both archived
+- **Unknowns:** —
+- **Risk:** Established the Polish-as-content pattern and the first write under the RLS contract. Archived (S-01a auth + S-01b profile/start).
+- **Status:** done
 
 ### S-02: Child completes a counting task in business context
 
-- **Outcome:** The child taps the lemonade stand and is shown a single counting task wrapped in shop narrative ("Ile monet leży w kasie?" with visible, tappable coins). Wrong taps produce a gentle "spróbuj jeszcze raz"; after 1–2 misses, a scaffolding hint briefly highlights the relevant artifact. Correct answer produces a small acknowledgment (subtle animation) and the task closes.
+- **Outcome:** The child taps the stand and completes a single counting task in shop narrative with soft retry + scaffolding hint.
 - **Change ID:** counting-task-in-business-context
-- **PRD refs:** US-02 (partial — counting half), FR-006 (counting half), FR-007 (grades 1-2 procedural generation), FR-008 (per-answer acknowledgment), FR-009 (retry + scaffolding hint)
+- **PRD refs:** FR-003
 - **Prerequisites:** S-01
-- **Parallel with:** S-03 (same Prereq, same task-rendering contract — different math operation)
+- **Parallel with:** S-03
 - **Blockers:** —
-- **Unknowns:**
-  - What does "subtle animation" feel like to a 6-year-old vs. fanfare fatigue? — Owner: user (kid-testing). Block: no (ship a reasonable default; iterate after observation).
-- **Risk:** First exercise of the business-narrative wrapper; the pedagogy depends on this feeling like running a shop, not like a math drill. The contract this slice establishes (task spec → rendered shop moment → answer collection → feedback) is what S-03 and the shift loop in S-04 will reuse.
+- **Unknowns:** —
+- **Risk:** First exercise of the business-narrative task wrapper; established the task spec → render → answer → feedback contract S-03/S-04 reuse.
 - **Status:** done
 
 ### S-03: Child completes a change-making task in business context
 
-- **Outcome:** The child is shown a single change-making task wrapped in shop narrative (e.g., "Pani Kowalska zapłaciła 5 zł za sok kosztujący 3 zł — ile reszty jej dasz?"). Same soft-retry / scaffolding-hint pattern as S-02. Correct answer closes the task with a small acknowledgment.
+- **Outcome:** The child completes a single change-making task in shop narrative with the same soft-retry / hint pattern.
 - **Change ID:** change-making-task-in-business-context
-- **PRD refs:** US-02 (partial — change-making half), FR-006 (change-making half), FR-007, FR-008, FR-009
+- **PRD refs:** FR-003
 - **Prerequisites:** S-01
 - **Parallel with:** S-02
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Same task-rendering contract as S-02 — extending it to a second operation type validates the contract is reusable before the shift loop in S-04 stress-tests it with mixed-type sequencing.
+- **Risk:** Generalized the task contract to a second operation type (shared `useCoinTask`/`CoinBoard`/`TaskScreen` + polymorphic `/app/task`).
 - **Status:** done
 
 ### S-04: Child completes a full shift end-to-end with results
 
-**NORTH STAR.**
-
-- **Outcome:** The child taps the lemonade stand, completes a 5–10 task shift (length adapts to level) mixing S-02-style counting and S-03-style change-making, sees a results screen showing total coins earned (single shift-end payout) and stars (0–3 based on accuracy), and returns to the start screen with profile state persisted. Re-opening the app on the same browser restores the same profile and progress.
+- **Outcome:** The child completes a 5–10 task shift (adaptive length) mixing counting + change-making, sees a results screen (total coins + 0–3 stars), and profile state persists across sessions.
 - **Change ID:** full-shift-with-results
-- **PRD refs:** US-02 (full), FR-006 (full shift), FR-008 (shift-end celebration), FR-010 (coins paid once at shift end), FR-011 (results screen with coins + stars), FR-012 (per-profile persistence)
+- **PRD refs:** FR-004, FR-005
 - **Prerequisites:** S-02, S-03
 - **Parallel with:** —
 - **Blockers:** —
-- **Unknowns:**
-  - How is "level" defined for the first profile (default starting level, threshold function)? — Owner: user. Block: no (ship a sensible default — level=1 maps to ~5 tasks, ~70% counting / ~30% change-making — iterate after observation).
-- **Risk:** The validation milestone. Extends the `child_profiles` schema (or adds a sibling `profile_state` table) under F-01's RLS contract — the second test of whether the isolation pattern propagates. Combines two task types, shift-length adaptation, scoring, results-screen rendering, and persistence in one slice; if `/10x-plan` finds the scope too large, candidate split is "shift loop + persistence" then "results screen". But the user-visible outcome is one capability (a complete shift) — splitting would break vertical-first.
+- **Unknowns:** —
+- **Risk:** The prior north star (the earlier thin-slice proof). Extended the schema (`business_level`, reserved `shop_state`) under the RLS contract; established the server-authoritative `recordShiftResult` compute-and-persist pattern the economy slices extend.
 - **Status:** done
 
-### S-05: Visible shop change on level-up
+### S-05: Child earns spendable funds and sees a wallet
 
-- **Outcome:** When a completed shift crosses a level threshold, the child sees a visible change to the shop (new shelf, new sign element, or new decoration) on the results screen and the next start-screen visit. The level number is tracked internally but the UI shows the literal shop growth, not an abstract integer.
-- **Change ID:** visible-shop-growth
-- **PRD refs:** US-02 AC ("a visible shop change when a level threshold was crossed"), FR-011 (visible shop change clause)
+- **Outcome:** At shift end the child earns **spendable funds** (the shipped accumulating "coins" reinterpreted as a wallet); the balance carries across shifts, is shown on the start + results surfaces, and is framed as a wallet (never decreasing except by a future purchase). Server computes the payout; a client cannot inflate it.
+- **Change ID:** spendable-funds-wallet
+- **PRD refs:** FR-007, FR-008 (advances US-01)
 - **Prerequisites:** S-04
-- **Parallel with:** S-06, S-08 (all post-S-04 extensions, sibling)
+- **Parallel with:** S-08, S-11, S-12
 - **Blockers:** —
 - **Unknowns:**
-  - How many threshold tiers + what artwork ships for v1? — Owner: user (art direction). Block: no (start with 2–3 tiers + the minimum shop-growth assets that make the pedagogy land).
-- **Risk:** This is the ownership-grows pedagogy completing the primary Success Criterion. Without it, the validation in S-04 proves "shift loop works" but not "ownership grows visibly". Defers the FULL Success Criterion landing by one slice — accepted under `main_goal: speed` because the wedge proof is in S-04, and shop-growth artwork can iterate independently.
+  - Non-destructive migration of existing profiles' coins → wallet with a rollback path — Owner: planning. Block: no.
+  - Exact funds formula (accuracy × length) vs. the shipped coin formula — Owner: planning. Block: no.
+- **Risk:** The precursor to the whole economy. Small and self-contained, but it re-keys the shipped coin field; the migration must not drop existing progress. Sequenced first in Stream A because S-06 can't offer a purchase without a spendable balance. Extends `recordShiftResult` rather than adding a parallel write path.
+- **Status:** ready
+
+### S-06: Child chooses an upgrade that visibly + functionally grows the shop  **(NORTH STAR)**
+
+- **Outcome:** On the results/upgrade surface the child sees the upgrades they can afford (from a small catalog gated on funds + world level) alongside locked ones, and **chooses one to buy** — a framed in-world decision ("masz 126 zł: półka za 80 czy więcej klientów za 120?"). Buying debits funds and applies **both** a visible change (new shelf/sign/decoration) and a functional unlock (new product / task type / capacity), persists the new world state, and shows what the child is saving toward next. Spending never lowers level or skill progress.
+- **Change ID:** upgrade-choice-and-growth  *(supersedes the paused `visible-shop-growth`; its `research.md` render/persist findings remain reusable)*
+- **PRD refs:** US-01, FR-010 (cost + world-level gates), FR-011, FR-012, FR-013, FR-014
+- **Prerequisites:** S-05
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Catalog size + which upgrades ship for the single world (doc 08 suggests 5–8) — Owner: user (art/product). Block: no.
+  - The v3 progression art + "upgrades / product-unlocked" mockups are local-only / gitignored — Owner: maintainer supplies. Block: no (degrade to a described target).
+  - "Spend feels like loss" mitigation (wallet + owned-upgrades framing) is unproven with kids — Owner: user (kid-testing). Block: no.
+- **Risk:** The bet. Biggest single slice in the tranche (catalog + choose-UI + apply-effects + growth art + persistence). Under `main_goal: market-feedback` it is sequenced as early as its one prerequisite allows, to surface the core hypothesis' risk first. Skill-gating is deliberately deferred to S-07 so the loop can ship and be validated with cost+level gates only.
 - **Status:** proposed
 
-### S-06: Cross-device login restores per-profile progress
+### S-07: Upgrades gate on skill progress; growth stays synced to learning
 
-- **Outcome:** A parent who completed shifts under profile A on Browser X signs in on Browser Y (or a phone) and sees the same profile A with the same coins, level, and visible shop state — exactly as left. A second parent (account B) signing in on the same physical device never sees account A's profiles or progress.
-- **Change ID:** cross-device-login
-- **PRD refs:** FR-015, §Success Criteria primary (cross-device persistence clause)
+- **Outcome:** The system tracks per-competency **skill progress** derived from task attempts, surfaces it simply, and uses it (plus completed task history) as an additional upgrade requirement — so some upgrades unlock only once the child has demonstrably practiced the relevant skill. World growth is now synchronized with learning, not just funds.
+- **Change ID:** skill-path-upgrade-gate
+- **PRD refs:** FR-015, FR-010 (skill + task-history gates)
+- **Prerequisites:** S-06
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Competency taxonomy + progress function (doc 08 suggests math / money / decisions) — Owner: planning. Block: no.
+- **Risk:** Deepens the loop into doc 08's "growth reinforces learning" goal. Sequenced after the loop ships (S-06) so the bet is validated before adding the learning-synchronization layer. Becomes load-bearing because FR-010 references its signal — it cannot be faked.
+- **Status:** proposed
+
+### S-08: Older child gets appropriately harder tasks (6–9 band)
+
+- **Outcome:** Procedurally-generated task numbers widen to the 6–9 band — larger numbers and occasional multi-step change-making for the upper cohort — within the no-bare-equation rule.
+- **Change ID:** upper-band-task-difficulty
+- **PRD refs:** FR-009
 - **Prerequisites:** S-04
-- **Parallel with:** S-05, S-08
+- **Parallel with:** S-05, S-11, S-12
 - **Blockers:** —
-- **Unknowns:** —
-- **Risk:** This is the end-to-end exercise of F-01's RLS isolation contract under real cross-account, multi-device load. The negative test (account B cannot see account A's data) lives here and is the highest-impact correctness gate in the project. If it fails, every shipped slice that touched DB needs an audit. Sequenced immediately after S-04 (when the data layer has real state to exercise) and before S-07 (which multiplies profile rows per account).
-- **Status:** proposed
+- **Unknowns:**
+  - Number-range curve per age/level for the added cohort — Owner: user (kid-testing). Block: no.
+- **Risk:** Touches task generation, not economy state, so it parallelizes cleanly with the economy chain — a useful capacity lever. Low risk; extends existing generators.
+- **Status:** ready
 
-### S-07: Multi-profile picker for accounts with 2+ children
+### S-09: Parent reads a minimal weekly report
 
-- **Outcome:** A parent with one profile already created adds a second child profile (one-tap action from the parent surface, pick another pre-set avatar). On the next launch under that account, the app shows a profile-picker scoped to that account; tapping a profile takes the child to that profile's start screen with that profile's state. Single-profile accounts continue to skip the picker.
-- **Change ID:** multi-profile-picker
-- **PRD refs:** FR-002, FR-015 (multi-profile aspect), US-01 (extension when the account already has ≥2 profiles)
-- **Prerequisites:** S-01
-- **Parallel with:** S-02, S-03, S-04, S-05, S-06, S-08 (depends only on S-01's profile-creation surface, runs alongside the whole shift loop)
-- **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Stretches the F-01 isolation contract to multi-row-per-account (rather than the implicit single-row of S-01). RLS policies written in F-01 must already correctly scope on `(account_id, profile_id)` — if they only scoped on `account_id`, this slice would expose the gap. Treat S-07 as a contract-correctness verification slice in addition to a feature slice.
-- **Status:** proposed
-
-### S-08: Network-loss mid-shift halts gracefully
-
-- **Outcome:** If the browser loses network connectivity mid-shift, the app shows a Polish in-world message ("Internet zniknął! Spróbuj za chwilę.") and halts. Pending mid-shift progress is discarded. On reconnect, the child returns to the start screen with profile state at the last shift-end the server recorded.
-- **Change ID:** network-loss-handling
+- **Outcome:** A parent reads a minimal, read-only weekly report for **their own** child profile(s): what was practiced, which upgrade was unlocked, and the skills it exercised — phrased educationally, never shaming or comparative.
+- **Change ID:** minimal-parent-weekly-report
 - **PRD refs:** FR-016
-- **Prerequisites:** S-04
-- **Parallel with:** S-05, S-06
-- **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Last must-have FR; small but listed in PRD §Success Criteria's resilience clause. v1 does NOT attempt offline queueing (explicit PRD non-goal) — the slice is intentionally narrow: detect, halt, in-world message, no retry, no queue.
-- **Status:** proposed
-
-### S-09: Child UI/UX polish to mockup fidelity (design-system Part B)
-
-- **Outcome:** The child surfaces built across S-01b–S-04 (start screen, counting task, change-making task, full-shift + results) are brought up to the canonical MatmaVerse mockup fidelity. Two parts: (a) a reusable **child-primitive component library** — the deferred design-system "Part B" — that absorbs and supersedes the ad-hoc primitives already shipped (`ChildButton`, `SelectTile`, and the counting-task's hand-built coin/tally/feedback visuals); (b) a visual/UX pass on each built child screen against the `assets/matma-verse` ui-v2 mockups (child-dashboard, change-mission, pricing-inventory as references). Pure visual/UX — no behavior, copy, or routing change (mirrors how the MatmaVerse design-system foundation restyled the auth surfaces without touching logic).
-- **Change ID:** child-ui-polish
-- **PRD refs:** §Non-Functional Requirements (smooth animation, oversized non-adjacently-hittable tap targets — prd-v2.md:145–148), §Persona (early-reader reliance on icons/animation/minimal text). Design source of truth: `assets/matma-verse/math-economy-ui-v2-{web,mobile}/` (CLAUDE.md).
-- **Prerequisites:** S-04
-- **Parallel with:** S-05, S-06, S-08 (sibling post-S-04 extensions) — but S-09 touches the same child surfaces, so sequence it **after** the others settle to avoid re-polishing.
+- **Prerequisites:** S-06, S-07
+- **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
-  - Fidelity bar: pixel-faithful vs spirit-faithful, and which screens are in the v1 polish scope vs deferred. — Owner: user. Block: no (start with the core-loop surfaces — start, task, results — at spirit-faithful, iterate).
-  - The mockups are **gitignored / local-only** (CLAUDE.md): a fresh clone / CI / cloud-agent session won't have them. — Owner: maintainer must share the relevant ui-v2 mockups for any agent doing this slice. Block: no (degrade to the maintainer describing the target).
-- **Risk:** This is the design-system "Part B" finally tracked rather than leaking into each functional slice as just-enough UI. Sequenced post-S-04 deliberately: polishing before the core loop's surfaces exist means re-polishing. The net-new component library must **fold in** the existing ad-hoc primitives (don't fork a second button/tile system). Pure-visual scope keeps behavioral risk low, but it touches many files — best done when the core loop is stable and its screens have stopped moving.
+  - The "parent-weekly-report" mockup is local-only / gitignored — Owner: maintainer supplies. Block: no.
+- **Risk:** The one genuinely new *read* access path — the natural place to re-exercise the isolation negative test (parent reads only their own child). Depends on S-06/S-07 for something meaningful to report. Kept minimal to bound cost.
+- **Status:** proposed
+
+### S-10: Cross-device login restores the economy state
+
+- **Outcome:** A parent who grew a shop under profile A on one device signs in on another and sees the same funds, purchased upgrades, grown shop, and skill progress — exactly as left. A second account on the same device never sees account A's data.
+- **Change ID:** cross-device-economy-restore
+- **PRD refs:** FR-001, FR-005, FR-012
+- **Prerequisites:** S-06
+- **Parallel with:** S-09
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Exercises the RLS isolation contract under real cross-account, multi-device load *with the new economy state included*. The negative test (account B can't see account A) is the highest-impact correctness gate; sequenced once there is real economy state to restore.
+- **Status:** proposed
+
+### S-11: Multi-profile picker for accounts with 2+ children
+
+- **Outcome:** A parent adds a second child profile (one-tap, pick another avatar); on next launch a profile-picker scoped to that account appears. Single-profile accounts still skip the picker.
+- **Change ID:** multi-profile-picker
+- **PRD refs:** FR-002
+- **Prerequisites:** S-01
+- **Parallel with:** S-05, S-08, S-12
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Stretches the isolation contract to multi-row-per-account. Independent of the economy loop — a `ready` capacity lever that can run alongside Stream A.
+- **Status:** ready
+
+### S-12: Network-loss mid-shift halts gracefully
+
+- **Outcome:** If the browser loses connectivity mid-shift, the app shows a Polish in-world message ("Internet zniknął! Spróbuj za chwilę.") and halts; pending mid-shift progress is discarded; on reconnect the child returns to the last server-recorded state.
+- **Change ID:** network-loss-handling
+- **PRD refs:** FR-017 (graceful mid-shift network-loss halt), §Non-Goals (no offline)
+- **Prerequisites:** S-04
+- **Parallel with:** S-05, S-08, S-11
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Narrow resilience slice (detect, halt, in-world message, no queue). A change folder already exists (`context/changes/network-loss-handling/`). Independent of the economy — parallelizable. Traces to FR-017 (carried from prd-v2 FR-016, re-added to prd-v3 as a preserved requirement).
+- **Status:** ready
+
+### S-13: Child UI/UX polish to mockup fidelity (incl. economy surfaces)
+
+- **Outcome:** The built child surfaces — start, task, results, and the new economy screens (wallet, choose-upgrade, grown shop) — are brought to canonical MatmaVerse / v3-progression mockup fidelity, plus a reusable child-primitive library that absorbs the ad-hoc primitives (`ChildButton`, `SelectTile`, coin visuals). Pure visual/UX — no behavior or copy change.
+- **Change ID:** child-ui-polish
+- **PRD refs:** US-01 (polishes the surfaces its flow runs through), §Non-Functional Requirements (smooth animation, oversized tap targets), §User & Persona (early-reader reliance on icons/animation)
+- **Prerequisites:** S-06
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Fidelity bar (pixel- vs spirit-faithful) and which screens are in scope — Owner: user. Block: no.
+  - The MatmaVerse + v3 mockups are local-only / gitignored — Owner: maintainer supplies. Block: no.
+- **Risk:** Sequenced last deliberately — polishing before the economy surfaces settle means re-polishing. The child-primitive library must fold in, not fork, the shipped ad-hoc primitives. Pure-visual scope keeps behavioral risk low but touches many files.
 - **Status:** proposed
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                                    | Suggested issue title                                                | Ready for `/10x-plan` | Notes                                                       |
-| ---------- | -------------------------------------------- | -------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------- |
-| F-01       | per-account-isolation-contract               | Establish RLS isolation contract + first migration + isolation test  | yes                   | Run `/10x-plan per-account-isolation-contract` first        |
-| S-01       | parent-signup-first-profile-and-start-screen | Polish parent sign-up + first child profile + start screen           | no                    | Unblocks when F-01 is done                                  |
-| S-02       | counting-task-in-business-context            | Counting task in shop narrative with soft retry + scaffolding hint   | no                    | Unblocks when S-01 is done; parallel with S-03              |
-| S-03       | change-making-task-in-business-context       | Change-making task in shop narrative with soft retry + scaffolding   | no                    | Unblocks when S-01 is done; parallel with S-02              |
-| S-04       | full-shift-with-results                      | Full shift end-to-end with results screen + persistence (north star) | no                    | Unblocks when S-02 + S-03 are done                          |
-| S-05       | visible-shop-growth                          | Visible shop change on level-up                                      | no                    | Unblocks when S-04 is done                                  |
-| S-06       | cross-device-login                           | Cross-device login restores per-profile progress + isolation test    | no                    | Unblocks when S-04 is done; load-bearing isolation gate     |
-| S-07       | multi-profile-picker                         | Add second profile + profile-picker for accounts with ≥2 profiles    | no                    | Unblocks when S-01 is done; parallel with the shift loop    |
-| S-08       | network-loss-handling                        | Network-loss mid-shift halts gracefully with Polish in-world message | no                    | Unblocks when S-04 is done                                  |
-| S-09       | child-ui-polish                              | Child UI/UX polish to mockup fidelity + child-primitive library      | no                    | Unblocks when S-04 is done; sequence last in Stream B       |
+| Roadmap ID | Change ID                    | Suggested issue title                                                  | Ready for `/10x-plan` | Notes                                              |
+| ---------- | ---------------------------- | --------------------------------------------------------------------- | --------------------- | -------------------------------------------------- |
+| F-01       | per-account-isolation-contract | RLS isolation contract + first migration + isolation test           | no                    | Done / archived                                    |
+| S-01       | parent-signup-first-profile-and-start-screen | Polish parent sign-up + first child profile + start screen | no                    | Done / archived                                    |
+| S-02       | counting-task-in-business-context | Counting task in shop narrative                                   | no                    | Done / archived                                    |
+| S-03       | change-making-task-in-business-context | Change-making task in shop narrative                         | no                    | Done / archived                                    |
+| S-04       | full-shift-with-results      | Full shift + results + persistence                                     | no                    | Done / archived                                    |
+| S-05       | spendable-funds-wallet       | Earn spendable funds + wallet (coins → wallet migration)               | yes                   | Run `/10x-plan spendable-funds-wallet` — unlocks S-06 |
+| S-06       | upgrade-choice-and-growth    | Choose-upgrade → visible + functional shop growth (north star)         | no                    | Unblocks when S-05 done; absorbs paused visible-shop-growth |
+| S-07       | skill-path-upgrade-gate      | Skill-progress tracking + skill-gated upgrades                         | no                    | Unblocks when S-06 done                            |
+| S-08       | upper-band-task-difficulty   | Harder tasks for the 6–9 upper band                                    | yes                   | Parallel; run `/10x-plan upper-band-task-difficulty` |
+| S-09       | minimal-parent-weekly-report | Minimal read-only parent weekly report                                 | no                    | Unblocks when S-06 + S-07 done; isolation read test |
+| S-10       | cross-device-economy-restore | Cross-device login restores funds/upgrades/shop                        | no                    | Unblocks when S-06 done; load-bearing isolation gate |
+| S-11       | multi-profile-picker         | Add 2nd profile + scoped profile-picker                                | yes                   | Parallel; run `/10x-plan multi-profile-picker`     |
+| S-12       | network-loss-handling        | Graceful mid-shift network-loss halt                                   | yes                   | Parallel; change folder already exists             |
+| S-13       | child-ui-polish              | Child UI polish to mockup fidelity + primitive library                 | no                    | Unblocks when S-06 done; sequence last             |
 
 ## Open Roadmap Questions
 
-1. **Verification mechanism (magic-link vs password vs both).** PRD §Open Questions #1. The scaffold already has password-based Supabase auth wired (`src/lib/supabase.ts`, `src/pages/api/auth/{signin,signup,signout}.ts`) with email confirmation on. Under `main_goal: speed`, the recommended v1 default is to keep the existing password scaffold; magic-link is a v2 candidate. Owner: user. Block: S-01 only if the user wants to switch away from password before shipping; otherwise non-blocking.
+1. **New-surface art + mockups are local-only.** The v3 progression assets and the 5 "missing screens" mockups (world-progression, upgrades, mission-result, product-unlocked, parent-weekly-report) are the design source of truth but are gitignored / not in the repo. Owner: maintainer. Block: no — but any CI/cloud-agent session on S-06/S-09/S-13 needs them supplied (degrade to a described target otherwise).
+2. **Lead-tranche split if S-06 is too big to plan.** Keeping cost+level+skill+task-history gates makes S-06 + S-07 heavy. If `/10x-plan spendable-funds-wallet`→`upgrade-choice-and-growth` reveals S-06 is too large, split it: (a) catalog + choose-UI + visible growth, then (b) functional unlock. Owner: planning. Block: no.
+3. **Tranche ordering for the deferred set.** The Parked future tranches (multi-world, grade-3, pricing/inventory, audio, 2nd theme, richer report) need their own FRs (re-shape / PRD) before they can be sliced. Order + dependencies TBD when the economy tranche lands. Owner: user. Block: no.
+4. **"Spend feels like loss" mitigation is unvalidated.** The wallet + owned-upgrades framing is the chosen mitigation; validate with real children and iterate. Owner: user (kid-testing). Block: no.
 
 ## Parked
 
-- **No parent-facing dashboard / progress reports / time limits / settings UI in v1** — PRD §Non-Goals. Parent surfaces in v1 are sign-up, login, profile-picker, sign-out. Dashboard is straightforward read-only views over existing account data and slots into v2.
-- **No monetization mechanic — ever (no ads, no IAP, no paywall, no premium tier)** — PRD §Non-Goals. Identity, not a deferred feature.
-- **No grade-3 math content in v1 (multiplication, division, fractions, measurement)** — PRD §Non-Goals + FR-007. Largest single v2 expansion.
-- **No gamification beyond coins + stars + visible shop growth in v1** — PRD §Non-Goals. No daily streaks, no badges/achievements, no sibling leaderboard.
-- **No visual world map in v1** — PRD §Non-Goals + FR-003 + dropped FR-005. Ships when 2+ business locations exist.
-- **No second visual theme in v1** — PRD §Non-Goals. v1 ships one theme; data model already carries per-profile theme field.
-- **No avatar customizer in v1** — PRD §Non-Goals. Avatars are pre-set (~6 named).
-- **No audio cues in v1** — PRD §Non-Goals. Sound design (chimes, narration, ambient) is v2.
-- **No offline / PWA shell in v1** — PRD §Non-Goals + FR-016 graceful network-loss only.
-- **No anonymous play in v1** — PRD §Non-Goals. Parents must sign up before any child profile exists.
-- **Production observability (Sentry/Datadog/OTel) in v1** — added under `main_goal: speed`; baseline reports observability absent and PRD does not gate launch on it. Vercel function logs are sufficient for v1 incident response. v2 candidate.
+### True non-goals (per prd-v3 §Non-Goals)
+- **No monetization — ever** (ads / IAP / paywall / premium). Identity, not a deferred feature.
+- **No casino mechanics** (lootboxes, random unlocks, timers, streaks, rankings, child comparison).
+- **No real trading / market / speculation** for this age band.
+- **No full parent dashboard** — only the minimal weekly report (S-09) ships; goal-setting / difficulty controls / settings out.
+- **No anonymous play.** **No offline / PWA shell** (network required; S-12 halts gracefully).
+- **No production observability (Sentry/OTel) yet** — Vercel logs suffice; v-later candidate.
+
+### Future tranches (in the product's scope; deferred — need their own FRs before slicing)
+- **Multi-world selection (pillar 2)** — world-selection surface + the other 5 interest-worlds. The largest post-economy tranche; re-shape → PRD FRs → roadmap slices when ready.
+- **Grade-3 content** — multiplication / division / fractions / measurement; widens persona toward 6–10.
+- **Pricing/inventory task types** — set-price→demand, manage-stock.
+- **Audio cues** — correct-answer / shift-end / upgrade-purchase sound.
+- **Second visual theme** — a second skin for the world (per-profile theme field already exists).
+- **Richer parent report** — trends + recommendations beyond the minimal S-09 view.
 
 ## Done
 
-- **F-01: (foundation) RLS template + first migration + isolation verification pattern** — Archived 2026-06-11 → `context/archive/2026-06-09-per-account-isolation-contract/`. Lesson: L-001/L-002 (lessons.md).
-- **S-01: Parent signs up in Polish and creates the first child profile** — Split into S-01a (auth + verification + Polish foundation, archived 2026-06-27) and S-01b (child-profile schema + avatar registry + wizard + start screen + `/app` router, archived 2026-06-28 → `context/archive/2026-06-28-first-child-profile-and-start-screen/`). Both APPROVED. Lesson: L-003 (i18n strings; lessons.md). Note: D1 product-owner override collects child name/age as RLS-isolated PII.
-- **S-02: Child completes a counting task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-counting-task-in-business-context/`. Impl-review APPROVED (F1/F2/F3 fixed). Established the reusable task contract (spec → render → answer → feedback) S-03 and S-04 inherit. Lesson: —.
-- **S-03: Child completes a change-making task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-change-making-task-in-business-context/`. Impl-review APPROVED (0 warnings). Generalized the task contract: `Task` union + shared `useCoinTask`/`CoinBoard`/`TaskScreen` core + polymorphic `/app/task` (counting ∥ change-making). Both task types + the rendering core now ready for the S-04 shift. Lesson: —.
-- **S-04: Child completes a full shift end-to-end with results (NORTH STAR)** — Archived 2026-06-30 → `context/archive/2026-06-29-full-shift-with-results/`. Lesson: —.
+- **F-01: Per-account data isolation contract** — Archived 2026-06-11 → `context/archive/2026-06-09-per-account-isolation-contract/`. Lesson: L-001 / L-002 (lessons.md).
+- **S-01: Parent signs up in Polish and creates the first child profile** — Split S-01a (archived 2026-06-27) + S-01b (archived 2026-06-28 → `context/archive/2026-06-28-first-child-profile-and-start-screen/`). Lesson: L-003.
+- **S-02: Child completes a counting task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-counting-task-in-business-context/`.
+- **S-03: Child completes a change-making task in business context** — Archived 2026-06-29 → `context/archive/2026-06-29-change-making-task-in-business-context/`.
+- **S-04: Child completes a full shift end-to-end with results** — Archived 2026-06-30 → `context/archive/2026-06-29-full-shift-with-results/`.

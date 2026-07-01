@@ -1,29 +1,19 @@
 ---
 project: "MathShop"
-context_type: greenfield
-created: 2026-05-21
-updated: 2026-05-21
+context_type: brownfield
+created: 2026-07-01
+updated: 2026-07-01
 checkpoint:
   current_phase: 8
   phases_completed: [1, 2, 3, 4, 5, 6, 7]
   gray_areas_resolved:
-    - topic: "primary persona scope"
-      decision: "The child (6–10) is the primary persona; parent is a setup helper, not a daily user."
-    - topic: "pain category"
-      decision: "Workflow friction (practice feels like a chore) + decision paralysis (parents can't tell which app teaches) + coordination overhead (parents nag kids to practice)."
-    - topic: "insight / why-now"
-      decision: "Entrepreneurship play teaches both math AND value-of-money / decision-making — dual pedagogical track (math fluency + early financial literacy) is the bet."
-    - topic: "auth model"
-      decision: "Local profile on-device, no auth, multi-profile. PWA-local storage. No accounts, no cloud sync, no email."
-    - topic: "parent surface in MVP"
-      decision: "None. MVP is pure child experience. A parent dashboard / progress peek is explicitly deferred to post-MVP."
-    - topic: "sibling profiles"
-      decision: "Multiple independent profiles on the same device. Profile-picker on launch. Each child has own avatar/theme/coins/level/badges. Optional light sibling leaderboard as motivator."
-    - topic: "MVP scope discipline"
-      decision: "Scoped down to a ~4-week after-hours slice. One theme (second deferred), two task types (counting + change-making — the most directly entrepreneurship-shaped), pre-set avatars instead of customizer, Polish text only (audio cues deferred). The vertical slice still proves the entrepreneurship-framed math premise end-to-end."
-    - topic: "architecture pivot (post-shape, 2026-05-21)"
-      decision: "Moved from PWA + on-device storage to web-app + cloud database. Parent creates an email-backed account that holds multiple child profiles; data persists in the database and is accessible from any device once the parent is logged in. Privacy guardrail rewritten: only parent email is PII; child-profile data remains non-PII (pre-set avatar names, coins, level — no real names). Offline operation and PWA shell are explicitly deferred to v2."
-  frs_drafted: 15
+    - topic: "core re-baseline bet"
+      decision: "Co-equal pillars — the upgrade economy (earn virtualBalance → choose an upgrade = a math/decision moment → world changes) AND multi-world breadth (every child finds an interest-context they care about) are both load-bearing, not one-supports-the-other."
+    - topic: "persona age band"
+      decision: "Widen v1 from 6–8 (grades 1–2) to 6–9, matching the MathMarket docs. Brings richer set-price / manage-stock / profit math for the 9-year-old cohort into scope."
+    - topic: "change category"
+      decision: "Brownfield re-baseline = multiple significant new modules layered on a shipped wedge (auth + profiles + task loop + shift results already live)."
+  frs_drafted: 16
   quality_check_status: accepted
 product_type: web-app
 target_scale:
@@ -31,195 +21,269 @@ target_scale:
   qps: low
   data_volume: medium
 timeline_budget:
-  mvp_weeks: 4
-  hard_deadline: 2026-08-31
+  delivery_weeks: null   # no fixed date — tranched delivery, economy-first as the lead tranche (Phase 3/6)
+  hard_deadline: null    # hard 2026-08-31 date DROPPED 2026-07-01 in favor of incremental tranches
   after_hours_only: true
 ---
 
-# MathShop — Shape Notes
+# MathShop (MathMarket re-baseline) — Shape Notes
+
+> Brownfield re-baseline (2026-07-01). Supersedes the v1 wedge shape archived at
+> `context/foundation/archive/shape-notes-2026-07-01-0129.md`. Source vision:
+> `assets/app-docs-v2-llm-handoff/` + `assets/atomic-assets-v3-progression/` +
+> `assets/math-economy-missing-screens-v3-*/` (local-only / gitignored).
+
+## Current System
+
+What exists today (shipped + archived through S-04):
+
+- **Product:** MathShop — a Polish-language web app teaching math to children by framing every operation as running a small shop. Astro 6 SSR (`output: "server"`) + React 19 islands + Tailwind 4 + shadcn/ui, Supabase (Postgres + auth + row-level security), deployed on Vercel (region `fra1`).
+- **Shipped capabilities (S-01..S-04):**
+  - Parent email-backed auth (sign-up / sign-in / sign-out) with email verification; Polish-localized.
+  - RLS-isolated child profiles — avatar *is* the identity (no text name input); per-account data isolation enforced by per-operation per-role policies (F-01 contract; CLAUDE.md's named highest-risk invariant).
+  - Two task types in shop narrative: **counting** (tap coins in the till) and **change-making** (give correct change), with soft retry + scaffolding hint after 1–2 misses.
+  - **Full shift loop:** 5–10 procedurally-generated tasks (length adapts to level), results screen with total coins + 0–3 stars (accuracy-based), single shift-end coin payout, per-profile persistence across same-browser sessions.
+  - `business_level = 1 + floor(completedShiftCount / 3)`; start-screen coin/level HUD; `shop_state jsonb` column reserved (unused).
+  - ONE world: the lemonade stand. One visual theme.
+- **Users today:** Polish children 6–8 (grades 1–2) as the player; parent as account/setup holder with no daily surface.
+- **Must preserve (guardrails this re-baseline cannot break):**
+  - Per-account RLS isolation — one parent's child profiles never visible to another (FR-012/FR-015). Highest-risk correctness invariant; getting it wrong is a silent data leak.
+  - The shipped auth / profile / task-rendering / shift-loop / results / persistence code and its contracts.
+  - "Math is never shown as a bare equation" — binding product rule.
+  - Soft, non-punishing feedback — no red flash, buzzer, "game over", or coin loss on wrong answers.
+  - 100% Polish localization, authored as content (swappable locale, no source edits).
+  - No monetization mechanic — ever (no ads, IAP, paywall, premium). Identity, not a deferred feature.
 
 ## Vision & Problem Statement
 
-Most math apps drill arithmetic in a vacuum — "3 + 5 = ?" with no context. Children aged 6–10 disengage from practice because the math feels pointless: it never explains why a number matters. Parents look for an alternative and find a sea of generic quiz apps, can't tell which one actually teaches, and end up nagging the child to use whichever they picked. The math is technically "practiced" but not internalized.
+**The delta (why re-baseline):** The shipped v1 proved the wedge — entrepreneurship-framed practice makes a child finish a shift — but it ships the *thinnest* cut of the core pedagogy. Shop growth today is **passive and decorative**: cross a level threshold and the shop changes automatically. Math earns an abstract integer; the child never *decides* anything with what they earned.
 
-The insight: when math is wrapped in a single coherent business narrative — the child runs their own little shop and every operation (counting, change-making, comparing prices, fractions of a cake) is a purposeful business task — children learn both math fluency AND early financial literacy (budgeting, decision-making, value-of-money). That dual-track payoff is what makes a parent pick this app over a generic quiz drill, and what makes a child want to come back without being nagged.
+The MathMarket vision closes that gap on **two co-equal pillars**:
 
-At 100x scale (large-bucket distribution, publicly accessible web app), the domain rule itself doesn't change — but the single-Polish-locale and the grades-1–2-only difficulty band become reach limits. The localization design (FR-013) is the hedge for the locale ceiling; grade-3 content (multiplication, division, fractions) is the most-requested v2 expansion at that scale.
+1. **Shop growth becomes an earned decision, not decoration.** The child earns `virtualBalance` from shifts, then **chooses** an upgrade from a catalog (each with clear, predictable requirements — cost, world level, skill progress, completed mission types). The choice is *itself a math/decision moment* ("masz 126 zł: półka za 80 czy więcej klientów za 120?"), and the world changes visually + functionally because the child decided. This is doc 08's *najważniejsza decyzja produktowa*: math has a point because earnings buy things the child chose, and each upgrade unlocks new missions/products — synchronizing world progress with the skill path.
+2. **Breadth of interest-worlds.** The child picks a world by *interest, not gender* — cafe, bakery, space base, collector shop, creative studio, invention lab. Every world teaches the same competencies through different narration, illustration, and examples, so every child finds a context they care about.
+
+Supporting the two pillars: skill-path tracking (math / money / decisions / inventory / profit), simple pricing→demand→profit and product-unlock mechanics, and a **parent weekly report** that reframes world progress as *evidence of learning, not just play*.
+
+The hard product rule is unchanged and strengthened: math never appears decontextualized, and progression must always reinforce *why* the math mattered — if a future UI or mechanic doesn't strengthen that connection, it is simplified or deferred (doc 08's closing rule).
+
+**Working name:** the design corpus uses "MathMarket / Math Economy" as a *robocza nazwa* (working name, may change). The product keeps **MathShop** as its name for now; the logic is deliberately not over-coupled to the shop motif, since the product spans many interest-worlds.
 
 ## User & Persona
 
-### Primary persona: the child (ages 6–10, Polish primary school grades 1–3)
+### Primary persona: the child (ages 6–9, Polish primary school grades 1–3)
 
-A child in early primary school in Poland. May still be an early reader, so the product relies heavily on icons, audio cues, animation, and minimal text. They reach for the app on a tablet or family laptop, probably handed over by a parent. They expect a game; they don't yet expect or want a "lesson." Their attention span is short (8–12 task shifts at a time) and they need a tangible sense of progress (coins, stars, the shop visibly growing) to keep coming back.
+A child in early primary school in Poland, possibly an early reader, so the product leans on icons, animation, and minimal text. They reach for the app on a tablet or family laptop, handed over by a parent. They expect a game, not a "lesson." Short attention span (a shift of ~5–10 task moments at a time); they need a tangible, *owned* sense of progress — coins they spend, upgrades they chose, a shop that grows because of their decisions — to come back without nagging.
 
-**v1 scope on the persona age band.** The full product targets ages 6–10. v1 ships content calibrated to **grades 1–2 (ages 6–8)** — counting, addition/subtraction in change-making. Grade-3 content for the 9–10 cohort (multiplication, division, fractions, measurement) is the largest single v2 feature and is named explicitly in `## Non-Goals`. The persona section keeps the 6–10 framing to preserve the product's full intent; the FR set narrows to the v1 deliverable.
+**v1 age band (widened in re-baseline):** v1 now targets **6–9 (grades 1–3-ish math within reach)** rather than the shipped 6–8. The extra cohort brings set-price, manage-stock, and simple-profit reasoning into scope alongside counting + change-making. Full grade-3 formal content (multiplication, division, fractions, measurement) remains a later expansion — see `## Non-Goals`.
 
-### Secondary persona: the parent (setup helper, not a daily user)
+### Secondary persona: the parent (account-holder + occasional reviewer)
 
-A parent of a 6–10-year-old who installs the app and may occasionally check what their child has been doing. Not a daily operator. Their bar is: "Does this actually teach math, or is it another gamification veneer over a quiz?" The MVP is not designed around parent supervision UX — but the choice of pedagogy (entrepreneurship framing, mistakes-as-learning) is the parent-facing argument that gets the app installed in the first place.
+Creates the account, logs in to enable each session, and — newly in this re-baseline — can read a **weekly report** that explains, in plain language, what the child practiced and what each unlocked upgrade taught (e.g., "Ania odblokowała małą półkę; powiązane umiejętności: dodawanie, reszta, pieniądze"). Not a daily operator of the game; the report is a low-frequency reassurance + steering surface, never a child-shaming or comparison surface. The pedagogy (entrepreneurship framing, mistakes-as-learning) remains the parent-facing argument that gets the app installed.
 
 ## Access Control
 
-Parent-account-backed. A parent creates an account associated with their email. Each account holds one or more child profiles. The child plays under a chosen profile within the account; there is no separate child login.
+**No change to the auth mechanism or role model — current model preserved.** The shipped two-role structure stays:
 
-- On first visit (no account on the device's browser session), the user is taken to a sign-up flow: parent enters their email and is authenticated. The exact verification mechanism (magic link vs password) is a stack-shaped decision routed to the tech-stack-selector step.
-- After sign-up, the parent is taken to a "create first child profile" flow — pick a pre-set avatar (the avatar's built-in Polish name doubles as the profile name). Adding more profiles later (siblings) is a one-tap action in the account.
-- On every subsequent visit, if the parent is already logged in on that browser, the app shows a profile-picker scoped to that account (one tap per profile to start playing). If not logged in, the parent re-authenticates and is taken to the same picker. Cross-device works: the parent logs in from a different browser or device and finds the same profiles and progress.
-- Each child profile is fully isolated within the account: own avatar, own theme, own coins, own business level, own progress. Data lives in the cloud database, keyed on (parent account, profile).
-- The parent's email is the only PII collected. Child profile data carries no real names (avatars are pre-set), no birthdates, no other identifying fields.
-- No parent-facing dashboard / progress reports / time limits / settings UI in the MVP — see `## Non-Goals`. The parent's only surface is the sign-up / login / profile-picker flow; deep parental supervision is v2 work.
+- `parent` — the account-holder. Signs up with email (verification on), logs in, and the session gates all play. Cross-device: logging in from any browser/device restores the same profiles + progress.
+- `child profile` — one of several profiles inside an account, no separate login. The child plays within a session the parent opened. No anonymous play.
 
-Role model: two roles — `parent` (the account-holder, who signs up and logs in) and `child profile` (one of several profiles inside an account, no separate login). Both roles touch the same authenticated session: child plays within a session the parent has opened. There is no anonymous play in v1.
+Each child profile remains fully isolated within the account (own avatar, theme, coins, level, and now: virtualBalance, world selection, skill progress, unlocked upgrades, world state), keyed on `(parent account, child profile)` and enforced by the F-01 RLS contract.
+
+**Re-baseline additions, all riding the *same* RLS contract (no new roles):**
+
+- New per-profile state introduced by the economy/worlds/skills (`virtualBalance`, `world_state`, `skill_progress`, `mission_attempt`, `unlocked_upgrades`) is account-isolated exactly like existing profile state — every new table/column ships its per-operation per-role RLS policy *in the same migration* (CLAUDE.md rule; L-001).
+- The **parent weekly report** is a new *read* surface: a parent reads aggregated progress for **their own** child profiles only. It must be a read path scoped by the same isolation contract — a parent can never read another account's child data. This is the one genuinely new access path the re-baseline adds, and it is the natural place to re-exercise the isolation negative test.
+- Only the parent's email remains PII. All new child-profile state (balance, upgrades, skill %, world) is non-identifying.
 
 ## Success Criteria
 
+> **v1 cut (decided Phase 3):** *Economy-first, single world, holding the 2026-08-31 deadline.* v1 proves **pillar 1** (earned-decision shop growth) end-to-end in the existing single world. **Pillar 2** (multi-world selection across the 6 interest-worlds) stays co-equal in the product vision but is sequenced into the **next tranche**, because it can't be proven without new per-world content that doesn't fit the remaining ~8 after-hours weeks. This mirrors doc 08's own MVP recommendation (1 active world, 3 stages, 5–8 upgrades, upgrade-choice screen, parent report).
+
 ### Primary
 
-- The entrepreneurship-framed shift works end-to-end: parent signs up for an account, creates a child profile (pre-set avatar), the child reaches the start screen with the first business unlocked, completes a single shift (5–10 tasks, length adapts to level) that mixes counting and change-making in business context (count coins in the till, process a sale and give correct change), sees a results screen with coins, stars, and any visible shop growth — and on the next visit (same browser, parent still logged in OR parent re-logs-in from any device) finds the same profile and progress preserved.
+- The **earned-decision growth loop** works end-to-end in the child's world: the child completes a shift (mixed counting + change-making, plus simple set-price for the upper age band) and earns **spendable funds** (the former "coins", now `virtualBalance`) + stars. On the results/upgrade surface the child sees the upgrades they can now afford and **chooses one** — a framed in-world math/decision moment ("masz 126 zł: półka za 80 czy więcej klientów za 120?"). The chosen upgrade changes the world **visibly** (new shelf/sign/decoration) **and functionally** (unlocks a new product / mission type / capacity), and the choice + new world state persist per profile. The child can see what they're saving toward next ("brakuje 18 zł do małej półki"). A parent can read a **minimal weekly report** tying each unlocked upgrade to the skills it exercised. All of this under the preserved per-account RLS isolation.
 
 ### Secondary
 
-- A typical 6–10-year-old can earn 3 stars (a perfect shift) at least once within their first 5 shifts — a signal that the difficulty curve is calibrated for the target persona, not too easy and not too punishing.
+- **Engagement-of-the-loop signal:** a typical child spends earned funds on at least one upgrade of their choosing within their first ~3 shifts — evidence the earn→choose→grow loop actually engages, not just that shifts complete.
+- **Calibration signal (carried from v1):** a typical 6–9-year-old can earn 3 stars (a perfect shift) at least once within their first 5 shifts — difficulty curve is right for the persona.
 
 ### Guardrails
 
-- Mistakes never feel punishing. Wrong answers produce encouraging, soft feedback (visual + textual) — no red flash, no buzzer sound, no "game over" screen, no loss of accumulated coins. Violating this regresses the whole product premise even if the math works.
-- No PII tied to children. The only personal data collected is the parent's email (for account access). Child profile data is pre-set avatar + coins + level + shop state — none of it identifying. No analytics tied to a child profile, no third-party data sharing, no advertising trackers. Data is encrypted in transit between browser and database. No ads, no in-app purchases, no purchase prompts, no dark patterns. Coins are in-world only. Streak design is forgiving — one missed day does not reset progress.
-- 100% Polish localization. Every user-visible string — UI labels, task prompts, feedback messages, error states, even alt text and any debug strings the child could see — is in Polish. No English leaks anywhere user-visible.
+*(carried from the shipped product — still binding)*
 
-### Timeline budget
+- Mistakes never feel punishing — no red flash, buzzer, "game over", or loss of accumulated funds. Wrong answers get soft, encouraging retry + scaffolding hint.
+- No PII tied to children — only the parent's email is PII; all economy/world/skill state is non-identifying. Encrypted in transit. No ads, no IAP, no purchase prompts, no dark patterns. Funds are in-world only.
+- 100% Polish, authored as swappable content (no source edits to add a locale).
+- Per-account RLS isolation preserved across every new table/column.
 
-- ~4 weeks of after-hours work to ship the scoped-down vertical slice (one theme, two task types, pre-set avatars, no audio). The second theme, the third task type (price comparison), the avatar customizer, and audio cues are explicit v2 work.
+*(new — specific to the economy, from MathMarket docs 02/06/08)*
+
+- **No casino mechanics.** No lootboxes, no random/percentage-chance unlocks, no timers, no streak pressure, no FOMO ("Tylko dziś!"), no rankings, no child-vs-child comparison. Upgrades have **clear, predictable requirements** (cost + world level + skill progress + completed mission types).
+- **Spending never regresses competence.** A child may spend funds on upgrades, but spending must never reduce the child's level, world level, or recorded skill progress (doc 08 rule).
+- **Growth must reinforce the math.** Every upgrade is tied to a concrete skill/mission; if a mechanic doesn't strengthen "the math had a point", it is simplified or deferred (doc 08's closing rule).
+
+### Timeline & delivery model
+
+Decided 2026-07-01: the hard **2026-08-31 deadline is dropped** in favor of **tranched, no-fixed-date delivery** (after-hours). Reason: the re-baselined product the maintainer wants (economy + grade-3 + audio + second theme + eventually multi-world) is materially larger than any single deadline-boxed release, and forcing it into ~8 weeks would risk a half-migrated app (the brownfield trap). Instead:
+
+- **Lead tranche = economy-first, single world** (the Success Criteria above) — proves the core bet (pillar 1) end-to-end and is shippable on its own.
+- Subsequent tranches, each shippable independently, in rough priority order (final ordering set in the roadmap): **multi-world** (pillar 2) · **grade-3 content** (widens persona to 6–10) · **pricing/inventory task types** (set-price, manage-stock) · **audio cues** · **second visual theme** · **richer parent report**.
+
+Acknowledgment: dropping the forcing function trades schedule certainty for scope integrity; the maintainer accepts delivering incrementally with no committed date. Each tranche must leave `main` shippable.
 
 ## Functional Requirements
 
-### Profiles & onboarding
+> `Change:` tags — `preserved` = shipped capability that must keep working unchanged (defensive); `modified` = shipped capability whose behavior changes; `new` = capability that doesn't exist yet. Preserved FRs retain their Socrates resolutions from the archived v1 shape and are not re-challenged here.
 
-- FR-001: User can create a child profile by picking a pre-set avatar (one of ~6 named avatars, e.g., "Lis" the fox); the avatar's built-in Polish name doubles as the profile name. No text-input step. Priority: must-have
-  > Socrates: Challenge — "Name field is too high a bar for pre-readers; the 3-step creation flow is friction before play." Resolution: dropped the text-input step; avatar selection IS the profile creation. Since v1 ships only one theme, no theme picker in the creation flow either (the data model still supports per-profile theme for v2).
+### Preserved (shipped wedge — must keep working)
 
-- FR-002: User can pick an existing profile from a friendly profile-picker on launch when 2+ profiles exist. Single-profile devices launch straight into the start screen with no picker. Priority: must-have
-  > Socrates: Challenge — "A one-option picker every launch is friction." Resolution: show picker only when ≥2 profiles exist.
+- FR-001: Parent can sign up with email, log in, and access the same account + profiles from any device. Priority: must-have. Change: preserved
+- FR-002: User can create a child profile by picking a pre-set avatar (avatar = identity, no text-name step); accounts with 2+ profiles get a profile-picker on launch, single-profile accounts skip it. Priority: must-have. Change: preserved
+- FR-003: Child can complete counting and change-making tasks rendered in shop narrative (never as a bare equation), with soft retry and a scaffolding hint after 1–2 misses. Priority: must-have. Change: preserved
+- FR-004: Child completes a shift of 5–10 procedurally-generated tasks whose length adapts to level, with a per-correct-answer acknowledgment and a larger shift-end celebration. Priority: must-have. Change: preserved
+- FR-005: Child receives a results screen with 0–3 stars based on accuracy; per-profile state persists and restores across sessions/devices. Priority: must-have. Change: preserved
+- FR-006: All user-visible text is Polish, authored as content so a future locale is added without source-code changes. Priority: must-have. Change: preserved
 
-### World & progression
+### Economy: earning & spending funds
 
-- FR-003: User can start a shift from a simple in-world start screen showing the active business (the lemonade stand). The full visual world map is deferred to v2 (ships when 2+ locations exist). Priority: must-have
-  > Socrates: Challenge — "World map is decorative with only one unlocked location; a Start Shift button is simpler and faster." Resolution: defer the map to v2; v1 ships a single-business start screen.
+- FR-007: Child earns **spendable funds** (`virtualBalance`) at shift end, reflecting accuracy + shift length. The shipped "coins" score becomes this single spendable currency — there are not two currencies. Stars remain a separate per-shift quality signal. Priority: must-have. Change: modified
+  > Socrates: Counter considered — "making the score spendable could feel like *losing* progress to a 6yo, colliding with the no-punishment guardrail." Resolution: keep one currency, but **mitigate by framing** — the funds balance is a *wallet*; the permanent, monotonic win the child sees is the **owned upgrades + grown shop**, never a shrinking number. Buying is gaining a thing, not losing coins. (Tied to FR-008, FR-012.)
+- FR-008: Child's funds accumulate across shifts and are never reduced by a wrong answer or by anything except a deliberate upgrade purchase; the running balance is visible on the start/results surfaces, framed as a wallet (spending = acquiring a permanent upgrade, never a penalty). Priority: must-have. Change: new
+  > Socrates: see FR-007 — the wallet framing + permanent owned-upgrades view is the mitigation for "spend feels like loss." Progress the child perceives (shop size, owned upgrades, level, skills) is always monotonic; only the spendable wallet moves down, and only by the child's own choice.
+- FR-009: Procedurally-generated task numbers cover the 6–9 band — larger numbers / occasional multi-step change-making for the upper cohort, within the no-bare-equation rule. The **choose-upgrade budgeting decision** (FR-011) is the primary *new* math surface for the upper cohort. Priority: must-have. Change: modified
+  > Socrates: Counter considered — "widening to 6–9 without a set-price task underserves the 9yo and makes the economy thin." Resolution: for v1, harder/multi-step change-making **plus** the budgeting decision in choose-upgrade (do I have enough? which is better value?) is sufficient new math. Dedicated **set-price→demand** and **manage-stock** task types are deferred to the pricing/inventory tranche (logged in Non-Goals / Open Questions).
 
-- FR-004: User can tap the active business to start a shift; the tap is wrapped in an in-world Polish narrative prompt (e.g., "Czas otworzyć sklep!"). Priority: must-have
-  > Socrates: Challenge — "Bare tap-to-start is mechanical." Resolution: wrap the tap in an in-world prompt to keep the narrative active.
+### Upgrades & visible world growth
 
-- ~~FR-005~~ — Deferred to v2 alongside the world map.
-  > Socrates: Challenge — "Map is dropped in v1, so the locked-locations-on-map FR no longer applies." Resolution: dropped from v1 entirely; will be reintroduced in v2 with the map.
+- FR-010: The world defines a small **upgrade catalog** (5–8 upgrades) — e.g. sign, shelf, better register, extra product slot, more customers — each with clear, predictable requirements: cost in funds + required world level + required skill progress + required completed mission types. No random/chance unlocks. Priority: must-have. Change: new
+  > Socrates: Counter considered — "4 requirement types is too complex for a 6yo and too much to build in 8 weeks; gate on cost + level only." Resolution: **keep all 4 requirement types** — the skill-progress + mission-type gates are exactly what synchronizes world growth with *learning* (doc 08's central point); a cost-only catalog would regress to a shop game detached from math. Accepted cost: higher build + the skill-path (FR-015) becomes load-bearing, not optional. UI still shows the child only the *missing* requirement in plain language, not the full predicate.
+- FR-011: On the results/upgrade surface, the child sees which upgrades they can now **afford and unlock**, and **chooses one to buy** — framed as an in-world math/decision moment ("masz X zł: A za 80 czy B za 120?"), not a store checkout. Locked upgrades show what's still needed. Priority: must-have. Change: new
+  > Socrates: Counter considered — "a full upgrade-store screen is a big new surface." Resolution: stands — this *is* the v1 bet (pillar 1). The decision moment is the new-math payoff; it cannot be cut without cutting the re-baseline's reason to exist.
+- FR-012: Buying an upgrade deducts its cost, applies its effects — a **visible** world-layer change (new shelf/sign/decoration) AND a **functional** unlock (new product, new mission type, or added capacity) — and persists the new world state per profile. Spending never reduces the child's level, world level, or skill progress. Priority: must-have. Change: new
+  > Socrates: Counter considered — "visible + functional in one FR is two features." Resolution: stands — the visible change without a functional unlock is the old passive decoration we're explicitly replacing; both halves together are what make growth *mean* something. (Absorbs the paused S-05.)
+- FR-013: The start/results surface shows the **next** meaningful upgrade and how much more the child needs ("brakuje 18 zł do małej półki"), as concrete, non-manipulative encouragement (no timers, no FOMO). Priority: must-have. Change: new
+  > Socrates: Counter considered — "a 'you need 18 more' nudge edges toward manipulative pressure." Resolution: stands but bounded by the guardrail — concrete progress info only (factual gap to the next upgrade), never urgency/scarcity language; doc 08's allowed-message list governs the copy.
+- FR-014: Visible shop growth (the paused S-05 outcome) is delivered as the *visual half* of FR-012 — driven by purchased upgrades / world state, not by a passive level threshold. Priority: must-have. Change: modified
+  > Socrates: Counter considered — "S-05 already has research done for passive growth; reusing it is cheaper." Resolution: the S-05 *render-path / RLS / persistence* research stays valid and reusable, but its passive-level-threshold trigger is superseded by upgrade-driven growth. Cheaper-but-passive would ship the weak version of the mechanic we're re-baselining away from.
 
-### Shift gameplay
+### Skill path (lite)
 
-- FR-006: User can complete a shift whose length adapts to their level. Lower-level (grade 1 equivalent) profiles play shorter shifts (~5–7 tasks); higher-level (grade 2 equivalent) profiles play longer shifts (~8–10 tasks). Each shift mixes counting and change-making tasks. Priority: must-have
-  > Socrates: Challenge — "8–12 tasks may be too long for a 6-year-old's attention span." Resolution: shift length is adaptive — shorter for younger/lower-level, longer as the child progresses, all within the grades 1–2 band (see FR-007).
+- FR-015: The system tracks per-competency **skill progress** (e.g. counting, money/change, decisions) from mission attempts, and surfaces the child's progress simply (icons / progress, age-appropriate). Used as an upgrade requirement input (FR-010) so world growth stays synchronized with learning. **Load-bearing in v1** (not optional) because FR-010 keeps the skill-progress requirement gate. Priority: must-have. Change: new
+  > Socrates: Counter considered — "skill tracking is a whole subsystem; could be faked/deferred." Resolution: it can't be deferred once FR-010 gates upgrades on skill progress — the gate needs a real signal. Kept minimal: derive progress from existing mission-attempt data, surface lightly. This is the scope the 'keep all 4 requirement types' decision bought.
 
-- FR-007: Task numbers are procedurally generated within the **grades 1–2 difficulty band (ages 6–8)** in v1. Grade 3 (ages 9–10) tasks — including the multiplication/division/fractions material from the seed — are deferred to v2. Priority: must-have
-  > Socrates: Challenge — "Grades 1–3 is too wide a band for one MVP." Resolution: narrow v1 to grades 1–2. Implication: the v1 persona narrows to ages 6–8; the original 6–10 persona is the v2 target. Logged in Open Questions.
+### Parent insight
 
-- FR-008: User receives a small acknowledgment per correct answer (subtle animation; audio cues deferred to v2) and a bigger celebration at shift end. Tiered feedback prevents per-answer fanfare fatigue. Priority: must-have
-  > Socrates: Challenge — "Constant per-answer celebration loses signal." Resolution: tiered feedback — small per task, large at shift end.
-
-- FR-009: User can retry a wrong answer within a task without losing earned coins. After 1–2 consecutive wrong attempts on the same task, a gentle scaffolding hint surfaces (e.g., briefly highlights the relevant on-screen artifact such as the coin pile to count); retry + hint, not retry + silence. Wrong-answer count affects star rating but never blocks progression. Priority: must-have
-  > Socrates: Challenge — "Unlimited silent retry risks rote tapping; the child learns to guess, not to think." Resolution: scaffolding hint after 1–2 misses — teach the strategy, not just the answer.
-
-### Scoring & persistence
-
-- FR-010: User earns coins for completing a shift; coins are paid out **once at shift end** as a single in-world payout (not per correct answer). Coin amount reflects the shift's accuracy and length. Priority: must-have
-  > Socrates: Challenge — "Per-answer coin reward feels transactional and fragments focus." Resolution: single shift-end coin payout keeps math attention central; reward signal is concentrated where it pedagogically fits (end-of-work payout).
-
-- FR-011: User receives a results screen showing total coins earned, stars (0–3 based on accuracy), and — when a level threshold is crossed — a **visible shop change** (new shelf, new sign element, new decoration). The level number is tracked internally but the UI shows literal shop growth as the reward, not an abstract integer. Priority: must-have
-  > Socrates: Challenge — "Business level as a number is abstract for a 6-year-old." Resolution: surface level progression as visible shop growth (new shelf, new sign) rather than an integer. Reinforces ownership-as-pedagogy: the shop visibly grows because the child worked.
-
-- FR-012: User's profile, coins, completed-shift count, business level, and visible shop state persist in a cloud database keyed on (parent account, child profile), and are accessible from any device once the parent logs in. Priority: must-have
-  > Socrates: Challenge (original, pre-pivot) — "localStorage is evicted more aggressively than IndexedDB; durability matters for multi-month child progress." Resolution after architecture pivot (2026-05-21): on-device storage was replaced by a cloud database tied to a parent account. Durability is now a database-operational concern; cross-device sync is now a feature, not a constraint.
-
-### Localization
-
-- FR-013: All user-visible text is in Polish in v1; adding additional locales in a future version must be possible through content changes alone, without requiring source-code modifications. Priority: must-have
-  > Socrates: Challenge — "Hardcoding Polish creates a costly rewrite if v2 needs other markets." Resolution: build the localization design so it accepts new locales as content, not code — cheap insurance.
-
-### Accounts & resilience (added post-pivot, 2026-05-21)
-
-- FR-014: Parent can sign up for an account using their email and access it from any device by logging back in. The verification mechanism (magic link, password, or both) is a stack-shaped decision routed to tech-stack-selector. Priority: must-have
-
-- FR-015: Once a parent is authenticated, they see a profile-picker scoped to their account containing all child profiles created under it. Cross-device login restores the same profile set and the same per-profile progress (coins, business level, visible shop state, completed-shift count). Priority: must-have
-
-- FR-016: If the browser loses network connectivity mid-shift, the app halts the shift gracefully and shows a Polish in-world message (e.g., "Internet zniknął! Spróbuj za chwilę."). Pending shift state is lost; on reconnect, the child resumes from the last shift-end the database recorded. v1 does not attempt to queue or sync mid-shift work — offline resilience is deferred to v2. Priority: must-have
-
-## Business Logic
-
-Every math task is rendered as a purposeful business activity inside a story-driven game, never as a bare equation, so the child practices math while running their shop.
-
-The inputs the rule consumes are user-facing artifacts of the shop: a pile of coins the customer hands over, a sale that needs a receipt, a price tag versus a sticker on a supplier's box, a recipe that needs a measured ingredient. Every input is a thing the child sees inside the world, not a numerical prompt floating on a blank screen.
-
-The output is an in-world action that completes a small business moment: change is given, a customer leaves happy, a supplier is picked, an ingredient is measured. The math is the means; the in-world resolution is the end. Correctness gates the in-world resolution but never gates the child's continued play — wrong answers produce a gentle retry with a scaffolding hint (see FR-009), not a dead end.
-
-The child encounters the rule continuously throughout each shift. There is no moment in the product flow where math appears decontextualized — even the first onboarding interaction is framed as opening the shop, not as "let's do some math." The narrative is the wrapper for every operation, not an intro skin that gets stripped away once the lessons begin.
-
-## Non-Functional Requirements
-
-- Animation feels continuous and smooth — no perceptible stutter, dropped frames, or visible loading hitches during any interaction on a mid-range tablet released within the last 3 years.
-- All interactive targets — avatars, task tiles, answer choices, on-screen coins, the start-shift button — are large enough and spaced enough that a typical 6-year-old's tap reliably lands on the intended target. Adjacent tap targets cannot be hit by a single tap that lands between them.
-- Cold-load from URL to the first interactive screen (profile-picker for an authenticated returning parent, or sign-up screen for a first-time visitor) completes in ≤ 3 seconds on a typical home broadband connection and a mid-range tablet released within the last 3 years.
-- Child-facing requests during a shift (task submission, hint surfacing, results screen) round-trip with no perceptible wait on a typical home broadband connection. Slower networks should not degrade the in-shift experience into unresponsive feedback.
-
-## Non-Goals
-
-- **No parent-facing dashboard / progress reports / time limits / settings UI in v1.** The MVP is pure child experience. Parental supervision UX is real work and deferring it lets us focus on the pedagogy. (Adding it later is straightforward — read-only views over the existing local data.)
-- **No monetization mechanic — ever. No ads, no in-app purchases, no paywall, no "premium tier."** This is identity, not a deferred feature. The product would compromise its own pedagogy by carrying any of these.
-- **No grade-3 math content in v1 — no multiplication, no division, no fractions, no measurement.** v1 covers grades 1–2 (counting, addition, subtraction in change-making). Grade-3 content is the largest single v2 expansion (see Vision insight on reach at scale).
-- **No gamification beyond coins + stars + visible shop growth in v1.** No daily streaks, no badges/achievements, no sibling leaderboard. Each of these is real UI + state-tracking work; v1 ships the core loop only, with these as v2 candidates.
-- **No offline / PWA shell in v1.** The app is a browser-loaded web application; network is required. A network blip mid-shift halts the shift gracefully (see FR-016). PWA conversion + offline play sit in v2 backlog and are explicitly out of v1 scope.
-- **No anonymous play in v1.** Parents must sign up before any child profile exists. "Try without signing up" surface is deferred — adding it later is straightforward, but launching with it broadens the privacy / abuse surface unnecessarily for an MVP.
-
-## Open Questions
-
-1. **Persona age narrowing.** Original vision: Polish kids 6–10 (grades 1–3). FR-007 narrowed the v1 difficulty band to grades 1–2 (ages 6–8). **Resolved (2026-05-21):** Keep the persona at 6–10 to preserve the product's full intent; v1 ships content calibrated to ages 6–8 with grade-3 material as the largest v2 expansion. The User & Persona section and the Non-Goals section both record this delta.
-
-2. **Architecture pivot (PWA → web-app + cloud DB).** Original shape (2026-05-21 morning): single-device PWA, on-device storage, no auth, no cloud sync. **Resolved (2026-05-21 same day):** moved to a browser-loaded web app backed by a cloud database, with parent-account-based access (email-backed auth, multiple child profiles per account, cross-device login). Privacy guardrail rewritten (only parent email is PII). Offline behavior + PWA conversion deferred to v2. New FRs added: FR-014 (parent sign-up), FR-015 (cross-device login + profile-picker), FR-016 (graceful network-loss handling). Old FR-012 ("on the device") rewritten to cloud-backed. Tech-stack hints (Vercel hosting, Supabase database+auth) routed to Forward block for tech-stack-selector.
-
-## Quality cross-check
-
-Cross-check ran 2026-05-21 against the greenfield 6-check soft gate.
-
-- Access Control — **present.** Parent-account-backed (email auth) with multiple child profiles per account; cross-device login; no separate child login. (Post-pivot 2026-05-21: changed from single-device local profile.)
-- Business Logic — **present.** One-sentence rule locked: "Every math task is rendered as a purposeful business activity inside a story-driven game, never as a bare equation, so the child practices math while running their shop." Not empty-CRUD; rule is Workflow + Calculation shape (math gates in-world progression).
-- Project artifacts — **present.** Valid frontmatter, project name (MathShop), context_type: greenfield, product_type, target_scale, timeline_budget all set.
-- Timeline-cost acknowledgment — **present.** Cost was surfaced in Phase 3 (8–12-week original estimate flagged); user picked scope-down to 4 weeks. The scope-down choice IS the acknowledgment.
-- Non-Goals — **present.** Post-pivot: no parent dashboard, no monetization ever, no grade-3 content in v1, no gamification beyond coins/stars/shop-growth, no world map in v1, no second theme/avatar customizer/audio in v1, no offline / PWA shell in v1, no anonymous play in v1.
-- Preserved behavior — **n/a** (greenfield).
-
-All 6 checks pass. `checkpoint.quality_check_status: accepted`.
-
-## Forward: tech-stack
-
-Notes for the downstream tech-stack-selector step (NOT part of PRD):
-
-- Browser-loaded web application accessed via URL (no PWA shell, no offline support in v1).
-- Cloud database backing all persisted state, keyed on (parent account, child profile).
-- Email-backed parent authentication. The user surfaced Supabase as a likely choice for both database and auth — pin with tech-stack-selector. Magic-link vs password verification is part of the stack pick.
-- Frontend deployment: the user surfaced Vercel as the preferred host — pin with tech-stack-selector.
-- Localization design (per FR-013) accepts new locales as content swaps, not source-code changes. Pick a stack pattern that supports this without rework.
-- Animation-heavy UI for a kid persona — the stack pick should accommodate smooth, performant animations on mid-range tablets.
-- Two visual themes deferred to v2 — but the theming infrastructure should be in place from day one (per-profile theme field already in the data model).
-- v2 backlog (not v1 stack pick): PWA conversion + offline play on top of the same database; child progress sync resilience across network blips.
+- FR-016: Parent can read a **minimal weekly report** for their own child profile(s) — what was practiced, which upgrade was unlocked, and the skills it exercised — phrased educationally, never shaming or comparative. Read-only, scoped by the RLS isolation contract. Priority: must-have. Change: new
+  > Socrates: Counter considered — "the report doesn't prove the child-side bet; cut it to protect the 8-week budget." Resolution: **promoted to must-have** — the parent-facing 'this is learning, not play' story is core to why a parent keeps the app, and it's the natural place to re-exercise the RLS isolation negative test (parent reads only their own child). Kept *minimal* (read-only, one screen) to bound the cost. Net v1 scope rises vs. the leanest cut — flagged as a budget risk in Open Questions.
 
 ## User Stories
 
-### US-01: Child completes their first shift end-to-end
+### US-01: Child earns funds and chooses how the shop grows
 
-- **Given** a child has created a profile (display name, pre-set avatar, theme) and is looking at the world map with the lemonade-stand location unlocked
-- **When** they tap the lemonade-stand to enter Shift 1
-- **Then** they complete 8–12 mixed counting and change-making tasks in business context, receive celebratory feedback on every correct answer and supportive retry on every wrong one, reach a results screen showing total coins earned, stars (0–3 based on accuracy), and a business-level update — and on the next launch they find their profile and progress preserved exactly as left
+- **Given** a child playing their world has completed a shift and earned funds (their balance now exceeds the cost of at least one available upgrade)
+- **When** they reach the results/upgrade surface and are shown the affordable upgrades alongside the locked ones
+- **Then** they choose one upgrade in a framed in-world decision moment, their balance is debited, the shop changes visibly *and* unlocks a new product/mission/capacity, the new world state persists, and the surface shows what they're now saving toward next — all without ever reducing their level or skill progress.
 
 #### Acceptance criteria
 
-- Every task is rendered as a *business activity*, not a bare equation (e.g., "Mrs. Kowalski paid with 5 zł for an item that costs 3 zł — how much change do you give her?" — never "5 − 3 = ?").
-- Counting tasks use visible, tappable objects (coins in the till, items on a shelf), not numerical inputs.
-- Wrong answers produce a gentle "try again" with the same task; the child can attempt unlimited retries on a single task. The wrong-answer count is recorded for the star rating but the task always completes once correct.
-- The results screen shows in this order: coins earned this shift, total coins, stars (0–3), and the business-level number (incrementing if a level threshold was crossed).
-- After the results screen, the child returns to the world map with persisted state. Closing the PWA and reopening it on the same device restores the same profile state intact.
+- The upgrade choice is presented as a business decision in Polish ("masz 126 zł: półka za 80 czy więcej klientów za 120?"), never as a bare store/checkout.
+- Affordable upgrades are selectable; locked ones show the concrete missing requirement (funds / world level / skill / mission type) — no random or chance-based unlocks.
+- Buying debits funds and applies both a visible layer change and a functional unlock; on reload the purchased state and grown shop persist for that profile.
+- Spending funds never lowers the child's level, world level, or skill progress.
+- A parent reading the weekly report later sees the unlocked upgrade tied to the skills it exercised, for their own child only.
+
+## Business Logic
+
+This re-baseline **modifies and extends** the shipped domain rule. Both rules below hold together.
+
+**Rule 1 (preserved):** Every math task is rendered as a purposeful business activity inside a story-driven game, never as a bare equation — so the child practices math while running their shop.
+
+**Rule 2 (new — the re-baseline):** *Progress is an earned economy that the child steers, and growth is gated on learning.* Concretely: completing math missions earns **spendable funds**; the child **chooses** upgrades from a catalog whose requirements (funds + world level + skill progress + completed mission types) are clear and predictable; buying an upgrade grows the world **visibly and functionally** (new product / mission / capacity); because upgrade requirements include skill progress and mission history, **world growth stays synchronized with what the child has actually learned**. Spending funds never regresses the child's level or competence — only the spendable wallet moves down, and only by the child's choice.
+
+The child encounters both rules continuously: every shift is in-world math (Rule 1), and every shift's payoff is *deciding how to grow the shop* with what was earned (Rule 2). There is no decontextualized math and no "points for points' sake" — the economy exists to make the math's purpose visible.
+
+**Model reconciliation (shipped → re-baselined), to pin in planning:**
+- shipped `coins` (accumulating score) → `virtualBalance` (spendable wallet). One currency.
+- shipped `business_level = 1 + floor(shifts/3)` → retained as **worldLevel**, used as an upgrade requirement gate (`requiredWorldLevel`).
+- shipped `stars` → unchanged (per-shift accuracy/quality signal).
+- shipped `shop_state jsonb` (reserved, unused) → now carries **world state**: purchased upgrade ids, active visual layers, product slots, unlocked mission types.
+- new: `skill_progress` (per competency, derived from mission attempts), an **upgrade catalog** definition, and the upgrade-purchase transaction.
+
+**Authority rule (preserved invariant, L-002):** funds, purchases, world-state changes, stars, and skill progress are **server-authoritative** — computed and written server-side from trusted inputs, never accepted from the client. A tampered client cannot inflate its wallet, grant itself an upgrade, or skip a requirement. This mirrors how coins/stars are already computed server-side in `recordShiftResult`.
+
+## Non-Functional Requirements
+
+*(carried from the shipped product)*
+- Animation feels continuous and smooth — no perceptible stutter or loading hitch during any interaction on a mid-range tablet released within the last 3 years. Extends to the new **upgrade-choice and world-growth** moments (the buy → shop-grows transition must feel rewarding, not janky).
+- All interactive targets — avatars, task tiles, answer choices, on-screen coins, the start-shift button, and the new **upgrade tiles** — are large enough and spaced enough that a typical 6-year-old's tap reliably lands on the intended target; adjacent targets can't be hit by one tap.
+- Cold-load from URL to the first interactive screen completes in ≤ 3 seconds on typical home broadband + a mid-range tablet.
+- Child-facing requests during a shift (task submission, hint, results, **upgrade purchase**) round-trip with no perceptible wait; slower networks must not degrade the in-shift experience into unresponsive feedback.
+
+*(new)*
+- Loading the start/upgrade surfaces — which now read world state, the upgrade catalog, and skill progress — must not add a perceptible delay versus the shipped start screen (single profile read already loads the needed columns; avoid N+1).
+
+## Constraints & Preserved Behavior
+
+- **RLS contract is inviolable.** Every new table or column (`skill_progress`, upgrade catalog/purchase data, any `world_state` shape change) ships its per-operation per-role RLS policy **in the same migration** (CLAUDE.md rule; L-001). The parent weekly-report read path (FR-016) is scoped so a parent reads only their own children's data — the isolation negative test is re-exercised here.
+- **Data migration must be non-destructive.** Existing `child_profiles` rows (coins, business_level, shop_state) must migrate cleanly: coins reinterpreted/renamed as the spendable wallet, `shop_state` populated to the new world-state shape with a sane default (no upgrades purchased, base layers). No existing profile loses progress.
+- **Shipped contracts reused, not forked.** The task spec → render → answer → feedback contract, the shift loop, the results screen, and `recordShiftResult`'s server-authoritative compute-and-persist pattern are extended, not rewritten. The economy write rides the existing single profile UPDATE where possible (no extra round-trip), per the paused S-05 research.
+- **API conventions preserved.** New endpoints `export const prerender = false`, validate input with zod, take nothing trust-bearing from the client (L-002), and reach rows by id under RLS (no client-supplied `account_id`).
+- **No regression of the shipped wedge.** S-01..S-04 user-visible behavior (auth, profile creation/picker, both task types, the full shift + results + persistence) must continue to work unchanged for existing accounts.
+
+## Product framing
+
+- **Product type:** unchanged — web-app (Astro SSR + React islands on Supabase/Vercel). The re-baseline adds surfaces, not a new product form factor.
+- **Scale:** unchanged — `large` user bucket, low QPS, medium data volume. Widening the persona from 6–8 to 6–9 (and later 6–10 with grade-3) does not move the scale bucket.
+- **Delivery:** no fixed date; tranched (see Timeline & delivery model). After-hours only.
+
+## Non-Goals
+
+### True non-goals — not on the re-baseline roadmap
+
+- **No monetization mechanic — ever.** No ads, IAP, paywall, premium tier. Identity, not a deferred feature.
+- **No casino mechanics.** No lootboxes, random/chance unlocks, timers, streak pressure, FOMO, rankings, or child-vs-child comparison. (Also a Guardrail.)
+- **No real trading / market / stock / crypto / speculation.** Doc 01/08 hard rule for this age band — even the "market" skill stays a locked, far-future module, never actual trading.
+- **No full parent dashboard in the re-baseline.** Only the minimal read-only weekly report (FR-016) ships. Goal-setting, difficulty controls, time limits, and a settings UI are out. (A fuller parent panel is a *possible* far-future item but is not committed here.)
+- **No anonymous play.** A parent must sign up before any child profile exists.
+- **No offline / PWA shell.** Network required; a mid-shift drop halts gracefully (existing FR / S-08 intent). PWA + offline sync stay out.
+
+### Deferred to later tranches — on the roadmap, NOT the lead tranche
+
+*(These are explicitly IN the re-baselined product's scope but sequenced after the economy lead tranche — recorded here so they don't leak into the first build.)*
+
+- **Multi-world selection (pillar 2)** — world-selection screen + the other 5 interest-worlds (bakery, space base, collector, studio, lab). The lead tranche ships the single existing world only.
+- **Grade-3 formal content** — multiplication, division, fractions, measurement; widens the persona to 6–10. Own tranche (heaviest content item).
+- **Pricing/inventory task types** — set-price→demand and manage-stock missions. Own tranche; the lead tranche's only new math is the budgeting choose-upgrade decision.
+- **Audio cues** — correct-answer / shift-end / upgrade-purchase sound. Own tranche.
+- **Second visual theme** — a second skin for the world (per-profile theme field already exists). Own tranche.
+- **Richer parent report** — beyond the minimal FR-016 weekly view (trends, recommendations). Own tranche.
+
+## Open Questions
+
+1. **v1 budget risk (build-cost creep).** Even as the lead tranche, the economy scope grew during shaping: keeping **all 4 upgrade-requirement types** (FR-010) makes the **skill-path load-bearing** (FR-015), and the **parent weekly report was promoted to must-have** (FR-016). Watch this in `/10x-plan` — if the lead tranche is too big to plan cleanly, the natural split is (a) economy loop [wallet + catalog + choose-upgrade + visible/functional growth], then (b) skill-path-as-gate + parent report. Owner: user. Block: no.
+2. **Tranche ordering.** The Timeline & delivery model lists a rough order (multi-world · grade-3 · pricing/inventory · audio · theme · richer report). Final ordering + dependencies are the roadmap's job (`/10x-roadmap`). Owner: user/roadmap. Block: no.
+3. **Skill-path signal source.** FR-015 derives skill progress from mission attempts; the exact competency taxonomy + progress function is a planning detail. The MathMarket docs suggest math / money / decisions / inventory / profit — v1 needs only the subset the lead-tranche upgrade gates reference. Owner: planning. Block: no.
+
+## Forward: tech-stack
+
+Notes for downstream steps (NOT part of PRD) — the stack is already chosen and shipped (Astro 6 SSR · React 19 · Tailwind 4 · shadcn · Supabase Postgres+auth+RLS · Vercel fra1). No stack change. Relevant carry-forwards:
+
+- The economy is **server-authoritative** on the existing Supabase pattern (`recordShiftResult` compute-and-persist); new upgrade-purchase logic extends the same single-UPDATE-under-RLS approach (paused S-05 research documents the exact render/persist path).
+- New tables/columns (`skill_progress`, upgrade catalog/purchase, `world_state` shape) ship RLS policies in-migration; migrations are non-destructive over existing `child_profiles` rows.
+- The v3 progression art (`assets/atomic-assets-v3-progression/` — 7 PNG illustrations + 22 SVG icons + 6 UI symbols) is the asset source for the economy surfaces; it is **local-only / gitignored**, so any CI/cloud-agent session needs the maintainer to supply the specific assets (per CLAUDE.md's assets caveat). Production PNGs must be committed under `public/` following the existing illustration pipeline.
+- The 5 v3 "missing screens" mockups (world-progression, upgrades, mission-result, product-unlocked, parent-weekly-report) are the design source of truth for the new surfaces — same local-only caveat.
+
+## Quality cross-check
+
+Cross-check ran 2026-07-01 against the brownfield 7-check soft gate. All pass.
+
+- **Access Control — present.** Preserved 2-role model (parent account + child profile, no separate child login); one new read path (parent weekly report) scoped by the same RLS isolation contract. No auth-mechanism change.
+- **Business Logic — present.** Two coupled rules: Rule 1 (preserved) "every math task is a purposeful business activity, never a bare equation"; Rule 2 (new) "progress is an earned economy the child steers, with growth gated on learning." Not empty-CRUD.
+- **Project artifacts — present.** Valid frontmatter; project MathShop; context_type brownfield; product_type/target_scale set; timeline dropped-date model recorded.
+- **Timeline-cost acknowledgment — present.** Hard 2026-08-31 date dropped 2026-07-01 in favor of tranched no-date delivery; the scope-integrity-over-schedule tradeoff is explicitly accepted (Timeline & delivery model).
+- **Non-Goals — present.** Split into true non-goals (no monetization ever, no casino mechanics, no real trading, no full parent dashboard, no anonymous play, no offline/PWA) and deferred-tranche backlog (multi-world, grade-3, pricing/inventory, audio, 2nd theme, richer report).
+- **Preserved behavior — present.** Constraints & Preserved Behavior names the inviolable RLS contract, non-destructive data migration over existing profiles, reuse (not rewrite) of shipped task/shift/results contracts, API conventions, and no-regression of the S-01..S-04 wedge.
+
+`checkpoint.quality_check_status: accepted`.
