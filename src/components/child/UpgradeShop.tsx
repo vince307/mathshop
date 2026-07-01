@@ -124,7 +124,7 @@ export default function UpgradeShop({ profileId, walletBalance, businessLevel, p
                   <ChildButton
                     variant="gold"
                     className="min-h-14 px-6 text-lg"
-                    disabled={buyingId === u.id}
+                    disabled={buyingId !== null}
                     onClick={() => buy(u)}
                   >
                     {buyingId === u.id ? t.upgradeShop.buying : t.upgradeShop.buy}

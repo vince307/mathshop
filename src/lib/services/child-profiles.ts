@@ -168,7 +168,7 @@ export async function buyUpgrade(
 
   const { error: updateErr } = await client
     .from("child_profiles")
-    .update({ wallet_balance: walletBalance, shop_state: { purchased: nextPurchased } })
+    .update({ wallet_balance: walletBalance, shop_state: { ...current.shop_state, purchased: nextPurchased } })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };
 
