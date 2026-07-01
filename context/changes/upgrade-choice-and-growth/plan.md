@@ -365,15 +365,15 @@ One profile read already loads `shop_state` (`select("*")`) — no new query for
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npm run check`
-- [x] 4.2 Linting passes: `npm run lint`
-- [x] 4.3 Build succeeds: `npm run build`
-- [x] 4.4 All tests pass incl. bonus-length + max-shift-accepted (`npx vitest run`)
-- [x] 4.5 No inline user-visible literals introduced (L-003 spot-check)
+- [x] 4.1 Type checking passes: `npm run check` — 40c0ed2
+- [x] 4.2 Linting passes: `npm run lint` — 40c0ed2
+- [x] 4.3 Build succeeds: `npm run build` — 40c0ed2
+- [x] 4.4 All tests pass incl. bonus-length + max-shift-accepted (`npx vitest run`) — 40c0ed2
+- [x] 4.5 No inline user-visible literals introduced (L-003 spot-check) — 40c0ed2
 
 #### Manual
 
-- [x] 4.6 Buying visibly changes the shop art on start + upgrades screens
-- [x] 4.7 Owned upgrades lengthen the shift (up to the cap) and pay more; a max shop's shift still completes
-- [x] 4.8 Start screen shows the correct "next upgrade / brakuje X zł" and hides it when nothing's next
-- [x] 4.9 Full loop works end-to-end; spending never lowers level; copy is encouraging Polish, no scarcity
+- [x] 4.6 Buying visibly changes the shop art on start + upgrades screens — 40c0ed2
+- [x] 4.7 Owned upgrades lengthen the shift (up to the cap) and pay more; a max shop's shift still completes — 40c0ed2
+- [x] 4.8 Start screen shows the correct "next upgrade / brakuje X zł" and hides it when nothing's next — 40c0ed2
+- [x] 4.9 Full loop works end-to-end; spending never lowers level; copy is encouraging Polish, no scarcity — 40c0ed2
