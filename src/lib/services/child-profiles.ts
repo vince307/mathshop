@@ -1,5 +1,5 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import { businessLevelForShifts, coinsForShift } from "@/data/shift";
+import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 
 export { deriveStartingLevel } from "@/data/leveling";
 
@@ -28,9 +28,10 @@ export interface ChildProfile {
   avatar: string;
   theme: string;
   starting_level: number;
-  // Gameplay state (S-04). business_level is mutable progression, distinct from
-  // the frozen starting_level difficulty band.
-  coins: number;
+  // Gameplay state (S-04/S-05). business_level is mutable progression, distinct
+  // from the frozen starting_level difficulty band. wallet_balance is the spendable
+  // wallet (virtualBalance) — the former `coins` field, renamed in S-05.
+  wallet_balance: number;
   completed_shift_count: number;
   business_level: number;
   shop_state: Record<string, unknown>;
@@ -72,18 +73,18 @@ export async function getMostRecentProfile(client: SupabaseClient): Promise<Chil
 }
 
 export interface ShiftResult {
-  coinsEarned: number;
+  earned: number;
   businessLevel: number;
   leveledUp: boolean;
 }
 
 /**
- * Persist a completed shift onto the parent's own profile (S-04). Coins are
- * recomputed server-side from the reported accuracy (`coinsForShift`), so the
- * client never supplies a coin amount — it cannot inflate the balance. The row
+ * Persist a completed shift onto the parent's own profile (S-04/S-05). Wallet
+ * earnings are recomputed server-side from the reported accuracy (`earningsForShift`),
+ * so the client never supplies an amount — it cannot inflate the wallet. The row
  * is reached by `id` and the F-01 `child_profiles_update_own` RLS policy gates
  * ownership (a non-owner read returns no row, a non-owner update affects 0 rows);
- * `account_id` is NEVER taken from the caller (L-002). Returns the earned coins +
+ * `account_id` is NEVER taken from the caller (L-002). Returns the wallet earnings +
  * new level, or `{ error }` if the profile isn't readable/owned.
  */
 export async function recordShiftResult(
@@ -99,15 +100,19 @@ export async function recordShiftResult(
   const current = (data[0] as ChildProfile | undefined) ?? null;
   if (!current) return { error: new Error("profile not found") };
 
-  const coinsEarned = coinsForShift(shift.taskCount, shift.cleanCount);
+  const earned = earningsForShift(shift.taskCount, shift.cleanCount);
   const newCount = current.completed_shift_count + 1;
   const businessLevel = businessLevelForShifts(newCount);
 
   const { error: updateErr } = await client
     .from("child_profiles")
-    .update({ coins: current.coins + coinsEarned, completed_shift_count: newCount, business_level: businessLevel })
+    .update({
+      wallet_balance: current.wallet_balance + earned,
+      completed_shift_count: newCount,
+      business_level: businessLevel,
+    })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };
 
-  return { coinsEarned, businessLevel, leveledUp: businessLevel > current.business_level };
+  return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
 }

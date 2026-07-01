@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
 interface ShiftResultsProps {
-  coinsEarned: number;
+  earned: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
 }
@@ -15,7 +15,7 @@ interface ShiftResultsProps {
  * Warm at every level — a 0-star result still pays out and never reads as
  * "game over". Returns to the start screen, which re-reads the persisted totals.
  */
-export default function ShiftResults({ coinsEarned, stars, leveledUp }: ShiftResultsProps) {
+export default function ShiftResults({ earned, stars, leveledUp }: ShiftResultsProps) {
   const starCopy = [t.results.star0, t.results.star1, t.results.star2, t.results.star3][stars];
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
@@ -37,7 +37,7 @@ export default function ShiftResults({ coinsEarned, stars, leveledUp }: ShiftRes
       <div className="bg-card border-border flex items-center gap-3 rounded-2xl border p-4 shadow-sm">
         <img src="/illustrations/coin-stack.png" alt="" className="size-10 object-contain" />
         <p className="text-foreground text-xl font-extrabold">
-          {t.results.coinsLabel.replace("{coins}", String(coinsEarned))}
+          {t.results.coinsLabel.replace("{coins}", String(earned))}
         </p>
       </div>
 

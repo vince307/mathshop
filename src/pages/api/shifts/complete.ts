@@ -7,10 +7,10 @@ import { recordShiftResult } from "@/lib/services/child-profiles";
 export const prerender = false;
 
 // account_id is NOT accepted from the client — ownership is enforced by RLS on
-// the profile row reached by `id` (L-002). Coins are recomputed server-side from
-// the reported accuracy (the client never sends a coin amount), so a tampered
-// client cannot inflate the balance. taskCount caps at 12 (max shift length is
-// 10, with margin); cleanCount cannot exceed taskCount.
+// the profile row reached by `id` (L-002). Wallet earnings are recomputed
+// server-side from the reported accuracy (the client never sends an amount), so a
+// tampered client cannot inflate the wallet. taskCount caps at 12 (max shift
+// length is 10, with margin); cleanCount cannot exceed taskCount.
 const completeSchema = z
   .object({
     profileId: z.uuid(),
@@ -51,7 +51,7 @@ export const POST: APIRoute = async (context) => {
 
   return json(200, {
     ok: true,
-    coinsEarned: result.coinsEarned,
+    earned: result.earned,
     businessLevel: result.businessLevel,
     leveledUp: result.leveledUp,
   });

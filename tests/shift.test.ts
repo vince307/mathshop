@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  COIN_PER_CLEAN,
-  COIN_PER_TASK,
+  EARN_PER_CLEAN,
+  EARN_PER_TASK,
   SHIFT_LENGTH,
   SHIFTS_PER_LEVEL,
   businessLevelForShifts,
-  coinsForShift,
+  earningsForShift,
   generateShift,
   shiftLength,
   starsForShift,
@@ -49,15 +49,15 @@ describe("generateShift", () => {
   });
 });
 
-describe("coinsForShift", () => {
+describe("earningsForShift", () => {
   it("pays base per task + bonus per clean task", () => {
-    expect(coinsForShift(6, 6)).toBe(COIN_PER_TASK * 6 + COIN_PER_CLEAN * 6); // 48
-    expect(coinsForShift(5, 1)).toBe(COIN_PER_TASK * 5 + COIN_PER_CLEAN * 1); // 28
-    expect(coinsForShift(9, 9)).toBe(72);
+    expect(earningsForShift(6, 6)).toBe(EARN_PER_TASK * 6 + EARN_PER_CLEAN * 6); // 48
+    expect(earningsForShift(5, 1)).toBe(EARN_PER_TASK * 5 + EARN_PER_CLEAN * 1); // 28
+    expect(earningsForShift(9, 9)).toBe(72);
   });
   it("never pays zero — the floor is base * tasks", () => {
-    expect(coinsForShift(5, 0)).toBe(COIN_PER_TASK * 5); // 25
-    expect(coinsForShift(5, 0)).toBeGreaterThan(0);
+    expect(earningsForShift(5, 0)).toBe(EARN_PER_TASK * 5); // 25
+    expect(earningsForShift(5, 0)).toBeGreaterThan(0);
   });
 });
 

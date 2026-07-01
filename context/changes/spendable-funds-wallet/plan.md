@@ -247,30 +247,30 @@ The rename is non-destructive (`rename column` preserves data) and the app is pr
 
 #### Automated
 
-- [x] 1.1 Test runner executes: `npm test`
-- [x] 1.2 All new unit tests pass
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Production build still succeeds: `npm run build`
+- [x] 1.1 Test runner executes: `npm test` — d51b04d
+- [x] 1.2 All new unit tests pass — d51b04d
+- [x] 1.3 Linting passes: `npm run lint` — d51b04d
+- [x] 1.4 Production build still succeeds: `npm run build` — d51b04d
 
 #### Manual
 
-- [x] 1.5 `npm test` output shows the economy-fn suite running and green
+- [x] 1.5 `npm test` output shows the economy-fn suite running and green — d51b04d
 
 ### Phase 2: Money-model rename (coins → wallet_balance)
 
 #### Automated
 
-- [ ] 2.1 Migration applies cleanly against a local reset
-- [ ] 2.2 Unit tests pass unchanged in value: `npm test`
-- [ ] 2.3 Type checking passes: `npm run lint`
-- [ ] 2.4 Production build succeeds: `npm run build`
-- [ ] 2.5 No remaining references to old balance symbols (grep clean except task-coins)
+- [x] 2.1 Migration applies cleanly against a local reset
+- [x] 2.2 Unit tests pass unchanged in value: `npm test`
+- [x] 2.3 Type checking passes: `npm run lint`
+- [x] 2.4 Production build succeeds: `npm run build`
+- [x] 2.5 No remaining references to old balance symbols (grep clean except task-coins)
 
 #### Manual
 
-- [ ] 2.6 A completed shift increases the persisted balance by the same amount as before
-- [ ] 2.7 Existing profile balances intact after the migration
-- [ ] 2.8 No 500s from `/api/shifts/complete`; results still shows earned amount
+- [x] 2.6 A completed shift increases the persisted balance by the same amount as before
+- [x] 2.7 Existing profile balances intact after the migration
+- [x] 2.8 No 500s from `/api/shifts/complete`; results still shows earned amount
 
 ### Phase 3: Wallet UI + "Portfel" vocabulary + savings framing
 

@@ -15,10 +15,10 @@ export const SHIFT_LENGTH: Record<1 | 2, { min: number; max: number }> = {
   2: { min: 8, max: 10 },
 };
 
-/** Coins per completed task (length term — every task always completes, FR-009). */
-export const COIN_PER_TASK = 5;
-/** Bonus coins per task done with zero misses (accuracy term). */
-export const COIN_PER_CLEAN = 3;
+/** Wallet earnings per completed task (length term — every task always completes, FR-009). */
+export const EARN_PER_TASK = 5;
+/** Bonus wallet earnings per task done with zero misses (accuracy term). */
+export const EARN_PER_CLEAN = 3;
 /** Completed shifts needed to advance one business level. */
 export const SHIFTS_PER_LEVEL = 3;
 
@@ -56,9 +56,9 @@ export function generateShift(
   return types.map((type) => generateTask(startingLevel, () => type));
 }
 
-/** Coins paid once at shift end (FR-010): base per task + perfect-task bonus. Floor is never zero. */
-export function coinsForShift(taskCount: number, cleanCount: number): number {
-  return COIN_PER_TASK * taskCount + COIN_PER_CLEAN * cleanCount;
+/** Wallet earnings paid once at shift end (FR-007): base per task + perfect-task bonus. Floor is never zero. */
+export function earningsForShift(taskCount: number, cleanCount: number): number {
+  return EARN_PER_TASK * taskCount + EARN_PER_CLEAN * cleanCount;
 }
 
 /** Stars 0–3 by clean-task rate (FR-011). 3 = a perfect shift (every task first-try correct). */

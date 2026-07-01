@@ -3,12 +3,12 @@ import { POST as completePOST } from "@/pages/api/shifts/complete";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
-import { businessLevelForShifts, coinsForShift } from "@/data/shift";
+import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 
 /**
- * Route-level persistence + isolation for POST /api/shifts/complete (S-04).
- * Proves the route (a) persists coins/shift-count/level computed SERVER-SIDE from
- * the reported accuracy (the client never supplies a coin amount), and (b) never
+ * Route-level persistence + isolation for POST /api/shifts/complete (S-04/S-05).
+ * Proves the route (a) persists wallet/shift-count/level computed SERVER-SIDE from
+ * the reported accuracy (the client never supplies an amount), and (b) never
  * writes another account's profile (L-002 — RLS gates by id, account_id is never
  * trusted). Durable state is verified via the service-role `admin` client.
  * Requires the local Supabase stack + `.env.test`.
@@ -46,10 +46,13 @@ async function seedProfile(accountId: string): Promise<string> {
 async function readState(profileId: string) {
   const { data } = await admin
     .from("child_profiles")
-    .select("coins, completed_shift_count, business_level")
+    .select("wallet_balance, completed_shift_count, business_level")
     .eq("id", profileId)
     .single()
-    .overrideTypes<{ coins: number; completed_shift_count: number; business_level: number }, { merge: false }>();
+    .overrideTypes<
+      { wallet_balance: number; completed_shift_count: number; business_level: number },
+      { merge: false }
+    >();
   return data;
 }
 
@@ -69,19 +72,23 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     if (accountB.id) await deleteUser(accountB.id);
   });
 
-  it("persists coins/shift-count/level computed server-side from accuracy", async () => {
+  it("persists wallet/shift-count/level computed server-side from accuracy", async () => {
     const jar = await mintSession(accountA.email);
     const res = await completePOST(completeContext(jar, { profileId: aProfileId, taskCount: "6", cleanCount: "6" }));
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { coinsEarned: number; businessLevel: number; leveledUp: boolean };
-    expect(body.coinsEarned).toBe(coinsForShift(6, 6)); // 48
+    const body = (await res.json()) as { earned: number; businessLevel: number; leveledUp: boolean };
+    expect(body.earned).toBe(earningsForShift(6, 6)); // 48
     expect(body.businessLevel).toBe(businessLevelForShifts(1)); // 1
 
     const state = await readState(aProfileId);
-    expect(state).toMatchObject({ coins: coinsForShift(6, 6), completed_shift_count: 1, business_level: 1 });
+    expect(state).toMatchObject({
+      wallet_balance: earningsForShift(6, 6),
+      completed_shift_count: 1,
+      business_level: 1,
+    });
   });
 
-  it("never trusts a client-sent coin amount — coins come from accuracy only", async () => {
+  it("never trusts a client-sent amount — wallet earnings come from accuracy only", async () => {
     const jar = await mintSession(accountA.email);
     const before = await readState(aProfileId);
     const res = await completePOST(
@@ -89,7 +96,7 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     );
     expect(res.status).toBe(200);
     const after = await readState(aProfileId);
-    expect(after?.coins).toBe((before?.coins ?? 0) + coinsForShift(5, 0)); // +25, not +99999
+    expect(after?.wallet_balance).toBe((before?.wallet_balance ?? 0) + earningsForShift(5, 0)); // +25, not +99999
     expect(after?.completed_shift_count).toBe((before?.completed_shift_count ?? 0) + 1);
   });
 
@@ -99,7 +106,7 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const res = await completePOST(completeContext(jar, { profileId: aProfileId, taskCount: "9", cleanCount: "9" }));
     expect(res.status).not.toBe(200); // B can neither read nor write A's row
     const after = await readState(aProfileId);
-    expect(after?.coins).toBe(before?.coins);
+    expect(after?.wallet_balance).toBe(before?.wallet_balance);
     expect(after?.completed_shift_count).toBe(before?.completed_shift_count);
   });
 
@@ -109,7 +116,7 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const res = await completePOST(completeContext(jar, { profileId: aProfileId, taskCount: "0", cleanCount: "5" }));
     expect(res.status).toBe(400);
     const after = await readState(aProfileId);
-    expect(after?.coins).toBe(before?.coins);
+    expect(after?.wallet_balance).toBe(before?.wallet_balance);
     expect(after?.completed_shift_count).toBe(before?.completed_shift_count);
   });
 });

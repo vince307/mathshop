@@ -5,7 +5,7 @@ import CountingTask from "@/components/child/CountingTask";
 import ChangeMakingTask from "@/components/child/ChangeMakingTask";
 import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
-import { coinsForShift, generateShift, starsForShift } from "@/data/shift";
+import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
@@ -18,7 +18,7 @@ interface ShiftScreenProps {
 type Phase = "playing" | "saving" | "results" | "error";
 
 interface Outcome {
-  coinsEarned: number;
+  earned: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
 }
@@ -27,7 +27,7 @@ interface Outcome {
  * Shift orchestrator (S-04). Runs a generated sequence of tasks, auto-advancing
  * on each task's success beat (a fresh per-task `key` resets the hook state), and
  * accumulates per-task accuracy. When the shift ends it POSTs the result ONCE
- * (coins recomputed server-side from accuracy) and shows the celebration, or a
+ * (wallet earnings recomputed server-side from accuracy) and shows the celebration, or a
  * gentle fallback on persist failure. Mid-shift state is never persisted (FR-016);
  * the only server write is the single shift-end POST.
  */
@@ -53,7 +53,7 @@ export default function ShiftScreen({ startingLevel, world, profileId }: ShiftSc
 
     const taskCount = results.length;
     const cleanCount = results.filter((r) => r.firstTry).length;
-    const coinsEarned = coinsForShift(taskCount, cleanCount);
+    const earned = earningsForShift(taskCount, cleanCount);
     const stars = starsForShift(taskCount, cleanCount);
 
     const body = new FormData();
@@ -68,7 +68,7 @@ export default function ShiftScreen({ startingLevel, world, profileId }: ShiftSc
           return;
         }
         const data = (await res.json()) as { leveledUp: boolean };
-        setOutcome({ coinsEarned, stars, leveledUp: data.leveledUp });
+        setOutcome({ earned, stars, leveledUp: data.leveledUp });
         setPhase("results");
       })
       .catch(() => {
@@ -77,7 +77,7 @@ export default function ShiftScreen({ startingLevel, world, profileId }: ShiftSc
   }, [results, tasks.length, profileId]);
 
   if (phase === "results" && outcome) {
-    return <ShiftResults coinsEarned={outcome.coinsEarned} stars={outcome.stars} leveledUp={outcome.leveledUp} />;
+    return <ShiftResults earned={outcome.earned} stars={outcome.stars} leveledUp={outcome.leveledUp} />;
   }
 
   if (phase === "error") {

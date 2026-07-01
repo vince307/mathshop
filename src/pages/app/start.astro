@@ -62,7 +62,7 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
             <div class="bg-card border-border flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-sm">
               <img src="/illustrations/coin.png" alt="" class="size-6 object-contain" loading="lazy" />
               <span class="sr-only">{t.start.coinsLabel}</span>
-              <span class="text-accent text-lg font-extrabold">{profile.coins}</span>
+              <span class="text-accent text-lg font-extrabold">{profile.wallet_balance}</span>
             </div>
             <div class="bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-sm font-bold">
               {t.start.levelLabel.replace("{level}", String(profile.business_level))}
