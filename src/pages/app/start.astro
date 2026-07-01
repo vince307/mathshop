@@ -80,6 +80,13 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
           <div class="mt-8 flex justify-center">
             <StartShiftButton client:load />
           </div>
+
+          {/* Spend the wallet: browse/choose upgrades (S-06) */}
+          <div class="mt-4 flex justify-center">
+            <a href="/app/upgrades" class:list={buttonVariants({ variant: "outline", size: "lg" })}>
+              {t.start.upgradesLink}
+            </a>
+          </div>
         </div>
       ) : (
         <div class="bg-card border-border mt-16 w-full max-w-md rounded-2xl border p-8 text-center shadow-sm">

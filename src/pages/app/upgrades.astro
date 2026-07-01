@@ -1,0 +1,60 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import UpgradeShop from "@/components/child/UpgradeShop";
+import { buttonVariants } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { createClient } from "@/lib/supabase";
+import { getMostRecentProfile } from "@/lib/services/child-profiles";
+import { worldForTheme } from "@/data/worlds";
+import { readPurchased } from "@/data/upgrades";
+import { t } from "@/i18n";
+
+// Dedicated upgrades surface (S-06). Gated under /app by existing middleware.
+// Loads the parent's most-recent profile and resolves its world + wallet +
+// business level + owned upgrades (normalized from shop_state via readPurchased,
+// robust to pre-S-06 '{}' rows), then mounts the choose-and-buy island. The
+// no-profile branch is a defensive fallback (direct nav with 0 profiles),
+// mirroring start.astro.
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const profile = supabase ? await getMostRecentProfile(supabase) : null;
+
+const world = profile ? worldForTheme(profile.theme) : null;
+const purchased = profile ? readPurchased(profile.shop_state) : [];
+---
+
+<Layout title={t.brand}>
+  <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
+    {/* Parent signout — subtle, top-right; child controls stay below */}
+    <div class="mb-6 flex w-full max-w-md justify-end">
+      <form method="POST" action="/api/auth/signout">
+        <button
+          type="submit"
+          class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+        >
+          <LogOut className="size-4" />
+          {t.nav.signOut}
+        </button>
+      </form>
+    </div>
+
+    {
+      profile && world ? (
+        <UpgradeShop
+          client:load
+          profileId={profile.id}
+          walletBalance={profile.wallet_balance}
+          businessLevel={profile.business_level}
+          purchased={purchased}
+          world={world}
+        />
+      ) : (
+        <div class="bg-card border-border mt-16 w-full max-w-md rounded-2xl border p-8 text-center shadow-sm">
+          <p class="text-muted-foreground mb-4">{t.profileWizard.subtitle}</p>
+          <a href="/app/new-profile" class:list={buttonVariants({ variant: "default", size: "lg" })}>
+            {t.profileWizard.title}
+          </a>
+        </div>
+      )
+    }
+  </div>
+</Layout>

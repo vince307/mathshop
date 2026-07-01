@@ -7,16 +7,19 @@ interface ShiftResultsProps {
   earned: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
+  /** True when the child can now afford an upgrade — shows a gentle, factual nudge (S-06). */
+  canUpgrade: boolean;
 }
 
 /**
  * Shift-end results celebration (S-04/S-05). The big payoff (FR-008): wallet
- * earnings ("Do portfela") + 0–3 stars, with an optional "level up!" text (shop
- * art / spending is S-06). Warm at every level — a 0-star result still pays out
- * and never reads as "game over". Returns to the start screen, which re-reads the
- * persisted wallet.
+ * earnings ("Do portfela") + 0–3 stars, with an optional "level up!" text. When
+ * the new balance can afford an upgrade, a gentle factual nudge links to
+ * /app/upgrades (S-06 — no FOMO/urgency). Warm at every level — a 0-star result
+ * still pays out and never reads as "game over". Returns to the start screen,
+ * which re-reads the persisted wallet.
  */
-export default function ShiftResults({ earned, stars, leveledUp }: ShiftResultsProps) {
+export default function ShiftResults({ earned, stars, leveledUp, canUpgrade }: ShiftResultsProps) {
   const starCopy = [t.results.star0, t.results.star1, t.results.star2, t.results.star3][stars];
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
@@ -46,6 +49,15 @@ export default function ShiftResults({ earned, stars, leveledUp }: ShiftResultsP
       </div>
 
       {leveledUp && <p className="text-primary font-bold">{t.results.levelUp}</p>}
+
+      {canUpgrade && (
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-foreground font-semibold">{t.results.upgradesNudge}</p>
+          <a href="/app/upgrades" className="text-primary text-sm font-bold underline underline-offset-4">
+            {t.results.upgradesNudgeLink}
+          </a>
+        </div>
+      )}
 
       <ChildButton
         variant="gold"

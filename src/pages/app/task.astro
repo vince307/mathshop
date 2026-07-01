@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { getMostRecentProfile } from "@/lib/services/child-profiles";
 import { worldForTheme } from "@/data/worlds";
+import { readPurchased } from "@/data/upgrades";
 import { t } from "@/i18n";
 
 // Shift surface (S-04). Gated under /app. Loads the active profile and mounts the
@@ -19,6 +20,7 @@ const profile = await getMostRecentProfile(supabase);
 if (!profile) return Astro.redirect("/app");
 
 const world = worldForTheme(profile.theme);
+const purchased = readPurchased(profile.shop_state);
 ---
 
 <Layout title={t.brand}>
@@ -36,6 +38,13 @@ const world = worldForTheme(profile.theme);
       </form>
     </div>
 
-    <ShiftScreen client:load startingLevel={profile.starting_level} world={world} profileId={profile.id} />
+    <ShiftScreen
+      client:load
+      startingLevel={profile.starting_level}
+      world={world}
+      profileId={profile.id}
+      walletBalance={profile.wallet_balance}
+      purchased={purchased}
+    />
   </div>
 </Layout>

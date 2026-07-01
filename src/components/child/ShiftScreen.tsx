@@ -6,6 +6,7 @@ import ChangeMakingTask from "@/components/child/ChangeMakingTask";
 import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
+import { nextUpgrade } from "@/data/upgrades";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
@@ -13,6 +14,10 @@ interface ShiftScreenProps {
   startingLevel: number;
   world: World;
   profileId: string;
+  /** Pre-shift wallet balance — the shift's earnings add to it (S-06 results nudge). */
+  walletBalance: number;
+  /** Owned-upgrade ids — feed the results nudge's next-upgrade check (S-06). */
+  purchased: string[];
 }
 
 type Phase = "playing" | "saving" | "results" | "error";
@@ -21,6 +26,8 @@ interface Outcome {
   earned: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
+  /** Whether the post-shift wallet can afford an upgrade — drives the results nudge. */
+  canUpgrade: boolean;
 }
 
 /**
@@ -31,7 +38,7 @@ interface Outcome {
  * gentle fallback on persist failure. Mid-shift state is never persisted (FR-016);
  * the only server write is the single shift-end POST.
  */
-export default function ShiftScreen({ startingLevel, world, profileId }: ShiftScreenProps) {
+export default function ShiftScreen({ startingLevel, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
   const tasks = useMemo<Task[]>(() => generateShift(startingLevel), [startingLevel]);
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<TaskOutcome[]>([]);
@@ -67,17 +74,28 @@ export default function ShiftScreen({ startingLevel, world, profileId }: ShiftSc
           setPhase("error");
           return;
         }
-        const data = (await res.json()) as { leveledUp: boolean };
-        setOutcome({ earned, stars, leveledUp: data.leveledUp });
+        const data = (await res.json()) as { leveledUp: boolean; businessLevel: number };
+        // Post-shift affordability: does the new wallet cover the cheapest
+        // level-eligible unowned upgrade? Drives the (factual) results nudge.
+        const next = nextUpgrade({ businessLevel: data.businessLevel, purchased });
+        const canUpgrade = next !== null && walletBalance + earned >= next.cost;
+        setOutcome({ earned, stars, leveledUp: data.leveledUp, canUpgrade });
         setPhase("results");
       })
       .catch(() => {
         setPhase("error");
       });
-  }, [results, tasks.length, profileId]);
+  }, [results, tasks.length, profileId, walletBalance, purchased]);
 
   if (phase === "results" && outcome) {
-    return <ShiftResults earned={outcome.earned} stars={outcome.stars} leveledUp={outcome.leveledUp} />;
+    return (
+      <ShiftResults
+        earned={outcome.earned}
+        stars={outcome.stars}
+        leveledUp={outcome.leveledUp}
+        canUpgrade={outcome.canUpgrade}
+      />
+    );
   }
 
   if (phase === "error") {

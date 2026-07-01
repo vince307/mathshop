@@ -170,6 +170,7 @@ export const pl = {
     walletLabel: "Portfel",
     savingsHint: "Zbierasz na rozwój sklepu",
     levelLabel: "Poziom sklepu {level}",
+    upgradesLink: "Rozbuduj sklep",
   },
 
   // Counting task in shop narrative (S-02). Copy is keyed by scenario so the
@@ -209,6 +210,29 @@ export const pl = {
     customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
   },
 
+  // Dedicated /app/upgrades screen (S-06): choose-and-buy surface. Warm, factual,
+  // NO urgency/scarcity copy (guardrail). `{cost}/{level}/{amount}/{name}/{wallet}`
+  // are interpolated in the island. Draft Polish — pending native-speaker review.
+  upgradeShop: {
+    title: "Rozbuduj sklep",
+    walletLabel: "Portfel",
+    decisionPrompt: "Masz {wallet} zł. Co wybierasz?",
+    affordableHeading: "Możesz kupić",
+    lockedHeading: "Wkrótce",
+    ownedHeading: "Twój sklep już ma",
+    costLabel: "{cost} zł",
+    buy: "Kup",
+    buying: "Kupuję…",
+    ownedTag: "Masz to",
+    lockedByLevel: "Dostępne od poziomu sklepu {level}",
+    lockedByFunds: "Brakuje {amount} zł",
+    nextProgress: "Brakuje {amount} zł do: {name}",
+    emptyAffordable: "Uzbieraj trochę więcej, aby kupić pierwsze ulepszenie.",
+    allOwned: "Masz już wszystkie ulepszenia. Brawo!",
+    buyError: "Nie udało się kupić. Spróbuj ponownie.",
+    back: "Wróć do sklepu",
+  },
+
   // Shift surface (S-04): per-task progress, the saving beat, and the shift-end
   // results celebration. `{current}/{total}/{earned}` are interpolated in the
   // island (`{earned}` is reused for both the wallet payout and the star count in
@@ -227,6 +251,10 @@ export const pl = {
     levelUp: "Twój sklep rośnie!",
     backToStart: "Wróć do sklepu",
     saveError: "Nie udało się zapisać zmiany. Spróbuj później.",
+    // Gentle, factual nudge shown only when the child can now afford an upgrade
+    // (no FOMO/urgency — guardrail).
+    upgradesNudge: "Masz dość, żeby coś kupić do sklepu!",
+    upgradesNudgeLink: "Zobacz ulepszenia",
   },
 
   confirmEmail: {

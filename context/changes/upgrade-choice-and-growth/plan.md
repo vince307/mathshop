@@ -333,33 +333,33 @@ One profile read already loads `shop_state` (`select("*")`) — no new query for
 
 #### Automated
 
-- [x] 2.1 Migration + buy test pass against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`)
-- [x] 2.2 Unit tests still pass: `npx vitest run tests/upgrades.test.ts`
-- [x] 2.3 Type checking passes: `npm run check`
-- [x] 2.4 Linting passes: `npm run lint`
-- [x] 2.5 Build succeeds: `npm run build`
+- [x] 2.1 Migration + buy test pass against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`) — 6098d27
+- [x] 2.2 Unit tests still pass: `npx vitest run tests/upgrades.test.ts` — 6098d27
+- [x] 2.3 Type checking passes: `npm run check` — 6098d27
+- [x] 2.4 Linting passes: `npm run lint` — 6098d27
+- [x] 2.5 Build succeeds: `npm run build` — 6098d27
 
 #### Manual
 
-- [x] 2.6 A buy debits the wallet by exactly the cost and records the upgrade
-- [x] 2.7 No path lets the wallet go negative or an upgrade be bought twice
+- [x] 2.6 A buy debits the wallet by exactly the cost and records the upgrade — 6098d27
+- [x] 2.7 No path lets the wallet go negative or an upgrade be bought twice — 6098d27
 
 ### Phase 3: Dedicated /app/upgrades screen
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run check`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Build succeeds: `npm run build`
-- [ ] 3.4 Unit + buy tests still pass: `npx vitest run tests/upgrades.test.ts tests/upgrades-buy.test.ts`
+- [x] 3.1 Type checking passes: `npm run check`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Build succeeds: `npm run build`
+- [x] 3.4 Unit + buy tests still pass: `npx vitest run tests/upgrades.test.ts tests/upgrades-buy.test.ts`
 
 #### Manual
 
-- [ ] 3.5 /app/upgrades shows affordable / locked / owned correctly
-- [ ] 3.6 Buying debits the wallet in the UI and moves the upgrade to owned without a full reload
-- [ ] 3.7 Locked upgrades show the concrete missing requirement; no scarcity copy
-- [ ] 3.8 Start-screen link + results nudge navigate to the upgrades screen
-- [ ] 3.9 Unauthenticated /app/upgrades redirects to sign-in
+- [x] 3.5 /app/upgrades shows affordable / locked / owned correctly
+- [x] 3.6 Buying debits the wallet in the UI and moves the upgrade to owned without a full reload
+- [x] 3.7 Locked upgrades show the concrete missing requirement; no scarcity copy
+- [x] 3.8 Start-screen link + results nudge navigate to the upgrades screen
+- [x] 3.9 Unauthenticated /app/upgrades redirects to sign-in
 
 ### Phase 4: Visible growth + capacity-effect wiring
 
