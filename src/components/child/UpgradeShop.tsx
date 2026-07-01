@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { World } from "@/data/worlds";
 import { ChildButton } from "@/components/child/ChildButton";
+import { ShopArt } from "@/components/child/ShopArt";
 import { UPGRADES, canBuy, isOwned, nextUpgrade, type Upgrade } from "@/data/upgrades";
 import { t } from "@/i18n";
 
@@ -30,7 +31,7 @@ function fill(template: string, values: Record<string, string | number>): string
  * returned wallet + owned list to local state so the shop reflects the buy without
  * a full reload. Copy is warm and factual — no timers/scarcity (guardrail).
  */
-export default function UpgradeShop({ profileId, walletBalance, businessLevel, purchased }: UpgradeShopProps) {
+export default function UpgradeShop({ profileId, walletBalance, businessLevel, purchased, world }: UpgradeShopProps) {
   const [wallet, setWallet] = useState(walletBalance);
   const [owned, setOwned] = useState(purchased);
   const [buyingId, setBuyingId] = useState<string | null>(null);
@@ -84,6 +85,11 @@ export default function UpgradeShop({ profileId, walletBalance, businessLevel, p
           <span className="sr-only">{t.upgradeShop.walletLabel}</span>
           <span className="text-accent text-lg font-extrabold">{wallet}</span>
         </div>
+      </div>
+
+      {/* The shop as it stands — grows as owned upgrades are bought (S-06) */}
+      <div className="bg-card border-border overflow-hidden rounded-3xl border shadow-sm">
+        <ShopArt world={world} purchased={owned} />
       </div>
 
       {/* Next-upgrade progress / all-owned (factual encouragement, no urgency) */}

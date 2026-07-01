@@ -348,32 +348,32 @@ One profile read already loads `shop_state` (`select("*")`) — no new query for
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run check`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Build succeeds: `npm run build`
-- [x] 3.4 Unit + buy tests still pass: `npx vitest run tests/upgrades.test.ts tests/upgrades-buy.test.ts`
+- [x] 3.1 Type checking passes: `npm run check` — c959cbb
+- [x] 3.2 Linting passes: `npm run lint` — c959cbb
+- [x] 3.3 Build succeeds: `npm run build` — c959cbb
+- [x] 3.4 Unit + buy tests still pass: `npx vitest run tests/upgrades.test.ts tests/upgrades-buy.test.ts` — c959cbb
 
 #### Manual
 
-- [x] 3.5 /app/upgrades shows affordable / locked / owned correctly
-- [x] 3.6 Buying debits the wallet in the UI and moves the upgrade to owned without a full reload
-- [x] 3.7 Locked upgrades show the concrete missing requirement; no scarcity copy
-- [x] 3.8 Start-screen link + results nudge navigate to the upgrades screen
-- [x] 3.9 Unauthenticated /app/upgrades redirects to sign-in
+- [x] 3.5 /app/upgrades shows affordable / locked / owned correctly — c959cbb
+- [x] 3.6 Buying debits the wallet in the UI and moves the upgrade to owned without a full reload — c959cbb
+- [x] 3.7 Locked upgrades show the concrete missing requirement; no scarcity copy — c959cbb
+- [x] 3.8 Start-screen link + results nudge navigate to the upgrades screen — c959cbb
+- [x] 3.9 Unauthenticated /app/upgrades redirects to sign-in — c959cbb
 
 ### Phase 4: Visible growth + capacity-effect wiring
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run check`
-- [ ] 4.2 Linting passes: `npm run lint`
-- [ ] 4.3 Build succeeds: `npm run build`
-- [ ] 4.4 All tests pass incl. bonus-length + max-shift-accepted (`npx vitest run`)
-- [ ] 4.5 No inline user-visible literals introduced (L-003 spot-check)
+- [x] 4.1 Type checking passes: `npm run check`
+- [x] 4.2 Linting passes: `npm run lint`
+- [x] 4.3 Build succeeds: `npm run build`
+- [x] 4.4 All tests pass incl. bonus-length + max-shift-accepted (`npx vitest run`)
+- [x] 4.5 No inline user-visible literals introduced (L-003 spot-check)
 
 #### Manual
 
-- [ ] 4.6 Buying visibly changes the shop art on start + upgrades screens
-- [ ] 4.7 Owned upgrades lengthen the shift (up to the cap) and pay more; a max shop's shift still completes
-- [ ] 4.8 Start screen shows the correct "next upgrade / brakuje X zł" and hides it when nothing's next
-- [ ] 4.9 Full loop works end-to-end; spending never lowers level; copy is encouraging Polish, no scarcity
+- [x] 4.6 Buying visibly changes the shop art on start + upgrades screens
+- [x] 4.7 Owned upgrades lengthen the shift (up to the cap) and pay more; a max shop's shift still completes
+- [x] 4.8 Start screen shows the correct "next upgrade / brakuje X zł" and hides it when nothing's next
+- [x] 4.9 Full loop works end-to-end; spending never lowers level; copy is encouraging Polish, no scarcity

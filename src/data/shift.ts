@@ -8,12 +8,21 @@
 import type { Task } from "@/types";
 import { tierForLevel } from "@/data/counting-tasks";
 import { generateTask, type TaskType } from "@/data/tasks";
+import { MAX_BONUS_TASKS } from "@/data/upgrades";
 
 /** Inclusive task-count band per difficulty tier — the grades 1–2 shift lengths (FR-006). */
 export const SHIFT_LENGTH: Record<1 | 2, { min: number; max: number }> = {
   1: { min: 5, max: 7 },
   2: { min: 8, max: 10 },
 };
+
+/**
+ * Absolute ceiling on tasks in one shift (S-06): the longest base shift plus the
+ * most bonus tasks owned upgrades can add. The shift-completion route caps
+ * `taskCount`/`cleanCount` here so a fully-upgraded shop's shift isn't rejected,
+ * and `shiftLength` clamps to it defensively.
+ */
+export const MAX_SHIFT_TASKS = SHIFT_LENGTH[2].max + MAX_BONUS_TASKS;
 
 /** Wallet earnings per completed task (length term — every task always completes, FR-009). */
 export const EARN_PER_TASK = 5;
@@ -27,24 +36,34 @@ function defaultPick(min: number, max: number): number {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
 
-/** Number of tasks in a shift for a child at `startingLevel` (FR-006 adaptivity). */
-export function shiftLength(startingLevel: number, pick: (min: number, max: number) => number = defaultPick): number {
+/**
+ * Number of tasks in a shift for a child at `startingLevel` (FR-006 adaptivity).
+ * `bonus` (capacity effect from owned upgrades, S-06) lengthens the shift — more
+ * practice + more earning via `earningsForShift` — clamped to `MAX_SHIFT_TASKS`.
+ */
+export function shiftLength(
+  startingLevel: number,
+  bonus = 0,
+  pick: (min: number, max: number) => number = defaultPick,
+): number {
   const { min, max } = SHIFT_LENGTH[tierForLevel(startingLevel)];
-  return Math.min(max, Math.max(min, Math.round(pick(min, max))));
+  const base = Math.min(max, Math.max(min, Math.round(pick(min, max))));
+  return Math.min(base + bonus, MAX_SHIFT_TASKS);
 }
 
 /**
  * Build a shift: `shiftLength` tasks mixing counting + change-making. Guarantees
  * at least one of each type (when length ≥ 2) so the child never gets an
- * all-one-type shift, then fills + shuffles the rest. `pick`/`pickType` are
- * injectable for deterministic tests.
+ * all-one-type shift, then fills + shuffles the rest. `bonus` adds capacity-effect
+ * tasks (S-06). `pick`/`pickType` are injectable for deterministic tests.
  */
 export function generateShift(
   startingLevel: number,
+  bonus = 0,
   pick: (min: number, max: number) => number = defaultPick,
   pickType: () => TaskType = () => (Math.random() < 0.5 ? "counting" : "change_making"),
 ): Task[] {
-  const n = shiftLength(startingLevel, pick);
+  const n = shiftLength(startingLevel, bonus, pick);
   const types: TaskType[] = [];
   if (n >= 2) types.push("counting", "change_making"); // guarantee both appear
   while (types.length < n) types.push(pickType());

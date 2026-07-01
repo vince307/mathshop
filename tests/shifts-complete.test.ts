@@ -3,7 +3,7 @@ import { POST as completePOST } from "@/pages/api/shifts/complete";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
-import { businessLevelForShifts, earningsForShift } from "@/data/shift";
+import { businessLevelForShifts, earningsForShift, MAX_SHIFT_TASKS } from "@/data/shift";
 
 /**
  * Route-level persistence + isolation for POST /api/shifts/complete (S-04/S-05).
@@ -108,6 +108,23 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const after = await readState(aProfileId);
     expect(after?.wallet_balance).toBe(before?.wallet_balance);
     expect(after?.completed_shift_count).toBe(before?.completed_shift_count);
+  });
+
+  it("accepts a max-length shift (a fully-upgraded shop, S-06 cap)", async () => {
+    const jar = await mintSession(accountA.email);
+    const before = await readState(aProfileId);
+    const res = await completePOST(
+      completeContext(jar, {
+        profileId: aProfileId,
+        taskCount: String(MAX_SHIFT_TASKS),
+        cleanCount: String(MAX_SHIFT_TASKS),
+      }),
+    );
+    expect(res.status).toBe(200); // the longest possible upgraded shift isn't rejected
+    const after = await readState(aProfileId);
+    expect(after?.wallet_balance).toBe(
+      (before?.wallet_balance ?? 0) + earningsForShift(MAX_SHIFT_TASKS, MAX_SHIFT_TASKS),
+    );
   });
 
   it("rejects invalid input and writes nothing", async () => {

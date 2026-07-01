@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   EARN_PER_CLEAN,
   EARN_PER_TASK,
+  MAX_SHIFT_TASKS,
   SHIFT_LENGTH,
   SHIFTS_PER_LEVEL,
   businessLevelForShifts,
@@ -10,6 +11,7 @@ import {
   shiftLength,
   starsForShift,
 } from "@/data/shift";
+import { MAX_BONUS_TASKS } from "@/data/upgrades";
 
 /**
  * Pure shift composition + scoring (S-04). No DOM / Supabase. The same math the
@@ -21,19 +23,30 @@ const pickMax = (_min: number, max: number) => max;
 
 describe("shiftLength", () => {
   it("stays in the tier-1 band (5–7) for level 1", () => {
-    expect(shiftLength(1, pickMin)).toBe(SHIFT_LENGTH[1].min);
-    expect(shiftLength(1, pickMax)).toBe(SHIFT_LENGTH[1].max);
+    expect(shiftLength(1, 0, pickMin)).toBe(SHIFT_LENGTH[1].min);
+    expect(shiftLength(1, 0, pickMax)).toBe(SHIFT_LENGTH[1].max);
   });
   it("stays in the tier-2 band (8–10) for level 2", () => {
-    expect(shiftLength(2, pickMin)).toBe(SHIFT_LENGTH[2].min);
-    expect(shiftLength(2, pickMax)).toBe(SHIFT_LENGTH[2].max);
+    expect(shiftLength(2, 0, pickMin)).toBe(SHIFT_LENGTH[2].min);
+    expect(shiftLength(2, 0, pickMax)).toBe(SHIFT_LENGTH[2].max);
+  });
+  it("adds the capacity bonus to the base length (S-06)", () => {
+    expect(shiftLength(1, 3, pickMax)).toBe(SHIFT_LENGTH[1].max + 3);
+    expect(shiftLength(2, 2, pickMin)).toBe(SHIFT_LENGTH[2].min + 2);
+  });
+  it("clamps the base + bonus total to MAX_SHIFT_TASKS", () => {
+    expect(shiftLength(2, MAX_BONUS_TASKS + 5, pickMax)).toBe(MAX_SHIFT_TASKS);
   });
 });
 
 describe("generateShift", () => {
   it("produces shiftLength tasks", () => {
-    const shift = generateShift(1, pickMin);
+    const shift = generateShift(1, 0, pickMin);
     expect(shift).toHaveLength(SHIFT_LENGTH[1].min);
+  });
+  it("produces base + bonus tasks with a capacity bonus (S-06)", () => {
+    expect(generateShift(1, 2, pickMin)).toHaveLength(SHIFT_LENGTH[1].min + 2);
+    expect(generateShift(2, MAX_BONUS_TASKS, pickMax)).toHaveLength(MAX_SHIFT_TASKS);
   });
   it("mixes both task types (never all-one-type)", () => {
     for (let i = 0; i < 20; i++) {

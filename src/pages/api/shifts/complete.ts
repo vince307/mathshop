@@ -3,19 +3,21 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase";
 import { applyNoStore } from "@/lib/http";
 import { recordShiftResult } from "@/lib/services/child-profiles";
+import { MAX_SHIFT_TASKS } from "@/data/shift";
 
 export const prerender = false;
 
 // account_id is NOT accepted from the client — ownership is enforced by RLS on
 // the profile row reached by `id` (L-002). Wallet earnings are recomputed
 // server-side from the reported accuracy (the client never sends an amount), so a
-// tampered client cannot inflate the wallet. taskCount caps at 12 (max shift
-// length is 10, with margin); cleanCount cannot exceed taskCount.
+// tampered client cannot inflate the wallet. taskCount caps at MAX_SHIFT_TASKS
+// (longest base shift + the most bonus tasks owned upgrades can add, S-06), so a
+// fully-upgraded shop's long shift isn't rejected; cleanCount cannot exceed taskCount.
 const completeSchema = z
   .object({
     profileId: z.uuid(),
-    taskCount: z.coerce.number().int().min(1).max(12),
-    cleanCount: z.coerce.number().int().min(0).max(12),
+    taskCount: z.coerce.number().int().min(1).max(MAX_SHIFT_TASKS),
+    cleanCount: z.coerce.number().int().min(0).max(MAX_SHIFT_TASKS),
   })
   .refine((v) => v.cleanCount <= v.taskCount);
 

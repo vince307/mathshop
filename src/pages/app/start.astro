@@ -1,12 +1,14 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import StartShiftButton from "@/components/child/StartShiftButton";
+import { ShopArt } from "@/components/child/ShopArt";
 import { buttonVariants } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { getMostRecentProfile } from "@/lib/services/child-profiles";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
+import { nextUpgrade, readPurchased } from "@/data/upgrades";
 import { t } from "@/i18n";
 
 // Child start screen (S-01b). Gated under /app. Loads the parent's most-recent
@@ -22,6 +24,21 @@ const profile = supabase ? await getMostRecentProfile(supabase) : null;
 const world = profile ? worldForTheme(profile.theme) : null;
 const avatar = profile ? getAvatar(profile.avatar) : null;
 const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : "";
+
+// Owned upgrades (normalized, robust to pre-S-06 '{}' rows) drive the grown shop
+// art + the "next upgrade" nudge. The nudge shows the gap to the cheapest
+// level-eligible unowned upgrade the child can't yet afford; hidden when nothing
+// is next (all owned / none eligible) or when it's already affordable (FR-013 —
+// factual, no urgency).
+const purchased = profile ? readPurchased(profile.shop_state) : [];
+const next = profile ? nextUpgrade({ businessLevel: profile.business_level, purchased }) : null;
+const showNext = !!(next && profile && profile.wallet_balance < next.cost);
+const nextText =
+  next && profile
+    ? t.upgradeShop.nextProgress
+        .replace("{amount}", String(next.cost - profile.wallet_balance))
+        .replace("{name}", t.upgrades[next.id as keyof typeof t.upgrades].name)
+    : "";
 ---
 
 <Layout title={t.brand}>
@@ -70,9 +87,9 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
           </div>
           <p class="text-muted-foreground mt-2 text-sm">{t.start.savingsHint}</p>
 
-          {/* Single themed business */}
+          {/* Single themed business — base world art + owned-upgrade badges (S-06) */}
           <div class="bg-card border-border mt-8 overflow-hidden rounded-3xl border shadow-sm">
-            <img src={world.image} alt={world.name} class="aspect-[4/3] w-full object-cover" />
+            <ShopArt world={world} purchased={purchased} />
             <p class="text-foreground px-4 py-3 text-center text-lg font-bold">{world.name}</p>
           </div>
 
@@ -80,6 +97,9 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
           <div class="mt-8 flex justify-center">
             <StartShiftButton client:load />
           </div>
+
+          {/* Next-upgrade nudge — factual gap to the next upgrade (S-06, FR-013) */}
+          {showNext && <p class="text-muted-foreground mt-6 text-center text-sm font-semibold">{nextText}</p>}
 
           {/* Spend the wallet: browse/choose upgrades (S-06) */}
           <div class="mt-4 flex justify-center">

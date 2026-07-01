@@ -6,7 +6,7 @@ import ChangeMakingTask from "@/components/child/ChangeMakingTask";
 import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
-import { nextUpgrade } from "@/data/upgrades";
+import { nextUpgrade, shiftBonusTasks } from "@/data/upgrades";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
@@ -39,7 +39,12 @@ interface Outcome {
  * the only server write is the single shift-end POST.
  */
 export default function ShiftScreen({ startingLevel, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
-  const tasks = useMemo<Task[]>(() => generateShift(startingLevel), [startingLevel]);
+  // Owned upgrades lengthen the shift (capacity effect, S-06): a busier shop means
+  // more practice + more earning via the unchanged `earningsForShift`.
+  const tasks = useMemo<Task[]>(
+    () => generateShift(startingLevel, shiftBonusTasks(purchased)),
+    [startingLevel, purchased],
+  );
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<TaskOutcome[]>([]);
   const [phase, setPhase] = useState<Phase>("playing");
