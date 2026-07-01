@@ -57,17 +57,18 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
             </div>
           </div>
 
-          {/* Coins + business-level HUD (S-04) — persisted, cross-session totals */}
+          {/* Wallet (Portfel) + business-level HUD (S-04/S-05) — persisted, cross-session totals */}
           <div class="mt-6 flex items-center gap-3">
             <div class="bg-card border-border flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-sm">
-              <img src="/illustrations/coin.png" alt="" class="size-6 object-contain" loading="lazy" />
-              <span class="sr-only">{t.start.coinsLabel}</span>
+              <img src="/illustrations/coin-stack.png" alt="" class="size-6 object-contain" loading="lazy" />
+              <span class="sr-only">{t.start.walletLabel}</span>
               <span class="text-accent text-lg font-extrabold">{profile.wallet_balance}</span>
             </div>
             <div class="bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-sm font-bold">
               {t.start.levelLabel.replace("{level}", String(profile.business_level))}
             </div>
           </div>
+          <p class="text-muted-foreground mt-2 text-sm">{t.start.savingsHint}</p>
 
           {/* Single themed business */}
           <div class="bg-card border-border mt-8 overflow-hidden rounded-3xl border shadow-sm">

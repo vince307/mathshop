@@ -160,12 +160,15 @@ export const pl = {
   },
 
   // Child start screen (S-01b). The tap opens the counting task (S-02). The
-  // coins/level HUD (S-04) surfaces the persisted balance + business level.
+  // wallet/level HUD (S-04/S-05) surfaces the persisted wallet balance + business
+  // level. The wallet ("Portfel") is money saved to grow the shop (S-05); the
+  // tappable in-task coins ("monety") are a separate concept.
   start: {
     greeting: "Cześć, {name}!",
     subtitle: "Twój sklep jest gotowy.",
     open: "Czas otworzyć sklep!",
-    coinsLabel: "Monety",
+    walletLabel: "Portfel",
+    savingsHint: "Zbierasz na rozwój sklepu",
     levelLabel: "Poziom sklepu {level}",
   },
 
@@ -195,13 +198,15 @@ export const pl = {
   },
 
   // Shift surface (S-04): per-task progress, the saving beat, and the shift-end
-  // results celebration. `{current}/{total}/{coins}/{earned}` are interpolated in
-  // the island. Polish copy is draft — pending native-speaker review.
+  // results celebration. `{current}/{total}/{earned}` are interpolated in the
+  // island (`{earned}` is reused for both the wallet payout and the star count in
+  // their own keys). Polish copy is draft — pending native-speaker review.
   results: {
     progress: "Zadanie {current} z {total}",
     saving: "Zapisuję…",
     heading: "Koniec zmiany!",
-    coinsLabel: "Zarobione monety: {coins}",
+    earnedLabel: "Do portfela: +{earned}",
+    savingsHint: "Odkładasz na rozwój sklepu",
     starsLabel: "Gwiazdki: {earned} z 3",
     star0: "Sklep otwarty! Następnym razem pójdzie lepiej.",
     star1: "Dobra robota — ćwiczysz i Ci idzie!",

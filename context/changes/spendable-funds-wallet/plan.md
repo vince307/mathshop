@@ -260,31 +260,31 @@ The rename is non-destructive (`rename column` preserves data) and the app is pr
 
 #### Automated
 
-- [x] 2.1 Migration applies cleanly against a local reset
-- [x] 2.2 Unit tests pass unchanged in value: `npm test`
-- [x] 2.3 Type checking passes: `npm run lint`
-- [x] 2.4 Production build succeeds: `npm run build`
-- [x] 2.5 No remaining references to old balance symbols (grep clean except task-coins)
+- [x] 2.1 Migration applies cleanly against a local reset — 80362b7
+- [x] 2.2 Unit tests pass unchanged in value: `npm test` — 80362b7
+- [x] 2.3 Type checking passes: `npm run lint` — 80362b7
+- [x] 2.4 Production build succeeds: `npm run build` — 80362b7
+- [x] 2.5 No remaining references to old balance symbols (grep clean except task-coins) — 80362b7
 
 #### Manual
 
-- [x] 2.6 A completed shift increases the persisted balance by the same amount as before
-- [x] 2.7 Existing profile balances intact after the migration
-- [x] 2.8 No 500s from `/api/shifts/complete`; results still shows earned amount
+- [x] 2.6 A completed shift increases the persisted balance by the same amount as before — 80362b7
+- [x] 2.7 Existing profile balances intact after the migration — 80362b7
+- [x] 2.8 No 500s from `/api/shifts/complete`; results still shows earned amount — 80362b7
 
 ### Phase 3: Wallet UI + "Portfel" vocabulary + savings framing
 
 #### Automated
 
-- [ ] 3.1 Linting passes: `npm run lint`
-- [ ] 3.2 Unit tests still pass: `npm test`
-- [ ] 3.3 Production build succeeds: `npm run build`
-- [ ] 3.4 No leftover balance-"Monety" key references (`grep coinsLabel src` empty)
+- [x] 3.1 Linting passes: `npm run lint`
+- [x] 3.2 Unit tests still pass: `npm test`
+- [x] 3.3 Production build succeeds: `npm run build`
+- [x] 3.4 No leftover balance-"Monety" key references (`grep coinsLabel src` empty)
 
 #### Manual
 
-- [ ] 3.5 Start screen shows the balance as "Portfel" with savings hint
-- [ ] 3.6 Results screen shows earnings landing in the wallet
-- [ ] 3.7 Balance persists across reload and sign-out/sign-in
-- [ ] 3.8 Task screens still call the tappable coins "monety"
-- [ ] 3.9 Copy reads as encouraging savings; no urgency/scarcity language
+- [x] 3.5 Start screen shows the balance as "Portfel" with savings hint
+- [x] 3.6 Results screen shows earnings landing in the wallet
+- [x] 3.7 Balance persists across reload and sign-out/sign-in
+- [x] 3.8 Task screens still call the tappable coins "monety"
+- [x] 3.9 Copy reads as encouraging savings; no urgency/scarcity language
