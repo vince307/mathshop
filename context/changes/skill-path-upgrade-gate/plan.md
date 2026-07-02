@@ -460,32 +460,32 @@ Three non-destructive migrations: `skill_state` column (default `'{}'`, normaliz
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run check`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Build succeeds: `npm run build`
-- [x] 3.4 Tests still pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts tests/upgrades-buy.test.ts`
-- [x] 3.5 No inline user-visible literals introduced (L-003 grep)
+- [x] 3.1 Type checking passes: `npm run check` — 6748184
+- [x] 3.2 Linting passes: `npm run lint` — 6748184
+- [x] 3.3 Build succeeds: `npm run build` — 6748184
+- [x] 3.4 Tests still pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts tests/upgrades-buy.test.ts` — 6748184
+- [x] 3.5 No inline user-visible literals introduced (L-003 grep) — 6748184
 
 #### Manual
 
-- [x] 3.6 Upgrades screen shows correct per-competency skill bars for a seeded profile
-- [x] 3.7 A skill/history-locked upgrade shows the one concrete missing requirement in Polish; no scarcity copy
-- [x] 3.8 Bars advance after playing shifts / buying upgrades
+- [x] 3.6 Upgrades screen shows correct per-competency skill bars for a seeded profile — 6748184
+- [x] 3.7 A skill/history-locked upgrade shows the one concrete missing requirement in Polish; no scarcity copy — 6748184
+- [x] 3.8 Bars advance after playing shifts / buying upgrades — 6748184
 
 ### Phase 4: Per-shift history log + logging + weekly aggregation
 
 #### Automated
 
-- [ ] 4.1 Isolation + persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shift-log-isolation.test.ts tests/shifts-complete.test.ts`)
-- [ ] 4.2 Type checking passes: `npm run check`
-- [ ] 4.3 Linting passes: `npm run lint`
-- [ ] 4.4 Build succeeds: `npm run build`
-- [ ] 4.5 Policy-removal meta-check turns the `shift_log` isolation test red (documented, reverted)
+- [x] 4.1 Isolation + persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shift-log-isolation.test.ts tests/shifts-complete.test.ts`)
+- [x] 4.2 Type checking passes: `npm run check`
+- [x] 4.3 Linting passes: `npm run lint`
+- [x] 4.4 Build succeeds: `npm run build`
+- [x] 4.5 Policy-removal meta-check turns the `shift_log` isolation test red (documented, reverted)
 
 #### Manual
 
-- [ ] 4.6 Completing shifts creates per-shift log rows for the right profile (Studio)
-- [ ] 4.7 Weekly aggregation returns a sensible per-child summary tying upgrades to skills
+- [x] 4.6 Completing shifts creates per-shift log rows for the right profile (Studio)
+- [x] 4.7 Weekly aggregation returns a sensible per-child summary tying upgrades to skills
 
 ### Phase 5: Parent-PIN gate
 

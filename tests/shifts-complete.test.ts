@@ -86,6 +86,16 @@ async function readSkill(profileId: string): Promise<SkillState> {
   return readSkillState(data?.skill_state);
 }
 
+/** Read the profile's shift_log rows via the RLS-bypassing admin client. */
+async function readLogRows(profileId: string) {
+  const { data } = await admin
+    .from("shift_log")
+    .select("skills, upgrade_purchased")
+    .eq("profile_id", profileId)
+    .overrideTypes<{ skills: unknown; upgrade_purchased: string | null }[], { merge: false }>();
+  return data ?? [];
+}
+
 describe("POST /api/shifts/complete (route persistence + isolation)", () => {
   let accountA: TestAccount;
   let accountB: TestAccount;
@@ -208,5 +218,31 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const state = await readState(profileId);
     expect(state?.completed_shift_count).toBe(0); // nothing persisted
     expect(await readSkill(profileId)).toEqual(readSkillState(null)); // skill untouched
+  });
+
+  it("writes exactly one shift_log row per completed shift with the right deltas", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const skills = JSON.stringify({
+      math: { firstTryCorrect: 2, completed: 2, misses: 1 },
+      money: { firstTryCorrect: 1, completed: 2, misses: 0 },
+    });
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "4", cleanCount: "3", skills }));
+    expect(res.status).toBe(200);
+
+    const rows = await readLogRows(profileId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].upgrade_purchased).toBeNull(); // a plain shift, not a purchase
+    const logged = readSkillState(rows[0].skills);
+    expect(logged.math).toEqual({ firstTryCorrect: 2, completed: 2, misses: 1 });
+    expect(logged.money).toEqual({ firstTryCorrect: 1, completed: 2, misses: 0 });
+  });
+
+  it("L-002: account B's shift never writes a shift_log row for account A", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountB.email);
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "5", cleanCount: "5" }));
+    expect(res.status).not.toBe(200); // B can't reach A's profile
+    expect(await readLogRows(profileId)).toHaveLength(0); // no log row leaked onto A
   });
 });

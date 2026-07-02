@@ -114,3 +114,27 @@ export interface CompetencyProgress {
  * postdates the column.
  */
 export type SkillState = Record<Competency, CompetencyProgress>;
+
+/**
+ * One unlocked upgrade in a weekly report (S-07 / FR-016), tied to the skills it
+ * exercised. `competencies` are a gated upgrade's required competencies, or (for a
+ * cost-only upgrade) the ones actually practiced that week; `generalPractice` is
+ * true when neither applies, so the report can show a "general practice" label
+ * instead of a blank tie.
+ */
+export interface WeeklyReportUpgrade {
+  upgradeId: string;
+  competencies: Competency[];
+  generalPractice: boolean;
+}
+
+/**
+ * A single child's weekly practice summary (S-07 / FR-016): per-competency practice
+ * aggregated from `shift_log` within the current week, plus the upgrades unlocked
+ * that week and the skills each exercised. Read-only, non-comparative (guardrail).
+ */
+export interface WeeklyReport {
+  profileId: string;
+  practice: SkillState;
+  upgrades: WeeklyReportUpgrade[];
+}

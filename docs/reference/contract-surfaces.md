@@ -21,6 +21,22 @@ The first account-owned table. Child play-profiles owned by a parent account. Ca
 - **`updated_at` trigger:** `child_profiles_set_updated_at` (`before update`, reuses `set_updated_at()`).
 - **Isolation test:** `tests/child-profiles-isolation.test.ts` (run by CI as a merge gate).
 
+## public.shift_log
+
+Per-profile, per-shift history log (S-07) backing the parent weekly report (FR-016). One row per completed shift, plus one per upgrade purchase. Written server-side (`recordShiftResult` / `buyUpgrade`), `account_id` taken from the RLS-verified profile row (never client input, L-002).
+
+- **Defined in:** `supabase/migrations/20260701150000_create_shift_log.sql` (S-07).
+- **Owner column:** `account_id uuid not null references auth.users(id) on delete cascade` — RLS predicate `auth.uid() = account_id`.
+- **Columns:** `id`, `account_id`, `profile_id` (`references child_profiles(id) on delete cascade`), `created_at`, `skills` jsonb (the per-competency delta this event exercised), `upgrade_purchased` text null (set only on a purchase event). No `updated_at` (append-mostly; rows aren't mutated in normal flow).
+- **Indexes:** `shift_log_account_id_idx` (`account_id`), `shift_log_profile_created_idx` (`profile_id, created_at` — the weekly-report query path).
+- **RLS:** enabled; four per-operation policies, all `to authenticated`:
+  - `shift_log_select_own` — `for select using (auth.uid() = account_id)`
+  - `shift_log_insert_own` — `for insert with check (auth.uid() = account_id)`
+  - `shift_log_update_own` — `for update using (...) with check (...)`
+  - `shift_log_delete_own` — `for delete using (auth.uid() = account_id)`
+- **Consumed by:** `src/lib/services/reports.ts` (`getWeeklyReport` / `aggregateWeeklyReport`), `src/lib/services/child-profiles.ts` (writers).
+- **Isolation test:** `tests/shift-log-isolation.test.ts`.
+
 ## set_updated_at()
 
 Shared trigger function that stamps `new.updated_at = now()` on every UPDATE.

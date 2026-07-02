@@ -78,6 +78,31 @@ export async function getMostRecentProfile(client: SupabaseClient): Promise<Chil
   return (data?.[0] as ChildProfile | undefined) ?? null;
 }
 
+/** All of the authenticated parent's profiles (RLS-scoped), newest first. Powers the report. */
+export async function listChildProfiles(client: SupabaseClient): Promise<ChildProfile[]> {
+  const { data } = await client.from("child_profiles").select("*").order("created_at", { ascending: false });
+  return (data as ChildProfile[] | null) ?? [];
+}
+
+/**
+ * Append one `shift_log` row (S-07) — the history the parent report reads. Best
+ * effort: a log failure must NOT fail an already-persisted shift/purchase (the
+ * authoritative profile UPDATE has committed by the time this runs), so its error
+ * is swallowed. `account_id` comes from the RLS-verified profile row, never from
+ * client input (L-002); the INSERT `with check` policy is the backstop.
+ */
+async function appendShiftLog(
+  client: SupabaseClient,
+  entry: { accountId: string; profileId: string; skills: SkillDelta; upgradePurchased?: string },
+): Promise<void> {
+  await client.from("shift_log").insert({
+    account_id: entry.accountId,
+    profile_id: entry.profileId,
+    skills: entry.skills,
+    upgrade_purchased: entry.upgradePurchased ?? null,
+  });
+}
+
 export interface ShiftResult {
   earned: number;
   businessLevel: number;
@@ -124,6 +149,9 @@ export async function recordShiftResult(
     })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };
+
+  // History row for the weekly report — account_id from the RLS-verified row (L-002).
+  await appendShiftLog(client, { accountId: current.account_id, profileId, skills: shift.skills });
 
   return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
 }
@@ -179,7 +207,8 @@ export async function buyUpgrade(
   // Choosing an upgrade IS the decisions competency (+1 per purchase, fully
   // server-side). Folded monotonically into the same UPDATE that debits the
   // wallet — spending never lowers a skill (PRD guardrail).
-  const nextSkillState = addSkillDelta(skillState, { decisions: { firstTryCorrect: 1, completed: 1, misses: 0 } });
+  const decisionsDelta: SkillDelta = { decisions: { firstTryCorrect: 1, completed: 1, misses: 0 } };
+  const nextSkillState = addSkillDelta(skillState, decisionsDelta);
 
   const { error: updateErr } = await client
     .from("child_profiles")
@@ -190,6 +219,14 @@ export async function buyUpgrade(
     })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };
+
+  // Purchase event in the history log — ties this upgrade to the week (report).
+  await appendShiftLog(client, {
+    accountId: current.account_id,
+    profileId,
+    skills: decisionsDelta,
+    upgradePurchased: upgrade.id,
+  });
 
   return { walletBalance, purchased: nextPurchased };
 }
