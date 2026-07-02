@@ -4,6 +4,7 @@ import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
 import { getUpgrade } from "@/data/upgrades";
+import { readSkillState, SKILL_THRESHOLDS, type SkillState } from "@/data/skills";
 
 /**
  * Route-level money integrity + isolation for POST /api/upgrades/buy (S-06) — the
@@ -25,7 +26,8 @@ function upgrade(id: string) {
 }
 
 const SIGN = upgrade("sign"); // cost 30, requiredWorldLevel 1
-const REGISTER = upgrade("register"); // cost 100, requiredWorldLevel 2
+const REGISTER = upgrade("register"); // cost 100, world 2, requiredSkill money level 1
+const CUSTOMERS = upgrade("customers"); // cost 300, world 3, requiredTaskHistory math 8
 
 async function mintSession(email: string): Promise<CookieJar> {
   const jar = createCookieJar();
@@ -47,7 +49,7 @@ function buyContext(jar: CookieJar, formData: Record<string, string>) {
 /** Seed a profile owned by `accountId` with explicit gameplay state (bypasses RLS). */
 async function seedProfile(
   accountId: string,
-  state: { walletBalance: number; businessLevel: number; purchased?: string[] },
+  state: { walletBalance: number; businessLevel: number; purchased?: string[]; skillState?: SkillState },
 ): Promise<string> {
   const { data } = await admin
     .from("child_profiles")
@@ -60,6 +62,7 @@ async function seedProfile(
       wallet_balance: state.walletBalance,
       business_level: state.businessLevel,
       shop_state: { purchased: state.purchased ?? [] },
+      skill_state: state.skillState ?? {},
     })
     .select("id")
     .single()
@@ -71,10 +74,13 @@ async function seedProfile(
 async function readState(profileId: string) {
   const { data } = await admin
     .from("child_profiles")
-    .select("wallet_balance, shop_state")
+    .select("wallet_balance, shop_state, skill_state")
     .eq("id", profileId)
     .single()
-    .overrideTypes<{ wallet_balance: number; shop_state: { purchased: string[] } }, { merge: false }>();
+    .overrideTypes<
+      { wallet_balance: number; shop_state: { purchased: string[] }; skill_state: unknown },
+      { merge: false }
+    >();
   return data;
 }
 
@@ -170,5 +176,80 @@ describe("POST /api/upgrades/buy (route money integrity + isolation)", () => {
     const state = await readState(profileId);
     expect(state?.wallet_balance).toBe(500);
     expect(state?.shop_state.purchased).toEqual([]);
+  });
+
+  it("skill-locked (world met, skill unearned) → 400, wallet + state unchanged", async () => {
+    // register: world 2 met, money skill 0 (< level 1). Affordable, so only the skill rung blocks it.
+    const profileId = await seedProfile(accountA.id, { walletBalance: 500, businessLevel: 2 });
+    const jar = await mintSession(accountA.email);
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: REGISTER.id }));
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { reason: string };
+    expect(body.reason).toBe("skill-locked");
+
+    const state = await readState(profileId);
+    expect(state?.wallet_balance).toBe(500);
+    expect(state?.shop_state.purchased).toEqual([]);
+  });
+
+  it("history-locked (world met, task history unearned) → 400, unchanged", async () => {
+    // customers: world 3 met, math completed 0 (< 8). Affordable, so only the history rung blocks it.
+    const profileId = await seedProfile(accountA.id, { walletBalance: 500, businessLevel: 3 });
+    const jar = await mintSession(accountA.email);
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: CUSTOMERS.id }));
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { reason: string };
+    expect(body.reason).toBe("history-locked");
+
+    const state = await readState(profileId);
+    expect(state?.wallet_balance).toBe(500);
+    expect(state?.shop_state.purchased).toEqual([]);
+  });
+
+  it("skill-gated buy succeeds once the skill is earned → 200, decisions accrues", async () => {
+    const profileId = await seedProfile(accountA.id, {
+      walletBalance: 500,
+      businessLevel: 2,
+      skillState: readSkillState({ money: { firstTryCorrect: SKILL_THRESHOLDS[0] } }), // money level 1
+    });
+    const jar = await mintSession(accountA.email);
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: REGISTER.id }));
+    expect(res.status).toBe(200);
+
+    const state = await readState(profileId);
+    expect(state?.wallet_balance).toBe(500 - REGISTER.cost);
+    expect(state?.shop_state.purchased).toEqual([REGISTER.id]);
+    const skill = readSkillState(state?.skill_state);
+    expect(skill.decisions.firstTryCorrect).toBe(1); // choosing an upgrade IS the decisions competency
+    expect(skill.money.firstTryCorrect).toBe(SKILL_THRESHOLDS[0]); // spending never lowered the money skill
+  });
+
+  it("a purchase increments the decisions competency (durable state)", async () => {
+    const profileId = await seedProfile(accountA.id, { walletBalance: 100, businessLevel: 1 });
+    const jar = await mintSession(accountA.email);
+    expect(readSkillState((await readState(profileId))?.skill_state).decisions.firstTryCorrect).toBe(0);
+
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: SIGN.id }));
+    expect(res.status).toBe(200);
+    const skill = readSkillState((await readState(profileId))?.skill_state);
+    expect(skill.decisions).toEqual({ firstTryCorrect: 1, completed: 1, misses: 0 });
+  });
+
+  it("an owned skill-gated upgrade is never retro-locked → 400 owned, not skill-locked", async () => {
+    // Owns register with zero skill: the owned rung short-circuits before the skill rung.
+    const profileId = await seedProfile(accountA.id, {
+      walletBalance: 500,
+      businessLevel: 3,
+      purchased: [REGISTER.id],
+    });
+    const jar = await mintSession(accountA.email);
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: REGISTER.id }));
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { reason: string };
+    expect(body.reason).toBe("owned");
+
+    const state = await readState(profileId);
+    expect(state?.wallet_balance).toBe(500); // no debit
+    expect(state?.shop_state.purchased).toEqual([REGISTER.id]); // no duplicate
   });
 });

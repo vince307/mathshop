@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { World } from "@/data/worlds";
+import type { SkillState } from "@/types";
 import { ChildButton } from "@/components/child/ChildButton";
 import { ShopArt } from "@/components/child/ShopArt";
 import { UPGRADES, canBuy, isOwned, nextUpgrade, type Upgrade } from "@/data/upgrades";
@@ -10,6 +11,8 @@ interface UpgradeShopProps {
   walletBalance: number;
   businessLevel: number;
   purchased: string[];
+  /** Normalized per-competency skill (S-07) — feeds the skill/task-history gate. */
+  skillState: SkillState;
   world: World;
 }
 
@@ -31,13 +34,22 @@ function fill(template: string, values: Record<string, string | number>): string
  * returned wallet + owned list to local state so the shop reflects the buy without
  * a full reload. Copy is warm and factual — no timers/scarcity (guardrail).
  */
-export default function UpgradeShop({ profileId, walletBalance, businessLevel, purchased, world }: UpgradeShopProps) {
+export default function UpgradeShop({
+  profileId,
+  walletBalance,
+  businessLevel,
+  purchased,
+  skillState,
+  world,
+}: UpgradeShopProps) {
   const [wallet, setWallet] = useState(walletBalance);
   const [owned, setOwned] = useState(purchased);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [errorId, setErrorId] = useState<string | null>(null);
 
-  const ctx = { walletBalance: wallet, businessLevel, purchased: owned };
+  // skillState is threaded so the gate (canBuy) is correct now; the visible skill
+  // bars + skill/history locked-reason copy land in Phase 3.
+  const ctx = { walletBalance: wallet, businessLevel, purchased: owned, skillState };
   const affordable = UPGRADES.filter((u) => canBuy(u, ctx).ok);
   const locked = UPGRADES.filter((u) => !isOwned(u.id, owned) && !canBuy(u, ctx).ok);
   const ownedList = UPGRADES.filter((u) => isOwned(u.id, owned));

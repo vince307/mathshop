@@ -9,9 +9,10 @@ import {
   shiftBonusTasks,
   UPGRADES,
 } from "@/data/upgrades";
+import { readSkillState, SKILL_THRESHOLDS, type SkillDelta } from "@/data/skills";
 
 /**
- * Pure upgrade catalog + derivations (S-06). No DOM / Supabase. These are the
+ * Pure upgrade catalog + derivations (S-06/S-07). No DOM / Supabase. These are the
  * same fns the buy route uses to authorize a purchase, so they lock the
  * server-authoritative rules.
  */
@@ -23,7 +24,14 @@ function up(id: string) {
 }
 const sign = up("sign"); // cost 30, level 1, +0
 const shelf = up("shelf"); // cost 60, level 1, +1
-const register = up("register"); // cost 100, level 2, +1
+const register = up("register"); // cost 100, level 2, requiredSkill money level 1
+const customers = up("customers"); // cost 300, level 3, requiredTaskHistory math 8
+
+/** Fully-zeroed skill state, optionally overlaid with a delta — for gate ctxs. */
+function skills(delta?: SkillDelta): ReturnType<typeof readSkillState> {
+  return readSkillState(delta ?? null);
+}
+const MONEY_L1 = SKILL_THRESHOLDS[0]; // firstTryCorrect that reaches money level 1
 
 describe("readPurchased", () => {
   it("normalizes missing / empty / populated shop_state", () => {
@@ -35,7 +43,14 @@ describe("readPurchased", () => {
 });
 
 describe("canBuy", () => {
-  const ctx = { walletBalance: 1000, businessLevel: 3, purchased: [] as string[] };
+  // Level 3 + full money skill + rich math history → the S-07 rungs pass, so the
+  // ungated S-06 cases behave exactly as before. Individual tests peel a field back.
+  const ctx = {
+    walletBalance: 1000,
+    businessLevel: 3,
+    purchased: [] as string[],
+    skillState: skills({ money: { firstTryCorrect: MONEY_L1 }, math: { completed: 8 } }),
+  };
 
   it("ok when affordable, level-met, unowned", () => {
     expect(canBuy(shelf, ctx)).toEqual({ ok: true });
@@ -53,7 +68,53 @@ describe("canBuy", () => {
     expect(canBuy(shelf, { ...ctx, walletBalance: shelf.cost - 1 })).toEqual({ ok: false, reason: "insufficient" });
   });
   it("owned takes precedence over locked/insufficient", () => {
-    expect(canBuy(shelf, { walletBalance: 0, businessLevel: 0, purchased: ["shelf"] })).toEqual({
+    expect(canBuy(shelf, { walletBalance: 0, businessLevel: 0, purchased: ["shelf"], skillState: skills() })).toEqual({
+      ok: false,
+      reason: "owned",
+    });
+  });
+
+  it("skips the new rungs entirely for an ungated upgrade (zero skill)", () => {
+    expect(canBuy(shelf, { ...ctx, skillState: skills() })).toEqual({ ok: true });
+  });
+
+  it("skill-locked when the required skill level isn't reached", () => {
+    expect(canBuy(register, { ...ctx, skillState: skills({ money: { firstTryCorrect: MONEY_L1 - 1 } }) })).toEqual({
+      ok: false,
+      reason: "skill-locked",
+    });
+  });
+  it("passes the skill rung once the level is reached", () => {
+    expect(canBuy(register, { ...ctx, skillState: skills({ money: { firstTryCorrect: MONEY_L1 } }) })).toEqual({
+      ok: true,
+    });
+  });
+  it("world lock precedes the skill lock", () => {
+    // register: world 2 unmet AND money skill unmet → the earlier (world) rung wins.
+    expect(canBuy(register, { ...ctx, businessLevel: 1, skillState: skills() })).toEqual({
+      ok: false,
+      reason: "locked",
+    });
+  });
+  it("skill lock precedes insufficient funds", () => {
+    expect(canBuy(register, { ...ctx, walletBalance: 0, skillState: skills() })).toEqual({
+      ok: false,
+      reason: "skill-locked",
+    });
+  });
+
+  it("history-locked when the completed-task count isn't reached", () => {
+    expect(canBuy(customers, { ...ctx, skillState: skills({ math: { completed: 7 } }) })).toEqual({
+      ok: false,
+      reason: "history-locked",
+    });
+  });
+  it("passes the history rung once the count is reached", () => {
+    expect(canBuy(customers, { ...ctx, skillState: skills({ math: { completed: 8 } }) })).toEqual({ ok: true });
+  });
+  it("owned short-circuits before the skill/history rungs (no retro-lock)", () => {
+    // A profile owning register with zero skill is still owned, never skill-locked.
+    expect(canBuy(register, { ...ctx, purchased: ["register"], skillState: skills() })).toEqual({
       ok: false,
       reason: "owned",
     });

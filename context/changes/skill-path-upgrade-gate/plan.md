@@ -430,31 +430,31 @@ Three non-destructive migrations: `skill_state` column (default `'{}'`, normaliz
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npx vitest run tests/skills.test.ts`
-- [x] 1.2 Migration + shift-skill persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shifts-complete.test.ts`)
-- [x] 1.3 Type checking passes: `npm run check`
-- [x] 1.4 Linting passes: `npm run lint`
-- [x] 1.5 Build succeeds: `npm run build`
+- [x] 1.1 Unit tests pass: `npx vitest run tests/skills.test.ts` — ce21728
+- [x] 1.2 Migration + shift-skill persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shifts-complete.test.ts`) — ce21728
+- [x] 1.3 Type checking passes: `npm run check` — ce21728
+- [x] 1.4 Linting passes: `npm run lint` — ce21728
+- [x] 1.5 Build succeeds: `npm run build` — ce21728
 
 #### Manual
 
-- [x] 1.6 Playing a shift advances the matching per-competency counters (firstTryCorrect up on a clean shift; misses up on retries)
-- [x] 1.7 Replaying shifts only ever increases skill counters — never decreases
+- [x] 1.6 Playing a shift advances the matching per-competency counters (firstTryCorrect up on a clean shift; misses up on retries) — ce21728
+- [x] 1.7 Replaying shifts only ever increases skill counters — never decreases — ce21728
 
 ### Phase 2: Gate extension — decisions competency, skill + task-history requirements
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts`
-- [ ] 2.2 Gate/buy integration passes against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`)
-- [ ] 2.3 Type checking passes: `npm run check`
-- [ ] 2.4 Linting passes: `npm run lint`
-- [ ] 2.5 Build succeeds: `npm run build`
+- [x] 2.1 Unit tests pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts`
+- [x] 2.2 Gate/buy integration passes against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`)
+- [x] 2.3 Type checking passes: `npm run check`
+- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.5 Build succeeds: `npm run build`
 
 #### Manual
 
-- [ ] 2.6 A skill/history-gated upgrade can't be bought until earned; once earned, it buys normally
-- [ ] 2.7 Buying raises the decisions competency; spending never lowers any skill
+- [x] 2.6 A skill/history-gated upgrade can't be bought until earned; once earned, it buys normally
+- [x] 2.7 Buying raises the decisions competency; spending never lowers any skill
 
 ### Phase 3: Child-facing skill surfacing
 

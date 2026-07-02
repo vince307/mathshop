@@ -6,11 +6,13 @@
  * first-guess defaults, adjust after kid-testing.
  *
  * v1 is a single shared catalog for the current single world (per-world catalogs
- * are the multi-world tranche). Gates on cost + world level only — skill-progress
- * gating is S-07. The only functional effect is capacity: owned upgrades add tasks
- * to the shift, so a busier shop earns more via `earningsForShift`.
+ * are the multi-world tranche). Gates on cost + world level (S-06) and, for a
+ * sparingly-chosen few entries, skill level / task history (S-07). The only
+ * functional effect is capacity: owned upgrades add tasks to the shift, so a
+ * busier shop earns more via `earningsForShift`.
  */
-import type { ShopState } from "@/types";
+import type { Competency, ShopState, SkillState } from "@/types";
+import { skillLevel } from "@/data/skills";
 
 export interface Upgrade {
   id: string;
@@ -26,6 +28,16 @@ export interface Upgrade {
   art: string;
   /** Display / progression order. */
   order: number;
+  /**
+   * Optional S-07 skill gate: the child must have reached `level` in `competency`
+   * (derived from first-try counts via `skillLevel`) before this can be bought.
+   */
+  requiredSkill?: { competency: Competency; level: number };
+  /**
+   * Optional S-07 task-history gate: the child must have `count` completed tasks
+   * in `competency` before this can be bought.
+   */
+  requiredTaskHistory?: { competency: Competency; count: number };
 }
 
 /** Max total bonus tasks from owned upgrades — caps how far shift length can grow. */
@@ -58,6 +70,8 @@ export const UPGRADES: readonly Upgrade[] = [
     extraTasks: 1,
     art: "/illustrations/upgrade-register.svg",
     order: 3,
+    // S-07: a register rewards money handling — gate on money skill level 1 (first-guess).
+    requiredSkill: { competency: "money", level: 1 },
   },
   {
     id: "slot",
@@ -85,6 +99,8 @@ export const UPGRADES: readonly Upgrade[] = [
     extraTasks: 1,
     art: "/illustrations/upgrade-customers.svg",
     order: 6,
+    // S-07: more customers rewards counting practice — gate on 8 completed math tasks (first-guess).
+    requiredTaskHistory: { competency: "math", count: 8 },
   },
 ] as const;
 
@@ -110,19 +126,33 @@ export interface BuyContext {
   walletBalance: number;
   businessLevel: number;
   purchased: string[];
+  /** Normalized per-competency skill (S-07) — feeds the skill/task-history rungs. */
+  skillState: SkillState;
 }
 
-export type BuyCheck = { ok: true } | { ok: false; reason: "owned" | "locked" | "insufficient" | "unknown" };
+export type BuyReason = "owned" | "locked" | "skill-locked" | "history-locked" | "insufficient" | "unknown";
+
+export type BuyCheck = { ok: true } | { ok: false; reason: BuyReason };
 
 /**
  * Server-authoritative purchasability — reused by the buy route (authority) and
- * the upgrades screen (display), so they never disagree. Order matters: an
- * unknown id first, then already-owned, then level lock, then affordability.
+ * the upgrades screen (display), so they never disagree. Order matters: unknown
+ * id first, then already-owned (so an owned upgrade is NEVER retro-locked by a
+ * later rung), then world-level lock, then the optional S-07 skill / task-history
+ * gates (skipped entirely for entries without them), then affordability.
  */
 export function canBuy(upgrade: Upgrade | undefined, ctx: BuyContext): BuyCheck {
   if (!upgrade) return { ok: false, reason: "unknown" };
   if (isOwned(upgrade.id, ctx.purchased)) return { ok: false, reason: "owned" };
   if (ctx.businessLevel < upgrade.requiredWorldLevel) return { ok: false, reason: "locked" };
+  if (upgrade.requiredSkill) {
+    const { competency, level } = upgrade.requiredSkill;
+    if (skillLevel(ctx.skillState[competency].firstTryCorrect) < level) return { ok: false, reason: "skill-locked" };
+  }
+  if (upgrade.requiredTaskHistory) {
+    const { competency, count } = upgrade.requiredTaskHistory;
+    if (ctx.skillState[competency].completed < count) return { ok: false, reason: "history-locked" };
+  }
   if (ctx.walletBalance < upgrade.cost) return { ok: false, reason: "insufficient" };
   return { ok: true };
 }

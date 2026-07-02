@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase";
 import { getMostRecentProfile } from "@/lib/services/child-profiles";
 import { worldForTheme } from "@/data/worlds";
 import { readPurchased } from "@/data/upgrades";
+import { readSkillState } from "@/data/skills";
 import { t } from "@/i18n";
 
 // Dedicated upgrades surface (S-06). Gated under /app by existing middleware.
@@ -20,6 +21,7 @@ const profile = supabase ? await getMostRecentProfile(supabase) : null;
 
 const world = profile ? worldForTheme(profile.theme) : null;
 const purchased = profile ? readPurchased(profile.shop_state) : [];
+const skillState = readSkillState(profile?.skill_state);
 ---
 
 <Layout title={t.brand}>
@@ -45,6 +47,7 @@ const purchased = profile ? readPurchased(profile.shop_state) : [];
           walletBalance={profile.wallet_balance}
           businessLevel={profile.business_level}
           purchased={purchased}
+          skillState={skillState}
           world={world}
         />
       ) : (

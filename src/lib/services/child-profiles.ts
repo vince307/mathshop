@@ -2,7 +2,7 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState, SkillState } from "@/types";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
-import { canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
+import { type BuyReason, canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
 
 export { deriveStartingLevel } from "@/data/leveling";
 
@@ -129,7 +129,7 @@ export async function recordShiftResult(
 }
 
 /** Why a buy could not proceed. `not-found` = the row isn't readable/owned (RLS). */
-export type BuyFailure = "owned" | "locked" | "insufficient" | "unknown" | "not-found";
+export type BuyFailure = BuyReason | "not-found";
 
 export type BuyUpgradeResult =
   | { walletBalance: number; purchased: string[] }
@@ -165,19 +165,29 @@ export async function buyUpgrade(
   if (!current) return { failure: "not-found" };
 
   const purchased = readPurchased(current.shop_state);
+  const skillState = readSkillState(current.skill_state);
   const check = canBuy(upgrade, {
     walletBalance: current.wallet_balance,
     businessLevel: current.business_level,
     purchased,
+    skillState,
   });
   if (!check.ok) return { failure: check.reason };
 
   const nextPurchased = [...purchased, upgrade.id];
   const walletBalance = current.wallet_balance - upgrade.cost;
+  // Choosing an upgrade IS the decisions competency (+1 per purchase, fully
+  // server-side). Folded monotonically into the same UPDATE that debits the
+  // wallet — spending never lowers a skill (PRD guardrail).
+  const nextSkillState = addSkillDelta(skillState, { decisions: { firstTryCorrect: 1, completed: 1, misses: 0 } });
 
   const { error: updateErr } = await client
     .from("child_profiles")
-    .update({ wallet_balance: walletBalance, shop_state: { ...current.shop_state, purchased: nextPurchased } })
+    .update({
+      wallet_balance: walletBalance,
+      shop_state: { ...current.shop_state, purchased: nextPurchased },
+      skill_state: nextSkillState,
+    })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };
 
