@@ -272,6 +272,27 @@ export const pl = {
     upgradesNudgeLink: "Zobacz ulepszenia",
   },
 
+  // Parent-PIN gate (S-07 / FR-016). A soft gate over the session protecting the
+  // parent report from the child. First visit sets a PIN; later visits enter it.
+  parentPin: {
+    title: "Panel rodzica",
+    setHeading: "Ustaw PIN rodzica",
+    enterHeading: "Podaj PIN rodzica",
+    intro: "PIN chroni panel rodzica przed dzieckiem.",
+    pinLabel: "PIN (4–6 cyfr)",
+    confirmLabel: "Powtórz PIN",
+    setSubmit: "Ustaw PIN",
+    enterSubmit: "Otwórz panel",
+    pending: "Sprawdzam…",
+    errors: {
+      invalid: "PIN musi mieć od 4 do 6 cyfr.",
+      mismatch: "PIN-y nie są takie same.",
+      wrong: "Nieprawidłowy PIN.",
+      locked: "Za dużo prób. Spróbuj ponownie za chwilę.",
+      generic: "Coś poszło nie tak. Spróbuj ponownie.",
+    },
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",

@@ -1,0 +1,20 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import ParentPinGate from "@/components/parent/ParentPinGate";
+import { createClient } from "@/lib/supabase";
+import { hasPin } from "@/lib/services/parent-pin";
+import { t } from "@/i18n";
+
+// Parent-PIN gate (S-07 / FR-016). Already auth-gated under /app by middleware.
+// Whether the parent has a PIN decides set vs enter mode; the island posts to the
+// server-authoritative routes and, on success, navigates to /app/report.
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const alreadyHasPin = supabase ? await hasPin(supabase) : false;
+const mode = alreadyHasPin ? "enter" : "set";
+---
+
+<Layout title={t.brand}>
+  <div class="bg-background flex min-h-screen flex-col items-center justify-center px-4 py-10">
+    <ParentPinGate client:load mode={mode} />
+  </div>
+</Layout>

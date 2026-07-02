@@ -37,6 +37,22 @@ Per-profile, per-shift history log (S-07) backing the parent weekly report (FR-0
 - **Consumed by:** `src/lib/services/reports.ts` (`getWeeklyReport` / `aggregateWeeklyReport`), `src/lib/services/child-profiles.ts` (writers).
 - **Isolation test:** `tests/shift-log-isolation.test.ts`.
 
+## public.account_settings
+
+Per-account parent settings (S-07) holding the scrypt-hashed parent PIN (FR-016 gate) and a verify throttle. One row per account (`account_id` is the PK). Written server-side (`src/lib/services/parent-pin.ts`); the PIN is **never stored in plaintext** and never logged.
+
+- **Defined in:** `supabase/migrations/20260701160000_create_account_settings.sql` (S-07).
+- **Owner column:** `account_id uuid primary key references auth.users(id) on delete cascade` — RLS predicate `auth.uid() = account_id`.
+- **Columns:** `account_id` (PK), `pin_hash` text (scrypt `salt:hash` hex), `failed_attempts` integer (check `>= 0`), `locked_until` timestamptz null, `created_at`, `updated_at`.
+- **`updated_at` trigger:** `account_settings_set_updated_at` (`before update`, reuses `set_updated_at()`).
+- **RLS:** enabled; four per-operation policies, all `to authenticated`:
+  - `account_settings_select_own` — `for select using (auth.uid() = account_id)`
+  - `account_settings_insert_own` — `for insert with check (auth.uid() = account_id)`
+  - `account_settings_update_own` — `for update using (...) with check (...)`
+  - `account_settings_delete_own` — `for delete using (auth.uid() = account_id)`
+- **Env dependency:** `PARENT_SESSION_SECRET` (astro.config.mjs `env.schema`) — HMAC key for the signed `parent_verified` session marker. Set on Vercel (Production + Preview).
+- **Isolation test:** `tests/account-settings-isolation.test.ts`.
+
 ## set_updated_at()
 
 Shared trigger function that stamps `new.updated_at = now()` on every UPDATE.

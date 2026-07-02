@@ -476,32 +476,32 @@ Three non-destructive migrations: `skill_state` column (default `'{}'`, normaliz
 
 #### Automated
 
-- [x] 4.1 Isolation + persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shift-log-isolation.test.ts tests/shifts-complete.test.ts`)
-- [x] 4.2 Type checking passes: `npm run check`
-- [x] 4.3 Linting passes: `npm run lint`
-- [x] 4.4 Build succeeds: `npm run build`
-- [x] 4.5 Policy-removal meta-check turns the `shift_log` isolation test red (documented, reverted)
+- [x] 4.1 Isolation + persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shift-log-isolation.test.ts tests/shifts-complete.test.ts`) — a0c0fea
+- [x] 4.2 Type checking passes: `npm run check` — a0c0fea
+- [x] 4.3 Linting passes: `npm run lint` — a0c0fea
+- [x] 4.4 Build succeeds: `npm run build` — a0c0fea
+- [x] 4.5 Policy-removal meta-check turns the `shift_log` isolation test red (documented, reverted) — a0c0fea
 
 #### Manual
 
-- [x] 4.6 Completing shifts creates per-shift log rows for the right profile (Studio)
-- [x] 4.7 Weekly aggregation returns a sensible per-child summary tying upgrades to skills
+- [x] 4.6 Completing shifts creates per-shift log rows for the right profile (Studio) — a0c0fea
+- [x] 4.7 Weekly aggregation returns a sensible per-child summary tying upgrades to skills — a0c0fea
 
 ### Phase 5: Parent-PIN gate
 
 #### Automated
 
-- [ ] 5.1 Isolation + PIN round-trip pass against a fresh DB (`supabase db reset` + `vitest run tests/account-settings-isolation.test.ts tests/parent-pin.test.ts`)
-- [ ] 5.2 Type checking passes: `npm run check`
-- [ ] 5.3 Linting passes: `npm run lint`
-- [ ] 5.4 Build succeeds: `npm run build`
-- [ ] 5.5 PIN stored hashed (never plaintext) — asserted in the round-trip test
+- [x] 5.1 Isolation + PIN round-trip pass against a fresh DB (`supabase db reset` + `vitest run tests/account-settings-isolation.test.ts tests/parent-pin.test.ts`)
+- [x] 5.2 Type checking passes: `npm run check`
+- [x] 5.3 Linting passes: `npm run lint`
+- [x] 5.4 Build succeeds: `npm run build`
+- [x] 5.5 PIN stored hashed (never plaintext) — asserted in the round-trip test
 
 #### Manual
 
-- [ ] 5.6 First visit prompts to set a PIN; later visits require entering it; wrong PIN rejected
-- [ ] 5.7 The parent_verified marker expires (short TTL) so the gate re-prompts
-- [ ] 5.8 Account B cannot read or set account A's PIN
+- [x] 5.6 First visit prompts to set a PIN; later visits require entering it; wrong PIN rejected
+- [x] 5.7 The parent_verified marker expires (short TTL) so the gate re-prompts
+- [x] 5.8 Account B cannot read or set account A's PIN
 
 ### Phase 6: Parent weekly report screen
 
