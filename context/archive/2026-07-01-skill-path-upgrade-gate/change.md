@@ -1,10 +1,10 @@
 ---
 change_id: skill-path-upgrade-gate
 title: Skill path upgrade gate
-status: impl_reviewed
+status: archived
 created: 2026-07-01
 updated: 2026-07-02
-archived_at: null
+archived_at: 2026-07-02T18:45:21Z
 ---
 
 ## Notes
