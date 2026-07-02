@@ -210,9 +210,22 @@ export const pl = {
     customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
   },
 
+  // Per-competency skill labels (S-07). Keyed so components carry no literal copy
+  // (L-003); the competency keys (math/money/decisions) match `Competency` in
+  // src/types.ts. `{level}` interpolated in the island. Draft Polish — pending review.
+  skills: {
+    heading: "Twoje umiejętności",
+    math: "Liczenie",
+    money: "Pieniądze",
+    decisions: "Decyzje",
+    levelLabel: "Poziom {level}",
+    maxLabel: "Maks. poziom",
+  },
+
   // Dedicated /app/upgrades screen (S-06): choose-and-buy surface. Warm, factual,
   // NO urgency/scarcity copy (guardrail). `{cost}/{level}/{amount}/{name}/{wallet}`
-  // are interpolated in the island. Draft Polish — pending native-speaker review.
+  // and, for the S-07 skill gates, `{competency}/{count}` are interpolated in the
+  // island. Draft Polish — pending native-speaker review.
   upgradeShop: {
     title: "Rozbuduj sklep",
     walletLabel: "Portfel",
@@ -226,6 +239,8 @@ export const pl = {
     ownedTag: "Masz to",
     lockedByLevel: "Dostępne od poziomu sklepu {level}",
     lockedByFunds: "Brakuje {amount} zł",
+    lockedBySkill: "Rozwiń umiejętność „{competency}” do poziomu {level}",
+    lockedByHistory: "Wykonaj {count} zadań: {competency}",
     nextProgress: "Brakuje {amount} zł do: {name}",
     emptyAffordable: "Uzbieraj trochę więcej, aby kupić pierwsze ulepszenie.",
     allOwned: "Masz już wszystkie ulepszenia. Brawo!",

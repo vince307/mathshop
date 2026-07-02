@@ -5,6 +5,7 @@ import {
   readSkillState,
   skillLevel,
   skillLevelsFor,
+  skillProgress,
   SKILL_THRESHOLDS,
   type SkillState,
 } from "@/data/skills";
@@ -90,6 +91,23 @@ describe("addSkillDelta", () => {
   it("does not mutate the input state", () => {
     addSkillDelta(base, { math: { completed: 10 } });
     expect(base.math.completed).toBe(3);
+  });
+});
+
+describe("skillProgress", () => {
+  it("is level 0 at a fresh profile, climbing toward the first threshold", () => {
+    expect(skillProgress(0)).toEqual({ level: 0, fraction: 0, atMax: false });
+    // halfway to the first threshold
+    const half = SKILL_THRESHOLDS[0] / 2;
+    expect(skillProgress(half).fraction).toBeCloseTo(0.5);
+  });
+  it("resets the fraction to 0 right at a threshold boundary", () => {
+    expect(skillProgress(SKILL_THRESHOLDS[0])).toEqual({ level: 1, fraction: 0, atMax: false });
+  });
+  it("is full + atMax at the top of the ladder", () => {
+    const top = SKILL_THRESHOLDS[SKILL_THRESHOLDS.length - 1];
+    expect(skillProgress(top)).toEqual({ level: SKILL_THRESHOLDS.length, fraction: 1, atMax: true });
+    expect(skillProgress(top + 100)).toEqual({ level: SKILL_THRESHOLDS.length, fraction: 1, atMax: true });
   });
 });
 

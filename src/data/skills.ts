@@ -87,6 +87,28 @@ export function addSkillDelta(current: SkillState, delta: SkillDelta): SkillStat
   return out;
 }
 
+/** Per-competency progress toward the next level — feeds the child-facing bars (S-07). */
+export interface SkillProgress {
+  level: number;
+  /** Fraction toward the next level in [0,1]; 1 when the top level is reached. */
+  fraction: number;
+  atMax: boolean;
+}
+
+/**
+ * Derive display progress from a first-try count: the current level plus how far
+ * (0..1) it has climbed toward the next threshold. At the top of the ladder the
+ * bar is full. Pure — the upgrades screen renders bars from this.
+ */
+export function skillProgress(firstTryCorrect: number): SkillProgress {
+  const level = skillLevel(firstTryCorrect);
+  const atMax = level >= SKILL_THRESHOLDS.length;
+  if (atMax) return { level, fraction: 1, atMax };
+  const prev = level === 0 ? 0 : SKILL_THRESHOLDS[level - 1];
+  const next = SKILL_THRESHOLDS[level];
+  return { level, fraction: (firstTryCorrect - prev) / (next - prev), atMax };
+}
+
 /** Derive the current level of every competency from its first-try count. */
 export function skillLevelsFor(state: SkillState): Record<Competency, number> {
   const normalized = readSkillState(state);

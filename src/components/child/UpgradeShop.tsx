@@ -3,6 +3,7 @@ import type { World } from "@/data/worlds";
 import type { SkillState } from "@/types";
 import { ChildButton } from "@/components/child/ChildButton";
 import { ShopArt } from "@/components/child/ShopArt";
+import { SkillBars } from "@/components/child/SkillBars";
 import { UPGRADES, canBuy, isOwned, nextUpgrade, type Upgrade } from "@/data/upgrades";
 import { t } from "@/i18n";
 
@@ -84,6 +85,18 @@ export default function UpgradeShop({
     if (check.reason === "locked") {
       return fill(t.upgradeShop.lockedByLevel, { level: upgrade.requiredWorldLevel });
     }
+    if (check.reason === "skill-locked" && upgrade.requiredSkill) {
+      return fill(t.upgradeShop.lockedBySkill, {
+        competency: t.skills[upgrade.requiredSkill.competency],
+        level: upgrade.requiredSkill.level,
+      });
+    }
+    if (check.reason === "history-locked" && upgrade.requiredTaskHistory) {
+      return fill(t.upgradeShop.lockedByHistory, {
+        competency: t.skills[upgrade.requiredTaskHistory.competency],
+        count: upgrade.requiredTaskHistory.count,
+      });
+    }
     return fill(t.upgradeShop.lockedByFunds, { amount: upgrade.cost - wallet });
   }
 
@@ -103,6 +116,9 @@ export default function UpgradeShop({
       <div className="bg-card border-border overflow-hidden rounded-3xl border shadow-sm">
         <ShopArt world={world} purchased={owned} />
       </div>
+
+      {/* Per-competency skill progress (S-07) — learning reflected back to the child */}
+      <SkillBars skillState={skillState} />
 
       {/* Next-upgrade progress / all-owned (factual encouragement, no urgency) */}
       {next && wallet < next.cost ? (

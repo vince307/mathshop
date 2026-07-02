@@ -445,32 +445,32 @@ Three non-destructive migrations: `skill_state` column (default `'{}'`, normaliz
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts`
-- [x] 2.2 Gate/buy integration passes against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`)
-- [x] 2.3 Type checking passes: `npm run check`
-- [x] 2.4 Linting passes: `npm run lint`
-- [x] 2.5 Build succeeds: `npm run build`
+- [x] 2.1 Unit tests pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts` — f769485
+- [x] 2.2 Gate/buy integration passes against a fresh DB (`supabase db reset` + `vitest run tests/upgrades-buy.test.ts`) — f769485
+- [x] 2.3 Type checking passes: `npm run check` — f769485
+- [x] 2.4 Linting passes: `npm run lint` — f769485
+- [x] 2.5 Build succeeds: `npm run build` — f769485
 
 #### Manual
 
-- [x] 2.6 A skill/history-gated upgrade can't be bought until earned; once earned, it buys normally
-- [x] 2.7 Buying raises the decisions competency; spending never lowers any skill
+- [x] 2.6 A skill/history-gated upgrade can't be bought until earned; once earned, it buys normally — f769485
+- [x] 2.7 Buying raises the decisions competency; spending never lowers any skill — f769485
 
 ### Phase 3: Child-facing skill surfacing
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run check`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Build succeeds: `npm run build`
-- [ ] 3.4 Tests still pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts tests/upgrades-buy.test.ts`
-- [ ] 3.5 No inline user-visible literals introduced (L-003 grep)
+- [x] 3.1 Type checking passes: `npm run check`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Build succeeds: `npm run build`
+- [x] 3.4 Tests still pass: `npx vitest run tests/upgrades.test.ts tests/skills.test.ts tests/upgrades-buy.test.ts`
+- [x] 3.5 No inline user-visible literals introduced (L-003 grep)
 
 #### Manual
 
-- [ ] 3.6 Upgrades screen shows correct per-competency skill bars for a seeded profile
-- [ ] 3.7 A skill/history-locked upgrade shows the one concrete missing requirement in Polish; no scarcity copy
-- [ ] 3.8 Bars advance after playing shifts / buying upgrades
+- [x] 3.6 Upgrades screen shows correct per-competency skill bars for a seeded profile
+- [x] 3.7 A skill/history-locked upgrade shows the one concrete missing requirement in Polish; no scarcity copy
+- [x] 3.8 Bars advance after playing shifts / buying upgrades
 
 ### Phase 4: Per-shift history log + logging + weekly aggregation
 
