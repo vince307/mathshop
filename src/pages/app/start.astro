@@ -3,7 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import StartShiftButton from "@/components/child/StartShiftButton";
 import { ShopArt } from "@/components/child/ShopArt";
 import { buttonVariants } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { getMostRecentProfile } from "@/lib/services/child-profiles";
 import { worldForTheme } from "@/data/worlds";
@@ -43,8 +43,18 @@ const nextText =
 
 <Layout title={t.brand}>
   <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
-    {/* Parent signout — subtle, top-right; child controls stay below */}
-    <div class="mb-6 flex w-full max-w-md justify-end">
+    {
+      /* Parent controls — subtle, top-right; child controls stay below. The report
+        link sits behind the PIN gate (report route redirects when unverified). */
+    }
+    <div class="mb-6 flex w-full max-w-md items-center justify-end gap-4">
+      <a
+        href="/app/report"
+        class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+      >
+        <ShieldCheck className="size-4" />
+        {t.report.title}
+      </a>
       <form method="POST" action="/api/auth/signout">
         <button
           type="submit"

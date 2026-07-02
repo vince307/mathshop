@@ -293,6 +293,27 @@ export const pl = {
     },
   },
 
+  // Parent weekly report (S-07 / FR-016). PIN-gated, read-only summary of what each
+  // child practiced this week and which upgrades that play unlocked, tied to the
+  // skills each exercised. Educational, plain-language, NEVER comparative or shaming
+  // (guardrail — no urgency, no cross-child comparison). `{count}`/`{skills}` are
+  // interpolated in the island; competency labels reuse `t.skills.*`. Draft Polish —
+  // pending native-speaker review.
+  report: {
+    title: "Panel rodzica",
+    heading: "Raport tygodniowy",
+    intro: "Zobacz, co Twoje dziecko ćwiczyło w tym tygodniu.",
+    practiceHeading: "Ćwiczone umiejętności",
+    practiceCount: "{count} razy",
+    noPractice: "W tym tygodniu jeszcze nic nie ćwiczyło.",
+    upgradesHeading: "Odblokowane ulepszenia",
+    upgradeSkillsTie: "ćwiczy: {skills}",
+    generalPractice: "ogólna praktyka",
+    noUpgrades: "W tym tygodniu bez nowych ulepszeń.",
+    noProfiles: "Nie masz jeszcze profili dzieci.",
+    back: "Wróć do sklepu",
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",

@@ -1,0 +1,52 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import WeeklyReport from "@/components/parent/WeeklyReport";
+import type { ChildReport } from "@/components/parent/WeeklyReport";
+import { buttonVariants } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase";
+import { listChildProfiles } from "@/lib/services/child-profiles";
+import { getWeeklyReport } from "@/lib/services/reports";
+import { PARENT_VERIFIED_COOKIE, verifyMarker } from "@/lib/services/parent-pin";
+import { getAvatar } from "@/data/avatars";
+import { t } from "@/i18n";
+
+// Parent weekly report (S-07 / FR-016). Auth-gated under /app by middleware; this
+// route ADDITIONALLY checks the signed parent_verified marker and redirects to the
+// PIN gate whenever it's absent / expired / tampered — the report is a parent-only
+// surface behind the soft PIN gate, not open to the child. Loads ONLY the acting
+// parent's own profiles + their current-week reports (RLS-scoped, so no other
+// account's data can appear). SSR by default (output: "server").
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+if (!supabase) return Astro.redirect("/app/parent-pin");
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+const marker = Astro.cookies.get(PARENT_VERIFIED_COOKIE)?.value;
+if (!user || !verifyMarker(marker, user.id)) return Astro.redirect("/app/parent-pin");
+
+const profiles = await listChildProfiles(supabase);
+const reports: ChildReport[] = await Promise.all(
+  profiles.map(async (profile) => {
+    const avatar = getAvatar(profile.avatar);
+    return {
+      name: profile.name,
+      avatarImage: avatar?.image ?? null,
+      avatarAlt: avatar?.alt ?? "",
+      report: await getWeeklyReport(supabase, profile.id),
+    };
+  }),
+);
+---
+
+<Layout title={t.brand}>
+  <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
+    <WeeklyReport client:load reports={reports} />
+
+    <div class="mt-8">
+      <a href="/app/start" class:list={buttonVariants({ variant: "outline", size: "lg" })}>
+        {t.report.back}
+      </a>
+    </div>
+  </div>
+</Layout>

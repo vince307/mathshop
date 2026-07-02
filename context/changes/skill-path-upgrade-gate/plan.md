@@ -491,31 +491,31 @@ Three non-destructive migrations: `skill_state` column (default `'{}'`, normaliz
 
 #### Automated
 
-- [x] 5.1 Isolation + PIN round-trip pass against a fresh DB (`supabase db reset` + `vitest run tests/account-settings-isolation.test.ts tests/parent-pin.test.ts`)
-- [x] 5.2 Type checking passes: `npm run check`
-- [x] 5.3 Linting passes: `npm run lint`
-- [x] 5.4 Build succeeds: `npm run build`
-- [x] 5.5 PIN stored hashed (never plaintext) — asserted in the round-trip test
+- [x] 5.1 Isolation + PIN round-trip pass against a fresh DB (`supabase db reset` + `vitest run tests/account-settings-isolation.test.ts tests/parent-pin.test.ts`) — 07da072
+- [x] 5.2 Type checking passes: `npm run check` — 07da072
+- [x] 5.3 Linting passes: `npm run lint` — 07da072
+- [x] 5.4 Build succeeds: `npm run build` — 07da072
+- [x] 5.5 PIN stored hashed (never plaintext) — asserted in the round-trip test — 07da072
 
 #### Manual
 
-- [x] 5.6 First visit prompts to set a PIN; later visits require entering it; wrong PIN rejected
-- [x] 5.7 The parent_verified marker expires (short TTL) so the gate re-prompts
-- [x] 5.8 Account B cannot read or set account A's PIN
+- [x] 5.6 First visit prompts to set a PIN; later visits require entering it; wrong PIN rejected — 07da072
+- [x] 5.7 The parent_verified marker expires (short TTL) so the gate re-prompts — 07da072
+- [x] 5.8 Account B cannot read or set account A's PIN — 07da072
 
 ### Phase 6: Parent weekly report screen
 
 #### Automated
 
-- [ ] 6.1 Type checking passes: `npm run check`
-- [ ] 6.2 Linting passes: `npm run lint`
-- [ ] 6.3 Build succeeds: `npm run build`
-- [ ] 6.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [ ] 6.5 No inline user-visible literals in the new report/PIN surfaces (L-003 grep)
+- [x] 6.1 Type checking passes: `npm run check`
+- [x] 6.2 Linting passes: `npm run lint`
+- [x] 6.3 Build succeeds: `npm run build`
+- [x] 6.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 6.5 No inline user-visible literals in the new report/PIN surfaces (L-003 grep)
 
 #### Manual
 
-- [ ] 6.6 `/app/report` redirects to the PIN gate when unverified; renders after PIN entry
-- [ ] 6.7 Report shows each of the parent's own children's weekly practice + unlocked upgrades tied to skills; no other account's data appears
-- [ ] 6.8 Copy is Polish, educational, non-shaming, no comparison/urgency
-- [ ] 6.9 End-to-end: shifts raise skills → buy a now-unlocked upgrade → report shows the week's practice + the unlock tied to the right skills
+- [x] 6.6 `/app/report` redirects to the PIN gate when unverified; renders after PIN entry
+- [x] 6.7 Report shows each of the parent's own children's weekly practice + unlocked upgrades tied to skills; no other account's data appears
+- [x] 6.8 Copy is Polish, educational, non-shaming, no comparison/urgency
+- [x] 6.9 End-to-end: shifts raise skills → buy a now-unlocked upgrade → report shows the week's practice + the unlock tied to the right skills
