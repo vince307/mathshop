@@ -507,15 +507,15 @@ Three non-destructive migrations: `skill_state` column (default `'{}'`, normaliz
 
 #### Automated
 
-- [x] 6.1 Type checking passes: `npm run check`
-- [x] 6.2 Linting passes: `npm run lint`
-- [x] 6.3 Build succeeds: `npm run build`
-- [x] 6.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [x] 6.5 No inline user-visible literals in the new report/PIN surfaces (L-003 grep)
+- [x] 6.1 Type checking passes: `npm run check` — 0c61253
+- [x] 6.2 Linting passes: `npm run lint` — 0c61253
+- [x] 6.3 Build succeeds: `npm run build` — 0c61253
+- [x] 6.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 0c61253
+- [x] 6.5 No inline user-visible literals in the new report/PIN surfaces (L-003 grep) — 0c61253
 
 #### Manual
 
-- [x] 6.6 `/app/report` redirects to the PIN gate when unverified; renders after PIN entry
-- [x] 6.7 Report shows each of the parent's own children's weekly practice + unlocked upgrades tied to skills; no other account's data appears
-- [x] 6.8 Copy is Polish, educational, non-shaming, no comparison/urgency
-- [x] 6.9 End-to-end: shifts raise skills → buy a now-unlocked upgrade → report shows the week's practice + the unlock tied to the right skills
+- [x] 6.6 `/app/report` redirects to the PIN gate when unverified; renders after PIN entry — 0c61253
+- [x] 6.7 Report shows each of the parent's own children's weekly practice + unlocked upgrades tied to skills; no other account's data appears — 0c61253
+- [x] 6.8 Copy is Polish, educational, non-shaming, no comparison/urgency — 0c61253
+- [x] 6.9 End-to-end: shifts raise skills → buy a now-unlocked upgrade → report shows the week's practice + the unlock tied to the right skills — 0c61253
