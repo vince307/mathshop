@@ -1,6 +1,7 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import type { ShopState } from "@/types";
+import type { ShopState, SkillState } from "@/types";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
+import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import { canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
 
 export { deriveStartingLevel } from "@/data/leveling";
@@ -37,6 +38,9 @@ export interface ChildProfile {
   completed_shift_count: number;
   business_level: number;
   shop_state: ShopState;
+  // Per-competency skill progress (S-07). Pre-S-07 rows may be `{}`; always read
+  // through `readSkillState` before use so missing keys normalize to zero.
+  skill_state: SkillState;
   created_at: string;
   updated_at: string;
 }
@@ -86,13 +90,16 @@ export interface ShiftResult {
  * so the client never supplies an amount — it cannot inflate the wallet. The row
  * is reached by `id` and the F-01 `child_profiles_update_own` RLS policy gates
  * ownership (a non-owner read returns no row, a non-owner update affects 0 rows);
- * `account_id` is NEVER taken from the caller (L-002). Returns the wallet earnings +
- * new level, or `{ error }` if the profile isn't readable/owned.
+ * `account_id` is NEVER taken from the caller (L-002). The per-competency `skills`
+ * delta (already capped + reconciled against taskCount/cleanCount by the route)
+ * is folded into `skill_state` MONOTONICALLY via `addSkillDelta` — it only ever
+ * adds, so replaying shifts can never lower a skill (PRD guardrail). Returns the
+ * wallet earnings + new level, or `{ error }` if the profile isn't readable/owned.
  */
 export async function recordShiftResult(
   client: SupabaseClient,
   profileId: string,
-  shift: { taskCount: number; cleanCount: number },
+  shift: { taskCount: number; cleanCount: number; skills: SkillDelta },
 ): Promise<ShiftResult | { error: PostgrestError | Error }> {
   // Read the row AS the parent (RLS-scoped): a non-owner sees no row. Use limit(1)
   // + data?.[0] (mirrors getMostRecentProfile) rather than .single() so the result
@@ -105,6 +112,7 @@ export async function recordShiftResult(
   const earned = earningsForShift(shift.taskCount, shift.cleanCount);
   const newCount = current.completed_shift_count + 1;
   const businessLevel = businessLevelForShifts(newCount);
+  const skillState = addSkillDelta(readSkillState(current.skill_state), shift.skills);
 
   const { error: updateErr } = await client
     .from("child_profiles")
@@ -112,6 +120,7 @@ export async function recordShiftResult(
       wallet_balance: current.wallet_balance + earned,
       completed_shift_count: newCount,
       business_level: businessLevel,
+      skill_state: skillState,
     })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };

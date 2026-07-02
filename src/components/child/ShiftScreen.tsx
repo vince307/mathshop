@@ -7,6 +7,7 @@ import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
 import { nextUpgrade, shiftBonusTasks } from "@/data/upgrades";
+import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
@@ -68,10 +69,22 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
     const earned = earningsForShift(taskCount, cleanCount);
     const stars = starsForShift(taskCount, cleanCount);
 
+    // Per-competency skill delta (S-07): pair each task's type with its outcome.
+    // Only the two play competencies accrue here (decisions is a purchase event);
+    // the server caps + reconciles + folds this monotonically into skill_state.
+    const delta = readSkillState(null);
+    results.forEach((r, i) => {
+      const bucket = delta[competencyForTaskType(tasks[i].type)];
+      bucket.completed += 1;
+      bucket.firstTryCorrect += r.firstTry ? 1 : 0;
+      bucket.misses += r.misses;
+    });
+
     const body = new FormData();
     body.set("profileId", profileId);
     body.set("taskCount", String(taskCount));
     body.set("cleanCount", String(cleanCount));
+    body.set("skills", JSON.stringify({ math: delta.math, money: delta.money }));
 
     fetch("/api/shifts/complete", { method: "POST", body })
       .then(async (res) => {
@@ -90,7 +103,7 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
       .catch(() => {
         setPhase("error");
       });
-  }, [results, tasks.length, profileId, walletBalance, purchased]);
+  }, [results, tasks, profileId, walletBalance, purchased]);
 
   if (phase === "results" && outcome) {
     return (

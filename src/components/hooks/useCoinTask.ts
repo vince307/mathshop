@@ -3,9 +3,14 @@ import { RETRY_HINT_THRESHOLD } from "@/types";
 
 export type CoinTaskStatus = "idle" | "wrong" | "correct";
 
-/** Per-task outcome surfaced at success — `firstTry` (no misses) drives shift accuracy. */
+/**
+ * Per-task outcome surfaced at success. `firstTry` (no misses) drives shift
+ * accuracy/earnings; `misses` (the exact wrong-attempt count, S-07) feeds the
+ * per-competency skill signal the shift folds server-side.
+ */
 export interface TaskOutcome {
   firstTry: boolean;
+  misses: number;
 }
 
 export interface CoinTaskState {
@@ -50,7 +55,7 @@ export function useCoinTask({
   useEffect(() => {
     if (status !== "correct") return;
     const timer = window.setTimeout(() => {
-      onComplete({ firstTry: misses === 0 });
+      onComplete({ firstTry: misses === 0, misses });
     }, 1400);
     return () => {
       window.clearTimeout(timer);

@@ -4,6 +4,7 @@ import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
 import { businessLevelForShifts, earningsForShift, MAX_SHIFT_TASKS } from "@/data/shift";
+import { readSkillState, type SkillState } from "@/data/skills";
 
 /**
  * Route-level persistence + isolation for POST /api/shifts/complete (S-04/S-05).
@@ -27,8 +28,26 @@ async function mintSession(email: string): Promise<CookieJar> {
   return jar;
 }
 
+/**
+ * A valid per-competency `skills` delta (S-07) that reconciles with the reported
+ * aggregates: all play credited to math, so Σ completed = taskCount and Σ
+ * firstTry = cleanCount (the route's reconciliation refine passes).
+ */
+function skillsFor(taskCount: number, cleanCount: number): string {
+  return JSON.stringify({
+    math: { firstTryCorrect: cleanCount, completed: taskCount, misses: 0 },
+    money: { firstTryCorrect: 0, completed: 0, misses: 0 },
+  });
+}
+
 function completeContext(jar: CookieJar, formData: Record<string, string>) {
-  return buildContext({ url: "https://test.local/api/shifts/complete", method: "POST", formData, cookies: jar });
+  // The client always posts `skills`; auto-attach a reconciling delta unless the
+  // test provides its own (e.g. to exercise inflation rejection).
+  const fd = { ...formData };
+  if ("taskCount" in fd && !("skills" in fd)) {
+    fd.skills = skillsFor(Number(fd.taskCount), Number("cleanCount" in fd ? fd.cleanCount : 0));
+  }
+  return buildContext({ url: "https://test.local/api/shifts/complete", method: "POST", formData: fd, cookies: jar });
 }
 
 /** Seed a profile owned by `accountId` via the admin client (bypasses RLS). */
@@ -54,6 +73,17 @@ async function readState(profileId: string) {
       { merge: false }
     >();
   return data;
+}
+
+/** Read the profile's normalized skill_state via the RLS-bypassing admin client. */
+async function readSkill(profileId: string): Promise<SkillState> {
+  const { data } = await admin
+    .from("child_profiles")
+    .select("skill_state")
+    .eq("id", profileId)
+    .single()
+    .overrideTypes<{ skill_state: unknown }, { merge: false }>();
+  return readSkillState(data?.skill_state);
 }
 
 describe("POST /api/shifts/complete (route persistence + isolation)", () => {
@@ -135,5 +165,48 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const after = await readState(aProfileId);
     expect(after?.wallet_balance).toBe(before?.wallet_balance);
     expect(after?.completed_shift_count).toBe(before?.completed_shift_count);
+  });
+
+  it("folds the per-competency skill delta into skill_state, monotonically on replay", async () => {
+    // Fresh profile so the counters are asserted from a known zero baseline.
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    expect(await readSkill(profileId)).toEqual(readSkillState(null)); // starts fully zeroed
+
+    // A 4-task shift, 3 clean: math 2/2 (1 miss), money 1/2 (3 misses). Σ completed=4≤4, Σ firstTry=3≤3.
+    const skills = JSON.stringify({
+      math: { firstTryCorrect: 2, completed: 2, misses: 1 },
+      money: { firstTryCorrect: 1, completed: 2, misses: 3 },
+    });
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "4", cleanCount: "3", skills }));
+    expect(res.status).toBe(200);
+    const afterOne = await readSkill(profileId);
+    expect(afterOne.math).toEqual({ firstTryCorrect: 2, completed: 2, misses: 1 });
+    expect(afterOne.money).toEqual({ firstTryCorrect: 1, completed: 2, misses: 3 });
+    expect(afterOne.decisions).toEqual({ firstTryCorrect: 0, completed: 0, misses: 0 }); // never touched by a shift
+
+    // Replaying the identical shift only ever increases the counters (monotonic).
+    const res2 = await completePOST(completeContext(jar, { profileId, taskCount: "4", cleanCount: "3", skills }));
+    expect(res2.status).toBe(200);
+    const afterTwo = await readSkill(profileId);
+    expect(afterTwo.math).toEqual({ firstTryCorrect: 4, completed: 4, misses: 2 });
+    expect(afterTwo.money).toEqual({ firstTryCorrect: 2, completed: 4, misses: 6 });
+  });
+
+  it("rejects a skill delta that exceeds the reported shift and writes no skill change", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    // Σ completed = 8 > taskCount 4 — the reconciliation refine must reject it.
+    const inflated = JSON.stringify({
+      math: { firstTryCorrect: 4, completed: 8, misses: 0 },
+      money: { firstTryCorrect: 0, completed: 0, misses: 0 },
+    });
+    const res = await completePOST(
+      completeContext(jar, { profileId, taskCount: "4", cleanCount: "4", skills: inflated }),
+    );
+    expect(res.status).toBe(400);
+    const state = await readState(profileId);
+    expect(state?.completed_shift_count).toBe(0); // nothing persisted
+    expect(await readSkill(profileId)).toEqual(readSkillState(null)); // skill untouched
   });
 });

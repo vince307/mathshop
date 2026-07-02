@@ -82,3 +82,35 @@ export type Task = CountingTask | ChangeMakingTask;
 export interface ShopState {
   purchased: string[];
 }
+
+/**
+ * The three v1 competencies (S-07). `math` and `money` accrue from shift play
+ * (counting → math, change-making → money); `decisions` accrues at upgrade
+ * purchase. The value doubles as the i18n key (`t.skills[competency]`) so the
+ * type carries no literal copy (L-003). New task types (set-price, manage-stock)
+ * and their competencies (inventory, profit) are out of scope until those exist.
+ * Defined here (dependency-free) as the shared source of truth; `src/data/skills.ts`
+ * re-exports it alongside the pure progress logic (mirrors `tasks.ts` → `Task`).
+ */
+export type Competency = "math" | "money" | "decisions";
+
+/**
+ * Per-competency skill counters. `firstTryCorrect` (tasks nailed with zero misses)
+ * drives the level ladder; `completed` (all attempts that succeeded) drives
+ * task-history gates; `misses` is retained for the parent report. All three are
+ * monotonic — see `addSkillDelta` (`src/data/skills.ts`).
+ */
+export interface CompetencyProgress {
+  firstTryCorrect: number;
+  completed: number;
+  misses: number;
+}
+
+/**
+ * Persisted per-competency skill progress (S-07) held in
+ * `child_profiles.skill_state` jsonb. Pre-S-07 rows default to `{}`; the
+ * `readSkillState` normalizer (`src/data/skills.ts`) fills a fully-zeroed shape
+ * for missing keys, so gate + report code is robust whether a row predates or
+ * postdates the column.
+ */
+export type SkillState = Record<Competency, CompetencyProgress>;
