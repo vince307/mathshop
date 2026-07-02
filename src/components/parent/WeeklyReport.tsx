@@ -118,9 +118,15 @@ function ChildSection({ child }: { child: ChildReport }) {
   );
 }
 
-/** Catalog upgrade name via i18n. Ids originate from the catalog (report aggregation), so the key is valid. */
+/**
+ * Catalog upgrade name via i18n. Ids come from `shift_log.upgrade_purchased`; a
+ * later-removed upgrade would leave a stale id, so we tolerate an unknown key
+ * (fall back to the id) rather than crash the report render — mirroring the same
+ * tolerance in `reports.ts` (upgradeSkillTie).
+ */
 function upgradeName(upgradeId: string): string {
-  return t.upgrades[upgradeId as keyof typeof t.upgrades].name;
+  const catalog = t.upgrades as Record<string, { name: string } | undefined>;
+  return catalog[upgradeId]?.name ?? upgradeId;
 }
 
 /** The skills an unlocked upgrade exercised, as a Polish list (or "general practice"). */

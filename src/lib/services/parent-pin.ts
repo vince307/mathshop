@@ -105,30 +105,49 @@ export async function verifyPin(client: SupabaseClient, pin: string): Promise<Ve
     return { ok: true };
   }
 
-  const failedAttempts = row.failed_attempts + 1;
-  const lockedUntil = failedAttempts >= MAX_FAILED_ATTEMPTS ? new Date(Date.now() + LOCKOUT_MS).toISOString() : null;
-  await client
-    .from("account_settings")
-    .update({ failed_attempts: failedAttempts, locked_until: lockedUntil })
-    .eq("account_id", row.account_id);
-  return { ok: false, reason: lockedUntil ? "locked" : "wrong" };
+  // Wrong PIN → increment the counter + decide the lockout ATOMICALLY in one
+  // row-locked UPDATE (register_pin_failure). A JS read-modify-write here would
+  // lose increments under a parallel verify burst, letting an attacker exceed the
+  // cap (review finding F3). The RPC runs under the caller's RLS (auth.uid()).
+  const { data: throttle, error: rpcErr } = (await client.rpc("register_pin_failure", {
+    p_max: MAX_FAILED_ATTEMPTS,
+    p_lockout_seconds: Math.floor(LOCKOUT_MS / 1000),
+  })) as { data: { locked_until: string | null }[] | null; error: unknown };
+  if (rpcErr) return { ok: false, reason: "error" };
+  const lockedUntil = throttle?.[0]?.locked_until;
+  const locked = lockedUntil !== null && lockedUntil !== undefined && new Date(lockedUntil).getTime() > Date.now();
+  return { ok: false, reason: locked ? "locked" : "wrong" };
 }
 
-/** HMAC-sign an `accountId.expiresAt` marker payload with the session secret. */
+/**
+ * The HMAC key, or null when unset/empty. Markers FAIL CLOSED on a missing secret:
+ * `PARENT_SESSION_SECRET` is declared optional (so builds/CI without it don't fail),
+ * but signing/verifying under an empty key would make every marker forgeable. So a
+ * misconfigured prod blocks the report (verifyMarker → false, signMarker → throw)
+ * rather than silently opening it.
+ */
+function markerSecret(): string | null {
+  return PARENT_SESSION_SECRET && PARENT_SESSION_SECRET.length > 0 ? PARENT_SESSION_SECRET : null;
+}
+
+/** HMAC-sign an `accountId.expiresAt` marker payload with the session secret. Throws if unset (fail closed). */
 export function signMarker(accountId: string, expiresAt: number): string {
+  const secret = markerSecret();
+  if (!secret) throw new Error("PARENT_SESSION_SECRET is not configured");
   const payload = `${accountId}.${expiresAt}`;
-  const sig = createHmac("sha256", PARENT_SESSION_SECRET ?? "")
-    .update(payload)
-    .digest("hex");
+  const sig = createHmac("sha256", secret).update(payload).digest("hex");
   return `${payload}.${sig}`;
 }
 
 /**
  * Validate a `parent_verified` cookie: right account, unexpired, and a signature
  * that verifies under the secret (constant-time). A missing/garbage/tampered/
- * expired marker returns false so the report route re-prompts for the PIN.
+ * expired marker — or an unconfigured secret — returns false so the report route
+ * re-prompts for the PIN.
  */
 export function verifyMarker(cookie: string | undefined, accountId: string): boolean {
+  const secret = markerSecret();
+  if (!secret) return false;
   if (!cookie) return false;
   const parts = cookie.split(".");
   if (parts.length !== 3) return false;
@@ -136,9 +155,7 @@ export function verifyMarker(cookie: string | undefined, accountId: string): boo
   if (acct !== accountId) return false;
   const exp = Number(expStr);
   if (!Number.isFinite(exp) || exp < Date.now()) return false;
-  const expected = createHmac("sha256", PARENT_SESSION_SECRET ?? "")
-    .update(`${acct}.${expStr}`)
-    .digest("hex");
+  const expected = createHmac("sha256", secret).update(`${acct}.${expStr}`).digest("hex");
   const given = Buffer.from(sig);
   const want = Buffer.from(expected);
   return given.length === want.length && timingSafeEqual(given, want);
