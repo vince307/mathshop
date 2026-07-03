@@ -7,24 +7,26 @@
 import type { CountingScenario, CountingTask } from "@/types";
 
 /**
- * Inclusive count range per difficulty tier — the grades 1–2 band (FR-007).
- * Tier ceilings never exceed 20: counting stays in the v1 difficulty band.
+ * Inclusive count range per difficulty tier. Tiers 1–2 are the grades 1–2 band
+ * (≤ 20, FR-007); tier 3 (S-08) widens the upper cohort (age 9) to ≤ 25 — still
+ * concrete/tappable, not a formal grade-3 surface. First-guess, tunable.
  */
-export const COUNT_RANGE: Record<1 | 2, { min: number; max: number }> = {
+export const COUNT_RANGE: Record<1 | 2 | 3, { min: number; max: number }> = {
   1: { min: 3, max: 10 },
   2: { min: 6, max: 20 },
+  3: { min: 10, max: 25 },
 };
 
 /** Count at/below which objects are scattered; above it they group into rows of 5 (subitizing aid). Shared with the change-making generator. */
 export const SCATTER_MAX = 5;
 
 /**
- * Map a profile's stored `starting_level` (1|2 today, see `deriveStartingLevel`)
- * to a counting tier. Out-of-range values clamp into the band so generation can
- * never produce an out-of-band count.
+ * Map a profile's stored `starting_level` (1|2|3, see `deriveStartingLevel`) to a
+ * counting tier. Out-of-range values clamp into the band so generation can never
+ * produce an out-of-band count.
  */
-export function tierForLevel(startingLevel: number): 1 | 2 {
-  return startingLevel >= 2 ? 2 : 1;
+export function tierForLevel(startingLevel: number): 1 | 2 | 3 {
+  return startingLevel >= 3 ? 3 : startingLevel >= 2 ? 2 : 1;
 }
 
 /** Default count picker — inclusive on both ends. Injectable so tests stay deterministic. */

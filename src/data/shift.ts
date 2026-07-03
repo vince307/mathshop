@@ -10,10 +10,15 @@ import { tierForLevel } from "@/data/counting-tasks";
 import { generateTask, type TaskType } from "@/data/tasks";
 import { MAX_BONUS_TASKS } from "@/data/upgrades";
 
-/** Inclusive task-count band per difficulty tier — the grades 1–2 shift lengths (FR-006). */
-export const SHIFT_LENGTH: Record<1 | 2, { min: number; max: number }> = {
+/**
+ * Inclusive task-count band per difficulty tier (FR-006). Tiers 1–2 are the
+ * grades 1–2 shift lengths; tier 3 (S-08) gives the upper cohort a longer shift.
+ * First-guess, tunable.
+ */
+export const SHIFT_LENGTH: Record<1 | 2 | 3, { min: number; max: number }> = {
   1: { min: 5, max: 7 },
   2: { min: 8, max: 10 },
+  3: { min: 9, max: 12 },
 };
 
 /**
@@ -22,7 +27,7 @@ export const SHIFT_LENGTH: Record<1 | 2, { min: number; max: number }> = {
  * `taskCount`/`cleanCount` here so a fully-upgraded shop's shift isn't rejected,
  * and `shiftLength` clamps to it defensively.
  */
-export const MAX_SHIFT_TASKS = SHIFT_LENGTH[2].max + MAX_BONUS_TASKS;
+export const MAX_SHIFT_TASKS = SHIFT_LENGTH[3].max + MAX_BONUS_TASKS;
 
 /** Wallet earnings per completed task (length term — every task always completes, FR-009). */
 export const EARN_PER_TASK = 5;

@@ -30,6 +30,10 @@ describe("shiftLength", () => {
     expect(shiftLength(2, 0, pickMin)).toBe(SHIFT_LENGTH[2].min);
     expect(shiftLength(2, 0, pickMax)).toBe(SHIFT_LENGTH[2].max);
   });
+  it("stays in the tier-3 band (9–12) for level 3 (S-08)", () => {
+    expect(shiftLength(3, 0, pickMin)).toBe(SHIFT_LENGTH[3].min);
+    expect(shiftLength(3, 0, pickMax)).toBe(SHIFT_LENGTH[3].max);
+  });
   it("adds the capacity bonus to the base length (S-06)", () => {
     expect(shiftLength(1, 3, pickMax)).toBe(SHIFT_LENGTH[1].max + 3);
     expect(shiftLength(2, 2, pickMin)).toBe(SHIFT_LENGTH[2].min + 2);
@@ -46,7 +50,8 @@ describe("generateShift", () => {
   });
   it("produces base + bonus tasks with a capacity bonus (S-06)", () => {
     expect(generateShift(1, 2, pickMin)).toHaveLength(SHIFT_LENGTH[1].min + 2);
-    expect(generateShift(2, MAX_BONUS_TASKS, pickMax)).toHaveLength(MAX_SHIFT_TASKS);
+    // Tier 3 is the longest base shift, so it reaches MAX_SHIFT_TASKS with full bonus (S-08).
+    expect(generateShift(3, MAX_BONUS_TASKS, pickMax)).toHaveLength(MAX_SHIFT_TASKS);
   });
   it("mixes both task types (never all-one-type)", () => {
     for (let i = 0; i < 20; i++) {
@@ -58,6 +63,9 @@ describe("generateShift", () => {
   it("every task is band-valid for the level", () => {
     for (const task of generateShift(2)) {
       expect(task.difficultyTier).toBe(2);
+    }
+    for (const task of generateShift(3)) {
+      expect(task.difficultyTier).toBe(3);
     }
   });
 });

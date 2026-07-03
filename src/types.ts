@@ -33,7 +33,7 @@ export interface CountingTask {
   targetCount: number;
   /** Layout hint: ≤ 5 scattered; larger counts grouped into rows of 5 to aid subitizing. */
   arrangement: "scatter" | "rows_of_5";
-  difficultyTier: 1 | 2;
+  difficultyTier: 1 | 2 | 3;
 }
 
 /**
@@ -62,7 +62,7 @@ export interface ChangeMakingTask {
   availableCount: number;
   /** Layout hint for the coin tray: ≤ 5 scattered; larger groups into rows of 5. */
   arrangement: "scatter" | "rows_of_5";
-  difficultyTier: 1 | 2;
+  difficultyTier: 1 | 2 | 3;
 }
 
 /**

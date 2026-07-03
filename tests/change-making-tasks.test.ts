@@ -8,7 +8,7 @@ import type { ChangeMakingTask } from "@/types";
  * tray > change) and correctness. The picker is injected for determinism.
  */
 
-function assertInvariants(task: ChangeMakingTask, tier: 1 | 2) {
+function assertInvariants(task: ChangeMakingTask, tier: 1 | 2 | 3) {
   expect(task.type).toBe("change_making");
   expect(task.scenario).toBe("give_change");
   expect(task.objectType).toBe("coin");
@@ -42,11 +42,27 @@ describe("generateChangeMakingTask", () => {
     }
   });
 
+  it("holds invariants across a sweep of injected picks (tier 3, S-08)", () => {
+    for (let v = 1; v <= 32; v++) {
+      assertInvariants(
+        generateChangeMakingTask(3, () => v),
+        3,
+      );
+    }
+  });
+
   it("a max picker hits the tier ceiling without overshooting the band", () => {
     const task = generateChangeMakingTask(2, (_min, max) => max);
     expect(task.change).toBe(CHANGE_CAP[2]);
     expect(task.paid).toBe(PAID_MAX[2]);
     expect(task.price).toBe(PAID_MAX[2] - CHANGE_CAP[2]);
+  });
+
+  it("a max picker hits the tier-3 ceiling (S-08)", () => {
+    const task = generateChangeMakingTask(3, (_min, max) => max);
+    expect(task.change).toBe(CHANGE_CAP[3]);
+    expect(task.paid).toBe(PAID_MAX[3]);
+    expect(task.price).toBe(PAID_MAX[3] - CHANGE_CAP[3]);
   });
 
   it("a min picker floors to the smallest valid task", () => {

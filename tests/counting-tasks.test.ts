@@ -9,15 +9,16 @@ import { COUNT_RANGE, generateCountingTask, isCorrect, tierForLevel } from "@/da
  */
 
 describe("tierForLevel", () => {
-  it("maps starting level 1 → tier 1, level 2 → tier 2", () => {
+  it("maps starting level 1 → tier 1, level 2 → tier 2, level 3 → tier 3", () => {
     expect(tierForLevel(1)).toBe(1);
     expect(tierForLevel(2)).toBe(2);
+    expect(tierForLevel(3)).toBe(3);
   });
 
   it("clamps out-of-range levels into the band", () => {
     expect(tierForLevel(0)).toBe(1);
     expect(tierForLevel(-3)).toBe(1);
-    expect(tierForLevel(5)).toBe(2);
+    expect(tierForLevel(5)).toBe(3);
   });
 });
 
@@ -42,16 +43,33 @@ describe("generateCountingTask", () => {
     expect(task.difficultyTier).toBe(2);
   });
 
+  it("picks from the tier-3 band for level 3 (S-08 upper cohort)", () => {
+    const task = generateCountingTask(3, () => COUNT_RANGE[3].max);
+    expect(task.targetCount).toBe(COUNT_RANGE[3].max);
+    expect(task.difficultyTier).toBe(3);
+  });
+
+  it("honors a deterministic picker across the full tier-3 band", () => {
+    const { min, max } = COUNT_RANGE[3];
+    for (let n = min; n <= max; n++) {
+      const task = generateCountingTask(3, () => n);
+      expect(task.targetCount).toBe(n);
+      expect(task.difficultyTier).toBe(3);
+    }
+  });
+
   it("clamps a picker that returns below the tier min", () => {
     expect(generateCountingTask(1, () => 0).targetCount).toBe(COUNT_RANGE[1].min);
   });
 
   it("clamps a picker that returns above the tier max", () => {
     expect(generateCountingTask(2, () => 999).targetCount).toBe(COUNT_RANGE[2].max);
+    expect(generateCountingTask(3, () => 999).targetCount).toBe(COUNT_RANGE[3].max);
   });
 
-  it("never exceeds 20 — the grades 1–2 band ceiling", () => {
+  it("respects each tier's ceiling (tier 2 ≤ 20, tier 3 ≤ 25)", () => {
     expect(generateCountingTask(2, () => 999).targetCount).toBeLessThanOrEqual(20);
+    expect(generateCountingTask(3, () => 999).targetCount).toBeLessThanOrEqual(25);
   });
 
   it("scatters counts ≤ 5 and groups larger counts into rows of 5", () => {

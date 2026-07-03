@@ -96,7 +96,7 @@ describe("POST /api/profiles/create (route-level isolation)", () => {
       .eq("account_id", accountB.id)
       .eq("name", "Spoof");
     expect(bRows).toHaveLength(1);
-    expect(bRows?.[0]?.starting_level).toBe(2); // age 9 → band 2
+    expect(bRows?.[0]?.starting_level).toBe(3); // age 9 → band 3 (S-08)
   });
 
   it("rejects invalid input and writes nothing", async () => {

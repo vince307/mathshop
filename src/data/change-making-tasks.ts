@@ -8,14 +8,15 @@ import type { ChangeMakingScenario, ChangeMakingTask } from "@/types";
 import { SCATTER_MAX, tierForLevel } from "@/data/counting-tasks";
 
 /**
- * Max change (paid − price) per tier — kept small so the child taps a
- * manageable number of coins (grades 1–2). Strictly below the paid ceiling so a
- * valid price (≥ 1) always exists.
+ * Max change (paid − price) per tier — kept small so the child taps a manageable
+ * number of coins. Tiers 1–2 are grades 1–2; tier 3 (S-08) widens the upper
+ * cohort to ≤ 15. Strictly below the paid ceiling so a valid price (≥ 1) always
+ * exists. First-guess, tunable.
  */
-export const CHANGE_CAP: Record<1 | 2, number> = { 1: 5, 2: 10 };
+export const CHANGE_CAP: Record<1 | 2 | 3, number> = { 1: 5, 2: 10, 3: 15 };
 
-/** Ceiling for the amount paid per tier — the grades 1–2 band; never exceeds 20. */
-export const PAID_MAX: Record<1 | 2, number> = { 1: 10, 2: 20 };
+/** Ceiling for the amount paid per tier. Tiers 1–2 = grades 1–2 (≤ 20); tier 3 (S-08) ≤ 30. */
+export const PAID_MAX: Record<1 | 2 | 3, number> = { 1: 10, 2: 20, 3: 30 };
 
 /** Coins offered beyond the change, so the child must stop at the right number. */
 const EXTRA_TRAY_MIN = 1;

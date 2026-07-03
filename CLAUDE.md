@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**MathShop** — a Polish-language web app that teaches math to children (ages 6–8 in v1) by framing every operation as running a small shop. The canonical product spec is `@context/foundation/prd-v2.md` (the post-pivot PRD); shaping notes in `@context/foundation/shape-notes.md`; the stack decision in `@context/foundation/tech-stack.md`. Read the PRD before building features — the entrepreneurship framing and the "math is never shown as a bare equation" rule are binding product constraints, not flavor.
+**MathShop** — a Polish-language web app that teaches math to children (ages 6–9 in v1) by framing every operation as running a small shop. The canonical product spec is `@context/foundation/prd-v2.md` (the post-pivot PRD); shaping notes in `@context/foundation/shape-notes.md`; the stack decision in `@context/foundation/tech-stack.md`. Read the PRD before building features — the entrepreneurship framing and the "math is never shown as a bare equation" rule are binding product constraints, not flavor.
 
 The codebase is the [10x-astro-starter](https://github.com/przeprogramowani/10x-astro-starter) scaffold. `CLAUDE.md.scaffold` is the starter's original AI-guidance file, kept as a sibling after bootstrap; delete it once you've confirmed everything useful is folded in here.
 
