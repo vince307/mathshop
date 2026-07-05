@@ -305,16 +305,16 @@ No new queries or persistence — all changes are in pure generators, one island
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npx vitest run tests/counting-tasks.test.ts tests/change-making-tasks.test.ts tests/shift.test.ts`
-- [x] 1.2 Profile age→level persistence passes against a fresh DB (`supabase db reset` + `vitest run tests/profiles-create.test.ts`)
-- [x] 1.3 Type checking passes: `npm run check`
-- [x] 1.4 Linting passes: `npm run lint`
-- [x] 1.5 Build succeeds: `npm run build`
+- [x] 1.1 Unit tests pass: `npx vitest run tests/counting-tasks.test.ts tests/change-making-tasks.test.ts tests/shift.test.ts` — e465e49
+- [x] 1.2 Profile age→level persistence passes against a fresh DB (`supabase db reset` + `vitest run tests/profiles-create.test.ts`) — e465e49
+- [x] 1.3 Type checking passes: `npm run check` — e465e49
+- [x] 1.4 Linting passes: `npm run lint` — e465e49
+- [x] 1.5 Build succeeds: `npm run build` — e465e49
 
 #### Manual
 
-- [x] 1.6 Age-9 profile shows larger numbers + longer shift than age-8; ages 6–8 unchanged
-- [x] 1.7 Numbers stay concrete and tappable at the tier-3 ceiling (no scroll pain)
+- [x] 1.6 Age-9 profile shows larger numbers + longer shift than age-8; ages 6–8 unchanged — e465e49
+- [x] 1.7 Numbers stay concrete and tappable at the tier-3 ceiling (no scroll pain) — e465e49
 
 ### Phase 2: Two-stage scenario — data model + generator + correctness
 
