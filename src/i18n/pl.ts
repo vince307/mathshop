@@ -329,6 +329,7 @@ export const pl = {
     generalPractice: "ogólna praktyka",
     noUpgrades: "W tym tygodniu bez nowych ulepszeń.",
     noProfiles: "Nie masz jeszcze profili dzieci.",
+    loadError: "Nie udało się wczytać raportu tego dziecka. Spróbuj ponownie za chwilę.",
     back: "Wróć do sklepu",
   },
 

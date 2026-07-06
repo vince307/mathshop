@@ -29,11 +29,20 @@ const profiles = await listChildProfiles(supabase);
 const reports: ChildReport[] = await Promise.all(
   profiles.map(async (profile) => {
     const avatar = getAvatar(profile.avatar);
+    // A failed query surfaces as an honest per-child error card (report: null)
+    // instead of masquerading as an empty week or 500ing the page (S-09).
+    let report: ChildReport["report"] = null;
+    try {
+      report = await getWeeklyReport(supabase, profile.id);
+    } catch {
+      report = null;
+    }
     return {
+      profileId: profile.id,
       name: profile.name,
       avatarImage: avatar?.image ?? null,
       avatarAlt: avatar?.alt ?? "",
-      report: await getWeeklyReport(supabase, profile.id),
+      report,
     };
   }),
 );

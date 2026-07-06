@@ -46,28 +46,70 @@ export function aggregateWeeklyReport(profileId: string, rows: ShiftLogRow[]): W
   return { profileId, practice, upgrades };
 }
 
-/** Start of the current ISO week (Monday 00:00 UTC) — the report's window. */
-function startOfWeek(now: Date): string {
-  const dayFromMonday = (now.getUTCDay() + 6) % 7; // Sun=0 → 6, Mon=1 → 0, …
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - dayFromMonday));
-  return monday.toISOString();
+/** The report's calendar anchor: the audience's civil time (S-09, FR-016). */
+const REPORT_TIME_ZONE = "Europe/Warsaw";
+
+const WEEKDAY_FROM_MONDAY: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+
+/** The zone's UTC offset (minutes) in force at `instant`, via Intl (DST-correct, no dependency). */
+function zoneOffsetMinutes(instant: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: REPORT_TIME_ZONE,
+    timeZoneName: "longOffset",
+  }).formatToParts(instant);
+  const name = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT";
+  const match = /GMT([+-])(\d{2}):(\d{2})/.exec(name);
+  if (!match) return 0; // "GMT" = UTC±00:00
+  const sign = match[1] === "-" ? -1 : 1;
+  return sign * (Number(match[2]) * 60 + Number(match[3]));
+}
+
+/**
+ * Start of the current week — Monday 00:00 **Europe/Warsaw** — as a UTC ISO
+ * instant (the report's window, S-09). Computed from `now`'s Warsaw wall-clock
+ * date, walked back to Monday, then resolved to the UTC instant using the
+ * zone offset in force at that midnight (Warsaw DST shifts happen at 02:00/03:00
+ * local, so Monday midnight always exists; the second offset pass settles the
+ * guess when `now` and that midnight sit on opposite sides of a transition).
+ */
+export function startOfWeek(now: Date): string {
+  const wall = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: REPORT_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      weekday: "short",
+    })
+      .formatToParts(now)
+      .map((part) => [part.type, part.value]),
+  );
+  // Walk back to Monday in wall-clock space (UTC-noon arithmetic avoids day underflow issues).
+  const mondayNoon = new Date(Date.UTC(+wall.year, +wall.month - 1, +wall.day - WEEKDAY_FROM_MONDAY[wall.weekday], 12));
+  const midnightUtcGuess = Date.UTC(mondayNoon.getUTCFullYear(), mondayNoon.getUTCMonth(), mondayNoon.getUTCDate());
+  const firstPass = new Date(midnightUtcGuess - zoneOffsetMinutes(new Date(midnightUtcGuess)) * 60_000);
+  return new Date(midnightUtcGuess - zoneOffsetMinutes(firstPass) * 60_000).toISOString();
 }
 
 /**
  * The current-week report for one profile (RLS-scoped — a non-owner reads no
  * rows, so the report is naturally empty rather than another account's data).
- * `now` is injectable for deterministic tests.
+ * A query error THROWS rather than folding into an empty report, so a DB
+ * failure can never masquerade as "nothing practiced this week" (S-09); the
+ * route catches per child and renders an honest error card. `now` is
+ * injectable for deterministic tests.
  */
 export async function getWeeklyReport(
   client: SupabaseClient,
   profileId: string,
   now: Date = new Date(),
 ): Promise<WeeklyReport> {
-  const { data } = await client
+  const { data, error } = await client
     .from("shift_log")
     .select("skills, upgrade_purchased")
     .eq("profile_id", profileId)
     .gte("created_at", startOfWeek(now))
     .order("created_at", { ascending: true });
-  return aggregateWeeklyReport(profileId, data ?? []);
+  if (error) throw error;
+  return aggregateWeeklyReport(profileId, data);
 }

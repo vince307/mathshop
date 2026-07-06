@@ -4,12 +4,17 @@ import type { Competency, WeeklyReport as WeeklyReportData, WeeklyReportUpgrade 
 import { COMPETENCIES } from "@/data/skills";
 import { t } from "@/i18n";
 
-/** One child's identity + current-week report, prepared by the route (RLS-scoped). */
+/**
+ * One child's identity + current-week report, prepared by the route (RLS-scoped).
+ * `report: null` = the query failed for this child; the section renders an honest
+ * load-error card instead of a false empty week (S-09).
+ */
 export interface ChildReport {
+  profileId: string;
   name: string;
   avatarImage: string | null;
   avatarAlt: string;
-  report: WeeklyReportData;
+  report: WeeklyReportData | null;
 }
 
 interface Props {
@@ -41,7 +46,7 @@ export default function WeeklyReport({ reports }: Props) {
       ) : (
         <div className="flex flex-col gap-5">
           {reports.map((child) => (
-            <ChildSection key={child.report.profileId} child={child} />
+            <ChildSection key={child.profileId} child={child} />
           ))}
         </div>
       )}
@@ -49,9 +54,37 @@ export default function WeeklyReport({ reports }: Props) {
   );
 }
 
+/** Child identity header (avatar + name), shared by the report and load-error cards. */
+function ChildIdentity({ child }: { child: ChildReport }) {
+  return (
+    <div className="flex items-center gap-3">
+      {child.avatarImage && (
+        <img
+          src={child.avatarImage}
+          alt={child.avatarAlt}
+          className="border-primary size-12 rounded-full border-2 object-cover"
+        />
+      )}
+      <h2 className="text-foreground text-xl font-extrabold">{child.name}</h2>
+    </div>
+  );
+}
+
 /** One child's card: identity, weekly practice per competency, and unlocked upgrades. */
 function ChildSection({ child }: { child: ChildReport }) {
   const copy = t.report;
+
+  if (child.report === null) {
+    return (
+      <section className="bg-card border-border rounded-3xl border p-6 shadow-sm">
+        <ChildIdentity child={child} />
+        <p role="status" className="text-muted-foreground mt-5 text-sm">
+          {copy.loadError}
+        </p>
+      </section>
+    );
+  }
+
   const { practice, upgrades } = child.report;
   // Only competencies actually practiced this week (completed > 0) — nothing to
   // shame for the rest. Order follows the canonical competency list.
@@ -59,16 +92,7 @@ function ChildSection({ child }: { child: ChildReport }) {
 
   return (
     <section className="bg-card border-border rounded-3xl border p-6 shadow-sm">
-      <div className="flex items-center gap-3">
-        {child.avatarImage && (
-          <img
-            src={child.avatarImage}
-            alt={child.avatarAlt}
-            className="border-primary size-12 rounded-full border-2 object-cover"
-          />
-        )}
-        <h2 className="text-foreground text-xl font-extrabold">{child.name}</h2>
-      </div>
+      <ChildIdentity child={child} />
 
       <div className="mt-5">
         <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
