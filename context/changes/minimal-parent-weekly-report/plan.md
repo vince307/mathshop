@@ -220,12 +220,12 @@ None material: one `Intl.DateTimeFormat` computation per report request; the que
 
 #### Automated
 
-- [x] 2.1 Isolation test passes against a fresh DB (`supabase db reset` + `vitest run tests/report-isolation.test.ts`)
-- [x] 2.2 Type checking passes: `npm run check`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Full suite passes: `npx vitest run`
+- [x] 2.1 Isolation test passes against a fresh DB (`supabase db reset` + `vitest run tests/report-isolation.test.ts`) — 5e27fa5
+- [x] 2.2 Type checking passes: `npm run check` — 5e27fa5
+- [x] 2.3 Linting passes: `npm run lint` — 5e27fa5
+- [x] 2.4 Full suite passes: `npx vitest run` — 5e27fa5
 
 #### Manual
 
-- [x] 2.5 Live report exercised end-to-end (shift → `/app/report` → counts/unlocks under Warsaw week)
-- [x] 2.6 Native copy review queued (follow-up file exists)
+- [x] 2.5 Live report exercised end-to-end (shift → `/app/report` → counts/unlocks under Warsaw week) — 5e27fa5
+- [x] 2.6 Native copy review queued (follow-up file exists) — 5e27fa5

@@ -1,7 +1,7 @@
 ---
 change_id: minimal-parent-weekly-report
 title: Minimal parent weekly report (S-09)
-status: implementing
+status: implemented
 created: 2026-07-06
 updated: 2026-07-06
 archived_at: null
