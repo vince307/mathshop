@@ -269,15 +269,15 @@ One extra RLS-scoped select per child-page request (cookie resolution) — same 
 
 #### Automated
 
-- [x] 2.1 Tests pass: `npx vitest run tests/profiles-create.test.ts tests/app-router.test.ts tests/active-profile.test.ts`
-- [x] 2.2 Type checking passes: `npm run check`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Build succeeds: `npm run build`
-- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.1 Tests pass: `npx vitest run tests/profiles-create.test.ts tests/app-router.test.ts tests/active-profile.test.ts` — 8955592
+- [x] 2.2 Type checking passes: `npm run check` — 8955592
+- [x] 2.3 Linting passes: `npm run lint` — 8955592
+- [x] 2.4 Build succeeds: `npm run build` — 8955592
+- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 8955592
 
 #### Manual
 
-- [x] 2.6 Add flow works from picker tile and parent panel; new child lands selected
-- [x] 2.7 Cap at 6: tile hidden, route refuses a 7th
-- [x] 2.8 Start-screen switch entry only for 2+ accounts; returns to picker
-- [x] 2.9 Copy Polish/warm; no inline literals (L-003)
+- [x] 2.6 Add flow works from picker tile and parent panel; new child lands selected — 8955592
+- [x] 2.7 Cap at 6: tile hidden, route refuses a 7th — 8955592
+- [x] 2.8 Start-screen switch entry only for 2+ accounts; returns to picker — 8955592
+- [x] 2.9 Copy Polish/warm; no inline literals (L-003) — 8955592

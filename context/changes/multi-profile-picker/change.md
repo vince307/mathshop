@@ -1,7 +1,7 @@
 ---
 change_id: multi-profile-picker
 title: Multi profile picker
-status: implementing
+status: implemented
 created: 2026-07-06
 updated: 2026-07-06
 archived_at: null
