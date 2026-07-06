@@ -48,7 +48,9 @@ export interface ChildProfile {
 /**
  * Soft ceiling on child profiles per account (S-11) — bounds junk-profile
  * accumulation now that the picker exposes an add entry a child can reach.
- * Route-level only (no DB constraint); first-guess, tunable.
+ * Route-level only (no DB constraint); first-guess, tunable. The create route's
+ * read-then-insert check can briefly overshoot under parallel requests (TOCTOU)
+ * — acceptable for a soft cap; add a DB trigger if this ever hardens.
  */
 export const MAX_PROFILES_PER_ACCOUNT = 6;
 
@@ -88,13 +90,7 @@ export function resolveLandingPath(profileCount: number, hasSelection: boolean):
   return "/app/start";
 }
 
-/** The parent's most-recently-created profile (RLS-scoped), or null if none. */
-export async function getMostRecentProfile(client: SupabaseClient): Promise<ChildProfile | null> {
-  const { data } = await client.from("child_profiles").select("*").order("created_at", { ascending: false }).limit(1);
-  return (data?.[0] as ChildProfile | undefined) ?? null;
-}
-
-/** All of the authenticated parent's profiles (RLS-scoped), newest first. Powers the report. */
+/** All of the authenticated parent's profiles (RLS-scoped), newest first. Powers the report + picker. */
 export async function listChildProfiles(client: SupabaseClient): Promise<ChildProfile[]> {
   const { data } = await client.from("child_profiles").select("*").order("created_at", { ascending: false });
   return (data as ChildProfile[] | null) ?? [];
@@ -143,8 +139,8 @@ export async function recordShiftResult(
   shift: { taskCount: number; cleanCount: number; skills: SkillDelta },
 ): Promise<ShiftResult | { error: PostgrestError | Error }> {
   // Read the row AS the parent (RLS-scoped): a non-owner sees no row. Use limit(1)
-  // + data?.[0] (mirrors getMostRecentProfile) rather than .single() so the result
-  // stays typed for the ChildProfile cast under the strict lint.
+  // + data?.[0] rather than .single() so the result stays typed for the
+  // ChildProfile cast under the strict lint.
   const { data, error: readErr } = await client.from("child_profiles").select("*").eq("id", profileId).limit(1);
   if (readErr) return { error: readErr };
   const current = (data[0] as ChildProfile | undefined) ?? null;

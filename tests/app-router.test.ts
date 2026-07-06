@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { countChildProfiles, getMostRecentProfile, resolveLandingPath } from "@/lib/services/child-profiles";
+import { countChildProfiles, listChildProfiles, resolveLandingPath } from "@/lib/services/child-profiles";
 import { admin, createSignedInUser, deleteUser, type TestAccount } from "./helpers/supabase";
 
 /**
@@ -50,9 +50,10 @@ describe("/app profile-count router", () => {
     expect(count).toBe(2);
     expect(resolveLandingPath(count, false)).toBe("/app/pick-profile");
 
-    // The picker lists *the account's* profiles (RLS-scoped) — confirm one resolves.
-    const profile = await getMostRecentProfile(account.client);
-    expect(profile?.account_id).toBe(account.id);
+    // The picker lists *the account's* profiles (RLS-scoped) — confirm they resolve.
+    const profiles = await listChildProfiles(account.client);
+    expect(profiles).toHaveLength(2);
+    expect(profiles[0]?.account_id).toBe(account.id);
   });
 
   it("2 profiles with a valid selection → /app/start (post-pick landing)", () => {

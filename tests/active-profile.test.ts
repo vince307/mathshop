@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { AstroCookies } from "astro";
 import { ACTIVE_PROFILE_COOKIE, resolveActiveProfile, resolvePageProfile } from "@/lib/services/active-profile";
+import { resolveLandingPath } from "@/lib/services/child-profiles";
 import { POST as selectPOST } from "@/pages/api/profiles/select";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
@@ -109,6 +110,21 @@ describe("active-profile selection (S-11)", () => {
       const { profile, profileCount } = await resolvePageProfile(accountB.client, asCookies(createCookieJar()));
       expect(profile?.id).toBe(bProfileId);
       expect(profileCount).toBe(1);
+    });
+
+    // The /app router's composed contract (app.astro glue): the landing decision
+    // must key off the VALIDATED profile, never raw cookie presence — a stale
+    // cookie still lands a 2+ account on the picker.
+    it("router glue: a stale cookie still lands a 2-profile account on the picker", async () => {
+      const jar = createCookieJar({ [ACTIVE_PROFILE_COOKIE]: "00000000-0000-4000-8000-000000000000" });
+      const { profile, profileCount } = await resolvePageProfile(accountA.client, asCookies(jar));
+      expect(resolveLandingPath(profileCount, profile !== null)).toBe("/app/pick-profile");
+    });
+
+    it("router glue: a valid selection lands on the start screen", async () => {
+      const jar = createCookieJar({ [ACTIVE_PROFILE_COOKIE]: aProfileId });
+      const { profile, profileCount } = await resolvePageProfile(accountA.client, asCookies(jar));
+      expect(resolveLandingPath(profileCount, profile !== null)).toBe("/app/start");
     });
   });
 
