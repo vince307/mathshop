@@ -3,7 +3,7 @@ change_id: upper-band-task-difficulty
 title: Upper band task difficulty
 status: implementing
 created: 2026-07-02
-updated: 2026-07-03
+updated: 2026-07-06
 archived_at: null
 ---
 

@@ -320,15 +320,15 @@ No new queries or persistence — all changes are in pure generators, one island
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npx vitest run tests/change-making-tasks.test.ts tests/counting-tasks.test.ts tests/shift.test.ts`
-- [ ] 2.2 Type checking passes: `npm run check`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Build succeeds: `npm run build`
-- [ ] 2.5 No runtime surface change: full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.1 Unit tests pass: `npx vitest run tests/change-making-tasks.test.ts tests/counting-tasks.test.ts tests/shift.test.ts`
+- [x] 2.2 Type checking passes: `npm run check`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Build succeeds: `npm run build`
+- [x] 2.5 No runtime surface change: full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
 
 #### Manual
 
-- [ ] 2.6 Playing shifts at every age behaves exactly as after Phase 1 (two-stage not yet reachable)
+- [x] 2.6 Playing shifts at every age behaves exactly as after Phase 1 (two-stage not yet reachable)
 
 ### Phase 3: Two-stage scenario — island, i18n, scoring & turn-on
 

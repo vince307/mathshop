@@ -19,7 +19,11 @@ interface ChangeMakingTaskProps {
  * alongside the hint copy in the retry card.
  */
 export default function ChangeMakingTask({ task, world, onComplete }: ChangeMakingTaskProps) {
-  const copy = t.task.give_change;
+  // Two-stage `stock_and_change` rendering lands in Phase 3 of S-08; until then
+  // the mixer emits only `give_change`, so this guard is unreachable. It also
+  // narrows the scenario so the copy lookup stays scenario-keyed and type-safe.
+  if (task.scenario !== "give_change") return null;
+  const copy = t.task[task.scenario];
   const story = copy.story.replace("{paid}", String(task.paid)).replace("{price}", String(task.price));
   return (
     <TaskScreen

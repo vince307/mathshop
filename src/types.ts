@@ -37,11 +37,13 @@ export interface CountingTask {
 }
 
 /**
- * Change-making scenarios. v1 (S-03) ships only `give_change` — give the
- * customer their change. Like `CountingScenario`, the value doubles as the i18n
- * content key (`t.task[scenario]`), so the type carries no literal copy.
+ * Change-making scenarios. `give_change` (S-03) — give the customer their
+ * change in one step. `stock_and_change` (S-08) — two-stage upper-band variant:
+ * first count the item's price into the register, then give the change. Like
+ * `CountingScenario`, the value doubles as the i18n content key
+ * (`t.task[scenario]`), so the type carries no literal copy.
  */
-export type ChangeMakingScenario = "give_change";
+export type ChangeMakingScenario = "give_change" | "stock_and_change";
 
 /**
  * A single change-making-task instance: the child gives `change` (= `paid − price`)
@@ -60,6 +62,12 @@ export interface ChangeMakingTask {
   change: number;
   /** Coins offered in the tray to give from; `> change` so tapping-all isn't auto-correct. */
   availableCount: number;
+  /**
+   * Stage-1 tray for the two-stage `stock_and_change` scenario: coins available
+   * to count the `price` into the register (`> price`, so the child must stop
+   * at the right number). Absent for single-stage `give_change`.
+   */
+  stockCount?: number;
   /** Layout hint for the coin tray: ≤ 5 scattered; larger groups into rows of 5. */
   arrangement: "scatter" | "rows_of_5";
   difficultyTier: 1 | 2 | 3;

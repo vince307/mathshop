@@ -63,6 +63,47 @@ export function generateChangeMakingTask(
   };
 }
 
+/**
+ * Per-stage ceilings for the two-stage `stock_and_change` scenario (S-08).
+ * Deliberately below the tier-3 single-stage maxima — the difficulty is the
+ * two-step structure, not a huge count — so each stage's tray stays comfortably
+ * renderable (≤ 18 coins with the extra-tray margin). First-guess, tunable.
+ */
+export const STOCK_PRICE_MAX = 15;
+export const STOCK_CHANGE_MAX = 10;
+
+/**
+ * Build a two-stage "stock then sell" task (S-08): stage 1 counts `price` into
+ * the register from a tray of `stockCount` (> price), stage 2 gives `change`
+ * from `availableCount` (> change), with `paid = price + change`. Standalone in
+ * Phase 2 — not reachable from the shift mixer until the Phase 3 turn-on.
+ * `pick` is injectable for deterministic tests.
+ */
+export function generateStockAndChangeTask(
+  startingLevel: number,
+  pick: (min: number, max: number) => number = defaultPick,
+): ChangeMakingTask {
+  const difficultyTier = tierForLevel(startingLevel);
+  const price = pickIn(pick, 1, STOCK_PRICE_MAX);
+  const stockCount = Math.min(TRAY_CAP, price + pickIn(pick, EXTRA_TRAY_MIN, EXTRA_TRAY_MAX));
+  const change = pickIn(pick, 1, STOCK_CHANGE_MAX);
+  const paid = price + change;
+  const availableCount = Math.min(TRAY_CAP, change + pickIn(pick, EXTRA_TRAY_MIN, EXTRA_TRAY_MAX));
+  const scenario: ChangeMakingScenario = "stock_and_change";
+  return {
+    type: "change_making",
+    scenario,
+    objectType: "coin",
+    paid,
+    price,
+    change,
+    availableCount,
+    stockCount,
+    arrangement: availableCount <= SCATTER_MAX ? "scatter" : "rows_of_5",
+    difficultyTier,
+  };
+}
+
 /** Correctness check: the coins the child gives must equal the change owed. */
 export function isChangeCorrect(task: ChangeMakingTask, given: number): boolean {
   return given === task.change;
