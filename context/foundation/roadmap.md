@@ -3,7 +3,7 @@ project: MathShop
 version: 1
 status: draft
 created: 2026-07-01
-updated: 2026-07-06
+updated: 2026-07-07
 prd_version: 3
 main_goal: market-feedback
 top_blocker: capacity
@@ -40,7 +40,7 @@ MathShop teaches math to Polish children (6–9) by framing every operation as r
 | S-08 | upper-band-task-difficulty   | Older child (up to 9) gets appropriately harder counting / change-making tasks        | S-04          | FR-009                                | done     |
 | S-09 | minimal-parent-weekly-report | Parent reads a minimal weekly report of their own child's practice + unlocks          | S-06, S-07    | FR-016                                | done     |
 | S-10 | cross-device-economy-restore | Parent logs in on a new device and sees the same funds, upgrades, and grown shop      | S-06          | FR-001, FR-005, FR-012                | proposed |
-| S-11 | multi-profile-picker         | Parent adds a 2nd child profile; a scoped profile-picker appears on next launch        | S-01          | FR-002                                | ready    |
+| S-11 | multi-profile-picker         | Parent adds a 2nd child profile; a scoped profile-picker appears on next launch        | S-01          | FR-002                                | done     |
 | S-12 | network-loss-handling        | A network drop mid-shift halts gracefully with a Polish in-world message               | S-04          | FR-017                                | ready    |
 | S-13 | child-ui-polish              | Built child surfaces (incl. the new economy screens) brought to mockup fidelity        | S-06          | US-01, §Non-Functional Requirements   | proposed |
 
@@ -221,7 +221,7 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Stretches the isolation contract to multi-row-per-account. Independent of the economy loop — a `ready` capacity lever that can run alongside Stream A.
-- **Status:** ready
+- **Status:** done
 
 ### S-12: Network-loss mid-shift halts gracefully
 
@@ -305,3 +305,4 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **S-07: Upgrades gate on skill progress; growth stays synced to learning** — Archived 2026-07-02 → `context/archive/2026-07-01-skill-path-upgrade-gate/`. Lesson: —.
 - **S-08: Older child (up to 9) gets appropriately harder counting / change-making tasks** — Archived 2026-07-06 → `context/archive/2026-07-02-upper-band-task-difficulty/`. Lesson: —.
 - **S-09: Parent reads a minimal weekly report of their own child's practice + unlocks** — Archived 2026-07-06 → `context/archive/2026-07-06-minimal-parent-weekly-report/`. Lesson: —.
+- **S-11: Parent adds a 2nd child profile; a scoped profile-picker appears on next launch** — Archived 2026-07-06 → `context/archive/2026-07-06-multi-profile-picker/`. Lesson: —.

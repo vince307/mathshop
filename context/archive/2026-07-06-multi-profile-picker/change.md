@@ -1,10 +1,10 @@
 ---
 change_id: multi-profile-picker
 title: Multi profile picker
-status: impl_reviewed
+status: archived
 created: 2026-07-06
 updated: 2026-07-07
-archived_at: null
+archived_at: 2026-07-06T23:04:28Z
 ---
 
 ## Notes
