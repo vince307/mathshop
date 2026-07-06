@@ -141,7 +141,7 @@ export const pl = {
     avatarLabel: "Wybierz avatar",
     interestLabel: "Zainteresowania",
     startingLevelLabel: "Poziom startowy",
-    levelNames: { "1": "Podstawy", "2": "Podstawy plus" },
+    levelNames: { "1": "Podstawy", "2": "Podstawy plus", "3": "Podstawy ekstra" },
     levelDescription: "Podstawy matematyki i ekonomii",
     note: "Świat możesz zmienić później. Skupiamy się na nauce przez praktykę i decyzje.",
     back: "Wstecz",

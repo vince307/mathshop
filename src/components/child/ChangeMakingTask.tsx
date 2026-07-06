@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import type { ChangeMakingTask as ChangeMakingTaskInstance } from "@/types";
 import type { World } from "@/data/worlds";
 import { TaskScreen } from "@/components/child/TaskScreen";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
-import { SCATTER_MAX } from "@/data/counting-tasks";
 import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
@@ -59,6 +58,22 @@ function StockAndChangeTask({ task, world, onComplete }: ChangeMakingTaskProps) 
   // The generator always sets `stockCount` for this scenario; fall back defensively.
   const stockCount = task.stockCount ?? task.price + 1;
 
+  // Stable identity so useCoinTask's completion effect never re-arms its
+  // success timer on an unrelated re-render (which could fire twice).
+  const completeStageTwo = useCallback(
+    (stageTwo: TaskOutcome) => {
+      if (!stageOne) return; // stage 2 only renders after stage 1 completes
+      const outcome = {
+        firstTry: stageOne.firstTry && stageTwo.firstTry,
+        misses: stageOne.misses + stageTwo.misses,
+      };
+      // Mirror useCoinTask's default completion for the standalone case.
+      if (onComplete) onComplete(outcome);
+      else window.location.href = "/app/start";
+    },
+    [stageOne, onComplete],
+  );
+
   if (stageOne === null) {
     const stage = copy.stage1;
     return (
@@ -66,7 +81,7 @@ function StockAndChangeTask({ task, world, onComplete }: ChangeMakingTaskProps) 
         key="stage-1"
         coinCount={stockCount}
         target={task.price}
-        arrangement={stockCount <= SCATTER_MAX ? "scatter" : "rows_of_5"}
+        arrangement={task.stockArrangement ?? "rows_of_5"}
         hintCopy={stage.hint.replace("{price}", String(task.price))}
         successCopy={stage.success}
         onComplete={setStageOne}
@@ -92,15 +107,7 @@ function StockAndChangeTask({ task, world, onComplete }: ChangeMakingTaskProps) 
       arrangement={task.arrangement}
       hintCopy={stage.hint}
       successCopy={stage.success}
-      onComplete={(stageTwo) => {
-        const outcome = {
-          firstTry: stageOne.firstTry && stageTwo.firstTry,
-          misses: stageOne.misses + stageTwo.misses,
-        };
-        // Mirror useCoinTask's default completion for the standalone case.
-        if (onComplete) onComplete(outcome);
-        else window.location.href = "/app/start";
-      }}
+      onComplete={completeStageTwo}
       renderHeader={(showHint) => (
         <StoryHeader
           world={world}

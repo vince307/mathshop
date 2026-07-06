@@ -122,6 +122,7 @@ function assertStockAndChangeInvariants(task: ChangeMakingTask) {
   expect(task.availableCount).toBeLessThanOrEqual(20);
   expect(task.paid).toBe(task.price + task.change);
   expect(task.arrangement).toBe(task.availableCount <= 5 ? "scatter" : "rows_of_5");
+  expect(task.stockArrangement).toBe((task.stockCount ?? 0) <= 5 ? "scatter" : "rows_of_5");
 }
 
 describe("generateStockAndChangeTask", () => {

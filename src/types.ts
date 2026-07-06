@@ -68,6 +68,8 @@ export interface ChangeMakingTask {
    * at the right number). Absent for single-stage `give_change`.
    */
   stockCount?: number;
+  /** Layout hint for the stage-1 stock tray; same rule as `arrangement`. Two-stage scenario only. */
+  stockArrangement?: "scatter" | "rows_of_5";
   /** Layout hint for the coin tray: ≤ 5 scattered; larger groups into rows of 5. */
   arrangement: "scatter" | "rows_of_5";
   difficultyTier: 1 | 2 | 3;

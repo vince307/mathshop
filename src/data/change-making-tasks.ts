@@ -118,6 +118,7 @@ export function generateStockAndChangeTask(
     change,
     availableCount,
     stockCount,
+    stockArrangement: stockCount <= SCATTER_MAX ? "scatter" : "rows_of_5",
     arrangement: availableCount <= SCATTER_MAX ? "scatter" : "rows_of_5",
     difficultyTier,
   };

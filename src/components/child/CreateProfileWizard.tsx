@@ -84,7 +84,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
   }
 
   const level = age ? deriveStartingLevel(age) : 1;
-  const levelName = level === 2 ? t.profileWizard.levelNames["2"] : t.profileWizard.levelNames["1"];
+  const levelName = t.profileWizard.levelNames[level >= 3 ? "3" : level === 2 ? "2" : "1"];
   const stepProgress = t.profileWizard.stepProgress
     .replace("{current}", String(step))
     .replace("{total}", String(TOTAL_STEPS));
