@@ -196,6 +196,24 @@ export const pl = {
       success: "Brawo! Wydałeś poprawną resztę.",
       hint: "Policz od ceny w górę aż do zapłaconej kwoty.",
     },
+    // Two-stage "stock then sell" (S-08): stage 1 counts the price into the
+    // register, stage 2 gives the change. `{step}`/`{price}`/`{paid}`
+    // interpolated in the island. Draft Polish — pending native-speaker review.
+    stock_and_change: {
+      stageLabel: "Krok {step} z 2",
+      stage1: {
+        story: "Klient wybrał towar za {price} zł.",
+        question: "Odlicz cenę do kasy. Ile monet włożysz?",
+        success: "Świetnie! Cena jest w kasie.",
+        hint: "Dotykaj monet po kolei i licz do {price}.",
+      },
+      stage2: {
+        story: "Klient zapłacił {paid} zł za zakup za {price} zł.",
+        question: "Ile reszty mu wydasz?",
+        success: "Brawo! Wydałeś poprawną resztę.",
+        hint: "Policz od ceny w górę aż do zapłaconej kwoty.",
+      },
+    },
   },
 
   // Upgrade catalog names (S-06). Keyed by upgrade id (`t.upgrades[id]`), so the

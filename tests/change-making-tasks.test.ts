@@ -51,9 +51,14 @@ describe("generateChangeMakingTask", () => {
   });
 
   it("holds invariants across a sweep of injected picks (tier 3, S-08)", () => {
+    // Scenario gate forced off: this sweep pins the single-stage tier-3 band.
     for (let v = 1; v <= 32; v++) {
       assertInvariants(
-        generateChangeMakingTask(3, () => v),
+        generateChangeMakingTask(
+          3,
+          () => v,
+          () => false,
+        ),
         3,
       );
     }
@@ -67,7 +72,11 @@ describe("generateChangeMakingTask", () => {
   });
 
   it("a max picker hits the tier-3 ceiling (S-08)", () => {
-    const task = generateChangeMakingTask(3, (_min, max) => max);
+    const task = generateChangeMakingTask(
+      3,
+      (_min, max) => max,
+      () => false,
+    );
     expect(task.change).toBe(CHANGE_CAP[3]);
     expect(task.paid).toBe(PAID_MAX[3]);
     expect(task.price).toBe(PAID_MAX[3] - CHANGE_CAP[3]);
@@ -144,6 +153,33 @@ describe("generateStockAndChangeTask", () => {
   it("the default RNG stays within the two-stage band over many draws", () => {
     for (let i = 0; i < 50; i++) {
       assertStockAndChangeInvariants(generateStockAndChangeTask(3));
+    }
+  });
+});
+
+describe("generateChangeMakingTask scenario gate (S-08, Phase 3)", () => {
+  const twoStageOn = () => true;
+  const twoStageOff = () => false;
+
+  it("tier 3 with the scenario picker forced on emits the two-stage scenario", () => {
+    const task = generateChangeMakingTask(3, (min) => min, twoStageOn);
+    expect(task.scenario).toBe("stock_and_change");
+    assertStockAndChangeInvariants(task);
+  });
+
+  it("tier 3 with the scenario picker forced off emits single-stage give_change", () => {
+    assertInvariants(
+      generateChangeMakingTask(3, (min) => min, twoStageOff),
+      3,
+    );
+  });
+
+  it("tiers 1–2 never emit the two-stage scenario, even with the picker forced on", () => {
+    for (const level of [1, 2] as const) {
+      for (let v = 1; v <= 12; v++) {
+        const task = generateChangeMakingTask(level, () => v, twoStageOn);
+        expect(task.scenario).toBe("give_change");
+      }
     }
   });
 });

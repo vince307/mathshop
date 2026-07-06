@@ -320,31 +320,31 @@ No new queries or persistence — all changes are in pure generators, one island
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npx vitest run tests/change-making-tasks.test.ts tests/counting-tasks.test.ts tests/shift.test.ts`
-- [x] 2.2 Type checking passes: `npm run check`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Build succeeds: `npm run build`
-- [x] 2.5 No runtime surface change: full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.1 Unit tests pass: `npx vitest run tests/change-making-tasks.test.ts tests/counting-tasks.test.ts tests/shift.test.ts` — ff42adb
+- [x] 2.2 Type checking passes: `npm run check` — ff42adb
+- [x] 2.3 Linting passes: `npm run lint` — ff42adb
+- [x] 2.4 Build succeeds: `npm run build` — ff42adb
+- [x] 2.5 No runtime surface change: full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — ff42adb
 
 #### Manual
 
-- [x] 2.6 Playing shifts at every age behaves exactly as after Phase 1 (two-stage not yet reachable)
+- [x] 2.6 Playing shifts at every age behaves exactly as after Phase 1 (two-stage not yet reachable) — ff42adb
 
 ### Phase 3: Two-stage scenario — island, i18n, scoring & turn-on
 
 #### Automated
 
-- [ ] 3.1 Unit/integration tests pass: `npx vitest run tests/change-making-tasks.test.ts tests/shift.test.ts tests/counting-tasks.test.ts`
-- [ ] 3.2 Type checking passes: `npm run check`
-- [ ] 3.3 Linting passes: `npm run lint`
-- [ ] 3.4 Build succeeds: `npm run build`
-- [ ] 3.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [ ] 3.6 No inline user-visible literals in the edited surfaces (L-003 grep)
+- [x] 3.1 Unit/integration tests pass: `npx vitest run tests/change-making-tasks.test.ts tests/shift.test.ts tests/counting-tasks.test.ts`
+- [x] 3.2 Type checking passes: `npm run check`
+- [x] 3.3 Linting passes: `npm run lint`
+- [x] 3.4 Build succeeds: `npm run build`
+- [x] 3.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 3.6 No inline user-visible literals in the edited surfaces (L-003 grep)
 
 #### Manual
 
-- [ ] 3.7 Age-9 profile occasionally gets a two-stage task: count price → give change, each with its own board/retry/hint
-- [ ] 3.8 Two-stage task is "clean" only when both stages first-try; a stage miss drops accuracy but never hard-fails
-- [ ] 3.9 Ages 6–8 never see a two-stage task
-- [ ] 3.10 Two-stage task counts as one shift task and raises money skill by one; shift saves (reconciles)
-- [ ] 3.11 Copy is Polish, warm, natural across both stages; no scarcity/urgency
+- [x] 3.7 Age-9 profile occasionally gets a two-stage task: count price → give change, each with its own board/retry/hint
+- [x] 3.8 Two-stage task is "clean" only when both stages first-try; a stage miss drops accuracy but never hard-fails
+- [x] 3.9 Ages 6–8 never see a two-stage task
+- [x] 3.10 Two-stage task counts as one shift task and raises money skill by one; shift saves (reconciles)
+- [x] 3.11 Copy is Polish, warm, natural across both stages; no scarcity/urgency

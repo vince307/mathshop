@@ -68,6 +68,37 @@ describe("generateShift", () => {
       expect(task.difficultyTier).toBe(3);
     }
   });
+
+  it("a tier-3 shift can include a two-stage task, counted as one change_making task (S-08)", () => {
+    // Each shift guarantees ≥ 1 change-making task and the default gate emits
+    // two-stage at a fixed rate, so P(none across 60 shifts) is ~0.7^60 ≈ 5e-10 —
+    // statistically deterministic without threading a picker through the mixer.
+    const twoStage = [];
+    for (let i = 0; i < 60; i++) {
+      for (const task of generateShift(3)) {
+        if (task.type === "change_making" && task.scenario === "stock_and_change") {
+          twoStage.push(task);
+        }
+      }
+    }
+    expect(twoStage.length).toBeGreaterThan(0);
+    for (const task of twoStage) {
+      // One shift entry, renderable as two stages: stage-1 tray present and valid.
+      expect(task.difficultyTier).toBe(3);
+      expect(task.stockCount).toBeGreaterThan(task.price);
+      expect(task.paid).toBe(task.price + task.change);
+    }
+  });
+
+  it("tier-1/2 shifts never contain a two-stage task (S-08)", () => {
+    for (let i = 0; i < 20; i++) {
+      for (const task of [...generateShift(1), ...generateShift(2)]) {
+        if (task.type === "change_making") {
+          expect(task.scenario).toBe("give_change");
+        }
+      }
+    }
+  });
 });
 
 describe("earningsForShift", () => {

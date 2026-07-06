@@ -24,9 +24,21 @@ const EXTRA_TRAY_MAX = 3;
 /** Hard cap on tray size so the coins stay tappable in a `max-w-md` grid. */
 const TRAY_CAP = 20;
 
+/**
+ * Chance that a tier-3 change-making task is the two-stage `stock_and_change`
+ * scenario instead of single-stage `give_change` (S-08 "occasional" clause).
+ * First-guess, tunable after kid-testing.
+ */
+export const STOCK_AND_CHANGE_RATE = 0.3;
+
 /** Default inclusive picker. Injectable so tests stay deterministic. */
 function defaultPick(min: number, max: number): number {
   return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+/** Default two-stage scenario gate. Injectable so tests stay deterministic. */
+function defaultPickTwoStage(): boolean {
+  return Math.random() < STOCK_AND_CHANGE_RATE;
 }
 
 /** Clamp a picked value into an inclusive range and round it. */
@@ -35,16 +47,23 @@ function pickIn(pick: (min: number, max: number) => number, min: number, max: nu
 }
 
 /**
- * Build a concrete `give_change` task for a child at `startingLevel`. The change
- * is kept within the tier cap, the price is rolled so `paid = price + change`
- * never exceeds the band ceiling, and the tray offers a few coins more than the
- * change. `pick` is injectable for deterministic tests.
+ * Build a change-making task for a child at `startingLevel`. Tier 3 (S-08)
+ * occasionally delegates to the two-stage `stock_and_change` generator via
+ * `pickTwoStage`; tiers 1–2 always get single-stage `give_change`. For
+ * `give_change` the change is kept within the tier cap, the price is rolled so
+ * `paid = price + change` never exceeds the band ceiling, and the tray offers a
+ * few coins more than the change. `pick`/`pickTwoStage` are injectable for
+ * deterministic tests.
  */
 export function generateChangeMakingTask(
   startingLevel: number,
   pick: (min: number, max: number) => number = defaultPick,
+  pickTwoStage: () => boolean = defaultPickTwoStage,
 ): ChangeMakingTask {
   const difficultyTier = tierForLevel(startingLevel);
+  if (difficultyTier === 3 && pickTwoStage()) {
+    return generateStockAndChangeTask(startingLevel, pick);
+  }
   const change = pickIn(pick, 1, CHANGE_CAP[difficultyTier]);
   const price = pickIn(pick, 1, PAID_MAX[difficultyTier] - change);
   const paid = price + change;
