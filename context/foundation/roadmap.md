@@ -3,7 +3,7 @@ project: MathShop
 version: 1
 status: draft
 created: 2026-07-01
-updated: 2026-07-02
+updated: 2026-07-06
 prd_version: 3
 main_goal: market-feedback
 top_blocker: capacity
@@ -37,7 +37,7 @@ MathShop teaches math to Polish children (6–9) by framing every operation as r
 | S-05 | spendable-funds-wallet       | Child earns spendable funds and sees a wallet that carries across shifts              | S-04          | FR-007, FR-008                        | done     |
 | S-06 | upgrade-choice-and-growth    | Child chooses an affordable upgrade; the shop changes visibly + functionally          | S-05          | US-01, FR-010, FR-011, FR-012, FR-013, FR-014 | done |
 | S-07 | skill-path-upgrade-gate      | Child's upgrades gate on skill progress; growth stays synced to learning              | S-06          | FR-015, FR-010                        | done |
-| S-08 | upper-band-task-difficulty   | Older child (up to 9) gets appropriately harder counting / change-making tasks        | S-04          | FR-009                                | ready    |
+| S-08 | upper-band-task-difficulty   | Older child (up to 9) gets appropriately harder counting / change-making tasks        | S-04          | FR-009                                | done     |
 | S-09 | minimal-parent-weekly-report | Parent reads a minimal weekly report of their own child's practice + unlocks          | S-06, S-07    | FR-016                                | proposed |
 | S-10 | cross-device-economy-restore | Parent logs in on a new device and sees the same funds, upgrades, and grown shop      | S-06          | FR-001, FR-005, FR-012                | proposed |
 | S-11 | multi-profile-picker         | Parent adds a 2nd child profile; a scoped profile-picker appears on next launch        | S-01          | FR-002                                | ready    |
@@ -184,7 +184,7 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **Unknowns:**
   - Number-range curve per age/level for the added cohort — Owner: user (kid-testing). Block: no.
 - **Risk:** Touches task generation, not economy state, so it parallelizes cleanly with the economy chain — a useful capacity lever. Low risk; extends existing generators.
-- **Status:** ready
+- **Status:** done
 
 ### S-09: Parent reads a minimal weekly report
 
@@ -303,3 +303,4 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **S-05: Child earns spendable funds and sees a wallet that carries across shifts** — Archived 2026-07-01 → `context/archive/2026-07-01-spendable-funds-wallet/`. Lesson: —.
 - **S-06: Child chooses an upgrade that visibly + functionally grows the shop** — Archived 2026-07-01 → `context/archive/2026-07-01-upgrade-choice-and-growth/`. Lesson: —.
 - **S-07: Upgrades gate on skill progress; growth stays synced to learning** — Archived 2026-07-02 → `context/archive/2026-07-01-skill-path-upgrade-gate/`. Lesson: —.
+- **S-08: Older child (up to 9) gets appropriately harder counting / change-making tasks** — Archived 2026-07-06 → `context/archive/2026-07-02-upper-band-task-difficulty/`. Lesson: —.

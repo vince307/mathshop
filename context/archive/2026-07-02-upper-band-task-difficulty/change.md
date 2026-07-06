@@ -1,10 +1,10 @@
 ---
 change_id: upper-band-task-difficulty
 title: Upper band task difficulty
-status: impl_reviewed
+status: archived
 created: 2026-07-02
 updated: 2026-07-06
-archived_at: null
+archived_at: 2026-07-06T12:17:48Z
 ---
 
 ## Notes
