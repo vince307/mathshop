@@ -1,17 +1,19 @@
 ---
 import { createClient } from "@/lib/supabase";
-import { countChildProfiles, resolveLandingPath } from "@/lib/services/child-profiles";
+import { resolveLandingPath } from "@/lib/services/child-profiles";
+import { resolvePageProfile } from "@/lib/services/active-profile";
 
-// Profile-count router (S-01b). Gated by middleware (`/app` ∈ PROTECTED_ROUTES),
-// so `locals.user` is always set here. Both signin and confirm-email funnel into
-// `/app`; this branch decides where the parent lands:
+// Profile-count router (S-01b, picker branch S-11). Gated by middleware
+// (`/app` ∈ PROTECTED_ROUTES), so `locals.user` is always set here. Both signin
+// and confirm-email funnel into `/app`; this branch decides where the parent lands:
 //   0 profiles  → create-first-profile wizard (/app/new-profile)
-//   1 profile   → that child's start screen (/app/start)
-//   2+ profiles → most-recent profile's start screen (the picker UI is S-07)
+//   1 profile   → that child's start screen (/app/start) — picker skipped (FR-002)
+//   2+ profiles → the profile picker (/app/pick-profile), unless a VALID
+//                 active-profile selection exists → that child's start screen
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 // Env-missing: don't silently funnel everyone into the wizard — send them to
 // signin, which renders the missing-config banner (matches the auth routes).
 if (!supabase) return Astro.redirect("/auth/signin");
-const count = await countChildProfiles(supabase);
-return Astro.redirect(resolveLandingPath(count));
+const { profile, profileCount } = await resolvePageProfile(supabase, Astro.cookies);
+return Astro.redirect(resolveLandingPath(profileCount, profile !== null));
 ---

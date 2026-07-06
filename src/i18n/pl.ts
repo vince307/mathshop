@@ -333,6 +333,15 @@ export const pl = {
     back: "Wróć do sklepu",
   },
 
+  // Profile picker (S-11, FR-002). Shown on launch for accounts with 2+ child
+  // profiles; single-profile accounts skip it. `{name}` interpolated per tile.
+  // Draft Polish — pending native-speaker review.
+  picker: {
+    heading: "Kto dziś prowadzi sklep?",
+    subtitle: "Wybierz swój profil, aby zagrać.",
+    tileLabel: "Graj jako {name}",
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",

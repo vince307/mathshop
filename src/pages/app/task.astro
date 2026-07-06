@@ -3,20 +3,21 @@ import Layout from "@/layouts/Layout.astro";
 import ShiftScreen from "@/components/child/ShiftScreen";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { getMostRecentProfile } from "@/lib/services/child-profiles";
+import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { readPurchased } from "@/data/upgrades";
 import { t } from "@/i18n";
 
-// Shift surface (S-04). Gated under /app. Loads the active profile and mounts the
+// Shift surface (S-04). Gated under /app. Loads the ACTIVE profile (S-11 fallback
+// ladder: valid selection → sole profile → back to the /app router) and mounts the
 // shift orchestrator, which generates a 5–10 task shift (mixing S-02 counting +
 // S-03 change-making) from starting_level, runs it client-side, then persists the
 // result once at shift end. Mid-shift state is never persisted (FR-016). Defensive
-// fallbacks: no SSR client → sign-in; no profile → back to the /app router.
+// fallbacks: no SSR client → sign-in; no resolvable profile → the /app router.
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 if (!supabase) return Astro.redirect("/auth/signin");
 
-const profile = await getMostRecentProfile(supabase);
+const { profile } = await resolvePageProfile(supabase, Astro.cookies);
 if (!profile) return Astro.redirect("/app");
 
 const world = worldForTheme(profile.theme);

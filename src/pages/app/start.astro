@@ -5,21 +5,24 @@ import { ShopArt } from "@/components/child/ShopArt";
 import { buttonVariants } from "@/components/ui/button";
 import { LogOut, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { getMostRecentProfile } from "@/lib/services/child-profiles";
+import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { nextUpgrade, readPurchased } from "@/data/upgrades";
 import { t } from "@/i18n";
 
-// Child start screen (S-01b). Gated under /app. Loads the parent's most-recent
-// profile; the /app router only sends parents here when one exists, so the
-// no-profile branch is a defensive fallback (direct nav with 0 profiles).
+// Child start screen (S-01b). Gated under /app. Loads the ACTIVE profile (S-11
+// fallback ladder: valid selection → sole profile). A 2+ account without a
+// selection bounces to the /app router (→ picker); the no-profile branch below
+// stays as the 0-profile defensive fallback (direct nav).
 // Single themed business + an in-world tap prompt — no map. The coins/level HUD
 // (S-04) surfaces the persisted balance + business level loaded with the profile.
 // profile.name is consciously-collected PII — rendered ONLY as auto-escaped text
 // (interpolation), never set:html.
 const supabase = createClient(Astro.request.headers, Astro.cookies);
-const profile = supabase ? await getMostRecentProfile(supabase) : null;
+const resolved = supabase ? await resolvePageProfile(supabase, Astro.cookies) : { profile: null, profileCount: 0 };
+if (!resolved.profile && resolved.profileCount >= 2) return Astro.redirect("/app");
+const profile = resolved.profile;
 
 const world = profile ? worldForTheme(profile.theme) : null;
 const avatar = profile ? getAvatar(profile.avatar) : null;

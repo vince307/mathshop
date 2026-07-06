@@ -32,26 +32,30 @@ describe("/app profile-count router", () => {
     account = await createSignedInUser("router");
     const count = await countChildProfiles(account.client);
     expect(count).toBe(0);
-    expect(resolveLandingPath(count)).toBe("/app/new-profile");
+    expect(resolveLandingPath(count, false)).toBe("/app/new-profile");
   });
 
-  it("1 profile → /app/start", async () => {
+  it("1 profile → /app/start (picker skipped, FR-002)", async () => {
     account = await createSignedInUser("router");
     await seedProfiles(account.id, 1);
     const count = await countChildProfiles(account.client);
     expect(count).toBe(1);
-    expect(resolveLandingPath(count)).toBe("/app/start");
+    expect(resolveLandingPath(count, false)).toBe("/app/start");
   });
 
-  it("2 profiles → /app/start (most-recent; picker is S-07)", async () => {
+  it("2 profiles without a selection → /app/pick-profile (S-11)", async () => {
     account = await createSignedInUser("router");
     await seedProfiles(account.id, 2);
     const count = await countChildProfiles(account.client);
     expect(count).toBe(2);
-    expect(resolveLandingPath(count)).toBe("/app/start");
+    expect(resolveLandingPath(count, false)).toBe("/app/pick-profile");
 
-    // The start screen loads *a* profile (RLS-scoped) — confirm one resolves.
+    // The picker lists *the account's* profiles (RLS-scoped) — confirm one resolves.
     const profile = await getMostRecentProfile(account.client);
     expect(profile?.account_id).toBe(account.id);
+  });
+
+  it("2 profiles with a valid selection → /app/start (post-pick landing)", () => {
+    expect(resolveLandingPath(2, true)).toBe("/app/start");
   });
 });

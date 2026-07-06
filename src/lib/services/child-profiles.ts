@@ -63,13 +63,16 @@ export async function countChildProfiles(client: SupabaseClient): Promise<number
 }
 
 /**
- * Where the `/app` router sends an authenticated parent based on their profile
- * count: 0 → the create-first-profile wizard; ≥1 → the start screen (which loads
- * the most-recent profile). The multi-profile picker for ≥2 is S-07 — until then
- * 2+ also lands on the most-recent profile's start screen (no dead-end).
+ * Where the `/app` router sends an authenticated parent: 0 profiles → the
+ * create-first-profile wizard; 1 → that child's start screen (picker skipped,
+ * FR-002); 2+ → the profile picker (S-11), unless a VALID selection already
+ * exists (validated by the caller via `resolveActiveProfile`, never trusted
+ * from the raw cookie) — then straight to the selected child's start screen.
  */
-export function resolveLandingPath(profileCount: number): string {
-  return profileCount === 0 ? "/app/new-profile" : "/app/start";
+export function resolveLandingPath(profileCount: number, hasSelection: boolean): string {
+  if (profileCount === 0) return "/app/new-profile";
+  if (profileCount >= 2 && !hasSelection) return "/app/pick-profile";
+  return "/app/start";
 }
 
 /** The parent's most-recently-created profile (RLS-scoped), or null if none. */

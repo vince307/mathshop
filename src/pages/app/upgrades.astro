@@ -4,20 +4,23 @@ import UpgradeShop from "@/components/child/UpgradeShop";
 import { buttonVariants } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { getMostRecentProfile } from "@/lib/services/child-profiles";
+import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { readPurchased } from "@/data/upgrades";
 import { readSkillState } from "@/data/skills";
 import { t } from "@/i18n";
 
 // Dedicated upgrades surface (S-06). Gated under /app by existing middleware.
-// Loads the parent's most-recent profile and resolves its world + wallet +
-// business level + owned upgrades (normalized from shop_state via readPurchased,
-// robust to pre-S-06 '{}' rows), then mounts the choose-and-buy island. The
-// no-profile branch is a defensive fallback (direct nav with 0 profiles),
-// mirroring start.astro.
+// Loads the ACTIVE profile (S-11 fallback ladder: valid selection → sole
+// profile; 2+ without a selection → /app router → picker) and resolves its
+// world + wallet + business level + owned upgrades (normalized from shop_state
+// via readPurchased, robust to pre-S-06 '{}' rows), then mounts the
+// choose-and-buy island. The no-profile branch is the 0-profile defensive
+// fallback (direct nav), mirroring start.astro.
 const supabase = createClient(Astro.request.headers, Astro.cookies);
-const profile = supabase ? await getMostRecentProfile(supabase) : null;
+const resolved = supabase ? await resolvePageProfile(supabase, Astro.cookies) : { profile: null, profileCount: 0 };
+if (!resolved.profile && resolved.profileCount >= 2) return Astro.redirect("/app");
+const profile = resolved.profile;
 
 const world = profile ? worldForTheme(profile.theme) : null;
 const purchased = profile ? readPurchased(profile.shop_state) : [];
