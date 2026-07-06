@@ -35,7 +35,7 @@ Per-profile, per-shift history log (S-07) backing the parent weekly report (FR-0
   - `shift_log_update_own` — `for update using (...) with check (...)`
   - `shift_log_delete_own` — `for delete using (auth.uid() = account_id)`
 - **Consumed by:** `src/lib/services/reports.ts` (`getWeeklyReport` / `aggregateWeeklyReport`), `src/lib/services/child-profiles.ts` (writers).
-- **Isolation test:** `tests/shift-log-isolation.test.ts`.
+- **Isolation test:** `tests/shift-log-isolation.test.ts` (table-level RLS), `tests/report-isolation.test.ts` (S-09 — the weekly-report read path itself: `getWeeklyReport` + profile listing, two signed-in accounts).
 
 ## public.account_settings
 

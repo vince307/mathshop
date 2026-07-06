@@ -204,28 +204,28 @@ None material: one `Intl.DateTimeFormat` computation per report request; the que
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npx vitest run tests/reports.test.ts`
-- [x] 1.2 Type checking passes: `npm run check`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Build succeeds: `npm run build`
-- [x] 1.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 1.1 Unit tests pass: `npx vitest run tests/reports.test.ts` — ecfbf5d
+- [x] 1.2 Type checking passes: `npm run check` — ecfbf5d
+- [x] 1.3 Linting passes: `npm run lint` — ecfbf5d
+- [x] 1.4 Build succeeds: `npm run build` — ecfbf5d
+- [x] 1.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — ecfbf5d
 
 #### Manual
 
-- [x] 1.6 Report renders normally for a child with current-week play (Warsaw window)
-- [x] 1.7 Forced query error shows the per-child Polish error card (no empty week, no 500)
-- [x] 1.8 No inline literals in edited surfaces (L-003)
+- [x] 1.6 Report renders normally for a child with current-week play (Warsaw window) — ecfbf5d
+- [x] 1.7 Forced query error shows the per-child Polish error card (no empty week, no 500) — ecfbf5d
+- [x] 1.8 No inline literals in edited surfaces (L-003) — ecfbf5d
 
 ### Phase 2: Read-path isolation test + registry + copy review
 
 #### Automated
 
-- [ ] 2.1 Isolation test passes against a fresh DB (`supabase db reset` + `vitest run tests/report-isolation.test.ts`)
-- [ ] 2.2 Type checking passes: `npm run check`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Full suite passes: `npx vitest run`
+- [x] 2.1 Isolation test passes against a fresh DB (`supabase db reset` + `vitest run tests/report-isolation.test.ts`)
+- [x] 2.2 Type checking passes: `npm run check`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Full suite passes: `npx vitest run`
 
 #### Manual
 
-- [ ] 2.5 Live report exercised end-to-end (shift → `/app/report` → counts/unlocks under Warsaw week)
-- [ ] 2.6 Native copy review queued (follow-up file exists)
+- [x] 2.5 Live report exercised end-to-end (shift → `/app/report` → counts/unlocks under Warsaw week)
+- [x] 2.6 Native copy review queued (follow-up file exists)
