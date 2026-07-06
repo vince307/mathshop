@@ -45,15 +45,28 @@ export interface ChildProfile {
   updated_at: string;
 }
 
+/**
+ * Soft ceiling on child profiles per account (S-11) — bounds junk-profile
+ * accumulation now that the picker exposes an add entry a child can reach.
+ * Route-level only (no DB constraint); first-guess, tunable.
+ */
+export const MAX_PROFILES_PER_ACCOUNT = 6;
+
+/** Insert a profile and return its id (RLS-read of the own row — powers the post-create selection). */
 export function createChildProfile(client: SupabaseClient, p: NewChildProfile) {
-  return client.from("child_profiles").insert({
-    account_id: p.accountId,
-    name: p.name,
-    age: p.age,
-    avatar: p.avatar,
-    theme: p.theme,
-    starting_level: p.startingLevel,
-  });
+  return client
+    .from("child_profiles")
+    .insert({
+      account_id: p.accountId,
+      name: p.name,
+      age: p.age,
+      avatar: p.avatar,
+      theme: p.theme,
+      starting_level: p.startingLevel,
+    })
+    .select("id")
+    .single()
+    .overrideTypes<{ id: string }, { merge: false }>();
 }
 
 /** How many profiles the authenticated parent owns (RLS-scoped, indexed count). */

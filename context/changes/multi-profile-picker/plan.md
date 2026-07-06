@@ -252,32 +252,32 @@ One extra RLS-scoped select per child-page request (cookie resolution) — same 
 
 #### Automated
 
-- [x] 1.1 Unit + integration tests pass: `npx vitest run tests/app-router.test.ts tests/active-profile.test.ts`
-- [x] 1.2 Type checking passes: `npm run check`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Build succeeds: `npm run build`
-- [x] 1.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 1.1 Unit + integration tests pass: `npx vitest run tests/app-router.test.ts tests/active-profile.test.ts` — af1fb26
+- [x] 1.2 Type checking passes: `npm run check` — af1fb26
+- [x] 1.3 Linting passes: `npm run lint` — af1fb26
+- [x] 1.4 Build succeeds: `npm run build` — af1fb26
+- [x] 1.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — af1fb26
 
 #### Manual
 
-- [x] 1.6 2-child account: picker on launch; picked child followed by start/task/shop
-- [x] 1.7 Fresh session shows picker again; single-profile account never sees it
-- [x] 1.8 Tiles oversized + tappable; names disambiguate same-avatar children
-- [x] 1.9 No inline literals in new/edited surfaces (L-003)
+- [x] 1.6 2-child account: picker on launch; picked child followed by start/task/shop — af1fb26
+- [x] 1.7 Fresh session shows picker again; single-profile account never sees it — af1fb26
+- [x] 1.8 Tiles oversized + tappable; names disambiguate same-avatar children — af1fb26
+- [x] 1.9 No inline literals in new/edited surfaces (L-003) — af1fb26
 
 ### Phase 2: Add-a-child, switching & cap
 
 #### Automated
 
-- [ ] 2.1 Tests pass: `npx vitest run tests/profiles-create.test.ts tests/app-router.test.ts tests/active-profile.test.ts`
-- [ ] 2.2 Type checking passes: `npm run check`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Build succeeds: `npm run build`
-- [ ] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.1 Tests pass: `npx vitest run tests/profiles-create.test.ts tests/app-router.test.ts tests/active-profile.test.ts`
+- [x] 2.2 Type checking passes: `npm run check`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Build succeeds: `npm run build`
+- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
 
 #### Manual
 
-- [ ] 2.6 Add flow works from picker tile and parent panel; new child lands selected
-- [ ] 2.7 Cap at 6: tile hidden, route refuses a 7th
-- [ ] 2.8 Start-screen switch entry only for 2+ accounts; returns to picker
-- [ ] 2.9 Copy Polish/warm; no inline literals (L-003)
+- [x] 2.6 Add flow works from picker tile and parent panel; new child lands selected
+- [x] 2.7 Cap at 6: tile hidden, route refuses a 7th
+- [x] 2.8 Start-screen switch entry only for 2+ accounts; returns to picker
+- [x] 2.9 Copy Polish/warm; no inline literals (L-003)

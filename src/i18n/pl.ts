@@ -157,6 +157,7 @@ export const pl = {
       interestRequired: "Wybierz świat",
     },
     error: "Nie udało się utworzyć profilu. Spróbuj ponownie.",
+    limitReached: "Masz już maksymalną liczbę profili dzieci.",
   },
 
   // Child start screen (S-01b). The tap opens the counting task (S-02). The
@@ -330,6 +331,7 @@ export const pl = {
     noUpgrades: "W tym tygodniu bez nowych ulepszeń.",
     noProfiles: "Nie masz jeszcze profili dzieci.",
     loadError: "Nie udało się wczytać raportu tego dziecka. Spróbuj ponownie za chwilę.",
+    addChild: "Dodaj profil dziecka",
     back: "Wróć do sklepu",
   },
 
@@ -340,6 +342,8 @@ export const pl = {
     heading: "Kto dziś prowadzi sklep?",
     subtitle: "Wybierz swój profil, aby zagrać.",
     tileLabel: "Graj jako {name}",
+    addProfile: "Dodaj profil",
+    switchProfile: "Zmień gracza",
   },
 
   confirmEmail: {

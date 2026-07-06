@@ -5,7 +5,10 @@ import { ShoppingCart } from "lucide-react";
 import { t } from "@/i18n";
 
 // Gated: /app/* is in PROTECTED_ROUTES (middleware). An anonymous request never
-// reaches here. Reached from the /app profile-count router when count === 0.
+// reaches here. Reached from the /app profile-count router when count === 0 and
+// from the add-a-child entries (picker tile / parent panel, S-11) for 2nd+
+// profiles — the create route enforces the per-account cap and selects the new
+// child on success, so the wizard itself stays count-agnostic.
 const error = Astro.url.searchParams.get("error");
 ---
 

@@ -4,7 +4,13 @@ import { createClient } from "@/lib/supabase";
 import { applyNoStore } from "@/lib/http";
 import { AVATAR_IDS } from "@/data/avatars";
 import { WORLD_SLUGS } from "@/data/worlds";
-import { createChildProfile, deriveStartingLevel } from "@/lib/services/child-profiles";
+import {
+  countChildProfiles,
+  createChildProfile,
+  deriveStartingLevel,
+  MAX_PROFILES_PER_ACCOUNT,
+} from "@/lib/services/child-profiles";
+import { setActiveProfileCookie } from "@/lib/services/active-profile";
 import { t } from "@/i18n";
 
 export const prerender = false;
@@ -47,8 +53,15 @@ export const POST: APIRoute = async (context) => {
     return applyNoStore(context.redirect(`${WIZARD}?error=${encodeURIComponent(t.profileWizard.error)}`));
   }
 
+  // Soft cap (S-11): the picker exposes a child-reachable add entry, so bound
+  // accumulation here — the count is RLS-scoped to the session account.
+  const count = await countChildProfiles(supabase);
+  if (count >= MAX_PROFILES_PER_ACCOUNT) {
+    return applyNoStore(context.redirect(`${WIZARD}?error=${encodeURIComponent(t.profileWizard.limitReached)}`));
+  }
+
   const { name, age, avatar, theme } = parsed.data;
-  const { error } = await createChildProfile(supabase, {
+  const { data: created, error } = await createChildProfile(supabase, {
     accountId: user.id,
     name,
     age,
@@ -60,5 +73,8 @@ export const POST: APIRoute = async (context) => {
     return applyNoStore(context.redirect(`${WIZARD}?error=${encodeURIComponent(t.profileWizard.error)}`));
   }
 
+  // The new child becomes the active selection (S-11), so the post-create
+  // redirect lands on THEIR start screen instead of bouncing to the picker.
+  setActiveProfileCookie(context.cookies, created.id);
   return applyNoStore(context.redirect("/app"));
 };

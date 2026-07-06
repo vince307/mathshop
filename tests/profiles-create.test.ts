@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { POST as createPOST } from "@/pages/api/profiles/create";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
+import { ACTIVE_PROFILE_COOKIE } from "@/lib/services/active-profile";
+import { MAX_PROFILES_PER_ACCOUNT } from "@/lib/services/child-profiles";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
 
@@ -106,5 +108,57 @@ describe("POST /api/profiles/create (route-level isolation)", () => {
 
     const { data } = await admin.from("child_profiles").select("id").eq("account_id", accountC.id);
     expect(data).toHaveLength(0);
+  });
+});
+
+/** Seed N profiles directly via the service-role client (provisioning only). */
+async function seedProfiles(accountId: string, n: number): Promise<void> {
+  for (let i = 0; i < n; i++) {
+    const { error } = await admin
+      .from("child_profiles")
+      .insert({ account_id: accountId, name: `Dziecko${i}`, age: 7, avatar: "kuba", theme: "kawiarnia" });
+    if (error) throw error;
+  }
+}
+
+describe("POST /api/profiles/create — second profile + cap (S-11)", () => {
+  let accountD: TestAccount;
+  let accountE: TestAccount;
+
+  beforeAll(async () => {
+    accountD = await createSignedInUser("cap");
+    accountE = await createSignedInUser("cap");
+  });
+
+  afterAll(async () => {
+    if (accountD.id) await deleteUser(accountD.id);
+    if (accountE.id) await deleteUser(accountE.id);
+  });
+
+  it("creates a second profile and makes it the active selection", async () => {
+    await seedProfiles(accountD.id, 1);
+    const jar = await mintSession(accountD.email);
+    const res = await createPOST(createContext(jar, { name: "Drugie", age: "8", avatar: "zosia", theme: "piekarnia" }));
+    expect(res.headers.get("Location")).toBe("/app");
+
+    const { data } = await admin
+      .from("child_profiles")
+      .select("id, name")
+      .eq("account_id", accountD.id)
+      .order("created_at", { ascending: true });
+    expect(data).toHaveLength(2);
+    // The freshly-created child becomes the selection, so the post-create
+    // redirect lands on the NEW child's start screen instead of re-picking.
+    expect(jar.get(ACTIVE_PROFILE_COOKIE)?.value).toBe(data?.[1]?.id);
+  });
+
+  it("refuses a profile past the cap and writes nothing (L-002 durable check)", async () => {
+    await seedProfiles(accountE.id, MAX_PROFILES_PER_ACCOUNT);
+    const jar = await mintSession(accountE.email);
+    const res = await createPOST(createContext(jar, { name: "Nadmiar", age: "7", avatar: "ola", theme: "kawiarnia" }));
+    expect(res.headers.get("Location")).toMatch(/^\/app\/new-profile\?error=/);
+
+    const { data } = await admin.from("child_profiles").select("id").eq("account_id", accountE.id);
+    expect(data).toHaveLength(MAX_PROFILES_PER_ACCOUNT);
   });
 });

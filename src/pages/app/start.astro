@@ -84,6 +84,17 @@ const nextText =
             <div>
               <h1 class="text-foreground text-2xl font-extrabold">{greeting}</h1>
               <p class="text-muted-foreground text-sm">{t.start.subtitle}</p>
+              {
+                /* Mid-session sibling handoff (S-11) — only when there's someone to switch to. */
+                resolved.profileCount >= 2 && (
+                  <a
+                    href="/app/pick-profile"
+                    class="text-muted-foreground hover:text-foreground mt-1 inline-block text-sm underline-offset-2 hover:underline"
+                  >
+                    {t.picker.switchProfile}
+                  </a>
+                )
+              }
             </div>
           </div>
 

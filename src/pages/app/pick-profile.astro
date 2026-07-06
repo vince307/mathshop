@@ -1,7 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { listChildProfiles } from "@/lib/services/child-profiles";
+import { listChildProfiles, MAX_PROFILES_PER_ACCOUNT } from "@/lib/services/child-profiles";
 import { getAvatar } from "@/data/avatars";
 import { t } from "@/i18n";
 
@@ -51,6 +52,21 @@ if (profiles.length === 1) return Astro.redirect("/app/start");
               </form>
             );
           })
+        }
+
+        {
+          /* One-tap add-a-child entry (S-11) — hidden once the soft cap is reached. */
+          profiles.length < MAX_PROFILES_PER_ACCOUNT && (
+            <a
+              href="/app/new-profile"
+              class="border-border text-muted-foreground hover:border-primary hover:text-foreground focus-visible:ring-ring flex min-h-20 w-full items-center gap-4 rounded-3xl border-2 border-dashed p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <span class="bg-secondary text-secondary-foreground inline-flex size-16 items-center justify-center rounded-full">
+                <Plus className="size-8" />
+              </span>
+              <span class="text-xl font-extrabold">{t.picker.addProfile}</span>
+            </a>
+          )
         }
       </div>
     </div>
