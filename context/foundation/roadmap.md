@@ -41,7 +41,7 @@ MathShop teaches math to Polish children (6–9) by framing every operation as r
 | S-09 | minimal-parent-weekly-report | Parent reads a minimal weekly report of their own child's practice + unlocks          | S-06, S-07    | FR-016                                | done     |
 | S-10 | cross-device-economy-restore | Parent logs in on a new device and sees the same funds, upgrades, and grown shop      | S-06          | FR-001, FR-005, FR-012                | proposed |
 | S-11 | multi-profile-picker         | Parent adds a 2nd child profile; a scoped profile-picker appears on next launch        | S-01          | FR-002                                | done     |
-| S-12 | network-loss-handling        | A network drop mid-shift halts gracefully with a Polish in-world message               | S-04          | FR-017                                | ready    |
+| S-12 | network-loss-handling        | A network drop mid-shift halts gracefully with a Polish in-world message               | S-04          | FR-017                                | done     |
 | S-13 | child-ui-polish              | Built child surfaces (incl. the new economy screens) brought to mockup fidelity        | S-06          | US-01, §Non-Functional Requirements   | proposed |
 
 ## Streams
@@ -233,7 +233,7 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Narrow resilience slice (detect, halt, in-world message, no queue). A change folder already exists (`context/changes/network-loss-handling/`). Independent of the economy — parallelizable. Traces to FR-017 (carried from prd-v2 FR-016, re-added to prd-v3 as a preserved requirement).
-- **Status:** ready
+- **Status:** done
 
 ### S-13: Child UI/UX polish to mockup fidelity (incl. economy surfaces)
 
@@ -306,3 +306,4 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **S-08: Older child (up to 9) gets appropriately harder counting / change-making tasks** — Archived 2026-07-06 → `context/archive/2026-07-02-upper-band-task-difficulty/`. Lesson: —.
 - **S-09: Parent reads a minimal weekly report of their own child's practice + unlocks** — Archived 2026-07-06 → `context/archive/2026-07-06-minimal-parent-weekly-report/`. Lesson: —.
 - **S-11: Parent adds a 2nd child profile; a scoped profile-picker appears on next launch** — Archived 2026-07-06 → `context/archive/2026-07-06-multi-profile-picker/`. Lesson: —.
+- **S-12: If the browser loses connectivity mid-shift, the app shows a Polish in-world message ("Internet zniknął! Spróbuj za chwilę.") and halts; pending mid-shift progress is discarded; on reconnect the child returns to the last server-recorded state.** — Archived 2026-07-07 → `context/archive/2026-06-14-network-loss-handling/`. Lesson: —.

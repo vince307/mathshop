@@ -2,10 +2,11 @@
 change_id: network-loss-handling
 roadmap_id: S-08
 title: Network-loss mid-shift halts gracefully
-status: implemented
+status: archived
 created: 2026-06-14
 updated: 2026-07-07
 prd_refs: [FR-016]
+archived_at: 2026-07-07T12:44:30Z
 ---
 
 # Change: Network-loss mid-shift halts gracefully
