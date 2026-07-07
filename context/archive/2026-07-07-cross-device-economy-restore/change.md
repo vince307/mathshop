@@ -1,10 +1,10 @@
 ---
 change_id: cross-device-economy-restore
 title: Cross-device economy restore (S-10)
-status: impl_reviewed
+status: archived
 created: 2026-07-07
 updated: 2026-07-07
-archived_at: null
+archived_at: 2026-07-07T18:20:07Z
 ---
 
 ## Notes
