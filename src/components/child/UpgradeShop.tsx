@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { World } from "@/data/worlds";
 import type { SkillState } from "@/types";
 import { ChildButton } from "@/components/child/ChildButton";
+import { WalletPill } from "@/components/child/HudChip";
+import { childCard } from "@/components/child/childCard";
 import { ShopArt } from "@/components/child/ShopArt";
 import { SkillBars } from "@/components/child/SkillBars";
 import { UPGRADES, canBuy, isOwned, nextUpgrade, type Upgrade } from "@/data/upgrades";
@@ -105,15 +107,11 @@ export default function UpgradeShop({
       {/* Header: title + wallet */}
       <div className="flex items-center justify-between">
         <h1 className="text-foreground text-2xl font-extrabold">{t.upgradeShop.title}</h1>
-        <div className="bg-card border-border flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-sm">
-          <img src="/illustrations/coin-stack.png" alt="" className="size-6 object-contain" loading="lazy" />
-          <span className="sr-only">{t.upgradeShop.walletLabel}</span>
-          <span className="text-accent text-lg font-extrabold">{wallet}</span>
-        </div>
+        <WalletPill amount={wallet} label={t.upgradeShop.walletLabel} />
       </div>
 
       {/* The shop as it stands — grows as owned upgrades are bought (S-06) */}
-      <div className="bg-card border-border overflow-hidden rounded-3xl border shadow-sm">
+      <div className={childCard("3xl", "overflow-hidden")}>
         <ShopArt world={world} purchased={owned} />
       </div>
 
@@ -137,10 +135,7 @@ export default function UpgradeShop({
             <p className="text-muted-foreground text-sm">{fill(t.upgradeShop.decisionPrompt, { wallet })}</p>
             <ul className="flex flex-col gap-4">
               {affordable.map((u) => (
-                <li
-                  key={u.id}
-                  className="bg-card border-border flex items-center gap-4 rounded-2xl border p-4 shadow-sm"
-                >
+                <li key={u.id} className={childCard("2xl", "flex items-center gap-4 p-4")}>
                   <img src={u.art} alt="" className="size-16 shrink-0 object-contain" />
                   <div className="flex-1">
                     <p className="text-foreground font-bold">{upgradeName(u.id)}</p>
@@ -150,7 +145,7 @@ export default function UpgradeShop({
                     )}
                   </div>
                   <ChildButton
-                    variant="gold"
+                    variant="primary"
                     className="min-h-14 px-6 text-lg"
                     disabled={buyingId !== null}
                     onClick={() => buy(u)}

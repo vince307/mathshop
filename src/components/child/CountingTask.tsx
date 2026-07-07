@@ -1,6 +1,7 @@
 import type { CountingTask as CountingTaskInstance } from "@/types";
 import type { World } from "@/data/worlds";
 import { TaskScreen } from "@/components/child/TaskScreen";
+import { StoryHeader } from "@/components/child/StoryHeader";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
@@ -26,13 +27,7 @@ export default function CountingTask({ task, world, onComplete }: CountingTaskPr
       hintCopy={copy.hint}
       successCopy={copy.success}
       onComplete={onComplete}
-      renderHeader={() => (
-        <div className="text-center">
-          <p className="text-primary text-sm font-bold tracking-wide uppercase">{world.name}</p>
-          <p className="text-foreground mt-1 text-xl font-bold">{copy.prompt}</p>
-          <p className="text-muted-foreground mt-1">{copy.question}</p>
-        </div>
-      )}
+      renderHeader={() => <StoryHeader world={world} story={copy.prompt} question={copy.question} />}
     />
   );
 }

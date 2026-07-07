@@ -10,7 +10,7 @@ import { t } from "@/i18n";
 export default function StartShiftButton() {
   return (
     <ChildButton
-      variant="gold"
+      variant="primary"
       onClick={() => {
         window.location.href = "/app/task";
       }}

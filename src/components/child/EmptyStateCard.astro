@@ -1,0 +1,18 @@
+---
+import { buttonVariants } from "@/components/ui/button";
+import { childCard } from "@/components/child/childCard";
+import { t } from "@/i18n";
+
+/**
+ * The zero-profile defensive fallback card (S-13 primitive — absorbed the
+ * byte-identical copies on start/upgrades): a calm CTA into the create-profile
+ * wizard for direct navigation with no profiles.
+ */
+---
+
+<div class:list={childCard("2xl", "mt-16 w-full max-w-md p-8 text-center")}>
+  <p class="text-muted-foreground mb-4">{t.profileWizard.subtitle}</p>
+  <a href="/app/new-profile" class:list={buttonVariants({ variant: "default", size: "lg" })}>
+    {t.profileWizard.title}
+  </a>
+</div>

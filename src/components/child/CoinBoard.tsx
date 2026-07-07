@@ -1,4 +1,5 @@
-import { Check } from "lucide-react";
+import { CheckBadge } from "@/components/child/CheckBadge";
+import { childCard } from "@/components/child/childCard";
 import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
@@ -21,10 +22,13 @@ export function CoinBoard({ counted, toggle, arrangement, disabled, hint }: Coin
   const isGrid = arrangement === "rows_of_5";
   return (
     <div
-      className={cn(
-        "bg-card border-border w-full rounded-3xl border p-5 shadow-sm transition-all",
-        isGrid ? "grid grid-cols-5 gap-4" : "flex flex-wrap justify-center gap-4",
-        hint && "ring-primary/40 animate-pulse ring-4",
+      className={childCard(
+        "3xl",
+        cn(
+          "w-full p-5 transition-all",
+          isGrid ? "grid grid-cols-5 gap-4" : "flex flex-wrap justify-center gap-4",
+          hint && "ring-primary/40 animate-pulse ring-4",
+        ),
       )}
     >
       {counted.map((isCounted, index) => (
@@ -44,11 +48,7 @@ export function CoinBoard({ counted, toggle, arrangement, disabled, hint }: Coin
           )}
         >
           <img src="/illustrations/coin.png" alt="" className="size-full rounded-full object-cover" />
-          {isCounted && (
-            <span className="bg-primary text-primary-foreground absolute -right-1 -bottom-1 inline-flex size-5 items-center justify-center rounded-full shadow">
-              <Check className="size-3" />
-            </span>
-          )}
+          {isCounted && <CheckBadge className="-right-1 -bottom-1 size-5" />}
         </button>
       ))}
     </div>

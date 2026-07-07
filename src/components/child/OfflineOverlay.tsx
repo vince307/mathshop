@@ -38,7 +38,7 @@ export default function OfflineOverlay() {
         <p className="text-muted-foreground mt-2 text-lg">{t.offline.subtitle}</p>
       </div>
       <ChildButton
-        variant="gold"
+        variant="primary"
         onClick={() => {
           void tryAgain();
         }}

@@ -2,47 +2,14 @@ import { useCallback, useState } from "react";
 import type { ChangeMakingTask as ChangeMakingTaskInstance } from "@/types";
 import type { World } from "@/data/worlds";
 import { TaskScreen } from "@/components/child/TaskScreen";
+import { StoryHeader } from "@/components/child/StoryHeader";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
-import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
 interface ChangeMakingTaskProps {
   task: ChangeMakingTaskInstance;
   world: World;
   onComplete?: (outcome: TaskOutcome) => void;
-}
-
-/** Shared narrative header: world chip, optional stage label, story (highlighted on hint), question. */
-function StoryHeader({
-  world,
-  story,
-  question,
-  showHint,
-  stageLabel,
-}: {
-  world: World;
-  story: string;
-  question: string;
-  showHint: boolean;
-  stageLabel?: string;
-}) {
-  return (
-    <div className="text-center">
-      <p className="text-primary text-sm font-bold tracking-wide uppercase">{world.name}</p>
-      {stageLabel && (
-        <p className="text-muted-foreground mt-1 text-xs font-bold tracking-wide uppercase">{stageLabel}</p>
-      )}
-      <p
-        className={cn(
-          "text-foreground mt-1 text-xl font-bold transition-colors",
-          showHint && "bg-accent/30 rounded-lg px-2 py-1",
-        )}
-      >
-        {story}
-      </p>
-      <p className="text-muted-foreground mt-1">{question}</p>
-    </div>
-  );
 }
 
 /**

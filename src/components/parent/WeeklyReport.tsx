@@ -1,5 +1,6 @@
 import React from "react";
 import { BarChart3, Sparkles } from "lucide-react";
+import { AvatarCircle } from "@/components/child/AvatarCircle";
 import type { Competency, WeeklyReport as WeeklyReportData, WeeklyReportUpgrade } from "@/types";
 import { COMPETENCIES } from "@/data/skills";
 import { t } from "@/i18n";
@@ -58,13 +59,7 @@ export default function WeeklyReport({ reports }: Props) {
 function ChildIdentity({ child }: { child: ChildReport }) {
   return (
     <div className="flex items-center gap-3">
-      {child.avatarImage && (
-        <img
-          src={child.avatarImage}
-          alt={child.avatarAlt}
-          className="border-primary size-12 rounded-full border-2 object-cover"
-        />
-      )}
+      {child.avatarImage && <AvatarCircle src={child.avatarImage} alt={child.avatarAlt} size={12} />}
       <h2 className="text-foreground text-xl font-extrabold">{child.name}</h2>
     </div>
   );

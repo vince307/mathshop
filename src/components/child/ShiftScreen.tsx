@@ -135,7 +135,7 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
       <div className="flex w-full max-w-md flex-col items-center gap-6 text-center" role="status">
         <p className="text-foreground text-xl font-bold">{t.results.saveError}</p>
         <ChildButton
-          variant="gold"
+          variant="primary"
           onClick={() => {
             window.location.href = "/app/start";
           }}

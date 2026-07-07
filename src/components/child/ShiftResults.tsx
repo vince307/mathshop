@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { ChildButton } from "@/components/child/ChildButton";
+import { childCard } from "@/components/child/childCard";
 import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
@@ -38,7 +39,7 @@ export default function ShiftResults({ earned, stars, leveledUp, canUpgrade }: S
       </div>
       <p className="text-foreground font-bold">{starCopy}</p>
 
-      <div className="bg-card border-border flex flex-col items-center gap-1 rounded-2xl border p-4 shadow-sm">
+      <div className={childCard("2xl", "flex flex-col items-center gap-1 p-4")}>
         <div className="flex items-center gap-3">
           <img src="/illustrations/coin-stack.png" alt="" className="size-10 object-contain" />
           <p className="text-foreground text-xl font-extrabold">
@@ -60,7 +61,7 @@ export default function ShiftResults({ earned, stars, leveledUp, canUpgrade }: S
       )}
 
       <ChildButton
-        variant="gold"
+        variant="primary"
         onClick={() => {
           window.location.href = "/app/start";
         }}

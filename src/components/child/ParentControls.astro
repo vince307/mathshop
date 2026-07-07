@@ -1,0 +1,38 @@
+---
+import { LogOut, ShieldCheck } from "lucide-react";
+import { t } from "@/i18n";
+
+/**
+ * The subtle top-right parent bar on child pages (S-13 primitive — absorbed the
+ * byte-identical copies on start/task/upgrades): optional PIN-gated report link
+ * plus the signout form. Parent chrome stays quiet; child controls live below.
+ */
+interface Props {
+  showReport?: boolean;
+}
+
+const { showReport = false } = Astro.props;
+---
+
+<div class="mb-6 flex w-full max-w-md items-center justify-end gap-4">
+  {
+    showReport && (
+      <a
+        href="/app/report"
+        class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+      >
+        <ShieldCheck className="size-4" />
+        {t.report.title}
+      </a>
+    )
+  }
+  <form method="POST" action="/api/auth/signout">
+    <button
+      type="submit"
+      class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+    >
+      <LogOut className="size-4" />
+      {t.nav.signOut}
+    </button>
+  </form>
+</div>

@@ -1,9 +1,13 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import StartShiftButton from "@/components/child/StartShiftButton";
+import ParentControls from "@/components/child/ParentControls.astro";
+import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
+import { AvatarCircle } from "@/components/child/AvatarCircle";
+import { WalletPill, LevelBadge } from "@/components/child/HudChip";
+import { childCard } from "@/components/child/childCard";
 import { ShopArt } from "@/components/child/ShopArt";
 import { buttonVariants } from "@/components/ui/button";
-import { LogOut, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
@@ -50,37 +54,14 @@ const nextText =
       /* Parent controls — subtle, top-right; child controls stay below. The report
         link sits behind the PIN gate (report route redirects when unverified). */
     }
-    <div class="mb-6 flex w-full max-w-md items-center justify-end gap-4">
-      <a
-        href="/app/report"
-        class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
-      >
-        <ShieldCheck className="size-4" />
-        {t.report.title}
-      </a>
-      <form method="POST" action="/api/auth/signout">
-        <button
-          type="submit"
-          class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
-        >
-          <LogOut className="size-4" />
-          {t.nav.signOut}
-        </button>
-      </form>
-    </div>
+    <ParentControls showReport />
 
     {
       profile && world ? (
         <div class="w-full max-w-md">
           {/* Greeting */}
           <div class="flex items-center gap-3">
-            {avatar && (
-              <img
-                src={avatar.image}
-                alt={avatar.alt}
-                class="border-primary size-14 rounded-full border-2 object-cover"
-              />
-            )}
+            {avatar && <AvatarCircle src={avatar.image} alt={avatar.alt} size={14} />}
             <div>
               <h1 class="text-foreground text-2xl font-extrabold">{greeting}</h1>
               <p class="text-muted-foreground text-sm">{t.start.subtitle}</p>
@@ -100,19 +81,13 @@ const nextText =
 
           {/* Wallet (Portfel) + business-level HUD (S-04/S-05) — persisted, cross-session totals */}
           <div class="mt-6 flex items-center gap-3">
-            <div class="bg-card border-border flex items-center gap-2 rounded-full border px-3 py-1.5 shadow-sm">
-              <img src="/illustrations/coin-stack.png" alt="" class="size-6 object-contain" loading="lazy" />
-              <span class="sr-only">{t.start.walletLabel}</span>
-              <span class="text-accent text-lg font-extrabold">{profile.wallet_balance}</span>
-            </div>
-            <div class="bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-sm font-bold">
-              {t.start.levelLabel.replace("{level}", String(profile.business_level))}
-            </div>
+            <WalletPill amount={profile.wallet_balance} label={t.start.walletLabel} />
+            <LevelBadge>{t.start.levelLabel.replace("{level}", String(profile.business_level))}</LevelBadge>
           </div>
           <p class="text-muted-foreground mt-2 text-sm">{t.start.savingsHint}</p>
 
           {/* Single themed business — base world art + owned-upgrade badges (S-06) */}
-          <div class="bg-card border-border mt-8 overflow-hidden rounded-3xl border shadow-sm">
+          <div class:list={childCard("3xl", "mt-8 overflow-hidden")}>
             <ShopArt world={world} purchased={purchased} />
             <p class="text-foreground px-4 py-3 text-center text-lg font-bold">{world.name}</p>
           </div>
@@ -133,12 +108,7 @@ const nextText =
           </div>
         </div>
       ) : (
-        <div class="bg-card border-border mt-16 w-full max-w-md rounded-2xl border p-8 text-center shadow-sm">
-          <p class="text-muted-foreground mb-4">{t.profileWizard.subtitle}</p>
-          <a href="/app/new-profile" class:list={buttonVariants({ variant: "default", size: "lg" })}>
-            {t.profileWizard.title}
-          </a>
-        </div>
+        <EmptyStateCard />
       )
     }
   </div>

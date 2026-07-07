@@ -1,6 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { Plus } from "lucide-react";
+import { AvatarCircle } from "@/components/child/AvatarCircle";
+import { childCard } from "@/components/child/childCard";
 import { createClient } from "@/lib/supabase";
 import { listChildProfiles, MAX_PROFILES_PER_ACCOUNT } from "@/lib/services/child-profiles";
 import { getAvatar } from "@/data/avatars";
@@ -38,15 +40,12 @@ if (profiles.length === 1) return Astro.redirect("/app/start");
                 <button
                   type="submit"
                   aria-label={t.picker.tileLabel.replace("{name}", profile.name)}
-                  class="bg-card border-border hover:border-primary focus-visible:ring-ring flex min-h-20 w-full items-center gap-4 rounded-3xl border-2 p-4 text-left shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none active:scale-[0.99]"
-                >
-                  {avatar && (
-                    <img
-                      src={avatar.image}
-                      alt={avatar.alt}
-                      class="border-primary size-16 rounded-full border-2 object-cover"
-                    />
+                  class:list={childCard(
+                    "3xl",
+                    "hover:border-primary focus-visible:ring-ring flex min-h-20 w-full items-center gap-4 border-2 p-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none active:scale-[0.99]",
                   )}
+                >
+                  {avatar && <AvatarCircle src={avatar.image} alt={avatar.alt} size={16} />}
                   <span class="text-foreground text-xl font-extrabold">{profile.name}</span>
                 </button>
               </form>

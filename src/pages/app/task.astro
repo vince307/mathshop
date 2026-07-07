@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import ShiftScreen from "@/components/child/ShiftScreen";
-import { LogOut } from "lucide-react";
+import ParentControls from "@/components/child/ParentControls.astro";
 import { createClient } from "@/lib/supabase";
 import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
@@ -26,18 +26,7 @@ const purchased = readPurchased(profile.shop_state);
 
 <Layout title={t.brand}>
   <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
-    {/* Parent signout — subtle, top-right; child controls stay below */}
-    <div class="mb-6 flex w-full max-w-md justify-end">
-      <form method="POST" action="/api/auth/signout">
-        <button
-          type="submit"
-          class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
-        >
-          <LogOut className="size-4" />
-          {t.nav.signOut}
-        </button>
-      </form>
-    </div>
+    <ParentControls />
 
     <ShiftScreen
       client:load

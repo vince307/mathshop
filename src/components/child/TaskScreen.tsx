@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ChildButton } from "@/components/child/ChildButton";
 import { CoinBoard } from "@/components/child/CoinBoard";
+import { FeedbackCard } from "@/components/child/FeedbackCard";
 import { useCoinTask, type TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
@@ -52,27 +53,21 @@ export function TaskScreen({
         {t.task.tally.replace("{count}", String(tally))}
       </p>
 
-      <ChildButton variant="gold" onClick={check} disabled={status === "correct"}>
+      <ChildButton variant="primary" onClick={check} disabled={status === "correct"}>
         {t.task.check}
       </ChildButton>
 
       {/* Feedback — gentle retry / hint / success (never punishing) */}
       {status === "wrong" && (
-        <div
-          role="status"
-          className="bg-card border-border animate-in fade-in max-w-sm rounded-2xl border p-4 text-center shadow-sm"
-        >
+        <FeedbackCard>
           <p className="text-foreground font-bold">{t.task.retry}</p>
           {showHint && <p className="text-muted-foreground mt-1 text-sm">{hintCopy}</p>}
-        </div>
+        </FeedbackCard>
       )}
       {status === "correct" && (
-        <div
-          role="status"
-          className="bg-card border-border animate-in fade-in zoom-in-95 max-w-sm rounded-2xl border p-4 text-center shadow-sm"
-        >
+        <FeedbackCard zoom>
           <p className="text-foreground font-bold">{successCopy}</p>
-        </div>
+        </FeedbackCard>
       )}
     </div>
   );

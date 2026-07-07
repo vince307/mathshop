@@ -5,6 +5,8 @@ import { WORLDS } from "@/data/worlds";
 import { deriveStartingLevel } from "@/data/leveling";
 import { SelectTile } from "@/components/child/SelectTile";
 import { ChildButton } from "@/components/child/ChildButton";
+import { AvatarCircle } from "@/components/child/AvatarCircle";
+import { childCard } from "@/components/child/childCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -96,7 +98,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
       method="POST"
       action="/api/profiles/create"
       onSubmit={handleSubmit}
-      className="bg-card text-card-foreground border-border rounded-2xl border p-6 shadow-sm sm:p-8"
+      className={childCard("2xl", "text-card-foreground p-6 sm:p-8")}
     >
       {/* State carried into the POST regardless of which step is visible. */}
       <input type="hidden" name="name" value={name.trim()} />
@@ -241,13 +243,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
           <>
             <p className="text-muted-foreground text-sm">{t.profileWizard.reviewIntro}</p>
             <div className="border-border flex items-center gap-4 rounded-xl border p-4">
-              {selectedAvatar && (
-                <img
-                  src={selectedAvatar.image}
-                  alt={selectedAvatar.alt}
-                  className="border-primary size-16 rounded-full border-2 object-cover"
-                />
-              )}
+              {selectedAvatar && <AvatarCircle src={selectedAvatar.image} alt={selectedAvatar.alt} size={16} />}
               <div>
                 <p className="text-foreground text-lg font-bold">{name.trim()}</p>
                 <p className="text-muted-foreground text-sm">

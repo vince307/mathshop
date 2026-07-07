@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check } from "lucide-react";
+import { CheckBadge } from "@/components/child/CheckBadge";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,11 +35,7 @@ export function SelectTile({ selected, onSelect, image, alt, label, shape = "car
         )}
       >
         <img src={image} alt={alt} loading="lazy" className="size-full object-cover" />
-        {selected && (
-          <span className="bg-primary text-primary-foreground absolute right-1 bottom-1 inline-flex size-6 items-center justify-center rounded-full shadow">
-            <Check className="size-4" />
-          </span>
-        )}
+        {selected && <CheckBadge className="right-1 bottom-1 size-6" iconClassName="size-4" />}
       </span>
       {label && (
         <span className={cn("text-sm font-semibold", selected ? "text-primary" : "text-foreground")}>{label}</span>
