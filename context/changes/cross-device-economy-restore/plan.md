@@ -174,24 +174,24 @@ None: one inline event listener per page; a reload only on bfcache restores.
 
 #### Automated
 
-- [x] 1.1 New test passes against a fresh DB (`supabase db reset` + `vitest run tests/cross-device-restore.test.ts`)
-- [x] 1.2 Type checking passes: `npm run check`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Full suite passes: `npx vitest run`
+- [x] 1.1 New test passes against a fresh DB (`supabase db reset` + `vitest run tests/cross-device-restore.test.ts`) — bc81794
+- [x] 1.2 Type checking passes: `npm run check` — bc81794
+- [x] 1.3 Linting passes: `npm run lint` — bc81794
+- [x] 1.4 Full suite passes: `npx vitest run` — bc81794
 
 ### Phase 2: Shared-device hygiene + walkthrough
 
 #### Automated
 
-- [ ] 2.1 Tests pass: `npx vitest run tests/parent-pin.test.ts tests/cross-device-restore.test.ts`
-- [ ] 2.2 Type checking passes: `npm run check`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Build succeeds: `npm run build`
-- [ ] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.1 Tests pass: `npx vitest run tests/parent-pin.test.ts tests/cross-device-restore.test.ts`
+- [x] 2.2 Type checking passes: `npm run check`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Build succeeds: `npm run build`
+- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
 
 #### Manual
 
-- [ ] 2.6 Two-device walkthrough: device-1 state identical on device 2
-- [ ] 2.7 Shared-device account swap: zero residue of the previous account
-- [ ] 2.8 Post-logout Back button reloads to signin (Safari if available)
-- [ ] 2.9 Signout → re-signin requires the PIN again for /app/report
+- [x] 2.6 Two-device walkthrough: device-1 state identical on device 2
+- [x] 2.7 Shared-device account swap: zero residue of the previous account
+- [x] 2.8 Post-logout Back button reloads to signin (Safari if available)
+- [x] 2.9 Signout → re-signin requires the PIN again for /app/report

@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { createClient, clearAuthCookies } from "@/lib/supabase";
 import { applyNoStore } from "@/lib/http";
 import { ACTIVE_PROFILE_COOKIE } from "@/lib/services/active-profile";
+import { PARENT_VERIFIED_COOKIE } from "@/lib/services/parent-pin";
 
 export const prerender = false;
 
@@ -14,9 +15,11 @@ export const POST: APIRoute = async (context) => {
     // so sign-out is never a silent no-op (stale-session surface).
     clearAuthCookies(context.request.headers, context.cookies);
   }
-  // The profile selection is per-session state — clear it so the next account
-  // on this browser starts fresh (a stale pointer is harmless under RLS, but
-  // "fresh account, fresh state" should be explicit; S-11).
+  // Per-session state — clear it so the next account on this browser starts
+  // fresh: the profile pointer (S-11; harmless under RLS but explicit) and the
+  // parent-verified PIN marker (S-10; signing out must revoke verification, or
+  // the same account re-signing-in within the 15-min TTL skips the PIN gate).
   context.cookies.delete(ACTIVE_PROFILE_COOKIE, { path: "/" });
+  context.cookies.delete(PARENT_VERIFIED_COOKIE, { path: "/" });
   return applyNoStore(context.redirect("/"));
 };

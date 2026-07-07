@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { onRequest } from "@/middleware";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { POST as signoutPOST } from "@/pages/api/auth/signout";
+import { PARENT_VERIFIED_COOKIE, signMarker } from "@/lib/services/parent-pin";
+import { ACTIVE_PROFILE_COOKIE } from "@/lib/services/active-profile";
 import { createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar, reachedNext, runMiddleware } from "./helpers/astro";
 
@@ -81,6 +83,20 @@ describe("Risk #3 — session gating (real middleware + Supabase)", () => {
 
     expect(response.headers.get("Location")).toBe("/auth/signin");
     expect(context.locals.user).toBeNull();
+  });
+
+  it("sign-out revokes parent verification and the profile selection (S-10 shared-device hygiene)", async () => {
+    const jar = await mintSession(account.email);
+    // Simulate an in-session PIN verification + child selection on this browser.
+    jar.set(PARENT_VERIFIED_COOKIE, signMarker(account.id, Date.now() + 60_000));
+    jar.set(ACTIVE_PROFILE_COOKIE, "00000000-0000-4000-8000-000000000000");
+
+    await signoutPOST(buildContext({ url: "https://test.local/api/auth/signout", method: "POST", cookies: jar }));
+
+    // Fresh account, fresh state: the next user of this browser inherits neither
+    // the PIN-gate marker (15-min re-entry window) nor the profile pointer.
+    expect(jar.get(PARENT_VERIFIED_COOKIE)).toBeUndefined();
+    expect(jar.get(ACTIVE_PROFILE_COOKIE)).toBeUndefined();
   });
 
   it("redirects an already-authenticated parent away from the auth forms to /app", async () => {

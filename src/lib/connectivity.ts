@@ -16,8 +16,8 @@ export const SHIFT_SAVE_TIMEOUT_MS = 10_000;
 /** Bound on the reconnect probe — short, so the try-again button answers quickly. Tunable. */
 const PROBE_TIMEOUT_MS = 5_000;
 
-/** Static asset the probe fetches — rides the CDN, spins up no function. */
-const PROBE_TARGET = "/favicon.svg";
+/** Static asset the probe fetches — rides the CDN, spins up no function. Must exist in `public/` (pinned by test). */
+export const PROBE_TARGET = "/favicon.png";
 
 /** True when `err` is a fetch rejection shape (transport failure / abort / timeout) — the authoritative offline signal. */
 export function isNetworkFailure(err: unknown): boolean {

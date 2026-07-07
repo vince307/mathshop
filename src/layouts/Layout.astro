@@ -19,6 +19,15 @@ const { title = t.brand } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>{title}</title>
+    <script>
+      // Back/forward-cache guard (S-10): a bfcache restore replays the page from
+      // memory — after a logout that can resurface the previous account's rendered
+      // data despite `no-store` (Safari notably ignores it for bfcache). Reload
+      // through the server instead: it re-renders current state or bounces to signin.
+      window.addEventListener("pageshow", (event) => {
+        if (event.persisted) window.location.reload();
+      });
+    </script>
   </head>
   <body>
     {

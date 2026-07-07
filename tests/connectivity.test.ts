@@ -1,5 +1,7 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { isNetworkFailure, probeConnectivity } from "@/lib/connectivity";
+import { isNetworkFailure, probeConnectivity, PROBE_TARGET } from "@/lib/connectivity";
 
 /**
  * Connectivity semantics (S-12, FR-017). Pure — no browser, no DB. Pins the
@@ -25,6 +27,10 @@ describe("isNetworkFailure", () => {
 });
 
 describe("probeConnectivity", () => {
+  it("targets a real static asset — a 404 target would strand the offline overlay forever", () => {
+    expect(existsSync(join(process.cwd(), "public", PROBE_TARGET))).toBe(true);
+  });
+
   it("confirms connectivity when the probe target responds ok", async () => {
     const okFetch = () => Promise.resolve(new Response(null, { status: 200 }));
     await expect(probeConnectivity(okFetch as typeof fetch)).resolves.toBe(true);
