@@ -182,6 +182,7 @@ export const pl = {
     check: "Sprawdź",
     tally: "Naliczono: {count}",
     retry: "Spróbuj jeszcze raz!",
+    hintTitle: "Wskazówka",
     coinLabel: "Moneta {n}",
     count_till: {
       prompt: "Policz monety w kasie, zanim otworzysz sklep.",

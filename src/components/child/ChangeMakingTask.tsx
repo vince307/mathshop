@@ -56,7 +56,8 @@ function StockAndChangeTask({ task, world, onComplete }: ChangeMakingTaskProps) 
           <StoryHeader
             world={world}
             stageLabel={copy.stageLabel.replace("{step}", "1")}
-            story={stage.story.replace("{price}", String(task.price))}
+            story={stage.story}
+            values={{ price: task.price }}
             question={stage.question}
             showHint={showHint}
           />
@@ -79,7 +80,8 @@ function StockAndChangeTask({ task, world, onComplete }: ChangeMakingTaskProps) 
         <StoryHeader
           world={world}
           stageLabel={copy.stageLabel.replace("{step}", "2")}
-          story={stage.story.replace("{paid}", String(task.paid)).replace("{price}", String(task.price))}
+          story={stage.story}
+          values={{ paid: task.paid, price: task.price }}
           question={stage.question}
           showHint={showHint}
         />
@@ -101,7 +103,6 @@ export default function ChangeMakingTask({ task, world, onComplete }: ChangeMaki
     return <StockAndChangeTask task={task} world={world} onComplete={onComplete} />;
   }
   const copy = t.task[task.scenario];
-  const story = copy.story.replace("{paid}", String(task.paid)).replace("{price}", String(task.price));
   return (
     <TaskScreen
       coinCount={task.availableCount}
@@ -111,7 +112,13 @@ export default function ChangeMakingTask({ task, world, onComplete }: ChangeMaki
       successCopy={copy.success}
       onComplete={onComplete}
       renderHeader={(showHint) => (
-        <StoryHeader world={world} story={story} question={copy.question} showHint={showHint} />
+        <StoryHeader
+          world={world}
+          story={copy.story}
+          values={{ paid: task.paid, price: task.price }}
+          question={copy.question}
+          showHint={showHint}
+        />
       )}
     />
   );

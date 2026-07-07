@@ -9,6 +9,7 @@ import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
 import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
+import { cn } from "@/lib/utils";
 import { nextUpgrade, shiftBonusTasks } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
@@ -32,6 +33,9 @@ interface Outcome {
   leveledUp: boolean;
   /** Whether the post-shift wallet can afford an upgrade — drives the results nudge. */
   canUpgrade: boolean;
+  /** The cheapest eligible unowned upgrade + post-shift wallet — the results
+      screen's progress card (S-13, presentational only). Null when none. */
+  nextInfo: { id: string; art: string; cost: number; wallet: number } | null;
 }
 
 /**
@@ -105,7 +109,8 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
         // level-eligible unowned upgrade? Drives the (factual) results nudge.
         const next = nextUpgrade({ businessLevel: data.businessLevel, purchased });
         const canUpgrade = next !== null && walletBalance + earned >= next.cost;
-        setOutcome({ earned, stars, leveledUp: data.leveledUp, canUpgrade });
+        const nextInfo = next ? { id: next.id, art: next.art, cost: next.cost, wallet: walletBalance + earned } : null;
+        setOutcome({ earned, stars, leveledUp: data.leveledUp, canUpgrade, nextInfo });
         setPhase("results");
       })
       .catch((err: unknown) => {
@@ -126,6 +131,7 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
         stars={outcome.stars}
         leveledUp={outcome.leveledUp}
         canUpgrade={outcome.canUpgrade}
+        nextInfo={outcome.nextInfo}
       />
     );
   }
@@ -164,9 +170,24 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-4">
       {offline && <OfflineOverlay />}
-      <p className="text-muted-foreground text-sm font-semibold">
-        {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(tasks.length))}
-      </p>
+      {/* Progress strip (S-13): segmented fill driven by index/total — the
+          mockup's mission progress in the wizard's existing step-bar idiom. */}
+      <div className="w-full">
+        <p className="text-muted-foreground text-center text-sm font-semibold">
+          {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(tasks.length))}
+        </p>
+        <div className="mt-2 flex items-center gap-1.5" aria-hidden="true">
+          {tasks.map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-2 flex-1 rounded-full transition-colors",
+                i < index ? "bg-success" : i === index ? "bg-primary" : "bg-muted",
+              )}
+            />
+          ))}
+        </div>
+      </div>
       {task.type === "counting" ? (
         <CountingTask key={index} task={task} world={world} onComplete={advance} />
       ) : (

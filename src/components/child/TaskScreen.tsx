@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Lightbulb } from "lucide-react";
 import { ChildButton } from "@/components/child/ChildButton";
 import { CoinBoard } from "@/components/child/CoinBoard";
 import { FeedbackCard } from "@/components/child/FeedbackCard";
@@ -57,12 +58,25 @@ export function TaskScreen({
         {t.task.check}
       </ChildButton>
 
-      {/* Feedback — gentle retry / hint / success (never punishing) */}
+      {/* Feedback — gentle retry / hint / success (never punishing). The
+          scaffolding hint gets the mockups' dedicated amber "Wskazówka" card
+          (S-13) — accent-tinted, lightbulb, same trigger and copy as before. */}
       {status === "wrong" && (
         <FeedbackCard>
           <p className="text-foreground font-bold">{t.task.retry}</p>
-          {showHint && <p className="text-muted-foreground mt-1 text-sm">{hintCopy}</p>}
         </FeedbackCard>
+      )}
+      {status === "wrong" && showHint && (
+        <div
+          role="status"
+          className="bg-accent/15 border-accent/40 animate-in fade-in max-w-sm rounded-2xl border p-4 text-center"
+        >
+          <p className="text-foreground flex items-center justify-center gap-2 font-bold">
+            <Lightbulb className="text-accent-foreground size-5" aria-hidden="true" />
+            {t.task.hintTitle}
+          </p>
+          <p className="text-muted-foreground mt-1 text-sm">{hintCopy}</p>
+        </div>
       )}
       {status === "correct" && (
         <FeedbackCard zoom>

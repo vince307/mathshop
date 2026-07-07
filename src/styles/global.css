@@ -21,6 +21,10 @@
   --muted-foreground: oklch(0.55 0.03 258);
   --accent: oklch(0.83 0.12 82);
   --accent-foreground: oklch(0.33 0.04 262);
+  /* Success green (~#22A45D, S-13) — celebration/done states per the mockups'
+     green check discs on pale-green tint panels. Never used for actions. */
+  --success: oklch(0.63 0.15 155);
+  --success-foreground: oklch(0.99 0.01 250);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.91 0.015 245);
   --input: oklch(0.91 0.015 245);
@@ -94,6 +98,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);

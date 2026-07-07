@@ -317,33 +317,33 @@ None — assets are additive/replacing files in `public/`; no data or schema inv
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run check`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 Build succeeds: `npm run build`
-- [x] 1.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [x] 1.5 No orphaned inline copies of extracted patterns (census grep)
+- [x] 1.1 Type checking passes: `npm run check` — 6457849
+- [x] 1.2 Linting passes: `npm run lint` — 6457849
+- [x] 1.3 Build succeeds: `npm run build` — 6457849
+- [x] 1.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 6457849
+- [x] 1.5 No orphaned inline copies of extracted patterns (census grep) — 6457849
 
 #### Manual
 
-- [x] 1.6 Surfaces visually identical except CTA colors (side-by-side spot-check)
-- [x] 1.7 Blue CTAs everywhere; gold only on money/stars
-- [x] 1.8 Signout/picker/wizard/coin-board/feedback flows intact (forms + aria)
+- [x] 1.6 Surfaces visually identical except CTA colors (side-by-side spot-check) — 6457849
+- [x] 1.7 Blue CTAs everywhere; gold only on money/stars — 6457849
+- [x] 1.8 Signout/picker/wizard/coin-board/feedback flows intact (forms + aria) — 6457849
 
 ### Phase 2: Task flow + results polish
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run check`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Build succeeds: `npm run build`
-- [ ] 2.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [ ] 2.5 No inline literals in edited surfaces (L-003 grep)
+- [x] 2.1 Type checking passes: `npm run check`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Build succeeds: `npm run build`
+- [x] 2.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.5 No inline literals in edited surfaces (L-003 grep)
 
 #### Manual
 
-- [ ] 2.6 Mission screen matches change-mission spirit (strip, receipt panel, amber hint); coin mechanic unchanged
-- [ ] 2.7 Results matches mission-result spirit (celebration panel, cells, next-upgrade card, action row)
-- [ ] 2.8 Retry/hint/success flows unchanged; no red; animations smooth
+- [x] 2.6 Mission screen matches change-mission spirit (strip, receipt panel, amber hint); coin mechanic unchanged
+- [x] 2.7 Results matches mission-result spirit (celebration panel, cells, next-upgrade card, action row)
+- [x] 2.8 Retry/hint/success flows unchanged; no red; animations smooth
 
 ### Phase 3: Economy surfaces + art adoption
 
