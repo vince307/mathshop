@@ -6,6 +6,7 @@ import ChangeMakingTask from "@/components/child/ChangeMakingTask";
 import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
+import { SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { nextUpgrade, shiftBonusTasks } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
@@ -86,7 +87,9 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
     body.set("cleanCount", String(cleanCount));
     body.set("skills", JSON.stringify({ math: delta.math, money: delta.money }));
 
-    fetch("/api/shifts/complete", { method: "POST", body })
+    // Time-bounded (S-12): a hung network fails fast into the gentle error path
+    // instead of stranding the child on "saving" forever.
+    fetch("/api/shifts/complete", { method: "POST", body, signal: AbortSignal.timeout(SHIFT_SAVE_TIMEOUT_MS) })
       .then(async (res) => {
         if (!res.ok) {
           setPhase("error");
