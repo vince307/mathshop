@@ -183,15 +183,15 @@ None: one inline event listener per page; a reload only on bfcache restores.
 
 #### Automated
 
-- [x] 2.1 Tests pass: `npx vitest run tests/parent-pin.test.ts tests/cross-device-restore.test.ts`
-- [x] 2.2 Type checking passes: `npm run check`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Build succeeds: `npm run build`
-- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.1 Tests pass: `npx vitest run tests/parent-pin.test.ts tests/cross-device-restore.test.ts` — 3e060b5
+- [x] 2.2 Type checking passes: `npm run check` — 3e060b5
+- [x] 2.3 Linting passes: `npm run lint` — 3e060b5
+- [x] 2.4 Build succeeds: `npm run build` — 3e060b5
+- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 3e060b5
 
 #### Manual
 
-- [x] 2.6 Two-device walkthrough: device-1 state identical on device 2
-- [x] 2.7 Shared-device account swap: zero residue of the previous account
-- [x] 2.8 Post-logout Back button reloads to signin (Safari if available)
-- [x] 2.9 Signout → re-signin requires the PIN again for /app/report
+- [x] 2.6 Two-device walkthrough: device-1 state identical on device 2 — 3e060b5
+- [x] 2.7 Shared-device account swap: zero residue of the previous account — 3e060b5
+- [x] 2.8 Post-logout Back button reloads to signin (Safari if available) — 3e060b5
+- [x] 2.9 Signout → re-signin requires the PIN again for /app/report — 3e060b5
