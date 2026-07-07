@@ -199,32 +199,32 @@ None material: one event listener on the shift surface, one static-asset probe p
 
 #### Automated
 
-- [x] 1.1 Unit tests pass: `npx vitest run tests/connectivity.test.ts`
-- [x] 1.2 Type checking passes: `npm run check`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Build succeeds: `npm run build`
-- [x] 1.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 1.1 Unit tests pass: `npx vitest run tests/connectivity.test.ts` — b304381
+- [x] 1.2 Type checking passes: `npm run check` — b304381
+- [x] 1.3 Linting passes: `npm run lint` — b304381
+- [x] 1.4 Build succeeds: `npm run build` — b304381
+- [x] 1.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — b304381
 
 #### Manual
 
-- [x] 1.6 Devtools-offline at shift end fails into the gentle error screen within ~10s (no infinite "saving")
-- [x] 1.7 Normal shift completion unchanged
+- [x] 1.6 Devtools-offline at shift end fails into the gentle error screen within ~10s (no infinite "saving") — b304381
+- [x] 1.7 Normal shift completion unchanged — b304381
 
 ### Phase 2: The in-world halt — overlay, offline wiring & reconnect
 
 #### Automated
 
-- [ ] 2.1 Tests pass: `npx vitest run tests/connectivity.test.ts`
-- [ ] 2.2 Type checking passes: `npm run check`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Build succeeds: `npm run build`
-- [ ] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [ ] 2.6 No inline user-visible literals (L-003)
+- [x] 2.1 Tests pass: `npx vitest run tests/connectivity.test.ts`
+- [x] 2.2 Type checking passes: `npm run check`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Build succeeds: `npm run build`
+- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 2.6 No inline user-visible literals (L-003)
 
 #### Manual
 
-- [ ] 2.7 Offline mid-task → instant calm overlay; shift UI stays mounted; no red
-- [ ] 2.8 Try-again offline → still-offline note; after reconnect → /app/start at last recorded state
-- [ ] 2.9 Offline at save → offline copy; server failure with network up → saveError copy
-- [ ] 2.10 Overlay never auto-lifts on the online event; only a confirmed probe navigates
-- [ ] 2.11 Copy Polish, warm, in-world; oversized tap target
+- [x] 2.7 Offline mid-task → instant calm overlay; shift UI stays mounted; no red
+- [x] 2.8 Try-again offline → still-offline note; after reconnect → /app/start at last recorded state
+- [x] 2.9 Offline at save → offline copy; server failure with network up → saveError copy
+- [x] 2.10 Overlay never auto-lifts on the online event; only a confirmed probe navigates
+- [x] 2.11 Copy Polish, warm, in-world; oversized tap target

@@ -346,6 +346,16 @@ export const pl = {
     switchProfile: "Zmień gracza",
   },
 
+  // In-world offline halt (S-12, FR-017). Shown over the shift when the internet
+  // drops; warm, non-technical, no urgency (guardrail — the shop is "closed for
+  // a moment", never an error). Draft Polish — pending native-speaker review.
+  offline: {
+    heading: "Internet zniknął! Spróbuj za chwilę.",
+    subtitle: "Sklep jest na chwilę zamknięty. Twoje monety są bezpieczne.",
+    tryAgain: "Spróbuj ponownie",
+    stillOffline: "Jeszcze chwilka… internet nie wrócił.",
+  },
+
   confirmEmail: {
     autoConfirmed: {
       emoji: "✅",

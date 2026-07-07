@@ -5,8 +5,10 @@ import CountingTask from "@/components/child/CountingTask";
 import ChangeMakingTask from "@/components/child/ChangeMakingTask";
 import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
+import OfflineOverlay from "@/components/child/OfflineOverlay";
+import { useConnectivity } from "@/components/hooks/useConnectivity";
 import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
-import { SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
+import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { nextUpgrade, shiftBonusTasks } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
@@ -52,6 +54,9 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
   const [phase, setPhase] = useState<Phase>("playing");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const savedRef = useRef(false);
+  // Offline halt (S-12): the overlay renders OVER the shift, never unmounting
+  // it — discard happens only when the child taps through to /app/start.
+  const { offline, markOffline } = useConnectivity();
 
   const advance = useCallback((o: TaskOutcome) => {
     setResults((prev) => [...prev, o]);
@@ -103,10 +108,16 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
         setOutcome({ earned, stars, leveledUp: data.leveledUp, canUpgrade });
         setPhase("results");
       })
-      .catch(() => {
-        setPhase("error");
+      .catch((err: unknown) => {
+        // Network-shaped failure (transport dead / timed out) → the in-world
+        // offline halt; anything else keeps the server-error fallback (S-12).
+        if (isNetworkFailure(err)) {
+          markOffline();
+        } else {
+          setPhase("error");
+        }
       });
-  }, [results, tasks, profileId, walletBalance, purchased]);
+  }, [results, tasks, profileId, walletBalance, purchased, markOffline]);
 
   if (phase === "results" && outcome) {
     return (
@@ -141,14 +152,18 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
   // before the effect flips the phase).
   if (!task) {
     return (
-      <p className="text-muted-foreground text-lg font-bold" role="status">
-        {t.results.saving}
-      </p>
+      <>
+        {offline && <OfflineOverlay />}
+        <p className="text-muted-foreground text-lg font-bold" role="status">
+          {t.results.saving}
+        </p>
+      </>
     );
   }
 
   return (
     <div className="flex w-full max-w-md flex-col items-center gap-4">
+      {offline && <OfflineOverlay />}
       <p className="text-muted-foreground text-sm font-semibold">
         {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(tasks.length))}
       </p>
