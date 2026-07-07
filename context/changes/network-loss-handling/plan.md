@@ -214,17 +214,17 @@ None material: one event listener on the shift surface, one static-asset probe p
 
 #### Automated
 
-- [x] 2.1 Tests pass: `npx vitest run tests/connectivity.test.ts`
-- [x] 2.2 Type checking passes: `npm run check`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Build succeeds: `npm run build`
-- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [x] 2.6 No inline user-visible literals (L-003)
+- [x] 2.1 Tests pass: `npx vitest run tests/connectivity.test.ts` — 04401a3
+- [x] 2.2 Type checking passes: `npm run check` — 04401a3
+- [x] 2.3 Linting passes: `npm run lint` — 04401a3
+- [x] 2.4 Build succeeds: `npm run build` — 04401a3
+- [x] 2.5 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 04401a3
+- [x] 2.6 No inline user-visible literals (L-003) — 04401a3
 
 #### Manual
 
-- [x] 2.7 Offline mid-task → instant calm overlay; shift UI stays mounted; no red
-- [x] 2.8 Try-again offline → still-offline note; after reconnect → /app/start at last recorded state
-- [x] 2.9 Offline at save → offline copy; server failure with network up → saveError copy
-- [x] 2.10 Overlay never auto-lifts on the online event; only a confirmed probe navigates
-- [x] 2.11 Copy Polish, warm, in-world; oversized tap target
+- [x] 2.7 Offline mid-task → instant calm overlay; shift UI stays mounted; no red — 04401a3
+- [x] 2.8 Try-again offline → still-offline note; after reconnect → /app/start at last recorded state — 04401a3
+- [x] 2.9 Offline at save → offline copy; server failure with network up → saveError copy — 04401a3
+- [x] 2.10 Overlay never auto-lifts on the online event; only a confirmed probe navigates — 04401a3
+- [x] 2.11 Copy Polish, warm, in-world; oversized tap target — 04401a3
