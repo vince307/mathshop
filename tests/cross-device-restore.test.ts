@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { AstroCookies } from "astro";
 import { POST as completePOST } from "@/pages/api/shifts/complete";
 import { POST as buyPOST } from "@/pages/api/upgrades/buy";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { readSkillState } from "@/data/skills";
+import { resolvePageProfile } from "@/lib/services/active-profile";
 import type { ChildProfile } from "@/lib/services/child-profiles";
 import { anonKey, createSignedInUser, deleteUser, PASSWORD, url, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
@@ -88,8 +90,12 @@ describe("cross-device economy restore (S-10)", () => {
   });
 
   afterAll(async () => {
-    if (accountA.id) await deleteUser(accountA.id);
-    if (accountB.id) await deleteUser(accountB.id);
+    // A beforeAll failure can leave these unassigned (TS's definite-assignment
+    // doesn't know that) — widen so teardown never throws its own TypeError.
+    const a = accountA as TestAccount | undefined;
+    const b = accountB as TestAccount | undefined;
+    if (a?.id) await deleteUser(a.id);
+    if (b?.id) await deleteUser(b.id);
   });
 
   it("a fresh session of the same account reads the state device 1 wrote — through RLS, identically", async () => {
@@ -115,6 +121,12 @@ describe("cross-device economy restore (S-10)", () => {
       money: SHIFT_SKILLS.money,
       decisions: { firstTryCorrect: 1, completed: 1, misses: 0 },
     });
+
+    // The app's own read ladder resolves the same row (fresh device: no
+    // selection cookie → sole-profile fallback) — covers the render-side path.
+    const { profile: viaApp } = await resolvePageProfile(deviceTwo, createCookieJar() as unknown as AstroCookies);
+    expect(viaApp?.id).toBe(profileId);
+    expect(viaApp?.wallet_balance).toBe(18);
   });
 
   it("a fresh session of another account sees none of it", async () => {
