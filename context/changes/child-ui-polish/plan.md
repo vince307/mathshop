@@ -333,34 +333,34 @@ None — assets are additive/replacing files in `public/`; no data or schema inv
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run check`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Build succeeds: `npm run build`
-- [x] 2.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [x] 2.5 No inline literals in edited surfaces (L-003 grep)
+- [x] 2.1 Type checking passes: `npm run check` — 737d2a8
+- [x] 2.2 Linting passes: `npm run lint` — 737d2a8
+- [x] 2.3 Build succeeds: `npm run build` — 737d2a8
+- [x] 2.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 737d2a8
+- [x] 2.5 No inline literals in edited surfaces (L-003 grep) — 737d2a8
 
 #### Manual
 
-- [x] 2.6 Mission screen matches change-mission spirit (strip, receipt panel, amber hint); coin mechanic unchanged
-- [x] 2.7 Results matches mission-result spirit (celebration panel, cells, next-upgrade card, action row)
-- [x] 2.8 Retry/hint/success flows unchanged; no red; animations smooth
+- [x] 2.6 Mission screen matches change-mission spirit (strip, receipt panel, amber hint); coin mechanic unchanged — 737d2a8
+- [x] 2.7 Results matches mission-result spirit (celebration panel, cells, next-upgrade card, action row) — 737d2a8
+- [x] 2.8 Retry/hint/success flows unchanged; no red; animations smooth — 737d2a8
 
 ### Phase 3: Economy surfaces + art adoption
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run check`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Build succeeds: `npm run build`
-- [ ] 3.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [ ] 3.5 No inline literals (L-003 grep); no orphaned old-art references
+- [x] 3.1 Type checking passes: `npm run check`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Build succeeds: `npm run build`
+- [x] 3.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 3.5 No inline literals (L-003 grep); no orphaned old-art references
 
 #### Manual
 
-- [ ] 3.6 Upgrades matches upgrades-mockup spirit (tiles, affordances, benefits, badges); buy paths work
-- [ ] 3.7 Unlock moment warm/green/non-blocking per product-unlocked spirit
-- [ ] 3.8 Bright world art crisp on start + upgrades; page weight sane
-- [ ] 3.9 Start hero matches dashboard spirit; CLAUDE.md pointer corrected
+- [x] 3.6 Upgrades matches upgrades-mockup spirit (tiles, affordances, benefits, badges); buy paths work
+- [x] 3.7 Unlock moment warm/green/non-blocking per product-unlocked spirit
+- [x] 3.8 Bright world art crisp on start + upgrades; page weight sane
+- [x] 3.9 Start hero matches dashboard spirit; CLAUDE.md pointer corrected
 
 ### Phase 4: Growth-in-scene + micro-touches
 

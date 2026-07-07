@@ -172,6 +172,7 @@ export const pl = {
     savingsHint: "Zbierasz na rozwój sklepu",
     levelLabel: "Poziom sklepu {level}",
     upgradesLink: "Rozbuduj sklep",
+    worldTagline: "Twój sklep rośnie dzięki matematyce!",
   },
 
   // Counting task in shop narrative (S-02). Copy is keyed by scenario so the
@@ -257,6 +258,9 @@ export const pl = {
     buy: "Kup",
     buying: "Kupuję…",
     ownedTag: "Masz to",
+    availableTag: "Dostępne",
+    unlockedHeading: "Odblokowane!",
+    unlockedDismiss: "Super!",
     lockedByLevel: "Dostępne od poziomu sklepu {level}",
     lockedByFunds: "Brakuje {amount} zł",
     lockedBySkill: "Rozwiń umiejętność „{competency}” do poziomu {level}",

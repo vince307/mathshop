@@ -19,15 +19,15 @@ export interface World {
 export const DEFAULT_WORLD: World = {
   slug: "kawiarnia",
   name: "Kawiarnia",
-  image: "/illustrations/world-kawiarnia.png",
+  image: "/illustrations/world-kawiarnia.webp",
 };
 export const DEFAULT_THEME = DEFAULT_WORLD.slug;
 
 export const WORLDS: readonly World[] = [
   DEFAULT_WORLD,
-  { slug: "piekarnia", name: "Piekarnia", image: "/illustrations/world-piekarnia.png" },
-  { slug: "galaktyczna-baza", name: "Galaktyczna baza", image: "/illustrations/world-galaktyczna-baza.png" },
-  { slug: "sklep-ksiegarnia", name: "Sklep księgarnia", image: "/illustrations/world-sklep-ksiegarnia.png" },
+  { slug: "piekarnia", name: "Piekarnia", image: "/illustrations/world-piekarnia.webp" },
+  { slug: "galaktyczna-baza", name: "Galaktyczna baza", image: "/illustrations/world-galaktyczna-baza.webp" },
+  { slug: "sklep-ksiegarnia", name: "Sklep księgarnia", image: "/illustrations/world-sklep-ksiegarnia.webp" },
 ] as const;
 
 /** Valid theme slugs — the closed set for app-layer (zod) validation. */

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CircleCheck, Check, Lock } from "lucide-react";
 import type { World } from "@/data/worlds";
 import type { SkillState } from "@/types";
 import { ChildButton } from "@/components/child/ChildButton";
@@ -19,9 +20,9 @@ interface UpgradeShopProps {
   world: World;
 }
 
-/** Resolve the localized upgrade name (catalog ids match the i18n keys; L-003). */
-function upgradeName(id: string): string {
-  return t.upgrades[id as keyof typeof t.upgrades].name;
+/** Resolve the localized upgrade copy (catalog ids match the i18n keys; L-003). */
+function upgradeCopy(id: string): { name: string; desc: string } {
+  return t.upgrades[id as keyof typeof t.upgrades];
 }
 
 function fill(template: string, values: Record<string, string | number>): string {
@@ -36,6 +37,11 @@ function fill(template: string, values: Record<string, string | number>): string
  * cost/level/ownership); the client only names an id and, on success, applies the
  * returned wallet + owned list to local state so the shop reflects the buy without
  * a full reload. Copy is warm and factual — no timers/scarcity (guardrail).
+ *
+ * S-13 spirit polish: art-forward tile cards (mockup catalog language), honest
+ * state affordances (green "Dostępne" pill / lock chip with the requirement),
+ * benefit lines from the existing desc keys, and a warm inline unlock moment
+ * after a successful buy — presentational state only, the buy flow is untouched.
  */
 export default function UpgradeShop({
   profileId,
@@ -49,14 +55,16 @@ export default function UpgradeShop({
   const [owned, setOwned] = useState(purchased);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [errorId, setErrorId] = useState<string | null>(null);
+  // The unlock moment (S-13): the id just bought, shown as an inline celebration
+  // card until the child taps it away. Pure presentation on top of the buy state.
+  const [unlockedId, setUnlockedId] = useState<string | null>(null);
 
-  // skillState is threaded so the gate (canBuy) is correct now; the visible skill
-  // bars + skill/history locked-reason copy land in Phase 3.
   const ctx = { walletBalance: wallet, businessLevel, purchased: owned, skillState };
   const affordable = UPGRADES.filter((u) => canBuy(u, ctx).ok);
   const locked = UPGRADES.filter((u) => !isOwned(u.id, owned) && !canBuy(u, ctx).ok);
   const ownedList = UPGRADES.filter((u) => isOwned(u.id, owned));
   const next = nextUpgrade({ businessLevel, purchased: owned });
+  const unlocked = unlockedId ? UPGRADES.find((u) => u.id === unlockedId) : undefined;
 
   async function buy(upgrade: Upgrade) {
     setBuyingId(upgrade.id);
@@ -75,6 +83,7 @@ export default function UpgradeShop({
       setWallet(data.walletBalance);
       setOwned(data.purchased);
       setBuyingId(null);
+      setUnlockedId(upgrade.id);
     } catch {
       setErrorId(upgrade.id);
       setBuyingId(null);
@@ -115,38 +124,68 @@ export default function UpgradeShop({
         <ShopArt world={world} purchased={owned} />
       </div>
 
+      {/* Unlock moment (S-13) — warm, factual, dismissed by the child */}
+      {unlocked && (
+        <div
+          role="status"
+          className="bg-success/10 border-success/30 animate-in fade-in zoom-in-95 flex flex-col items-center gap-3 rounded-3xl border p-6 text-center"
+        >
+          <span className="bg-success text-success-foreground inline-flex size-12 items-center justify-center rounded-full shadow-sm">
+            <CircleCheck className="size-7" aria-hidden="true" />
+          </span>
+          <p className="text-foreground text-xl font-extrabold">{t.upgradeShop.unlockedHeading}</p>
+          <img src={unlocked.art} alt="" className="size-20 object-contain" />
+          <p className="text-foreground font-bold">{upgradeCopy(unlocked.id).name}</p>
+          <p className="text-muted-foreground text-sm">{upgradeCopy(unlocked.id).desc}</p>
+          <ChildButton
+            variant="primary"
+            className="min-h-14 px-6 text-lg"
+            onClick={() => {
+              setUnlockedId(null);
+            }}
+          >
+            {t.upgradeShop.unlockedDismiss}
+          </ChildButton>
+        </div>
+      )}
+
       {/* Per-competency skill progress (S-07) — learning reflected back to the child */}
       <SkillBars skillState={skillState} />
 
       {/* Next-upgrade progress / all-owned (factual encouragement, no urgency) */}
       {next && wallet < next.cost ? (
         <p className="text-muted-foreground text-sm font-semibold">
-          {fill(t.upgradeShop.nextProgress, { amount: next.cost - wallet, name: upgradeName(next.id) })}
+          {fill(t.upgradeShop.nextProgress, { amount: next.cost - wallet, name: upgradeCopy(next.id).name })}
         </p>
       ) : ownedList.length === UPGRADES.length ? (
         <p className="text-primary text-sm font-bold">{t.upgradeShop.allOwned}</p>
       ) : null}
 
-      {/* Affordable — the framed decision */}
+      {/* Affordable — the framed decision, art-forward tiles */}
       <section className="flex flex-col gap-4">
         <h2 className="text-foreground text-lg font-bold">{t.upgradeShop.affordableHeading}</h2>
         {affordable.length > 0 ? (
           <>
             <p className="text-muted-foreground text-sm">{fill(t.upgradeShop.decisionPrompt, { wallet })}</p>
-            <ul className="flex flex-col gap-4">
+            <ul className="grid grid-cols-2 gap-4">
               {affordable.map((u) => (
-                <li key={u.id} className={childCard("2xl", "flex items-center gap-4 p-4")}>
-                  <img src={u.art} alt="" className="size-16 shrink-0 object-contain" />
-                  <div className="flex-1">
-                    <p className="text-foreground font-bold">{upgradeName(u.id)}</p>
-                    <p className="text-accent font-extrabold">{fill(t.upgradeShop.costLabel, { cost: u.cost })}</p>
-                    {errorId === u.id && (
-                      <p className="text-destructive text-sm font-semibold">{t.upgradeShop.buyError}</p>
-                    )}
-                  </div>
+                <li key={u.id} className={childCard("2xl", "flex flex-col items-center gap-2 p-4 text-center")}>
+                  <span className="bg-success/15 text-success rounded-full px-2.5 py-0.5 text-xs font-bold">
+                    {t.upgradeShop.availableTag}
+                  </span>
+                  <img src={u.art} alt="" className="size-20 object-contain" />
+                  <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
+                  <p className="text-muted-foreground text-xs leading-snug">{upgradeCopy(u.id).desc}</p>
+                  <p className="text-accent flex items-center gap-1 font-extrabold">
+                    <img src="/illustrations/coin.png" alt="" className="size-4 rounded-full object-cover" />
+                    {fill(t.upgradeShop.costLabel, { cost: u.cost })}
+                  </p>
+                  {errorId === u.id && (
+                    <p className="text-destructive text-xs font-semibold">{t.upgradeShop.buyError}</p>
+                  )}
                   <ChildButton
                     variant="primary"
-                    className="min-h-14 px-6 text-lg"
+                    className="min-h-14 w-full px-4 text-lg"
                     disabled={buyingId !== null}
                     onClick={() => buy(u)}
                   >
@@ -161,28 +200,29 @@ export default function UpgradeShop({
         )}
       </section>
 
-      {/* Locked — one concrete missing requirement each */}
+      {/* Locked — one concrete missing requirement each, honest and calm */}
       {locked.length > 0 && (
         <section className="flex flex-col gap-4">
           <h2 className="text-muted-foreground text-lg font-bold">{t.upgradeShop.lockedHeading}</h2>
-          <ul className="flex flex-col gap-4">
+          <ul className="grid grid-cols-2 gap-4">
             {locked.map((u) => (
               <li
                 key={u.id}
-                className="border-border flex items-center gap-4 rounded-2xl border border-dashed p-4 opacity-80"
+                className="border-border flex flex-col items-center gap-2 rounded-2xl border border-dashed p-4 text-center opacity-80"
               >
-                <img src={u.art} alt="" className="size-16 shrink-0 object-contain grayscale" />
-                <div className="flex-1">
-                  <p className="text-foreground font-bold">{upgradeName(u.id)}</p>
-                  <p className="text-muted-foreground text-sm font-semibold">{lockedReason(u)}</p>
-                </div>
+                <img src={u.art} alt="" className="size-20 object-contain grayscale" />
+                <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
+                <p className="bg-muted text-muted-foreground flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold">
+                  <Lock className="size-3 shrink-0" aria-hidden="true" />
+                  <span>{lockedReason(u)}</span>
+                </p>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      {/* Owned */}
+      {/* Owned — the shop already has these */}
       {ownedList.length > 0 && (
         <section className="flex flex-col gap-4">
           <h2 className="text-foreground text-lg font-bold">{t.upgradeShop.ownedHeading}</h2>
@@ -191,9 +231,12 @@ export default function UpgradeShop({
               <li key={u.id} className="bg-secondary/40 border-border flex items-center gap-4 rounded-2xl border p-4">
                 <img src={u.art} alt="" className="size-16 shrink-0 object-contain" />
                 <div className="flex-1">
-                  <p className="text-foreground font-bold">{upgradeName(u.id)}</p>
+                  <p className="text-foreground font-bold">{upgradeCopy(u.id).name}</p>
                 </div>
-                <span className="text-primary text-sm font-bold">{t.upgradeShop.ownedTag}</span>
+                <span className="text-primary flex items-center gap-1 text-sm font-bold">
+                  <Check className="size-4" aria-hidden="true" />
+                  {t.upgradeShop.ownedTag}
+                </span>
               </li>
             ))}
           </ul>

@@ -18,7 +18,7 @@ export function ShopArt({ world, purchased }: ShopArtProps) {
   const owned = UPGRADES.filter((u) => isOwned(u.id, purchased));
   return (
     <div className="relative">
-      <img src={world.image} alt={world.name} className="aspect-[4/3] w-full object-cover" />
+      <img src={world.image} alt={world.name} className="aspect-[4/3] w-full object-contain p-2" />
       {owned.length > 0 && (
         <div className="absolute bottom-2 left-2 flex flex-wrap gap-1.5">
           {owned.map((u) => (

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Star } from "lucide-react";
 
 /**
  * The HUD chip family (S-13 primitive): rounded-full pills showing status at a
@@ -16,8 +17,11 @@ export function WalletPill({ amount, label }: { amount: number; label: string })
   );
 }
 
-export function LevelBadge({ children }: { children: ReactNode }) {
+export function LevelBadge({ children, withStar = false }: { children: ReactNode; withStar?: boolean }) {
   return (
-    <div className="bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-sm font-bold">{children}</div>
+    <div className="bg-secondary text-secondary-foreground flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold">
+      {withStar && <Star className="text-accent size-4 fill-current" aria-hidden="true" />}
+      {children}
+    </div>
   );
 }

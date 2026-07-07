@@ -82,14 +82,18 @@ const nextText =
           {/* Wallet (Portfel) + business-level HUD (S-04/S-05) — persisted, cross-session totals */}
           <div class="mt-6 flex items-center gap-3">
             <WalletPill amount={profile.wallet_balance} label={t.start.walletLabel} />
-            <LevelBadge>{t.start.levelLabel.replace("{level}", String(profile.business_level))}</LevelBadge>
+            <LevelBadge withStar>{t.start.levelLabel.replace("{level}", String(profile.business_level))}</LevelBadge>
           </div>
           <p class="text-muted-foreground mt-2 text-sm">{t.start.savingsHint}</p>
 
-          {/* Single themed business — base world art + owned-upgrade badges (S-06) */}
+          {/* Single themed business — hero treatment (S-13): world name at hero
+              scale + tagline above the bright art (base art + owned badges, S-06) */}
           <div class:list={childCard("3xl", "mt-8 overflow-hidden")}>
+            <div class="px-4 pt-4 text-center">
+              <p class="text-foreground text-2xl font-extrabold">{world.name}</p>
+              <p class="text-muted-foreground mt-1 text-sm font-semibold">{t.start.worldTagline}</p>
+            </div>
             <ShopArt world={world} purchased={purchased} />
-            <p class="text-foreground px-4 py-3 text-center text-lg font-bold">{world.name}</p>
           </div>
 
           {/* In-world tap prompt (coming-soon no-op until S-02+) */}
