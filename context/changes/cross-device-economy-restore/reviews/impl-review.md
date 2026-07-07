@@ -29,7 +29,7 @@
 - **Detail**: bfcache restores work offline; reloads don't. Offline → Back → persisted restore → forced reload → browser network-error page instead of the stale frame/overlay. Defensible: the stale frame is the security hazard; shared-device logout is an online scenario.
 - **Fix A ⭐ Recommended**: `if (event.persisted && navigator.onLine !== false) reload` — onLine === false is the reliable direction of the flag; security reload survives every online case.
 - **Fix B**: Keep as shipped (maximal security posture; offline back-nav shows a browser error page).
-- **Decision**: FIXED via Fix A — guard now `event.persisted && navigator.onLine \!== false`, rationale in the code comment.
+- **Decision**: FIXED via Fix A — guard now `event.persisted && navigator.onLine !== false`, rationale in the code comment.
 
 ### F2 — Restore test covers the write path; the read is a raw select
 
