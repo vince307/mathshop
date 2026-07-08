@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import { Check, Lock } from "lucide-react";
 import StartShiftButton from "@/components/child/StartShiftButton";
 import ParentControls from "@/components/child/ParentControls.astro";
 import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
@@ -39,6 +40,13 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
 // factual, no urgency).
 const purchased = profile ? readPurchased(profile.shop_state) : [];
 const next = profile ? nextUpgrade({ businessLevel: profile.business_level, purchased }) : null;
+
+// Milestone path (S-13): a 5-node window around the current business_level
+// (levels are uncapped — 1 + shifts/3), read-only from profile data. Decorative;
+// the LevelBadge above already announces the level.
+const level = profile?.business_level ?? 1;
+const milestoneStart = Math.max(1, level - 2);
+const milestones = [0, 1, 2, 3, 4].map((i) => milestoneStart + i);
 const showNext = !!(next && profile && profile.wallet_balance < next.cost);
 const nextText =
   next && profile
@@ -94,6 +102,28 @@ const nextText =
               <p class="text-muted-foreground mt-1 text-sm font-semibold">{t.start.worldTagline}</p>
             </div>
             <ShopArt world={world} purchased={purchased} />
+          </div>
+
+          {/* Milestone path (S-13): the level journey — done / current / upcoming */}
+          <div class="mt-4 flex items-center justify-center" aria-hidden="true">
+            {milestones.map((lvl, i) => (
+              <>
+                {i > 0 && <span class:list={["h-0.5 w-5 rounded-full", lvl <= level ? "bg-success" : "bg-muted"]} />}
+                {lvl < level ? (
+                  <span class="bg-success text-success-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
+                    <Check className="size-4" />
+                  </span>
+                ) : lvl === level ? (
+                  <span class="bg-primary text-primary-foreground ring-primary/25 flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4">
+                    {lvl}
+                  </span>
+                ) : (
+                  <span class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
+                    <Lock className="size-3.5" />
+                  </span>
+                )}
+              </>
+            ))}
           </div>
 
           {/* In-world tap prompt (coming-soon no-op until S-02+) */}

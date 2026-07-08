@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { WifiOff } from "lucide-react";
 import { ChildButton } from "@/components/child/ChildButton";
+import { childCard } from "@/components/child/childCard";
 import { probeConnectivity } from "@/lib/connectivity";
 import { t } from "@/i18n";
 
@@ -30,23 +31,29 @@ export default function OfflineOverlay() {
   return (
     <div
       role="status"
-      className="bg-background/95 animate-in fade-in fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 px-6 text-center backdrop-blur-sm"
+      className="bg-background/95 animate-in fade-in fixed inset-0 z-50 flex flex-col items-center justify-center px-6 backdrop-blur-sm"
     >
-      <WifiOff className="text-muted-foreground size-16" aria-hidden="true" />
-      <div>
-        <h2 className="text-foreground text-2xl font-extrabold">{t.offline.heading}</h2>
-        <p className="text-muted-foreground mt-2 text-lg">{t.offline.subtitle}</p>
+      {/* S-13: content on a white card in the shared design language; icon in a
+          calm tinted disc. Same behavior, same z-order, still gentle/non-red. */}
+      <div className={childCard("3xl", "flex w-full max-w-sm flex-col items-center gap-6 p-8 text-center")}>
+        <span className="bg-secondary inline-flex size-20 items-center justify-center rounded-full">
+          <WifiOff className="text-muted-foreground size-10" aria-hidden="true" />
+        </span>
+        <div>
+          <h2 className="text-foreground text-2xl font-extrabold">{t.offline.heading}</h2>
+          <p className="text-muted-foreground mt-2 text-lg">{t.offline.subtitle}</p>
+        </div>
+        <ChildButton
+          variant="primary"
+          onClick={() => {
+            void tryAgain();
+          }}
+          disabled={state === "probing"}
+        >
+          {t.offline.tryAgain}
+        </ChildButton>
+        {state === "failed" && <p className="text-muted-foreground text-sm">{t.offline.stillOffline}</p>}
       </div>
-      <ChildButton
-        variant="primary"
-        onClick={() => {
-          void tryAgain();
-        }}
-        disabled={state === "probing"}
-      >
-        {t.offline.tryAgain}
-      </ChildButton>
-      {state === "failed" && <p className="text-muted-foreground text-sm">{t.offline.stillOffline}</p>}
     </div>
   );
 }

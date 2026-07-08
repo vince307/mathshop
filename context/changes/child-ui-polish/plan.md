@@ -349,30 +349,30 @@ None — assets are additive/replacing files in `public/`; no data or schema inv
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run check`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Build succeeds: `npm run build`
-- [x] 3.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
-- [x] 3.5 No inline literals (L-003 grep); no orphaned old-art references
+- [x] 3.1 Type checking passes: `npm run check` — 3fd4714
+- [x] 3.2 Linting passes: `npm run lint` — 3fd4714
+- [x] 3.3 Build succeeds: `npm run build` — 3fd4714
+- [x] 3.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 3fd4714
+- [x] 3.5 No inline literals (L-003 grep); no orphaned old-art references — 3fd4714
 
 #### Manual
 
-- [x] 3.6 Upgrades matches upgrades-mockup spirit (tiles, affordances, benefits, badges); buy paths work
-- [x] 3.7 Unlock moment warm/green/non-blocking per product-unlocked spirit
-- [x] 3.8 Bright world art crisp on start + upgrades; page weight sane
-- [x] 3.9 Start hero matches dashboard spirit; CLAUDE.md pointer corrected
+- [x] 3.6 Upgrades matches upgrades-mockup spirit (tiles, affordances, benefits, badges); buy paths work — 3fd4714
+- [x] 3.7 Unlock moment warm/green/non-blocking per product-unlocked spirit — 3fd4714
+- [x] 3.8 Bright world art crisp on start + upgrades; page weight sane — 3fd4714
+- [x] 3.9 Start hero matches dashboard spirit; CLAUDE.md pointer corrected — 3fd4714
 
 ### Phase 4: Growth-in-scene + micro-touches
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run check`
-- [ ] 4.2 Linting passes: `npm run lint`
-- [ ] 4.3 Build succeeds: `npm run build`
-- [ ] 4.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 4.1 Type checking passes: `npm run check`
+- [x] 4.2 Linting passes: `npm run lint`
+- [x] 4.3 Build succeeds: `npm run build`
+- [x] 4.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
 
 #### Manual
 
-- [ ] 4.5 Shop scene visibly grows with owned upgrades; milestone path reflects business_level
-- [ ] 4.6 Picker + overlay match the design language; offline flow works end-to-end
-- [ ] 4.7 Full six-surface walkthrough coherent (blue/gold grammar, calm tone)
+- [x] 4.5 Shop scene visibly grows with owned upgrades; milestone path reflects business_level
+- [x] 4.6 Picker + overlay match the design language; offline flow works end-to-end
+- [x] 4.7 Full six-surface walkthrough coherent (blue/gold grammar, calm tone)
