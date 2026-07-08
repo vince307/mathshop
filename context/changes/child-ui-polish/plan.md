@@ -366,13 +366,13 @@ None — assets are additive/replacing files in `public/`; no data or schema inv
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npm run check`
-- [x] 4.2 Linting passes: `npm run lint`
-- [x] 4.3 Build succeeds: `npm run build`
-- [x] 4.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`)
+- [x] 4.1 Type checking passes: `npm run check` — 7a2c670
+- [x] 4.2 Linting passes: `npm run lint` — 7a2c670
+- [x] 4.3 Build succeeds: `npm run build` — 7a2c670
+- [x] 4.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`) — 7a2c670
 
 #### Manual
 
-- [x] 4.5 Shop scene visibly grows with owned upgrades; milestone path reflects business_level
-- [x] 4.6 Picker + overlay match the design language; offline flow works end-to-end
-- [x] 4.7 Full six-surface walkthrough coherent (blue/gold grammar, calm tone)
+- [x] 4.5 Shop scene visibly grows with owned upgrades; milestone path reflects business_level — 7a2c670
+- [x] 4.6 Picker + overlay match the design language; offline flow works end-to-end — 7a2c670
+- [x] 4.7 Full six-surface walkthrough coherent (blue/gold grammar, calm tone) — 7a2c670
