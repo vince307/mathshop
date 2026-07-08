@@ -8,7 +8,7 @@ import { childCard } from "@/components/child/childCard";
 import { ShopArt } from "@/components/child/ShopArt";
 import { SkillBars } from "@/components/child/SkillBars";
 import { UPGRADES, canBuy, isOwned, nextUpgrade, type Upgrade } from "@/data/upgrades";
-import { t } from "@/i18n";
+import { t, upgradeCopy } from "@/i18n";
 
 interface UpgradeShopProps {
   profileId: string;
@@ -18,11 +18,6 @@ interface UpgradeShopProps {
   /** Normalized per-competency skill (S-07) — feeds the skill/task-history gate. */
   skillState: SkillState;
   world: World;
-}
-
-/** Resolve the localized upgrade copy (catalog ids match the i18n keys; L-003). */
-function upgradeCopy(id: string): { name: string; desc: string } {
-  return t.upgrades[id as keyof typeof t.upgrades];
 }
 
 function fill(template: string, values: Record<string, string | number>): string {

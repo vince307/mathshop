@@ -1,7 +1,7 @@
 ---
 change_id: child-ui-polish
 title: Child ui polish
-status: implemented
+status: impl_reviewed
 created: 2026-07-07
 updated: 2026-07-08
 archived_at: null

@@ -66,11 +66,10 @@ export function TaskScreen({
           <p className="text-foreground font-bold">{t.task.retry}</p>
         </FeedbackCard>
       )}
+      {/* No role="status" here — the retry card above already announces; two
+          simultaneous live regions would double the screen-reader message. */}
       {status === "wrong" && showHint && (
-        <div
-          role="status"
-          className="bg-accent/15 border-accent/40 animate-in fade-in max-w-sm rounded-2xl border p-4 text-center"
-        >
+        <div className="bg-accent/15 border-accent/40 animate-in fade-in max-w-sm rounded-2xl border p-4 text-center">
           <p className="text-foreground flex items-center justify-center gap-2 font-bold">
             <Lightbulb className="text-accent-foreground size-5" aria-hidden="true" />
             {t.task.hintTitle}

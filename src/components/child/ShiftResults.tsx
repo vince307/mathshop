@@ -3,7 +3,7 @@ import { ChildButton } from "@/components/child/ChildButton";
 import { childCard } from "@/components/child/childCard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { t } from "@/i18n";
+import { t, upgradeCopy } from "@/i18n";
 
 interface ShiftResultsProps {
   earned: number;
@@ -13,11 +13,6 @@ interface ShiftResultsProps {
   canUpgrade: boolean;
   /** Cheapest eligible unowned upgrade + post-shift wallet (S-13 progress card); null when none. */
   nextInfo: { id: string; art: string; cost: number; wallet: number } | null;
-}
-
-/** Resolve the localized upgrade name (catalog ids match the i18n keys; L-003). */
-function upgradeName(id: string): string {
-  return t.upgrades[id as keyof typeof t.upgrades].name;
 }
 
 /**
@@ -87,7 +82,7 @@ export default function ShiftResults({ earned, stars, leveledUp, canUpgrade, nex
             <p className="text-muted-foreground mt-1 text-sm font-semibold">
               {t.upgradeShop.nextProgress
                 .replace("{amount}", String(nextInfo.cost - nextInfo.wallet))
-                .replace("{name}", upgradeName(nextInfo.id))}
+                .replace("{name}", upgradeCopy(nextInfo.id).name)}
             </p>
           </div>
         </div>

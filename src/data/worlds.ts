@@ -3,7 +3,7 @@
  * offers and the create-profile route validates as the `theme` value. `slug` is
  * stored in `child_profiles.theme`; the start screen resolves the themed
  * business art from it. Slugs match the committed `public/illustrations/`
- * stems, so `world-<slug>.png` always resolves. The DB column default is
+ * stems, so `world-<slug>.webp` always resolves. The DB column default is
  * `'default'` → rendered as the fallback world (`kawiarnia`).
  *
  * (The `05` mockup labels the 4th interest "Sklep kolekcjonera"; the committed

@@ -25,3 +25,12 @@ const polishPlural = new Intl.PluralRules("pl");
 export function charsNeeded(n: number): string {
   return `Jeszcze ${n} ${charForms[polishPlural.select(n)]}`;
 }
+
+/**
+ * Localized upgrade copy by catalog id (L-003: the catalog carries no literal
+ * copy). Guarded: a catalog id missing from the dictionary falls back to the
+ * raw id instead of throwing mid-render.
+ */
+export function upgradeCopy(id: string): { name: string; desc: string } {
+  return (t.upgrades as Record<string, { name: string; desc: string }>)[id] ?? { name: id, desc: "" };
+}
