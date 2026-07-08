@@ -3,7 +3,7 @@ project: MathShop
 version: 1
 status: draft
 created: 2026-07-01
-updated: 2026-07-07
+updated: 2026-07-08
 prd_version: 3
 main_goal: market-feedback
 top_blocker: capacity
@@ -42,7 +42,7 @@ MathShop teaches math to Polish children (6–9) by framing every operation as r
 | S-10 | cross-device-economy-restore | Parent logs in on a new device and sees the same funds, upgrades, and grown shop      | S-06          | FR-001, FR-005, FR-012                | done     |
 | S-11 | multi-profile-picker         | Parent adds a 2nd child profile; a scoped profile-picker appears on next launch        | S-01          | FR-002                                | done     |
 | S-12 | network-loss-handling        | A network drop mid-shift halts gracefully with a Polish in-world message               | S-04          | FR-017                                | done     |
-| S-13 | child-ui-polish              | Built child surfaces (incl. the new economy screens) brought to mockup fidelity        | S-06          | US-01, §Non-Functional Requirements   | proposed |
+| S-13 | child-ui-polish              | Built child surfaces (incl. the new economy screens) brought to mockup fidelity        | S-06          | US-01, §Non-Functional Requirements   | done |
 
 ## Streams
 
@@ -247,7 +247,7 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
   - Fidelity bar (pixel- vs spirit-faithful) and which screens are in scope — Owner: user. Block: no.
   - The MatmaVerse + v3 mockups are local-only / gitignored — Owner: maintainer supplies. Block: no.
 - **Risk:** Sequenced last deliberately — polishing before the economy surfaces settle means re-polishing. The child-primitive library must fold in, not fork, the shipped ad-hoc primitives. Pure-visual scope keeps behavioral risk low but touches many files.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -308,3 +308,4 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 - **S-11: Parent adds a 2nd child profile; a scoped profile-picker appears on next launch** — Archived 2026-07-06 → `context/archive/2026-07-06-multi-profile-picker/`. Lesson: —.
 - **S-12: If the browser loses connectivity mid-shift, the app shows a Polish in-world message ("Internet zniknął! Spróbuj za chwilę.") and halts; pending mid-shift progress is discarded; on reconnect the child returns to the last server-recorded state.** — Archived 2026-07-07 → `context/archive/2026-06-14-network-loss-handling/`. Lesson: —.
 - **S-10: A parent who grew a shop under profile A on one device signs in on another and sees the same funds, purchased upgrades, grown shop, and skill progress — exactly as left. A second account on the same device never sees account A's data.** — Archived 2026-07-07 → `context/archive/2026-07-07-cross-device-economy-restore/`. Lesson: —.
+- **S-13: The built child surfaces — start, task, results, and the new economy screens (wallet, choose-upgrade, grown shop) — are brought to canonical MatmaVerse / v3-progression mockup fidelity, plus a reusable child-primitive library that absorbs the ad-hoc primitives (`ChildButton`, `SelectTile`, coin visuals). Pure visual/UX — no behavior or copy change.** — Archived 2026-07-08 → `context/archive/2026-07-07-child-ui-polish/`. Lesson: —.
