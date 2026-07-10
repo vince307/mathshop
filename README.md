@@ -120,15 +120,12 @@ SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_KEY=<anon-key>
 ```
 
-### Email confirmation in local development
+### Email confirmation
 
-By default Supabase requires email confirmation before a user can sign in. To skip this during local development:
+Local and production diverge deliberately (both declared in `supabase/config.toml`):
 
-1. Open the Supabase dashboard for your project
-2. Go to **Authentication → Email → Confirm email**
-3. Toggle it **off**
-
-Users can then sign in immediately after sign-up without clicking a confirmation link.
+- **Local**: `enable_confirmations = false` — users sign in immediately after sign-up; the test suite depends on this. To manually test the email round-trip, flip it to `true`, restart the stack (`npx supabase stop && npx supabase start`), sign up, and read the Polish email in Inbucket at <http://localhost:54324>; flip back afterwards.
+- **Production**: governed by the `[remotes.production]` block (confirmations ON, Brevo SMTP, Polish template from `supabase/templates/confirmation.html`), synced to the hosted project with `npx -y supabase@latest config push` — review the printed diff before confirming. The Brevo credentials come from `BREVO_SMTP_USER` / `BREVO_SMTP_KEY` in the pusher's environment, never from the repo.
 
 ### Auth routes
 

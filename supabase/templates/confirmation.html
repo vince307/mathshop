@@ -1,9 +1,13 @@
 <!--
-  Local-only confirmation email template (Polish). Points at the token_hash
-  confirm route, NOT the default {{ .ConfirmationURL }} PKCE link. `{{ .SiteURL }}`
-  is the local app origin (config.toml `auth.site_url`); `{{ .RedirectTo }}` is the
-  signup `emailRedirectTo` (/app). Production templates are authored in the hosted
-  dashboard (launch prerequisite) — this file only serves the local stack.
+  Confirmation email template (Polish) for BOTH the local stack and production —
+  `supabase config push` uploads this file to the hosted project by content_path
+  (config.toml [auth.email.template.confirmation]), so the environments cannot
+  drift. Points at the token_hash confirm route, NOT the default
+  {{ .ConfirmationURL }} PKCE link; the link shape is pinned by the confirm route
+  and tests/auth-confirm.test.ts — keep it byte-compatible. `{{ .SiteURL }}` is
+  the environment's auth site_url (local: localhost:4321; prod:
+  [remotes.production] in config.toml); `{{ .RedirectTo }}` is the signup
+  `emailRedirectTo` (/app).
 -->
 <h2>Potwierdź swój adres e-mail</h2>
 <p>Cześć! Kliknij poniższy link, aby aktywować konto w MatmaVerse:</p>

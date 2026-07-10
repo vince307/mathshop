@@ -401,3 +401,43 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+# ── Hosted project overrides (deep-merged per project_id; synced via
+# `npx -y supabase@latest config push`, which uploads auth config INCLUDING the
+# email template by content_path and SMTP settings). Local behavior is untouched:
+# this block only applies when operating against the linked production project.
+# ALWAYS read the push diff before confirming — site_url/redirect URLs below must
+# match the values set in the dashboard on 2026-07-10 (MAT-14), so they should
+# show NO change; SMTP/rate-limit/confirmations are the expected additions.
+# Secrets stay out of the repo: BREVO_SMTP_USER / BREVO_SMTP_KEY are read from
+# the pusher's environment at push time (Brevo SMTP & API page; regenerate the
+# login/key pair if the auto-generated login exposes the account email).
+[remotes.production]
+project_id = "hozkukbsfdcrbszgdxbg"
+
+[remotes.production.auth]
+site_url = "https://mathshop.vercel.app"
+additional_redirect_urls = [
+  "https://mathshop.vercel.app/app",
+  "https://mathshop.vercel.app/api/auth/confirm",
+]
+
+[remotes.production.auth.email]
+# Production verifies email for real (locally false — the test suite depends on it).
+enable_confirmations = true
+
+[remotes.production.auth.email.smtp]
+# Brevo (decision: infrastructure.md §Email Delivery). From is rewritten to
+# @brevosend.com until a sending domain is authenticated (deferred).
+enabled = true
+host = "smtp-relay.brevo.com"
+port = 587
+user = "env(BREVO_SMTP_USER)"
+pass = "env(BREVO_SMTP_KEY)"
+admin_email = "vince307@gmail.com"
+sender_name = "MatmaVerse"
+
+[remotes.production.auth.rate_limit]
+# Custom-SMTP baseline (built-in mailer was 2/hr). Raise further in the dashboard
+# (Auth → Rate Limits) if real signup volume ever demands it.
+email_sent = 30

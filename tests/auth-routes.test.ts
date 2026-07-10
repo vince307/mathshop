@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createClient as createAppClient } from "@/lib/supabase";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { POST as signupPOST } from "@/pages/api/auth/signup";
+import { POST as resendPOST, resendFailureMessage } from "@/pages/api/auth/resend";
 import { createSignedInUser, deleteUser, findUserIdByEmail, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
 import { t } from "@/i18n";
@@ -135,5 +136,39 @@ describe("Risk #4 — auth route contracts (real Supabase)", () => {
     const error = decodeURIComponent(new URL(location, "https://test.local").searchParams.get("error") ?? "");
 
     expect(error).toBe(t.auth.serverError.invalidCredentials); // Polish, mapped from error.code
+  });
+});
+
+describe("resend route — failure copy (production-email-delivery)", () => {
+  // The rate-limit path can't be triggered deterministically at route level in
+  // the local stack: enable_confirmations = false means signup never sends a
+  // confirmation email, so GoTrue's send throttles never engage. The route-level
+  // test pins the generic branch; the selector is unit-tested for the rate-limit
+  // signal set (same codes/status as src/lib/auth-errors.ts).
+  it("missing email redirects back with the generic Polish resend error", async () => {
+    const context = buildContext({
+      url: "https://test.local/api/auth/resend",
+      method: "POST",
+      formData: { email: "" },
+    });
+
+    const response = await resendPOST(context);
+    const location = response.headers.get("Location") ?? "";
+    const error = decodeURIComponent(new URL(location, "https://test.local").searchParams.get("error") ?? "");
+
+    expect(location).toMatch(/^\/auth\/confirm-email\?email=/);
+    expect(error).toBe(t.confirmEmail.checkEmail.resendError);
+  });
+
+  it("maps rate-limit signals to the 'too many attempts' copy, everything else to the generic one", () => {
+    expect(resendFailureMessage({ code: "over_email_send_rate_limit", status: 429 })).toBe(
+      t.auth.serverError.rateLimited,
+    );
+    expect(resendFailureMessage({ code: "over_request_rate_limit", status: 429 })).toBe(t.auth.serverError.rateLimited);
+    expect(resendFailureMessage({ code: undefined, status: 429 })).toBe(t.auth.serverError.rateLimited);
+    expect(resendFailureMessage({ code: "user_already_exists", status: 400 })).toBe(
+      t.confirmEmail.checkEmail.resendError,
+    );
+    expect(resendFailureMessage({ code: undefined, status: 500 })).toBe(t.confirmEmail.checkEmail.resendError);
   });
 });
