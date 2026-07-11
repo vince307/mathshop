@@ -39,3 +39,4 @@ supabase password.txt
 # scratch / design reference material (mockups, scraped pages, minified vendor
 # JS) — not source; must not be linted or committed
 assets/
+coverage/
