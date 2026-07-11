@@ -1,11 +1,15 @@
 ---
 change_id: visible-shop-growth
 title: Visible shop change when a completed shift crosses a level threshold
-status: paused
+status: archived
 created: 2026-06-30
-updated: 2026-07-01
-archived_at: null
+updated: 2026-07-11
+archived_at: 2026-07-11T09:45:00Z
 ---
+
+## Status: SUPERSEDED — closed 2026-07-11 without implementation
+
+This change was **never implemented under this ID**. The 2026-07-01 product re-baseline (PRD v3) replaced its passive-decorative-growth scope with the earned upgrade economy, delivered as **S-06 `upgrade-choice-and-growth`** (`context/archive/2026-07-01-upgrade-choice-and-growth/`) and completed visually by **S-13 `child-ui-polish`** growth-in-scene compositing + milestone path (`context/archive/2026-07-07-child-ui-polish/`). The roadmap records the supersession at S-06's Change ID line. The `research.md` below remains valid for its render-path/RLS/persistence findings. GitHub #8 and Linear MAT-11 were closed with the same note on 2026-07-09. Archived as a historical record, not as completed work.
 
 ## Status: PAUSED (2026-07-01)
 
