@@ -282,24 +282,24 @@ No schema changes. Rollback = revert commits (UI/routes disappear; no data shape
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run check`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Build succeeds: `npm run build`
-- [x] 2.4 Full suite passes against a fresh DB incl. new account-deletion tests
-- [x] 2.5 L-003 grep clean on new/edited files
+- [x] 2.1 Type checking passes: `npm run check` — 879315e
+- [x] 2.2 Linting passes: `npm run lint` — 879315e
+- [x] 2.3 Build succeeds: `npm run build` — 879315e
+- [x] 2.4 Full suite passes against a fresh DB incl. new account-deletion tests — 879315e
+- [x] 2.5 L-003 grep clean on new/edited files — 879315e
 
 #### Manual
 
-- [x] 2.6 Local flow: danger zone → typed email + fresh PIN → signed out with farewell; Studio shows full erasure
-- [x] 2.7 Wrong PIN throttled; stale marker 403s; back-button post-deletion is clean
-- [x] 2.8 Second local account untouched
+- [x] 2.6 Local flow: danger zone → typed email + fresh PIN → signed out with farewell; Studio shows full erasure — 879315e
+- [x] 2.7 Wrong PIN throttled; stale marker 403s; back-button post-deletion is clean — 879315e
+- [x] 2.8 Second local account untouched — 879315e
 
 ### Phase 3: Ops + production proof
 
 #### Manual
 
-- [ ] 3.1 SUPABASE_SERVICE_ROLE_KEY + PARENT_SESSION_SECRET in Vercel (Production scope only); no secrets leaked
-- [ ] 3.2 Production deploy green; PIN gate works in prod
-- [ ] 3.3 Production profile deletion verified
-- [ ] 3.4 Production account deletion verified (auth user + all rows gone)
-- [ ] 3.5 MAT-17 Done + GitHub #17 closed with outcome
+- [x] 3.1 SUPABASE_SERVICE_ROLE_KEY + PARENT_SESSION_SECRET in Vercel (Production scope only); no secrets leaked
+- [x] 3.2 Production deploy green; PIN gate works in prod
+- [x] 3.3 Production profile deletion verified
+- [x] 3.4 Production account deletion verified (auth user + all rows gone)
+- [x] 3.5 MAT-17 Done + GitHub #17 closed with outcome
