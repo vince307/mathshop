@@ -51,7 +51,7 @@ export function ConfirmDeleteDialog({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const copy = t.deletion;
-  const armed = typed.trim() === expectedText;
+  const armed = typed.trim() === expectedText.trim();
 
   const close = (next: boolean) => {
     if (busy) return;

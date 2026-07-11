@@ -23,8 +23,9 @@ export default defineConfig({
       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),
       SUPABASE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
       // HMAC key for the short-lived parent-verified session marker (S-07). Set on
-      // Vercel (Production + Preview). Optional so builds without it don't fail;
-      // the marker helpers fall back to an empty key only when it's absent.
+      // Vercel Production scope (Preview would fail closed — no marker minting).
+      // Optional so builds without it don't fail; the marker helpers throw / return
+      // false only when it's absent (fail closed).
       PARENT_SESSION_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
       // Service-role key (MAT-17) — powers exactly ONE operation: account
       // self-deletion (auth.admin.deleteUser). The most sensitive value in the

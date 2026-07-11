@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { POST as deletePOST } from "@/pages/api/profiles/delete";
 import { createChildProfile } from "@/lib/services/child-profiles";
-import { signMarker, PARENT_VERIFIED_COOKIE } from "@/lib/services/parent-pin";
+import { setPin, signMarker, PARENT_VERIFIED_COOKIE } from "@/lib/services/parent-pin";
 import { ACTIVE_PROFILE_COOKIE } from "@/lib/services/active-profile";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, createCookieJar, type CookieJar } from "./helpers/astro";
@@ -103,6 +103,10 @@ describe("profile deletion route (MAT-17)", () => {
     expect(await adminCount("shift_log", "profile_id", target)).toBe(0); // FK cascade
     expect(await adminCount("child_profiles", "id", sibling)).toBe(1); // sibling survives
     expect(await adminCount("shift_log", "profile_id", sibling)).toBe(1);
+    // account_settings is owned by the PARENT, not the profile — a profile delete
+    // must never touch the parent PIN row (only account deletion cascades it).
+    await setPin(a.client, "1234");
+    expect(await adminCount("account_settings", "account_id", a.id)).toBe(1);
   });
 
   it("clears the active_profile cookie when it pointed at the deleted profile", async () => {

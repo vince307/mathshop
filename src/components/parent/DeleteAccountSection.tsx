@@ -38,9 +38,12 @@ export default function DeleteAccountSection({ email }: Props) {
         window.location.href = "/app/parent-pin";
         return copy.sessionExpired;
       }
-      if (response.status === 401) return copy.errors.wrongPin;
       if (response.status === 429) return copy.errors.pinLocked;
       const payload = (await response.json().catch(() => null)) as { reason?: string } | null;
+      // 401 is "wrong PIN" only when the route says so; a 401 with no `wrong`
+      // reason means the session is already gone (e.g. a retry after the success
+      // response was lost) — "wrong PIN" would be a misleading message there.
+      if (response.status === 401) return payload?.reason === "wrong" ? copy.errors.wrongPin : copy.sessionExpired;
       if (payload?.reason === "email-mismatch") return copy.errors.emailMismatch;
       return copy.genericError;
     } catch {

@@ -20,7 +20,7 @@ The first account-owned table. Child play-profiles owned by a parent account. Ca
   - `child_profiles_delete_own` — `for delete using (auth.uid() = account_id)`
 - **`updated_at` trigger:** `child_profiles_set_updated_at` (`before update`, reuses `set_updated_at()`).
 - **Isolation test:** `tests/child-profiles-isolation.test.ts` (run by CI as a merge gate).
-- **Deletion surface (MAT-17):** `POST /api/profiles/delete` (parent-marker-gated) → `deleteChildProfile` (`src/lib/services/child-profiles.ts`) deletes one owned row via `child_profiles_delete_own`; the profile's `shift_log` rows cascade via their `profile_id` FK. Positive-delete + cascade + isolation coverage: `tests/profile-deletion.test.ts`.
+- **Deletion surface (MAT-17):** see the [Child-profile deletion](#child-profile-deletion-rls-surface) surface below (`POST /api/profiles/delete` → `deleteChildProfile` via `child_profiles_delete_own`; `shift_log` cascades).
 
 ## public.shift_log
 
@@ -51,8 +51,24 @@ Per-account parent settings (S-07) holding the scrypt-hashed parent PIN (FR-016 
   - `account_settings_insert_own` — `for insert with check (auth.uid() = account_id)`
   - `account_settings_update_own` — `for update using (...) with check (...)`
   - `account_settings_delete_own` — `for delete using (auth.uid() = account_id)`
-- **Env dependency:** `PARENT_SESSION_SECRET` (astro.config.mjs `env.schema`) — HMAC key for the signed `parent_verified` session marker. Set on Vercel (Production + Preview).
+- **Env dependency:** `PARENT_SESSION_SECRET` (astro.config.mjs `env.schema`) — HMAC key for the signed `parent_verified` session marker. Set on Vercel Production scope (added 2026-07-11 with MAT-17; Preview fails closed — no marker minting, so the report + deletion actions are unreachable there).
 - **Isolation test:** `tests/account-settings-isolation.test.ts`.
+
+## Account deletion (service-role surface)
+
+Whole-account erasure (MAT-17) — the project's **first and only production service-role surface**. The GDPR right-to-erasure path: deleting the parent's `auth.users` row cascades every owned table (see the three surfaces above, all `on delete cascade`) plus `auth.sessions`.
+
+- **Route:** `POST /api/account/delete` (`src/pages/api/account/delete.ts`). Gate order (all-or-nothing, each a hard stop): 503 (no RLS or admin client) → 401 (no session user) → 403 (invalid `parent_verified` marker) → 400 (zod) → PIN re-check via `verifyPin` (429 locked / 401 wrong / 400 no-pin — the atomic `register_pin_failure` throttle applies) → 400 (typed e-mail ≠ session e-mail) → `admin.auth.admin.deleteUser(user.id)` → best-effort `signOut()` + `clearAuthCookies` + delete `active_profile`/`parent_verified` → 200. The deletion target is **always** `user.id` from the session (`getUser()`), never client input (L-002).
+- **Admin client:** `createAdminClient()` (`src/lib/supabase-admin.ts`) — plain `@supabase/supabase-js` client with the **service-role** key, `{ autoRefreshToken: false, persistSession: false }`, no cookie adapter. Used for **exactly one operation** (`deleteUser`); never to read/write app tables (that bypasses RLS, the project's highest-risk invariant). Fails closed: missing key → `null` → route 503.
+- **Env dependency:** `SUPABASE_SERVICE_ROLE_KEY` (astro.config.mjs `env.schema`, `optional`). The most sensitive value in the project — Vercel **Production scope ONLY** (never Preview/Development; `infrastructure.md`), never the browser. `astro:env/server` import fails in client bundles, so islands cannot import the factory.
+- **Tests:** `tests/account-deletion.test.ts` (full-cascade erasure across all three tables + auth user via admin read-back; wrong-PIN throttle; missing marker; e-mail mismatch; bystander isolation; absent-key 503).
+
+## Child-profile deletion (RLS surface)
+
+Single-profile deletion (MAT-17) — rides the existing `child_profiles_delete_own` policy; the profile's `shift_log` rows cascade via `profile_id`.
+
+- **Route:** `POST /api/profiles/delete` (`src/pages/api/profiles/delete.ts`), `parent_verified`-marker-gated → `deleteChildProfile` (`src/lib/services/child-profiles.ts`) on the request-scoped **RLS** client (a non-owner's delete matches 0 rows → 404). Never uses the admin client.
+- **Tests:** `tests/profile-deletion.test.ts` (positive delete + `shift_log` cascade + sibling/`account_settings` survival + cross-account 404 + marker 403 paths).
 
 ## set_updated_at()
 
