@@ -34,3 +34,17 @@ export function mapAuthError(error: AuthError): string {
   }
   return t.auth.serverError.default;
 }
+
+/**
+ * Failure copy for the resend-confirmation route's interstitial. Rate-limit
+ * signals (same set as `messageByCode` + the 429 fallback above) get the honest
+ * "too many attempts" message — real in production under the 30/hr custom-SMTP
+ * cap and `max_frequency` — everything else keeps the interstitial's generic
+ * message. Deliberately NOT `mapAuthError`: its other mappings are
+ * signin-flavored and wrong for that context.
+ */
+export function resendFailureMessage(error: Pick<AuthError, "code" | "status">): string {
+  const rateLimited =
+    error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit" || error.status === 429;
+  return rateLimited ? t.auth.serverError.rateLimited : t.confirmEmail.checkEmail.resendError;
+}

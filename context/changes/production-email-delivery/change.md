@@ -1,7 +1,7 @@
 ---
 change_id: production-email-delivery
 title: Production email delivery via Brevo SMTP + Polish auth templates
-status: implemented
+status: impl_reviewed
 created: 2026-07-10
 updated: 2026-07-11
 archived_at: null
@@ -29,3 +29,5 @@ Tracked as **Linear MAT-15** / **GitHub #15**. Launch blocker: without custom SM
 ## Phase 2 state (2026-07-10)
 
 Blocked on **Brevo SMTP account activation** (external): direct SMTP test returns `502 5.7.0 Your SMTP account is not yet activated` — Brevo's anti-spam gate for new accounts; maintainer asked to complete Brevo onboarding / request activation via in-app chat or contact@sendinblue.com. Everything else verified: SMTP credentials authenticate (generated `@smtp-brevo.com` login — NOT the account email; that was a first-attempt failure worth remembering), hosted auth config pushed and **idempotent** (`config push` → "Remote Auth config is up to date"), MAT-14 URLs preserved, rate limit 30/hr live, and the base-config leakage caught in the first push diff (max_frequency 1s, otp_length 6, MFA flags) is pinned back to prod values in `[remotes.production]`. Two ops gotchas recorded: the CLI **auto-confirms config push when stdin is not a TTY** (a piped "n" does NOT prevent application), and a fresh `npx supabase@latest` binary can hang on a **macOS keychain authorization dialog**. Signup attempts during diagnosis may have left a handful of unconfirmed `vince307+prodtest*@gmail.com` users in the hosted auth table — harmless; delete via dashboard if noticed. Once Brevo activates: re-run the production signup proof (fresh +suffix address), then 2.4/2.5 close.
+
+**Resolved 2026-07-10:** Brevo activated SMTP the same day; the production proof passed end-to-end (signup with a fresh +suffix address → Polish email via Brevo → confirm link → signed-in at /app, maintainer-confirmed). MAT-15 marked Done, GitHub #15 closed. The blocked state above is preserved as runbook history only.

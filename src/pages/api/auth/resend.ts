@@ -1,23 +1,10 @@
 import type { APIRoute } from "astro";
-import type { AuthError } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase";
 import { applyNoStore } from "@/lib/http";
+import { resendFailureMessage } from "@/lib/auth-errors";
 import { t } from "@/i18n";
 
 export const prerender = false;
-
-/**
- * Pick the interstitial's Polish failure copy. Rate-limit signals (same set as
- * src/lib/auth-errors.ts) get the honest "too many attempts" message — real in
- * production under the 30/hr custom-SMTP cap and `max_frequency` — everything
- * else keeps the generic one. Deliberately NOT full `mapAuthError`: its other
- * mappings are signin-flavored and wrong for this context.
- */
-export function resendFailureMessage(error: Pick<AuthError, "code" | "status">): string {
-  const rateLimited =
-    error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit" || error.status === 429;
-  return rateLimited ? t.auth.serverError.rateLimited : t.confirmEmail.checkEmail.resendError;
-}
 
 /**
  * Resend the signup confirmation email. Driven by the plain form on the
