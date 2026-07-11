@@ -340,6 +340,44 @@ export const pl = {
     back: "Wróć do sklepu",
   },
 
+  // Deletion surfaces (MAT-17): child-profile + whole-account deletion. Parent-zone
+  // only (PIN-gated report page); both are irreversible, so the dialogs demand a
+  // typed confirmation (child's name / account e-mail) and account deletion
+  // additionally re-asks for the PIN. Calm, factual, no drama — but honest about
+  // permanence. `{name}`/`{expected}` interpolated in the islands. Draft Polish —
+  // pending native-speaker review.
+  deletion: {
+    // Child profile (phase 1)
+    profileAction: "Usuń profil",
+    profileTitle: "Usunąć profil {name}?",
+    profileConsequence:
+      "Znikną wszystkie postępy, portfel, ulepszenia i historia zmian tego dziecka. Tego nie można cofnąć.",
+    profileConfirm: "Usuń profil na zawsze",
+    // Shared dialog chrome
+    typeToConfirm: "Aby potwierdzić, przepisz: {expected}",
+    confirmPlaceholder: "Przepisz tutaj",
+    cancel: "Anuluj",
+    working: "Usuwam…",
+    genericError: "Coś poszło nie tak. Spróbuj ponownie.",
+    sessionExpired: "Sesja rodzica wygasła. Podaj PIN jeszcze raz.",
+    // Whole account (phase 2 — danger zone on the report page)
+    accountHeading: "Usunięcie konta",
+    accountIntro:
+      "Usunięcie konta skasuje wszystkie profile dzieci, ich postępy oraz Twoje dane. Tego nie można cofnąć.",
+    accountAction: "Usuń konto",
+    accountTitle: "Usunąć całe konto?",
+    accountConsequence:
+      "Skasujemy Twoje konto, wszystkie profile dzieci i całą historię. Zostaniesz wylogowany. Tego nie można cofnąć.",
+    accountPinLabel: "PIN rodzica",
+    accountConfirm: "Usuń konto na zawsze",
+    accountDeleted: "Konto zostało usunięte. Dziękujemy, że byliście z nami.",
+    errors: {
+      wrongPin: "Nieprawidłowy PIN.",
+      pinLocked: "Za dużo prób. Spróbuj ponownie za chwilę.",
+      emailMismatch: "Adres e-mail nie zgadza się z kontem.",
+    },
+  },
+
   // Profile picker (S-11, FR-002). Shown on launch for accounts with 2+ child
   // profiles; single-profile accounts skip it. `{name}` interpolated per tile.
   // Draft Polish — pending native-speaker review.

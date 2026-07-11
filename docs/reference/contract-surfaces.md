@@ -20,6 +20,7 @@ The first account-owned table. Child play-profiles owned by a parent account. Ca
   - `child_profiles_delete_own` — `for delete using (auth.uid() = account_id)`
 - **`updated_at` trigger:** `child_profiles_set_updated_at` (`before update`, reuses `set_updated_at()`).
 - **Isolation test:** `tests/child-profiles-isolation.test.ts` (run by CI as a merge gate).
+- **Deletion surface (MAT-17):** `POST /api/profiles/delete` (parent-marker-gated) → `deleteChildProfile` (`src/lib/services/child-profiles.ts`) deletes one owned row via `child_profiles_delete_own`; the profile's `shift_log` rows cascade via their `profile_id` FK. Positive-delete + cascade + isolation coverage: `tests/profile-deletion.test.ts`.
 
 ## public.shift_log
 

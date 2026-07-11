@@ -96,6 +96,27 @@ export async function listChildProfiles(client: SupabaseClient): Promise<ChildPr
   return (data as ChildProfile[] | null) ?? [];
 }
 
+export type DeleteProfileResult = { ok: true } | { failure: "not-found" } | { error: PostgrestError };
+
+/**
+ * Delete one of the parent's own child profiles (MAT-17 — the "cleanup" slice
+ * S-11 deferred). The row is reached by `id` under the F-01
+ * `child_profiles_delete_own` RLS policy: a non-owner's delete matches 0 rows
+ * and reads as `not-found` (buyUpgrade's vocabulary), never touching another
+ * account. The profile's `shift_log` rows cascade via their `profile_id` FK —
+ * DB machinery, no second statement. Irreversible by design (F-01 accepts
+ * "irreversible per delete"); the typed-confirmation dialog carries the safety.
+ * Deleting the LAST profile is legal — the /app router degrades to the wizard.
+ */
+export async function deleteChildProfile(client: SupabaseClient, profileId: string): Promise<DeleteProfileResult> {
+  // delete().select() returns the deleted rows, so 0 rows distinguishes
+  // not-found/not-owned from success without a prior read.
+  const { data, error } = await client.from("child_profiles").delete().eq("id", profileId).select("id");
+  if (error) return { error };
+  if (data.length === 0) return { failure: "not-found" };
+  return { ok: true };
+}
+
 /**
  * Append one `shift_log` row (S-07) — the history the parent report reads. Best
  * effort: a log failure must NOT fail an already-persisted shift/purchase (the

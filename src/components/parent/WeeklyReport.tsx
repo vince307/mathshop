@@ -1,6 +1,8 @@
-import React from "react";
-import { BarChart3, Sparkles } from "lucide-react";
+import React, { useState } from "react";
+import { BarChart3, Sparkles, Trash2 } from "lucide-react";
 import { AvatarCircle } from "@/components/child/AvatarCircle";
+import { ConfirmDeleteDialog } from "@/components/parent/ConfirmDeleteDialog";
+import { Button } from "@/components/ui/button";
 import type { Competency, WeeklyReport as WeeklyReportData, WeeklyReportUpgrade } from "@/types";
 import { COMPETENCIES } from "@/data/skills";
 import { t } from "@/i18n";
@@ -32,6 +34,32 @@ interface Props {
  */
 export default function WeeklyReport({ reports }: Props) {
   const copy = t.report;
+  // Local list so a deletion removes the card without a reload; the server list
+  // is re-fetched on the next SSR render anyway.
+  const [children, setChildren] = useState(reports);
+  const [pendingDelete, setPendingDelete] = useState<ChildReport | null>(null);
+
+  /**
+   * POST the deletion; the route re-verifies the parent marker server-side.
+   * Resolves to a Polish error message for the dialog, or null on success.
+   * A 403 means the 15-min marker expired mid-visit — bounce to the PIN gate.
+   */
+  const deleteProfile = async (child: ChildReport): Promise<string | null> => {
+    try {
+      const body = new FormData();
+      body.set("profileId", child.profileId);
+      const response = await fetch("/api/profiles/delete", { method: "POST", body });
+      if (response.status === 403) {
+        window.location.href = "/app/parent-pin";
+        return t.deletion.sessionExpired;
+      }
+      if (!response.ok) return t.deletion.genericError;
+      setChildren((current) => current.filter((entry) => entry.profileId !== child.profileId));
+      return null;
+    } catch {
+      return t.deletion.genericError;
+    }
+  };
 
   return (
     <div className="w-full max-w-md">
@@ -40,16 +68,36 @@ export default function WeeklyReport({ reports }: Props) {
         <p className="text-muted-foreground mt-1 text-sm">{copy.intro}</p>
       </header>
 
-      {reports.length === 0 ? (
+      {children.length === 0 ? (
         <p className="bg-card border-border text-muted-foreground rounded-2xl border p-6 text-center text-sm shadow-sm">
           {copy.noProfiles}
         </p>
       ) : (
         <div className="flex flex-col gap-5">
-          {reports.map((child) => (
-            <ChildSection key={child.profileId} child={child} />
+          {children.map((child) => (
+            <ChildSection
+              key={child.profileId}
+              child={child}
+              onDelete={() => {
+                setPendingDelete(child);
+              }}
+            />
           ))}
         </div>
+      )}
+
+      {pendingDelete && (
+        <ConfirmDeleteDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPendingDelete(null);
+          }}
+          title={t.deletion.profileTitle.replace("{name}", pendingDelete.name)}
+          consequence={t.deletion.profileConsequence}
+          expectedText={pendingDelete.name}
+          confirmLabel={t.deletion.profileConfirm}
+          onConfirm={() => deleteProfile(pendingDelete)}
+        />
       )}
     </div>
   );
@@ -65,8 +113,8 @@ function ChildIdentity({ child }: { child: ChildReport }) {
   );
 }
 
-/** One child's card: identity, weekly practice per competency, and unlocked upgrades. */
-function ChildSection({ child }: { child: ChildReport }) {
+/** One child's card: identity, weekly practice per competency, unlocked upgrades, and the delete action. */
+function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () => void }) {
   const copy = t.report;
 
   if (child.report === null) {
@@ -76,6 +124,7 @@ function ChildSection({ child }: { child: ChildReport }) {
         <p role="status" className="text-muted-foreground mt-5 text-sm">
           {copy.loadError}
         </p>
+        <DeleteProfileAction onDelete={onDelete} />
       </section>
     );
   }
@@ -133,7 +182,30 @@ function ChildSection({ child }: { child: ChildReport }) {
           </ul>
         )}
       </div>
+
+      <DeleteProfileAction onDelete={onDelete} />
     </section>
+  );
+}
+
+/**
+ * Per-card destructive entry (MAT-17): quiet ghost styling — the report is a calm
+ * surface; the real friction (typed name) lives in the dialog it opens.
+ */
+function DeleteProfileAction({ onDelete }: { onDelete: () => void }) {
+  return (
+    <div className="border-border mt-5 border-t pt-3">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onDelete}
+        className="text-destructive hover:text-destructive"
+      >
+        <Trash2 className="size-4" aria-hidden="true" />
+        {t.deletion.profileAction}
+      </Button>
+    </div>
   );
 }
 
