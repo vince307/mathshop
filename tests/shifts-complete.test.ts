@@ -238,6 +238,24 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     expect(logged.money).toEqual({ firstTryCorrect: 1, completed: 2, misses: 0 });
   });
 
+  it("PINS current behavior: a duplicate shift-end POST pays twice (no idempotency key — Risk #2 §6.3.4)", async () => {
+    // The design has no shift idempotency key: each POST is treated as a new
+    // legitimate shift, so an accidental client/network replay double-pays.
+    // Pinned consciously (test-plan cookbook §6.3 step 4) so that adding an
+    // idempotency key later is a deliberate hardening change, not an accident.
+    // Relevant horizon: supabase-js auto-retry lands at v2.102.0 (§4 note).
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const shift = { profileId, taskCount: "5", cleanCount: "5" };
+
+    expect((await completePOST(completeContext(jar, shift))).status).toBe(200);
+    expect((await completePOST(completeContext(jar, shift))).status).toBe(200);
+
+    const state = await readState(profileId);
+    expect(state?.completed_shift_count).toBe(2); // replay counted as a 2nd shift
+    expect(state?.wallet_balance).toBe(2 * earningsForShift(5, 5)); // and paid twice
+  });
+
   it("L-002: account B's shift never writes a shift_log row for account A", async () => {
     const profileId = await seedProfile(accountA.id);
     const jar = await mintSession(accountB.email);

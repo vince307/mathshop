@@ -28,7 +28,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/**/*.test.{ts,tsx}"],
     // The isolation + auth suites provision/delete real users; keep files serial
     // and give the DB round-trips room.
     fileParallelism: false,

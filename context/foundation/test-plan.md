@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-25 (Phase 1 researched)
+> Last updated: 2026-07-12 (Phases 2–4 complete; component layer installed)
 
 ## 1. Strategy
 
@@ -74,9 +74,9 @@ orchestrator updates Status as artifacts appear on disk.
 | #   | Phase name                                   | Goal (one line)                                                                                              | Risks covered | Test types                                                                                             | Status      | Change folder                               |
 | --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ------------------------------------------------------------------------------------------------------ | ----------- | ------------------------------------------- |
 | 1   | Auth critical-path + session gating          | Prove the universal entry works and the gate never fails open; establish the test harness later phases reuse | #3, #4        | integration (auth routes + middleware); harness bootstrap (vitest config, Supabase test-client helper) | researched  | context/changes/testing-auth-critical-path/ |
-| 2   | Isolation contract + authorization hardening | Lock the #1 correctness invariant into a reusable per-table pattern before the schema grows                  | #1, #5        | integration (RLS cross-account, IDOR negative) + L-002 meta-check                                      | not started | —                                           |
-| 3   | Shift persistence + scoring/generation       | Prove "come back and your progress is there" holds, and that scoring/generation are correct                  | #2, #7        | integration (persistence round-trip + replay idempotency) + unit (scoring, payout, band bounds)        | not started | —                                           |
-| 4   | Gameplay guardrail behavior                  | Prove the soft-failure premise cannot silently regress                                                       | #6            | component / interaction (task feedback)                                                                | not started | —                                           |
+| 2   | Isolation contract + authorization hardening | Lock the #1 correctness invariant into a reusable per-table pattern before the schema grows                  | #1, #5        | integration (RLS cross-account, IDOR negative) + L-002 meta-check                                      | complete    | in feature changes — see §6.6                                           |
+| 3   | Shift persistence + scoring/generation       | Prove "come back and your progress is there" holds, and that scoring/generation are correct                  | #2, #7        | integration (persistence round-trip + replay idempotency) + unit (scoring, payout, band bounds)        | complete    | in feature changes — see §6.6                                           |
+| 4   | Gameplay guardrail behavior                  | Prove the soft-failure premise cannot silently regress                                                       | #6            | component / interaction (task feedback)                                                                | complete    | coverage sweep 2026-07-12 — §6.6                                           |
 
 **Status vocabulary** (fixed — parser literals): `not started` → `change opened` → `researched` → `planned` → `implementing` → `complete`.
 
@@ -94,7 +94,8 @@ ship alongside those slices.
 | ----------------------- | ------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | unit + integration      | Vitest                    | ^4.1.8                                                   | Configured pre-Phase-1 (`vitest.config.ts`: node env, `.env.test`, serial files, 30s timeouts). Phase 1 (`testing-auth-critical-path`) added the `@/*` alias, the `tests/helpers/` Supabase + Astro request harness (cookie jar, `APIContext`/middleware builders), and `astro:middleware` / `astro:env/server` stubs so the real middleware + routes import under node-env Vitest. |
 | RLS / DB integration    | Supabase JS client        | `@supabase/supabase-js` ^2.99.1, `@supabase/ssr` ^0.10.3 | Real-Postgres integration via local Supabase + a service-role provisioning client. Reference: `tests/child-profiles-isolation.test.ts`. Note: built-in auto-retry lands at supabase-js v2.102.0 — not active on ^2.99.1.                                                                                                                                                            |
-| component / interaction | none yet — see §3 Phase 4 | —                                                        | React Testing Library + a DOM env (`jsdom`/`happy-dom`) are **not installed**; Phase 4 adds them for the task-feedback behavior tests.                                                                                                                                                                                                                                              |
+| component / interaction | React Testing Library     | `@testing-library/react` ^16.3.2, `jsdom` ^29.1.1        | Installed by Phase 4 (2026-07-12) with `@testing-library/user-event` + `jest-dom`. No global config: component test files opt into the DOM env with a `// @vitest-environment jsdom` first-line pragma (node stays the default); vitest `include` now covers `.tsx`. Reference: `tests/task-guardrail.test.tsx`.                                                                    |
+| coverage                | @vitest/coverage-v8       | ^4.1.10                                                  | `npx vitest run --coverage --coverage.include="src/**"`. Baseline 2026-07-12: `src/data` 96% / `src/lib(+services)` 88–98% stmts; the component layer was the 0% area Phase 4 addressed.                                                                                                                                                                                            |
 | API mocking             | none yet                  | —                                                        | Auth/profile integration tests hit a real local Supabase rather than mocking the edge; revisit if external HTTP boundaries appear.                                                                                                                                                                                                                                                  |
 | e2e                     | none                      | —                                                        | No Playwright/Cypress installed. Not planned for v1 — request-level integration covers the critical paths (#3, #4) more cheaply. Re-evaluate if a full deployed-shape failure mode appears.                                                                                                                                                                                         |
 
@@ -171,15 +172,54 @@ that read/write account-owned resources.
 
 ### 6.4 Adding a persistence / scoring test
 
-- TBD — see §3 Phase 3 (durable round-trip + replay idempotency for the shift-end write; unit pattern for scoring, payout, and grade-band bounds).
+Patterns live in `tests/shifts-complete.test.ts` (route persistence: server-side
+earnings recomputation, L-002 spoof negatives, monotonic skill fold, exactly-one
+`shift_log` row) and `tests/cross-device-restore.test.ts` (durable re-read from a
+FRESH session — the "come back and it's there" proof). Unit bounds for scoring /
+payout / grade-band generation: `tests/{shift,skills,tasks,counting-tasks,change-making-tasks}.test.ts`.
+**Known pinned behavior:** a duplicate shift-end POST pays twice — there is no
+idempotency key by design; the pin (shifts-complete, "PINS current behavior")
+makes adding one a conscious hardening change (watch the supabase-js ≥2.102
+auto-retry horizon from §2 Risk #2).
 
 ### 6.5 Adding a gameplay component-behavior test
 
-- TBD — see §3 Phase 4 (asserting the soft-failure invariants on the task component, not animation snapshots).
+Pattern established by `tests/task-guardrail.test.tsx` (Phase 4, 2026-07-12):
+
+1. First line of the file: `// @vitest-environment jsdom` — component tests opt
+   into the DOM env per-file; the suite default stays `node` (no config fork).
+2. RTL without globals: `afterEach(cleanup)` manually (vitest `globals` is off).
+3. Assert the BEHAVIORAL invariants, never CSS/animation (§7): wrong answer →
+   polite `role="status"` retry (assert `role="alert"` never appears), child's
+   tapped-coin state preserved, board + check button stay enabled, hint card
+   only after `RETRY_HINT_THRESHOLD` misses, eventual success completes.
+4. Completion rides a 1.4s beat: `vi.useFakeTimers()` + `act(() => vi.advanceTimersByTime(1400))`;
+   always restore real timers in `finally`. Use `fireEvent` (not user-event —
+   its delay handling fights fake timers).
+5. Resolve accessible names from `t.*` (e.g. `t.task.coinLabel`) — no hardcoded
+   Polish in queries beyond what the test itself injects as props.
 
 ### 6.6 Per-rollout-phase notes
 
 (Optional. After each phase lands, `/10x-implement` appends a 2–3 line note here capturing anything surprising the phase taught.)
+
+**Phases 2 & 3 — delivered inside feature changes (recorded 2026-07-12):** the
+isolation contract generalized itself through feature work rather than a
+dedicated rollout folder — F-01's per-table pattern was reproduced for
+`shift_log` + `account_settings` in their shipping migrations' changes, and the
+IDOR negatives live in the route suites (`upgrades-buy`, `shifts-complete`,
+`profile-deletion`, `account-deletion` — each asserts the durable no-op, not the
+error message). Phase 3's substance shipped with S-04/S-05/S-10
+(`shifts-complete`, `cross-device-restore`, the data-layer unit suites); the
+2026-07-12 sweep added the missing replay-behavior pin (§6.4). Statuses in §3
+flipped accordingly; no separate change folders exist for these phases.
+
+**Phase 4 — Gameplay guardrail behavior (coverage sweep, 2026-07-12):** installed
+the §4 component layer (jsdom + RTL via per-file env pragma; vitest `include`
+extended to `.tsx`) and landed `tests/task-guardrail.test.tsx` — Risk #6's
+invariants on the real `TaskScreen`/`useCoinTask`/`ChangeMakingTask` two-stage
+flow. Coverage baseline measured with `@vitest/coverage-v8` (added): `src/data`
+96%, `src/lib(+services)` 88–98%; i18n helper gap closed (`i18n-helpers.test.ts`).
 
 **Phase 1 — Auth critical-path + session gating (`testing-auth-critical-path`):**
 
@@ -215,8 +255,8 @@ unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-06-19
-- Stack versions last verified: 2026-06-19
+- Strategy (§1–§5) last reviewed: 2026-07-12
+- Stack versions last verified: 2026-07-12
 - AI-native tool references last verified: 2026-06-19
 
 Refresh (`/10x-test-plan --refresh`) when:
