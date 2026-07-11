@@ -298,8 +298,8 @@ No schema changes. Rollback = revert commits (UI/routes disappear; no data shape
 
 #### Manual
 
-- [x] 3.1 SUPABASE_SERVICE_ROLE_KEY + PARENT_SESSION_SECRET in Vercel (Production scope only); no secrets leaked
-- [x] 3.2 Production deploy green; PIN gate works in prod
-- [x] 3.3 Production profile deletion verified
-- [x] 3.4 Production account deletion verified (auth user + all rows gone)
-- [x] 3.5 MAT-17 Done + GitHub #17 closed with outcome
+- [x] 3.1 SUPABASE_SERVICE_ROLE_KEY + PARENT_SESSION_SECRET in Vercel (Production scope only); no secrets leaked — 54350ff
+- [x] 3.2 Production deploy green; PIN gate works in prod — 54350ff
+- [x] 3.3 Production profile deletion verified — 54350ff
+- [x] 3.4 Production account deletion verified (auth user + all rows gone) — 54350ff
+- [x] 3.5 MAT-17 Done + GitHub #17 closed with outcome — 54350ff
