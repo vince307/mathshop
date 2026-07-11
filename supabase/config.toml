@@ -425,6 +425,11 @@ additional_redirect_urls = [
 [remotes.production.auth.email]
 # Production verifies email for real (locally false — the test suite depends on it).
 enable_confirmations = true
+# Anti-abuse gap between resends: keep prod at 1 minute (base config's "1s" is a
+# LOCAL TESTING value — without this override a push would leak it to prod).
+max_frequency = "1m0s"
+# Prior hosted value; pinned so pushes don't drift it to the local default (6).
+otp_length = 8
 
 [remotes.production.auth.email.smtp]
 # Brevo (decision: infrastructure.md §Email Delivery). From is rewritten to
@@ -441,3 +446,9 @@ sender_name = "MatmaVerse"
 # Custom-SMTP baseline (built-in mailer was 2/hr). Raise further in the dashboard
 # (Auth → Rate Limits) if real signup volume ever demands it.
 email_sent = 30
+
+[remotes.production.auth.mfa.totp]
+# Prior hosted values (unused by the app, but not ours to flip); pinned so pushes
+# don't drift them to the local defaults (false).
+enroll_enabled = true
+verify_enabled = true

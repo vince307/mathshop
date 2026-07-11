@@ -217,23 +217,23 @@ No DB changes. Rollback: `git revert` restores the TOML; a re-push restores prio
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run check`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 Build succeeds: `npm run build`
-- [x] 1.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`), incl. new resend-rider test, with `BREVO_*` unset
+- [x] 1.1 Type checking passes: `npm run check` — 713bef2
+- [x] 1.2 Linting passes: `npm run lint` — 713bef2
+- [x] 1.3 Build succeeds: `npm run build` — 713bef2
+- [x] 1.4 Full suite passes against a fresh DB (`supabase db reset` + `vitest run`), incl. new resend-rider test, with `BREVO_*` unset — 713bef2
 
 #### Manual
 
-- [x] 1.5 Local Inbucket email round-trip (confirmations on → signup → Polish email → link → /app → flip back)
-- [x] 1.6 Throttled resend shows "Zbyt wiele prób…"; other failures keep generic copy
-- [x] 1.7 config.toml diff = new block only
+- [x] 1.5 Local Inbucket email round-trip (confirmations on → signup → Polish email → link → /app → flip back) — 713bef2
+- [x] 1.6 Throttled resend shows "Zbyt wiele prób…"; other failures keep generic copy — 713bef2
+- [x] 1.7 config.toml diff = new block only — 713bef2
 
 ### Phase 2: Brevo provisioning + config push + production proof
 
 #### Manual
 
-- [ ] 2.1 Brevo account + SMTP key provisioned; env vars exported; no secrets in repo
-- [ ] 2.2 `config push` diff reviewed (MAT-14 values preserved) and applied
-- [ ] 2.3 Hosted rate limit = 30/hr (push or dashboard fallback)
-- [ ] 2.4 Production signup to non-team address: Polish email → confirm link → /app
-- [ ] 2.5 MAT-15 Done + GitHub #15 closed with outcome
+- [x] 2.1 Brevo account + SMTP key provisioned; env vars exported; no secrets in repo
+- [x] 2.2 `config push` diff reviewed (MAT-14 values preserved) and applied
+- [x] 2.3 Hosted rate limit = 30/hr (push or dashboard fallback)
+- [x] 2.4 Production signup to non-team address: Polish email → confirm link → /app
+- [x] 2.5 MAT-15 Done + GitHub #15 closed with outcome
