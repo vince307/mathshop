@@ -232,8 +232,8 @@ No DB changes. Rollback: `git revert` restores the TOML; a re-push restores prio
 
 #### Manual
 
-- [x] 2.1 Brevo account + SMTP key provisioned; env vars exported; no secrets in repo
-- [x] 2.2 `config push` diff reviewed (MAT-14 values preserved) and applied
-- [x] 2.3 Hosted rate limit = 30/hr (push or dashboard fallback)
-- [x] 2.4 Production signup to non-team address: Polish email → confirm link → /app
-- [x] 2.5 MAT-15 Done + GitHub #15 closed with outcome
+- [x] 2.1 Brevo account + SMTP key provisioned; env vars exported; no secrets in repo — 73d732a
+- [x] 2.2 `config push` diff reviewed (MAT-14 values preserved) and applied — 73d732a
+- [x] 2.3 Hosted rate limit = 30/hr (push or dashboard fallback) — 73d732a
+- [x] 2.4 Production signup to non-team address: Polish email → confirm link → /app — 73d732a
+- [x] 2.5 MAT-15 Done + GitHub #15 closed with outcome — 73d732a

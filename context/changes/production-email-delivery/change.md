@@ -1,9 +1,9 @@
 ---
 change_id: production-email-delivery
 title: Production email delivery via Brevo SMTP + Polish auth templates
-status: implementing
+status: implemented
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-11
 archived_at: null
 ---
 
