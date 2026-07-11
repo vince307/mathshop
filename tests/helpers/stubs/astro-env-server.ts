@@ -9,3 +9,5 @@ export const SUPABASE_URL = process.env.SUPABASE_URL;
 export const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 // HMAC key for the parent-verified session marker (S-07). From `.env.test`.
 export const PARENT_SESSION_SECRET = process.env.PARENT_SESSION_SECRET;
+// Service-role key (MAT-17 account deletion). Local-stack demo key from `.env.test`.
+export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

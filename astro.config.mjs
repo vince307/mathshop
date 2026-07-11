@@ -26,6 +26,12 @@ export default defineConfig({
       // Vercel (Production + Preview). Optional so builds without it don't fail;
       // the marker helpers fall back to an empty key only when it's absent.
       PARENT_SESSION_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
+      // Service-role key (MAT-17) — powers exactly ONE operation: account
+      // self-deletion (auth.admin.deleteUser). The most sensitive value in the
+      // project: Vercel PRODUCTION scope only, never Preview/Development
+      // (infrastructure.md), never the browser. Optional so builds without it
+      // don't fail; createAdminClient() fails closed (null → route 503).
+      SUPABASE_SERVICE_ROLE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
     },
   },
 });

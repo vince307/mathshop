@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import WeeklyReport from "@/components/parent/WeeklyReport";
+import DeleteAccountSection from "@/components/parent/DeleteAccountSection";
 import type { ChildReport } from "@/components/parent/WeeklyReport";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
@@ -65,5 +66,8 @@ const reports: ChildReport[] = await Promise.all(
         {t.report.back}
       </a>
     </div>
+
+    {/* Danger zone (MAT-17): whole-account deletion — typed e-mail + fresh PIN in the dialog. */}
+    <DeleteAccountSection client:load email={user.email ?? ""} />
   </div>
 </Layout>

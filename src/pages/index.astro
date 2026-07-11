@@ -1,8 +1,23 @@
 ---
 import Welcome from "@/components/Welcome.astro";
 import Layout from "@/layouts/Layout.astro";
+import { t } from "@/i18n";
+
+// Post-account-deletion farewell (MAT-17): the delete route signs the browser
+// out and the island lands here with ?deleted=1 — a calm one-liner, no CTA.
+const deleted = Astro.url.searchParams.get("deleted") === "1";
 ---
 
 <Layout>
+  {
+    deleted && (
+      <p
+        role="status"
+        class="bg-card border-border text-foreground mx-auto mt-6 w-fit rounded-2xl border px-6 py-3 text-center text-sm font-semibold shadow-sm"
+      >
+        {t.deletion.accountDeleted}
+      </p>
+    )
+  }
   <Welcome />
 </Layout>

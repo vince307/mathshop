@@ -265,34 +265,34 @@ No schema changes. Rollback = revert commits (UI/routes disappear; no data shape
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run check`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 Build succeeds: `npm run build`
-- [x] 1.4 Full suite passes against a fresh DB incl. new profile-deletion tests
-- [x] 1.5 L-003 grep clean on new/edited components
+- [x] 1.1 Type checking passes: `npm run check` — 26dd33e
+- [x] 1.2 Linting passes: `npm run lint` — 26dd33e
+- [x] 1.3 Build succeeds: `npm run build` — 26dd33e
+- [x] 1.4 Full suite passes against a fresh DB incl. new profile-deletion tests — 26dd33e
+- [x] 1.5 L-003 grep clean on new/edited components — 26dd33e
 
 #### Manual
 
-- [x] 1.6 Local flow: PIN → report → typed-name delete → card + shift history gone; cap slot freed
-- [x] 1.7 Last-profile delete degrades to wizard/empty-state; active_profile cookie cleared
-- [x] 1.8 Stale/no marker bounces to PIN gate; wrong typed name keeps button disabled
-- [x] 1.9 Dialog calm/Polish; destructive styling on confirm only
+- [x] 1.6 Local flow: PIN → report → typed-name delete → card + shift history gone; cap slot freed — 26dd33e
+- [x] 1.7 Last-profile delete degrades to wizard/empty-state; active_profile cookie cleared — 26dd33e
+- [x] 1.8 Stale/no marker bounces to PIN gate; wrong typed name keeps button disabled — 26dd33e
+- [x] 1.9 Dialog calm/Polish; destructive styling on confirm only — 26dd33e
 
 ### Phase 2: Parent-account deletion end-to-end
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run check`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Build succeeds: `npm run build`
-- [ ] 2.4 Full suite passes against a fresh DB incl. new account-deletion tests
-- [ ] 2.5 L-003 grep clean on new/edited files
+- [x] 2.1 Type checking passes: `npm run check`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Build succeeds: `npm run build`
+- [x] 2.4 Full suite passes against a fresh DB incl. new account-deletion tests
+- [x] 2.5 L-003 grep clean on new/edited files
 
 #### Manual
 
-- [ ] 2.6 Local flow: danger zone → typed email + fresh PIN → signed out with farewell; Studio shows full erasure
-- [ ] 2.7 Wrong PIN throttled; stale marker 403s; back-button post-deletion is clean
-- [ ] 2.8 Second local account untouched
+- [x] 2.6 Local flow: danger zone → typed email + fresh PIN → signed out with farewell; Studio shows full erasure
+- [x] 2.7 Wrong PIN throttled; stale marker 403s; back-button post-deletion is clean
+- [x] 2.8 Second local account untouched
 
 ### Phase 3: Ops + production proof
 
