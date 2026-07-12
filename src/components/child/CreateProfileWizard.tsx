@@ -272,12 +272,17 @@ export default function CreateProfileWizard({ serverError }: Props) {
           <span />
         )}
         {step < TOTAL_STEPS ? (
-          <ChildButton variant="primary" onClick={goNext}>
+          // Distinct keys force a remount between "Dalej" and "Utwórz profil".
+          // Without them React reuses the same <button> node, and goNext's state
+          // flush lands before the click's default action — the just-clicked
+          // button is already type="submit", so step 2's "Dalej" submits the
+          // form and the review step is skipped (caught by e2e/onboarding.spec.ts).
+          <ChildButton key="wizard-next" variant="primary" onClick={goNext}>
             {t.profileWizard.next}
             <ArrowRight />
           </ChildButton>
         ) : (
-          <ChildButton variant="primary" type="submit">
+          <ChildButton key="wizard-create" variant="primary" type="submit">
             <Check />
             {t.profileWizard.create}
           </ChildButton>

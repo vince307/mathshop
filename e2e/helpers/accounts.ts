@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { admin, deleteUser, findUserIdByEmail, PASSWORD } from "../../tests/helpers/supabase";
+import { waitForIslands } from "./hydration";
 import { t } from "./i18n";
 
 /**
@@ -68,6 +69,10 @@ export async function seedChildProfile(accountId: string, options: SeedProfileOp
  */
 export async function signInViaUI(page: Page, email: string, password: string = PASSWORD): Promise<void> {
   await page.goto("/auth/signin");
+  // Hydration gate: filling the SSR'd controlled inputs before React mounts
+  // gets wiped when hydration re-renders them from empty state (race caught in
+  // a parallel run — the click then trips client validation and never submits).
+  await waitForIslands(page);
   await page.getByLabel(t.auth.fields.emailLabel).fill(email);
   await page.getByLabel(t.auth.fields.passwordLabel, { exact: true }).fill(password);
   await page.getByRole("button", { name: t.auth.signin.submit }).click();

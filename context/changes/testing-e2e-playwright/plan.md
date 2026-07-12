@@ -330,28 +330,28 @@ None — additive layer. Rollback = delete `e2e/`, `playwright.config.ts`, the C
 
 #### Automated
 
-- [x] 1.1 `npx playwright test e2e/smoke.spec.ts` passes locally
-- [x] 1.2 `npm run test` (vitest) still passes and ignores `e2e/**`
-- [x] 1.3 `npm run lint` + `npx astro check` pass with new TS files
+- [x] 1.1 `npx playwright test e2e/smoke.spec.ts` passes locally — 1190b10
+- [x] 1.2 `npm run test` (vitest) still passes and ignores `e2e/**` — 1190b10
+- [x] 1.3 `npm run lint` + `npx astro check` pass with new TS files — 1190b10
 
 #### Manual
 
-- [x] 1.4 `npx playwright test --ui` runs the smoke spec
-- [x] 1.5 Playwright MCP starts from `.mcp.json` in a fresh session
-- [x] 1.6 Open-question findings (preview viability, signup auto-confirm) recorded in research.md
+- [x] 1.4 `npx playwright test --ui` runs the smoke spec — 1190b10
+- [x] 1.5 Playwright MCP starts from `.mcp.json` in a fresh session — 1190b10
+- [x] 1.6 Open-question findings (preview viability, signup auto-confirm) recorded in research.md — 1190b10
 
 ### Phase 2: Onboarding journey spec (Risk #4)
 
 #### Automated
 
-- [ ] 2.1 `e2e/onboarding.spec.ts` green, parallel-safe, zero waitForTimeout
-- [ ] 2.2 Full suite green
-- [ ] 2.3 No hardcoded Polish beyond `t`-interpolations (grep guard)
+- [x] 2.1 `e2e/onboarding.spec.ts` green, parallel-safe, zero waitForTimeout
+- [x] 2.2 Full suite green
+- [x] 2.3 No hardcoded Polish beyond `t`-interpolations (grep guard)
 
 #### Manual
 
-- [ ] 2.4 Trace-watch: wizard advances; confirm-link hop lands authenticated
-- [ ] 2.5 Broken-hop red-test sanity (bad token → Polish error assertion fires)
+- [x] 2.4 Trace-watch: wizard advances; confirm-link hop lands authenticated
+- [x] 2.5 Broken-hop red-test sanity (bad token → Polish error assertion fires)
 
 ### Phase 3: Gameplay loop + fresh-context restore spec (Risks #6, #2)
 
