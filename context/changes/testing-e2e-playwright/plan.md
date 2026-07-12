@@ -357,27 +357,27 @@ None — additive layer. Rollback = delete `e2e/`, `playwright.config.ts`, the C
 
 #### Automated
 
-- [x] 3.1 `e2e/gameplay-restore.spec.ts` green in desktop AND touch projects
-- [x] 3.2 Zero waitForTimeout; file runtime < ~4 min locally
-- [x] 3.3 Full suite green in parallel
+- [x] 3.1 `e2e/gameplay-restore.spec.ts` green in desktop AND touch projects — 9cd90d2
+- [x] 3.2 Zero waitForTimeout; file runtime < ~4 min locally — 9cd90d2
+- [x] 3.3 Full suite green in parallel — 9cd90d2
 
 #### Manual
 
-- [x] 3.4 Touch-project trace-watch: taps register, no flaky advance
-- [x] 3.5 Earnings-oracle red-test (corrupted formula → exact-delta assertion fails)
+- [x] 3.4 Touch-project trace-watch: taps register, no flaky advance — 9cd90d2
+- [x] 3.5 Earnings-oracle red-test (corrupted formula → exact-delta assertion fails) — 9cd90d2
 
 ### Phase 4: Parent surfaces spec (PIN gate + danger zone)
 
 #### Automated
 
-- [ ] 4.1 `e2e/parent-surfaces.spec.ts` green, parallel-safe, zero waitForTimeout
-- [ ] 4.2 Full suite green
-- [ ] 4.3 In-spec durable check: deleted account gone (`findUserIdByEmail` → null)
+- [x] 4.1 `e2e/parent-surfaces.spec.ts` green, parallel-safe, zero waitForTimeout
+- [x] 4.2 Full suite green
+- [x] 4.3 In-spec durable check: deleted account gone (`findUserIdByEmail` → null)
 
 #### Manual
 
-- [ ] 4.4 Trace-watch: dialog focus/disabled/Escape behavior correct
-- [ ] 4.5 Throwaway-only confirmed (no external credentials reachable from specs)
+- [x] 4.4 Trace-watch: dialog focus/disabled/Escape behavior correct
+- [x] 4.5 Throwaway-only confirmed (no external credentials reachable from specs)
 
 ### Phase 5: CI job + test-plan docs
 
