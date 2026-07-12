@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-07-12 (Phases 1–4 complete; Phase 5 — E2E browser layer, Playwright — opened via scoped refresh)
+> Last updated: 2026-07-12 (Phases 1–5 complete; e2e layer shipped — see §4 e2e row + §6.7)
 
 ## 1. Strategy
 
@@ -98,7 +98,7 @@ ship alongside those slices.
 | component / interaction | React Testing Library     | `@testing-library/react` ^16.3.2, `jsdom` ^29.1.1        | Installed by Phase 4 (2026-07-12) with `@testing-library/user-event` + `jest-dom`. No global config: component test files opt into the DOM env with a `// @vitest-environment jsdom` first-line pragma (node stays the default); vitest `include` now covers `.tsx`. Reference: `tests/task-guardrail.test.tsx`.                                                                    |
 | coverage                | @vitest/coverage-v8       | ^4.1.10                                                  | `npx vitest run --coverage --coverage.include="src/**"`. Baseline 2026-07-12: `src/data` 96% / `src/lib(+services)` 88–98% stmts; the component layer was the 0% area Phase 4 addressed.                                                                                                                                                                                            |
 | API mocking             | none yet                  | —                                                        | Auth/profile integration tests hit a real local Supabase rather than mocking the edge; revisit if external HTTP boundaries appear.                                                                                                                                                                                                                                                  |
-| e2e                     | none                      | —                                                        | No Playwright/Cypress installed. Not planned for v1 — request-level integration covers the critical paths (#3, #4) more cheaply. Re-evaluate if a full deployed-shape failure mode appears.                                                                                                                                                                                         |
+| e2e                     | Playwright                | `@playwright/test` ^1.61.1                               | Bootstrapped by §3 Phase 5 (2026-07-12). Specs in `e2e/*.spec.ts` (invisible to vitest's `tests/**/*.test.*` include); two Chromium projects — `desktop` + `touch` (touch scoped to the gameplay spec); webServer `npm run dev` :4321 vs local Supabase (`astro preview` is unsupported by the Vercel adapter); per-test throwaway accounts, `fullyParallel`, workers ≤ 4. Quality levers: `e2e/seed.spec.ts` + `e2e/CLAUDE.md`. Playwright MCP wired in `.mcp.json`. See §6.7. |
 
 **Stack grounding tools (current session):**
 
@@ -116,6 +116,7 @@ ship alongside those slices.
 | unit + integration                  | local + CI                    | required after §3 Phase 1                     | logic regressions on auth/session, persistence, scoring |
 | authorization / IDOR negative tests | CI on PR                      | required after §3 Phase 2                     | ownership-check bypass at the app layer                 |
 | component / interaction (guardrail) | CI on PR                      | required after §3 Phase 4                     | harsh-feedback regression on wrong answers              |
+| e2e journeys (Playwright)           | CI on PR (separate `e2e` job) | required after §3 Phase 5                     | journey-glue regressions: redirect chains, island hydration, cookie lifecycle, dialog arming |
 | pre-prod smoke                      | between merge + prod (Vercel) | optional                                      | environment-specific SSR/runtime failures               |
 
 ## 6. Cookbook Patterns
@@ -200,9 +201,50 @@ Pattern established by `tests/task-guardrail.test.tsx` (Phase 4, 2026-07-12):
 5. Resolve accessible names from `t.*` (e.g. `t.task.coinLabel`) — no hardcoded
    Polish in queries beyond what the test itself injects as props.
 
+### 6.7 Adding an e2e journey spec (Playwright)
+
+Pattern established by §3 Phase 5 (`testing-e2e-playwright`, 2026-07-12).
+References: `e2e/seed.spec.ts` (the exemplar every spec is modeled on) and
+`e2e/CLAUDE.md` (the rules file, read automatically in that directory).
+
+1. One spec file per journey in `e2e/*.spec.ts` (`.spec` keeps it invisible to
+   vitest); name every test after the risk it protects.
+2. Provision per test via `e2e/helpers/accounts.ts` (`provisionAccount` — admin
+   API, bypasses the signup IP rate limit; `seedChildProfile` for gameplay
+   state). UI signup only in the onboarding spec. Clean up in `finally`;
+   destructive flows run against throwaway accounts only.
+3. Locators via `e2e/helpers/i18n.ts` (`t`, `fill`, `templateRegex`) —
+   role/label-first, strings always from the dictionary (L-003).
+4. **Always `waitForIslands(page)` before interacting with an island.** Two
+   real races caught during rollout: fills on SSR'd controlled inputs get wiped
+   when hydration re-renders them, and a pre-hydration click on an island
+   `onClick` button is silently lost.
+5. Wait for state text, never time — the gameplay 1.4 s beat is absorbed by
+   waiting on the next "Zadanie N z M" / results heading. The DOM-derived
+   answer loop (unseeded generator) lives in `e2e/helpers/solve-shift.ts`;
+   seed level-1 profiles so two-stage tasks never appear.
+6. Fresh-context semantics = new context + UI re-signin. `storageState` is
+   banned — it falsely persists the session-lifetime `active_profile` cookie.
+   `browser.newContext()` does not inherit project options; pass
+   `test.info().project.use`.
+7. Verify every new spec with a **deliberate break**: invert the behavior it
+   protects, confirm red, revert. A spec that stays green when its risk
+   materializes is decorative (this caught one such assertion during rollout).
+8. Run one spec: `npx playwright test e2e/<file> --project=desktop`.
+
 ### 6.6 Per-rollout-phase notes
 
 (Optional. After each phase lands, `/10x-implement` appends a 2–3 line note here capturing anything surprising the phase taught.)
+
+**Phase 5 — E2E browser layer (`testing-e2e-playwright`, 2026-07-12):**
+Playwright bootstrapped per §4; four spec files (smoke, onboarding,
+gameplay+restore, parent surfaces), each deliberate-break verified, wired as a
+blocking CI job. The onboarding journey caught a **real wizard bug** pre-merge:
+React reused the footer button node, so "Dalej" on step 2 became `type="submit"`
+mid-click and the review step was unreachable in a real browser (fixed with
+distinct keys in `CreateProfileWizard.tsx` — no jsdom or route test could see
+it). Two hydration races were fixed in the harness (fill-wipe on controlled
+inputs; lost island click) — hence §6.7's `waitForIslands` rule.
 
 **Phases 2 & 3 — delivered inside feature changes (recorded 2026-07-12):** the
 isolation contract generalized itself through feature work rather than a
@@ -234,14 +276,15 @@ flow. Coverage baseline measured with `@vitest/coverage-v8` (added): `src/data`
 - **Coverage debt (Risk #4, deferred):** email-verification code exchange, first-profile
   creation, and the start screen are unbuilt — their onboarding tests land with slices
   **S-01/S-02**, not here. Phase 1 covers only the built signup/signin route contracts.
-- **Known issues pinned by tests** (current behavior asserted; fixes are separate changes):
-  1. `src/pages/api/auth/signout.ts` is missing `export const prerender = false`, and is a
-     **silent no-op when Supabase is unconfigured** (redirects to `/` without clearing cookies)
-     — `tests/auth-env-missing.test.ts`.
-  2. The middleware `startsWith` gate has no boundary, so `/dashboardXYZ` also gates —
-     `tests/auth-session-gating.test.ts`.
-  3. The raw (English) Supabase `error.message` leaks through `?error=` (FR-013) with no
-     Polish-mapping layer — `tests/auth-routes.test.ts`.
+- **Known issues pinned by tests** (status backported 2026-07-12 from Phase 5 research):
+  1. ~~signout silent no-op when unconfigured~~ — **FIXED**: `signout.ts` clears auth +
+     `active_profile` + `parent_verified` cookies even without env (`tests/auth-env-missing.test.ts`
+     pins the new behavior).
+  2. The middleware `startsWith` gate has no boundary, so `/appXYZ` also gates — **still open,
+     deliberately pinned** (`tests/auth-session-gating.test.ts`).
+  3. ~~English Supabase `error.message` leak through `?error=`~~ — **FIXED**: all auth routes map
+     via `mapAuthError` (`src/lib/auth-errors.ts`), Polish-only pinned in `tests/auth-errors.test.ts`
+     and `tests/auth-routes.test.ts`.
 
 ## 7. What We Deliberately Don't Test
 

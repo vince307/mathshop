@@ -54,3 +54,53 @@ jobs:
           rm -f sb.env
       - name: Run per-account isolation test
         run: npm run test
+
+  # Browser-level journey gate (test-plan §3 Phase 5). Runs alongside `ci` (not
+  # chained) so wall-clock stays bounded. Playwright's webServer starts
+  # `npm run dev` on :4321 against the same local Supabase stack; retries=2 +
+  # trace-on-first-retry come from playwright.config.ts (CI mode).
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - name: Start Supabase (local stack — db + auth + rest only)
+        run: >-
+          npx supabase start -x
+          realtime,storage-api,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+      - name: Apply migrations to a fresh DB
+        run: npx supabase db reset
+      # playwright.config.ts reads these names (dotenv .env.test is absent in CI)
+      # and maps SUPABASE_KEY for the dev-server child. The local-stack keys are
+      # fixed public demo JWTs; PARENT_SESSION_SECRET is any non-empty string.
+      - name: Export local Supabase test env
+        run: |
+          npx supabase status -o env \
+            | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=' > sb.env
+          . ./sb.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "PARENT_SESSION_SECRET=ci-parent-session-secret-0123456789"
+          } >> "$GITHUB_ENV"
+          rm -f sb.env
+      - name: Run Playwright e2e suite
+        run: npx playwright test
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

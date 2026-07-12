@@ -370,21 +370,21 @@ None — additive layer. Rollback = delete `e2e/`, `playwright.config.ts`, the C
 
 #### Automated
 
-- [x] 4.1 `e2e/parent-surfaces.spec.ts` green, parallel-safe, zero waitForTimeout
-- [x] 4.2 Full suite green
-- [x] 4.3 In-spec durable check: deleted account gone (`findUserIdByEmail` → null)
+- [x] 4.1 `e2e/parent-surfaces.spec.ts` green, parallel-safe, zero waitForTimeout — 6c140fd
+- [x] 4.2 Full suite green — 6c140fd
+- [x] 4.3 In-spec durable check: deleted account gone (`findUserIdByEmail` → null) — 6c140fd
 
 #### Manual
 
-- [x] 4.4 Trace-watch: dialog focus/disabled/Escape behavior correct
-- [x] 4.5 Throwaway-only confirmed (no external credentials reachable from specs)
+- [x] 4.4 Trace-watch: dialog focus/disabled/Escape behavior correct — 6c140fd
+- [x] 4.5 Throwaway-only confirmed (no external credentials reachable from specs) — 6c140fd
 
 ### Phase 5: CI job + test-plan docs
 
 #### Automated
 
 - [ ] 5.1 CI green on a PR with both jobs (existing + e2e)
-- [ ] 5.2 `npm run lint` passes
+- [x] 5.2 `npm run lint` passes
 
 #### Manual
 
