@@ -344,27 +344,27 @@ None — additive layer. Rollback = delete `e2e/`, `playwright.config.ts`, the C
 
 #### Automated
 
-- [x] 2.1 `e2e/onboarding.spec.ts` green, parallel-safe, zero waitForTimeout
-- [x] 2.2 Full suite green
-- [x] 2.3 No hardcoded Polish beyond `t`-interpolations (grep guard)
+- [x] 2.1 `e2e/onboarding.spec.ts` green, parallel-safe, zero waitForTimeout — 9c795fb
+- [x] 2.2 Full suite green — 9c795fb
+- [x] 2.3 No hardcoded Polish beyond `t`-interpolations (grep guard) — 9c795fb
 
 #### Manual
 
-- [x] 2.4 Trace-watch: wizard advances; confirm-link hop lands authenticated
-- [x] 2.5 Broken-hop red-test sanity (bad token → Polish error assertion fires)
+- [x] 2.4 Trace-watch: wizard advances; confirm-link hop lands authenticated — 9c795fb
+- [x] 2.5 Broken-hop red-test sanity (bad token → Polish error assertion fires) — 9c795fb
 
 ### Phase 3: Gameplay loop + fresh-context restore spec (Risks #6, #2)
 
 #### Automated
 
-- [ ] 3.1 `e2e/gameplay-restore.spec.ts` green in desktop AND touch projects
-- [ ] 3.2 Zero waitForTimeout; file runtime < ~4 min locally
-- [ ] 3.3 Full suite green in parallel
+- [x] 3.1 `e2e/gameplay-restore.spec.ts` green in desktop AND touch projects
+- [x] 3.2 Zero waitForTimeout; file runtime < ~4 min locally
+- [x] 3.3 Full suite green in parallel
 
 #### Manual
 
-- [ ] 3.4 Touch-project trace-watch: taps register, no flaky advance
-- [ ] 3.5 Earnings-oracle red-test (corrupted formula → exact-delta assertion fails)
+- [x] 3.4 Touch-project trace-watch: taps register, no flaky advance
+- [x] 3.5 Earnings-oracle red-test (corrupted formula → exact-delta assertion fails)
 
 ### Phase 4: Parent surfaces spec (PIN gate + danger zone)
 
