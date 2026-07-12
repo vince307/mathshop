@@ -29,10 +29,10 @@ function openAndConfirm(pin = "1234") {
 const jsonResponse = (status: number, bodyObj: unknown): Response =>
   ({ ok: status >= 200 && status < 300, status, json: () => Promise.resolve(bodyObj) }) as Response;
 
-let hrefSpy: ReturnType<typeof vi.fn>;
+let hrefSpy: ReturnType<typeof vi.fn<(v: string) => void>>;
 
 beforeEach(() => {
-  hrefSpy = vi.fn();
+  hrefSpy = vi.fn<(v: string) => void>();
   // jsdom doesn't implement navigation; intercept href assignment without navigating.
   Object.defineProperty(window, "location", {
     configurable: true,

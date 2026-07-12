@@ -155,6 +155,8 @@ describe("Risk #6 — two-stage stock_and_change keeps the guarantees per stage"
   const task: ChangeMakingTaskInstance = {
     type: "change_making",
     scenario: "stock_and_change",
+    objectType: "coin",
+    difficultyTier: 3,
     paid: 5,
     price: 2,
     change: 3,
