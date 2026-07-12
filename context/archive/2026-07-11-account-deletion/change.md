@@ -1,10 +1,10 @@
 ---
 change_id: account-deletion
 title: Delete child profile + delete parent account (GDPR erasure)
-status: impl_reviewed
+status: archived
 created: 2026-07-11
-updated: 2026-07-11
-archived_at: null
+updated: 2026-07-12
+archived_at: 2026-07-12T08:19:55Z
 ---
 
 ## Notes
