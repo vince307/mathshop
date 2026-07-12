@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-07-12 (Phases 2–4 complete; component layer installed)
+> Last updated: 2026-07-12 (Phases 1–4 complete; Phase 5 — E2E browser layer, Playwright — opened via scoped refresh)
 
 ## 1. Strategy
 
@@ -73,10 +73,11 @@ orchestrator updates Status as artifacts appear on disk.
 
 | #   | Phase name                                   | Goal (one line)                                                                                              | Risks covered | Test types                                                                                             | Status      | Change folder                               |
 | --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ------------------------------------------------------------------------------------------------------ | ----------- | ------------------------------------------- |
-| 1   | Auth critical-path + session gating          | Prove the universal entry works and the gate never fails open; establish the test harness later phases reuse | #3, #4        | integration (auth routes + middleware); harness bootstrap (vitest config, Supabase test-client helper) | researched  | context/changes/testing-auth-critical-path/ |
+| 1   | Auth critical-path + session gating          | Prove the universal entry works and the gate never fails open; establish the test harness later phases reuse | #3, #4        | integration (auth routes + middleware); harness bootstrap (vitest config, Supabase test-client helper) | complete    | context/archive/2026-06-19-testing-auth-critical-path/ |
 | 2   | Isolation contract + authorization hardening | Lock the #1 correctness invariant into a reusable per-table pattern before the schema grows                  | #1, #5        | integration (RLS cross-account, IDOR negative) + L-002 meta-check                                      | complete    | in feature changes — see §6.6                                           |
 | 3   | Shift persistence + scoring/generation       | Prove "come back and your progress is there" holds, and that scoring/generation are correct                  | #2, #7        | integration (persistence round-trip + replay idempotency) + unit (scoring, payout, band bounds)        | complete    | in feature changes — see §6.6                                           |
 | 4   | Gameplay guardrail behavior                  | Prove the soft-failure premise cannot silently regress                                                       | #6            | component / interaction (task feedback)                                                                | complete    | coverage sweep 2026-07-12 — §6.6                                           |
+| 5   | E2E browser layer (Playwright)               | Prove the four core user journeys survive in a real browser — hydration, real cookies, cross-page/cross-context state that node-env tests cannot see | #2, #4, #6 (browser-level halves) + parent PIN/danger-zone surface | e2e (Playwright vs local dev + local Supabase); Playwright bootstrap (config, fixtures, provisioning reuse) | planned       | context/changes/testing-e2e-playwright/     |
 
 **Status vocabulary** (fixed — parser literals): `not started` → `change opened` → `researched` → `planned` → `implementing` → `complete`.
 

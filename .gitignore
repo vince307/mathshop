@@ -40,3 +40,8 @@ supabase password.txt
 # JS) — not source; must not be linted or committed
 assets/
 coverage/
+
+# playwright artifacts
+playwright-report/
+test-results/
+blob-report/
