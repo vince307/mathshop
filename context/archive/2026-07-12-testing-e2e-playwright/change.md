@@ -1,10 +1,10 @@
 ---
 change_id: testing-e2e-playwright
 title: E2E browser layer with Playwright (test-plan rollout Phase 5)
-status: impl_reviewed
+status: archived
 created: 2026-07-12
 updated: 2026-07-14
-archived_at: null
+archived_at: 2026-07-14T09:12:00Z
 ---
 
 ## Notes
