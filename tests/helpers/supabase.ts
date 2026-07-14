@@ -59,9 +59,15 @@ export async function createSignedInUser(prefix = "auth-test"): Promise<TestAcco
   return { id: data.user.id, email, client };
 }
 
-/** Tear down a provisioned user. ON DELETE CASCADE removes their owned rows. */
+/** Tear down a provisioned user. ON DELETE CASCADE removes their owned rows.
+ * Non-throwing (cleanup must tolerate an already-deleted account), but real
+ * teardown failures are logged so stale users don't silently accumulate. */
 export async function deleteUser(id: string): Promise<void> {
-  await admin.auth.admin.deleteUser(id);
+  const { error } = await admin.auth.admin.deleteUser(id);
+  if (error && error.status !== 404) {
+    // eslint-disable-next-line no-console -- teardown diagnostics must reach the runner output
+    console.warn(`deleteUser(${id}): teardown failed — ${error.message}`);
+  }
 }
 
 /**

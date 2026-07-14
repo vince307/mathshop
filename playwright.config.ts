@@ -22,12 +22,18 @@ const BASE_URL = "http://localhost:4321";
 
 export default defineConfig({
   testDir: "./e2e",
+  // Backend-identity probe — fails loudly if a reused dev server points at a
+  // different Supabase stack than .env.test (see e2e/global-setup.ts).
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   // Per-test throwaway accounts make parallelism safe; cap workers so the shared
   // local Supabase stack and the single dev server stay comfortable.
   workers: 4,
   retries: process.env.CI ? 2 : 0,
   forbidOnly: !!process.env.CI,
+  // CI keeps the html report on disk so the failure-artifact step has
+  // something to upload (the default CI reporter is `dot`, which writes nothing).
+  reporter: process.env.CI ? [["html", { open: "never" }], ["dot"]] : "list",
   use: {
     baseURL: BASE_URL,
     locale: "pl-PL",

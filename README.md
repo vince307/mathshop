@@ -154,6 +154,10 @@ It needs the **local Supabase stack** running. Running the isolation test:
 
 The local-stack anon/service-role keys are fixed **public demo** JWTs (the same on every machine) — they are not secrets, so CI reads them straight from `supabase status` and `.env.test` is gitignored. Never reuse these keys for any deployed environment.
 
+### E2E tests (Playwright)
+
+Browser-level journey specs live in `e2e/` and run against `npm run dev` (:4321) + the local Supabase stack, reusing `.env.test`. One-time setup: `npx playwright install chromium`. Run with `npm run test:e2e` (or `npm run test:e2e:ui`); conventions and rules are in `e2e/CLAUDE.md`, the cookbook in `context/foundation/test-plan.md` §6.7.
+
 ## Deployment
 
 This project deploys to [Vercel](https://vercel.com/) via the `@astrojs/vercel` adapter (SSR routes compile to Vercel Functions). See `context/foundation/infrastructure.md` for the full decision and risk register.

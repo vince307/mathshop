@@ -75,12 +75,20 @@ test("gameplay: start → tasks (one soft retry) → results → upgrade purchas
 test("restore: a fresh browser context re-signs in and sees the earned state (Risk #2)", async ({ browser }) => {
   test.slow();
   const account = await provisionAccount("e2e-restore");
+  // Track manually created contexts so a mid-test throw can't leak them for
+  // the worker's lifetime (impl-review F4); closed in the finally.
+  const openContexts: BrowserContext[] = [];
+  const trackedContext = async (): Promise<BrowserContext> => {
+    const context = await freshContext(browser);
+    openContexts.push(context);
+    return context;
+  };
   try {
     // Seed the cheapest upgrade as owned so the restore assertion covers shop state.
     await seedChildProfile(account.id, { name: "Pola", walletBalance: 0, shopState: { purchased: ["sign"] } });
 
     // Context A: earn a clean shift, then "close the browser".
-    const contextA = await freshContext(browser);
+    const contextA = await trackedContext();
     const pageA = await contextA.newPage();
     await signInViaUI(pageA, account.email);
     await startShift(pageA);
@@ -90,7 +98,7 @@ test("restore: a fresh browser context re-signs in and sees the earned state (Ri
 
     // Context B: a brand-new browser — UI re-signin, never storageState (it would
     // falsely carry the session-lifetime active_profile cookie; research.md §Risk #2).
-    const contextB = await freshContext(browser);
+    const contextB = await trackedContext();
     const pageB = await contextB.newPage();
     await signInViaUI(pageB, account.email);
     await pageB.waitForURL((url) => url.pathname.startsWith("/app/start"));
@@ -108,7 +116,7 @@ test("restore: a fresh browser context re-signs in and sees the earned state (Ri
     // Context C: with a second profile, a fresh browser lands on the picker —
     // the active_profile cookie is session-lifetime BY DESIGN (picker on launch).
     await seedChildProfile(account.id, { name: "Karol" });
-    const contextC = await freshContext(browser);
+    const contextC = await trackedContext();
     const pageC = await contextC.newPage();
     await signInViaUI(pageC, account.email);
     await pageC.waitForURL((url) => url.pathname.startsWith("/app/pick-profile"));
@@ -118,6 +126,7 @@ test("restore: a fresh browser context re-signs in and sees the earned state (Ri
     await expect(pageC.getByRole("heading", { name: fill(t.start.greeting, { name: "Pola" }) })).toBeVisible();
     await contextC.close();
   } finally {
+    for (const context of openContexts) await context.close().catch(() => undefined);
     await deleteUser(account.id);
   }
 });

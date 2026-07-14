@@ -195,7 +195,9 @@ anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 token_refresh = 150
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
-sign_in_sign_ups = 30
+# Local: raised for the e2e suite (~14 UI sign-ins per full run; CI retries and
+# back-to-back local runs need headroom). Production pins 30 in [remotes.production].
+sign_in_sign_ups = 100
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
 token_verifications = 30
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
@@ -446,6 +448,9 @@ sender_name = "MatmaVerse"
 # Custom-SMTP baseline (built-in mailer was 2/hr). Raise further in the dashboard
 # (Auth → Rate Limits) if real signup volume ever demands it.
 email_sent = 30
+# Keep prod at the platform default — the base value (100) is an e2e-suite
+# accommodation for the throwaway local stack and must not push to prod.
+sign_in_sign_ups = 30
 
 [remotes.production.auth.mfa.totp]
 # Prior hosted values (unused by the app, but not ours to flip); pinned so pushes

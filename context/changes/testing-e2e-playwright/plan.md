@@ -213,6 +213,17 @@ One spec file with a shared solve-shift helper: prove the tap-through gameplay j
 
 **Contract**: Behavior asserted: durable state is user-visible after a true context restart; picker-on-launch semantics. Regression caught: UI restore path divergence from the API layer (`cross-device-restore.test.ts` covers only the server half). Research source: research.md §Risk #2. Anti-patterns avoided: no storageState reuse (falsely persists `active_profile`); assert re-read SSR UI, never network responses. Wallet display is the known locator soft spot — assert via the visible amount text near the sr-only `Portfel` label; if too brittle in practice, assert level + owned-upgrade + picker instead and surface the wallet-pill a11y gap as a product finding.
 
+> **Addendum (impl-review, 2026-07-14).** Three letter-deviations from the intent
+> above, all coverage-preserving: (1) the gameplay test merges the all-clean run
+> with the wrong-answer edge (`failFirstTaskOnce`) — so it asserts 2 stars and
+> `5n+3(n−1)`, never the 3-star/8n case (the all-clean earnings label is asserted
+> in the restore test's context A instead); (2) the restore test seeds
+> `shopState: {purchased:["sign"]}` at provision time rather than buying
+> in-journey, and pins the exact wallet via the upgrades page's `nextProgress`
+> gap copy (stronger than the planned wallet-pill read); (3) consequently the
+> wallet-pill a11y soft spot was bypassed, not exercised — it remains a known
+> product gap (research.md locator table), not a surfaced finding.
+
 ### Success Criteria:
 
 #### Automated Verification:

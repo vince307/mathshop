@@ -7,9 +7,16 @@ the plan/research in `context/changes/testing-e2e-playwright/`.
 - Use `getByRole`, `getByLabel`, `getByText` as primary locators. Fall back to
   `getByTestId` only when accessibility attributes are ambiguous (none exist in
   `src/` today — if you need one, that's a product finding to surface first).
-- Never use CSS selectors, XPath, or DOM structure for locating elements. (The
-  one sanctioned exception: `waitForIslands()` in `helpers/hydration.ts`, an
-  infrastructure wait on Astro island hydration, not an element locator.)
+- Never use CSS selectors, XPath, or DOM structure for locating elements.
+  Sanctioned exceptions (closed list — do not extend it by analogy):
+  1. `waitForIslands()` in `helpers/hydration.ts` — an infrastructure wait on
+     Astro island hydration, not an element locator.
+  2. `context.clearCookies({ name: "parent_verified" })` in the parent-surfaces
+     spec — the only way to simulate marker expiry without a 15-minute sleep.
+     Do not poke other cookies by name.
+  3. One positional `.first()` on the world-tile locator in the onboarding spec
+     (composite accessible names make "Kawiarnia" ambiguous). Prefer
+     `filter()`-scoped locators for any new ambiguity.
 - Every user-visible string a locator matches comes from the i18n dictionary via
   `helpers/i18n.ts` (`t`, `fill`, `templateRegex`) — never hardcode Polish
   beyond data the test itself injects (e.g. a child name it typed).
