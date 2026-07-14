@@ -4,7 +4,7 @@ title: E2E browser layer with Playwright (test-plan rollout Phase 5)
 status: archived
 created: 2026-07-12
 updated: 2026-07-14
-archived_at: 2026-07-14T09:12:00Z
+archived_at: 2026-07-14T20:06:40Z
 ---
 
 ## Notes
