@@ -383,10 +383,10 @@ None — additive layer. Rollback = delete `e2e/`, `playwright.config.ts`, the C
 
 #### Automated
 
-- [ ] 5.1 CI green on a PR with both jobs (existing + e2e)
-- [x] 5.2 `npm run lint` passes
+- [x] 5.1 CI green on a PR with both jobs (existing + e2e) — d6c93d8
+- [x] 5.2 `npm run lint` passes — 9e6b23e
 
 #### Manual
 
-- [ ] 5.3 e2e CI job runtime < ~8 min, flake near-zero over first PRs
-- [ ] 5.4 test-plan.md §4/§5/§6 updated + §6.6 stale known-issues backport; newcomer smoke test passes
+- [x] 5.3 e2e CI job runtime < ~8 min, flake near-zero over first PRs — d6c93d8
+- [x] 5.4 test-plan.md §4/§5/§6 updated + §6.6 stale known-issues backport; newcomer smoke test passes — 9e6b23e
