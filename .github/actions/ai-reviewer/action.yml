@@ -34,7 +34,7 @@ outputs:
     description: Path to the captured stderr log (progress, errors, cost).
     value: ${{ steps.run.outputs.log-path }}
   cost-line:
-    description: The "Tokens: ... | Cost: ... | Time: ..." stderr line, if present.
+    description: 'The "Tokens: ... | Cost: ... | Time: ..." stderr line, if present.'
     value: ${{ steps.run.outputs.cost-line }}
 
 runs:
