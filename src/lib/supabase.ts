@@ -1,6 +1,6 @@
 import { createServerClient, parseCookieHeader } from "@supabase/ssr";
 import type { AstroCookies } from "astro";
-import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
+import { SUPABASE_URL, SUPABASE_API_KEY } from "astro:env/server";
 
 /**
  * Hardened cookie options for the Supabase auth cookies. `httpOnly` keeps the
@@ -19,10 +19,10 @@ const AUTH_COOKIE_OPTIONS = {
 const AUTH_COOKIE_RE = /^sb-.+-auth-token(\.\d+)?$/;
 
 export function createClient(requestHeaders: Headers, cookies: AstroCookies) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_API_KEY) {
     return null;
   }
-  return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+  return createServerClient(SUPABASE_URL, SUPABASE_API_KEY, {
     cookies: {
       getAll() {
         return parseCookieHeader(requestHeaders.get("Cookie") ?? "").map(({ name, value }) => ({

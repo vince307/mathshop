@@ -21,7 +21,7 @@ export default defineConfig({
   env: {
     schema: {
       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),
-      SUPABASE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
+      SUPABASE_API_KEY: envField.string({ context: "server", access: "secret", optional: true }),
       // HMAC key for the short-lived parent-verified session marker (S-07). Set on
       // Vercel Production scope (Preview would fail closed — no marker minting).
       // Optional so builds without it don't fail; the marker helpers throw / return
