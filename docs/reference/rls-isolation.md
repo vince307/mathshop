@@ -1,6 +1,6 @@
 # RLS Isolation Contract
 
-MathShop requires **per-account data isolation** — one parent's data must never be visible or writable by another (PRD FR-012 / FR-015; `CLAUDE.md` §Architecture). This is the project's highest-risk correctness invariant: a wrong policy is a **silent data leak, not a crash**. Foundation F-01 established the contract below; every later migration that adds an account-owned table must follow it.
+MathShop requires **per-account data isolation** — one parent's data must never be visible to, or writable by, another (PRD FR-012 / FR-015; `CLAUDE.md` §Architecture). This is the project's highest-risk correctness invariant: a wrong policy is a **silent data leak, not a crash**. Foundation F-01 established the contract below; every later migration that adds an account-owned table must follow it.
 
 - **Worked example:** [`supabase/migrations/20260609120000_child_profiles_isolation.sql`](../../supabase/migrations/20260609120000_child_profiles_isolation.sql)
 - **Copyable skeleton:** [`rls-template.sql`](./rls-template.sql)
