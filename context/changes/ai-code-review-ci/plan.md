@@ -332,26 +332,26 @@ No data or code migration. Rollback = delete `review.yml` (check disappears) and
 
 #### Automated
 
-- [x] 3.1 `scripts/setup-review-gate.sh` runs clean against the live repo
-- [x] 3.2 Protection contexts verify as `["ci","e2e","review"]`
-- [x] 3.3 All three `ai-cr:*` labels exist
-- [x] 3.4 `npm run lint` passes
+- [x] 3.1 `scripts/setup-review-gate.sh` runs clean against the live repo — 6ab9b76
+- [x] 3.2 Protection contexts verify as `["ci","e2e","review"]` — 6ab9b76
+- [x] 3.3 All three `ai-cr:*` labels exist — 6ab9b76
+- [x] 3.4 `npm run lint` passes — 6ab9b76
 
 #### Manual
 
-- [ ] 3.5 Settings → Branches shows the rule; PR merge box lists three required checks
+- [x] 3.5 Settings → Branches shows the rule; PR merge box lists three required checks — 6ab9b76
 
 ### Phase 4: Acceptance on live PRs
 
 #### Automated
 
-- [ ] 4.1 Bad PR: `review` red + `ai-cr:failed`
-- [ ] 4.2 Clean PR: all green + `ai-cr:passed` + merged
-- [ ] 4.3 Retrigger: exactly one bot comment after label run
+- [x] 4.1 Bad PR: `review` red + `ai-cr:failed`
+- [x] 4.2 Clean PR: all green + `ai-cr:passed` + merged
+- [x] 4.3 Retrigger: exactly one bot comment after label run
 
 #### Manual
 
-- [ ] 4.4 Bad-PR comment names criterion 6 with concrete fix
-- [ ] 4.5 Clean-PR cost ≈ $0.01–0.02
-- [ ] 4.6 Blocked-merge box screenshot on bad PR
-- [ ] 4.7 Evidence folder populated
+- [x] 4.4 Bad-PR comment names criterion 6 with concrete fix
+- [x] 4.5 Clean-PR cost ≈ $0.01–0.02
+- [x] 4.6 Blocked-merge box screenshot on bad PR
+- [x] 4.7 Evidence folder populated

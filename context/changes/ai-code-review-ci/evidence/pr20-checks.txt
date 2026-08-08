@@ -1,0 +1,8 @@
+# PR 20 (bad env rename) — checks + state, 2026-08-08T21:07:40Z
+Vercel	fail	0	https://vercel.com/kamilps-projects/mathshop/D6ToywJw3QMyXwnt2anpoiTfJcPK	Deployment has failed — run this Vercel CLI command: npx vercel inspect dpl_D6ToywJw3QMyXwnt2anpoiTfJcPK --logs
+ci	fail	2m52s	https://github.com/vince307/mathshop/actions/runs/31278324190/job/93155419910	
+e2e	fail	2m19s	https://github.com/vince307/mathshop/actions/runs/31278324190/job/93155419879	
+review	fail	23s	https://github.com/vince307/mathshop/actions/runs/31278437121/job/93155697386	
+Vercel Preview Comments	pass	0	https://vercel.com/github	
+
+{"labels":["ai-cr:failed"],"mergeState":"UNKNOWN","state":"OPEN"}

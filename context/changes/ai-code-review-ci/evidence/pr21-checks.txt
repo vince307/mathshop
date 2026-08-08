@@ -1,0 +1,8 @@
+# PR 21 (clean docs) — checks + state, 2026-08-08T21:07:42Z
+Vercel	fail	0	https://vercel.com/kamilps-projects/mathshop/AxufUjQ4DrBDYMKgEHJ4eGd4QjyX	Deployment has failed — run this Vercel CLI command: npx vercel inspect dpl_AxufUjQ4DrBDYMKgEHJ4eGd4QjyX --logs
+Vercel Preview Comments	pass	0	https://vercel.com/github	
+ci	pass	3m27s	https://github.com/vince307/mathshop/actions/runs/31278397650/job/93155597649	
+e2e	pass	3m0s	https://github.com/vince307/mathshop/actions/runs/31278397650/job/93155597584	
+review	pass	21s	https://github.com/vince307/mathshop/actions/runs/31278397631/job/93155597675	
+
+{"labels":["ai-cr:passed"],"mergedAt":"2026-08-08T21:07:10Z","state":"MERGED"}
