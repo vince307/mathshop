@@ -332,21 +332,21 @@ Rollback is one commit revert: delete `packages/code-reviewer/`, restore the two
 
 #### Automated
 
-- [x] 3.1 `npm run fixtures` exits 0 (07da072 → exit 1 + criterion-6 < 5; 9ee3a49 → exit 0)
-- [x] 3.2 All five fixture rows ran to completion (no exit-2 rows)
+- [x] 3.1 `npm run fixtures` exits 0 (07da072 → exit 1 + criterion-6 < 5; 9ee3a49 → exit 0) — a3ff44f
+- [x] 3.2 All five fixture rows ran to completion (no exit-2 rows) — a3ff44f
 
 #### Manual
 
-- [x] 3.3 07da072 findings name the real gaps (env var sync, fail-open HMAC), not generic complaints
-- [x] 3.4 Two consecutive `npm run fixtures` runs: stable hard-assertion outcomes
-- [x] 3.5 879315e report row reviewed (pass, or justified findings recorded)
+- [x] 3.3 07da072 findings name the real gaps (env var sync, fail-open HMAC), not generic complaints — a3ff44f
+- [x] 3.4 Two consecutive `npm run fixtures` runs: stable hard-assertion outcomes — a3ff44f
+- [x] 3.5 879315e report row reviewed (pass, or justified findings recorded) — a3ff44f
 
 ### Phase 4: Docs
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` + Prettier check pass on edited docs
+- [x] 4.1 `npm run lint` + Prettier check pass on edited docs
 
 #### Manual
 
-- [ ] 4.2 README commands work verbatim from a fresh shell
+- [x] 4.2 README commands work verbatim from a fresh shell

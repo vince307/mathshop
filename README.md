@@ -125,7 +125,7 @@ SUPABASE_KEY=<anon-key>
 Local and production diverge deliberately (both declared in `supabase/config.toml`):
 
 - **Local**: `enable_confirmations = false` — users sign in immediately after sign-up; the test suite depends on this. To manually test the email round-trip, flip it to `true`, restart the stack (`npx supabase stop && npx supabase start`), sign up, and read the Polish email in the local test inbox (Mailpit) at <http://localhost:54324>; flip back afterwards.
-- **Production**: governed by the `[remotes.production]` block (confirmations ON, Brevo SMTP, Polish template from `supabase/templates/confirmation.html`), synced to the hosted project with `npx -y supabase@latest config push` — review the printed diff before confirming. The Brevo credentials come from `BREVO_SMTP_USER` / `BREVO_SMTP_KEY` in the pusher's environment, never from the repo. **Two push-safety rules:** export both vars before *any* `config push` (the push syncs the whole auth config — unset vars would push empty SMTP credentials and silently break production email), and run the push only from an interactive terminal — **the CLI auto-confirms when stdin is not a TTY**, so a scripted push applies without showing you the diff.
+- **Production**: governed by the `[remotes.production]` block (confirmations ON, Brevo SMTP, Polish template from `supabase/templates/confirmation.html`), synced to the hosted project with `npx -y supabase@latest config push` — review the printed diff before confirming. The Brevo credentials come from `BREVO_SMTP_USER` / `BREVO_SMTP_KEY` in the pusher's environment, never from the repo. **Two push-safety rules:** export both vars before _any_ `config push` (the push syncs the whole auth config — unset vars would push empty SMTP credentials and silently break production email), and run the push only from an interactive terminal — **the CLI auto-confirms when stdin is not a TTY**, so a scripted push applies without showing you the diff.
 
 ### Auth routes
 
@@ -157,6 +157,30 @@ The local-stack anon/service-role keys are fixed **public demo** JWTs (the same 
 ### E2E tests (Playwright)
 
 Browser-level journey specs live in `e2e/` and run against `npm run dev` (:4321) + the local Supabase stack, reusing `.env.test`. One-time setup: `npx playwright install chromium`. Run with `npm run test:e2e` (or `npm run test:e2e:ui`); conventions and rules are in `e2e/CLAUDE.md`, the cookbook in `context/foundation/test-plan.md` §6.7.
+
+## AI code review (local)
+
+A local review agent (`packages/code-reviewer/`, isolated from the app's dependency tree) scores a git diff against the rubric in `context/team/code-review-dod.md` and emits a JSON verdict. It needs `ANTHROPIC_API_KEY` in `.env` (see `.env.example`).
+
+One-time install (root `node_modules` stays untouched):
+
+```bash
+npm --prefix packages/code-reviewer ci
+```
+
+Review a branch:
+
+```bash
+git diff main...HEAD | npx --prefix packages/code-reviewer tsx packages/code-reviewer/review.ts
+```
+
+The verdict JSON lands on stdout; progress, scores, token usage, and cost on stderr. Exit codes: `0` pass, `1` fail, `2` setup or budget error (missing key, empty stdin, diff over 4000 post-strip lines) — never a review verdict. Default model is `claude-haiku-4-5`; override with `--model claude-sonnet-4-6` or the `REVIEW_MODEL` env var.
+
+Prove the gate works (five historical commits, two hard assertions, ~$0.05 on Haiku):
+
+```bash
+npm --prefix packages/code-reviewer run fixtures
+```
 
 ## Deployment
 
