@@ -4,6 +4,16 @@
 # the repo. Safe to re-run: label creation is --force, the protection PUT is
 # last-write-wins.
 #
+# Verification (the script performs step 1 itself at the end; 2-3 are manual):
+#   1. `gh api repos/<repo>/branches/main/protection` shows contexts
+#      ["ci","e2e","review"], strict=false, enforce_admins=false.
+#   2. GitHub Settings -> Branches shows the rule on main; an open PR's merge
+#      box lists all three required checks.
+#   3. A PR with a failing `review` check reports mergeStateStatus=BLOCKED.
+# Rollback: `gh api -X DELETE repos/<repo>/branches/main/protection`.
+#
+# Consumed by: .github/workflows/review.yml (the gate this script enforces);
+# the ANTHROPIC_API_KEY Actions secret must exist for that workflow to run.
 # Context: context/changes/ai-code-review-ci/ (stage 2 of ai-code-review).
 set -euo pipefail
 
