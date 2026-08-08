@@ -319,23 +319,23 @@ No data or code migration. Rollback = delete `review.yml` (check disappears) and
 
 #### Automated
 
-- [x] 2.1 Introducing PR produces a `review` check run (no workflow-parse error)
-- [x] 2.2 Introducing PR's review run completes with a readable verdict
+- [x] 2.1 Introducing PR produces a `review` check run (no workflow-parse error) — abc23d3
+- [x] 2.2 Introducing PR's review run completes with a readable verdict — abc23d3
 
 #### Manual
 
-- [ ] 2.3 Comment upserts across pushes (one comment, edited)
-- [ ] 2.4 Label matches verdict; exit-code annotation visible in logs
-- [ ] 2.5 Draft PR produces a skipped run
+- [x] 2.3 Comment upserts across pushes (one comment, edited) — abc23d3
+- [x] 2.4 Label matches verdict; exit-code annotation visible in logs — abc23d3
+- [x] 2.5 Draft PR produces a skipped run — abc23d3
 
 ### Phase 3: Enforcement script + repo sync
 
 #### Automated
 
-- [ ] 3.1 `scripts/setup-review-gate.sh` runs clean against the live repo
-- [ ] 3.2 Protection contexts verify as `["ci","e2e","review"]`
-- [ ] 3.3 All three `ai-cr:*` labels exist
-- [ ] 3.4 `npm run lint` passes
+- [x] 3.1 `scripts/setup-review-gate.sh` runs clean against the live repo
+- [x] 3.2 Protection contexts verify as `["ci","e2e","review"]`
+- [x] 3.3 All three `ai-cr:*` labels exist
+- [x] 3.4 `npm run lint` passes
 
 #### Manual
 
