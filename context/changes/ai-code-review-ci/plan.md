@@ -345,13 +345,13 @@ No data or code migration. Rollback = delete `review.yml` (check disappears) and
 
 #### Automated
 
-- [x] 4.1 Bad PR: `review` red + `ai-cr:failed`
-- [x] 4.2 Clean PR: all green + `ai-cr:passed` + merged
-- [x] 4.3 Retrigger: exactly one bot comment after label run
+- [x] 4.1 Bad PR: `review` red + `ai-cr:failed` — 1f0df31
+- [x] 4.2 Clean PR: all green + `ai-cr:passed` + merged — 1f0df31
+- [x] 4.3 Retrigger: exactly one bot comment after label run — 1f0df31
 
 #### Manual
 
-- [x] 4.4 Bad-PR comment names criterion 6 with concrete fix
-- [x] 4.5 Clean-PR cost ≈ $0.01–0.02
-- [x] 4.6 Blocked-merge box screenshot on bad PR
-- [x] 4.7 Evidence folder populated
+- [x] 4.4 Bad-PR comment names criterion 6 with concrete fix — 1f0df31
+- [x] 4.5 Clean-PR cost ≈ $0.01–0.02 — 1f0df31
+- [x] 4.6 Blocked-merge box screenshot on bad PR — 1f0df31
+- [x] 4.7 Evidence folder populated — 1f0df31
