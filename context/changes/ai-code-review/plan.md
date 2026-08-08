@@ -302,31 +302,31 @@ Rollback is one commit revert: delete `packages/code-reviewer/`, restore the two
 
 #### Automated
 
-- [x] 1.1 Root toolchain green with the package present (`npm run check && npm run lint && npm run build`)
-- [x] 1.2 Root lockfile untouched (`git diff --exit-code package-lock.json`)
-- [x] 1.3 Package installs from its committed lockfile (`npm --prefix packages/code-reviewer ci`)
-- [x] 1.4 Pre-commit passes on a commit touching a package `.ts` file
-- [x] 1.5 No secret in the diff (`git grep` for the key returns nothing)
+- [x] 1.1 Root toolchain green with the package present (`npm run check && npm run lint && npm run build`) — 04a5839
+- [x] 1.2 Root lockfile untouched (`git diff --exit-code package-lock.json`) — 04a5839
+- [x] 1.3 Package installs from its committed lockfile (`npm --prefix packages/code-reviewer ci`) — 04a5839
+- [x] 1.4 Pre-commit passes on a commit touching a package `.ts` file — 04a5839
+- [x] 1.5 No secret in the diff (`git grep` for the key returns nothing) — 04a5839
 
 #### Manual
 
-- [x] 1.6 Root `node_modules` contains no `ai` / `@ai-sdk` packages after fresh root `npm ci`
+- [x] 1.6 Root `node_modules` contains no `ai` / `@ai-sdk` packages after fresh root `npm ci` — 04a5839
 
 ### Phase 2: Review Agent Core
 
 #### Automated
 
-- [ ] 2.1 Happy path: synthetic clean diff → schema-valid JSON, exit 0
-- [ ] 2.2 Missing `ANTHROPIC_API_KEY` → exit 2 naming the variable
-- [ ] 2.3 Empty stdin → exit 2 with usage message
-- [ ] 2.4 Oversized post-strip diff → exit 2 with line count, no API call
-- [ ] 2.5 Noise-only diff → "nothing to review", exit 0, no API call
+- [x] 2.1 Happy path: synthetic clean diff → schema-valid JSON, exit 0
+- [x] 2.2 Missing `ANTHROPIC_API_KEY` → exit 2 naming the variable
+- [x] 2.3 Empty stdin → exit 2 with usage message
+- [x] 2.4 Oversized post-strip diff → exit 2 with line count, no API call
+- [x] 2.5 Noise-only diff → "nothing to review", exit 0, no API call
 
 #### Manual
 
-- [ ] 2.6 Real working-tree diff: sensible verdict, actionable summary, real file/line findings
-- [ ] 2.7 Cost ≈ $0.01–0.02 on Haiku, wall time < 60 s
-- [ ] 2.8 `--model claude-sonnet-4-6` works and reports Sonnet pricing
+- [x] 2.6 Real working-tree diff: sensible verdict, actionable summary, real file/line findings
+- [x] 2.7 Cost ≈ $0.01–0.02 on Haiku, wall time < 60 s
+- [x] 2.8 `--model claude-sonnet-4-6` works and reports Sonnet pricing
 
 ### Phase 3: Fixture Harness + Acceptance
 
