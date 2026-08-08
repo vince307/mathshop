@@ -316,30 +316,30 @@ Rollback is one commit revert: delete `packages/code-reviewer/`, restore the two
 
 #### Automated
 
-- [x] 2.1 Happy path: synthetic clean diff → schema-valid JSON, exit 0
-- [x] 2.2 Missing `ANTHROPIC_API_KEY` → exit 2 naming the variable
-- [x] 2.3 Empty stdin → exit 2 with usage message
-- [x] 2.4 Oversized post-strip diff → exit 2 with line count, no API call
-- [x] 2.5 Noise-only diff → "nothing to review", exit 0, no API call
+- [x] 2.1 Happy path: synthetic clean diff → schema-valid JSON, exit 0 — 07adcdd
+- [x] 2.2 Missing `ANTHROPIC_API_KEY` → exit 2 naming the variable — 07adcdd
+- [x] 2.3 Empty stdin → exit 2 with usage message — 07adcdd
+- [x] 2.4 Oversized post-strip diff → exit 2 with line count, no API call — 07adcdd
+- [x] 2.5 Noise-only diff → "nothing to review", exit 0, no API call — 07adcdd
 
 #### Manual
 
-- [x] 2.6 Real working-tree diff: sensible verdict, actionable summary, real file/line findings
-- [x] 2.7 Cost ≈ $0.01–0.02 on Haiku, wall time < 60 s
-- [x] 2.8 `--model claude-sonnet-4-6` works and reports Sonnet pricing
+- [x] 2.6 Real working-tree diff: sensible verdict, actionable summary, real file/line findings — 07adcdd
+- [x] 2.7 Cost ≈ $0.01–0.02 on Haiku, wall time < 60 s — 07adcdd
+- [x] 2.8 `--model claude-sonnet-4-6` works and reports Sonnet pricing — 07adcdd
 
 ### Phase 3: Fixture Harness + Acceptance
 
 #### Automated
 
-- [ ] 3.1 `npm run fixtures` exits 0 (07da072 → exit 1 + criterion-6 < 5; 9ee3a49 → exit 0)
-- [ ] 3.2 All five fixture rows ran to completion (no exit-2 rows)
+- [x] 3.1 `npm run fixtures` exits 0 (07da072 → exit 1 + criterion-6 < 5; 9ee3a49 → exit 0)
+- [x] 3.2 All five fixture rows ran to completion (no exit-2 rows)
 
 #### Manual
 
-- [ ] 3.3 07da072 findings name the real gaps (env var sync, fail-open HMAC), not generic complaints
-- [ ] 3.4 Two consecutive `npm run fixtures` runs: stable hard-assertion outcomes
-- [ ] 3.5 879315e report row reviewed (pass, or justified findings recorded)
+- [x] 3.3 07da072 findings name the real gaps (env var sync, fail-open HMAC), not generic complaints
+- [x] 3.4 Two consecutive `npm run fixtures` runs: stable hard-assertion outcomes
+- [x] 3.5 879315e report row reviewed (pass, or justified findings recorded)
 
 ### Phase 4: Docs
 
