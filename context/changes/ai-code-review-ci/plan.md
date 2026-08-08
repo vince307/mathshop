@@ -307,13 +307,13 @@ No data or code migration. Rollback = delete `review.yml` (check disappears) and
 
 #### Automated
 
-- [x] 1.1 Renderer syntax-checks (`node --check`)
-- [x] 1.2 Renderer produces all three shapes (fixture / empty-JSON pass / exit-2)
-- [x] 1.3 Local parity check: real diff through CLI + renderer end-to-end
+- [x] 1.1 Renderer syntax-checks (`node --check`) — fbd56c8
+- [x] 1.2 Renderer produces all three shapes (fixture / empty-JSON pass / exit-2) — fbd56c8
+- [x] 1.3 Local parity check: real diff through CLI + renderer end-to-end — fbd56c8
 
 #### Manual
 
-- [x] 1.4 `action.yml` contract review (inputs/outputs documented, no secret leakage)
+- [x] 1.4 `action.yml` contract review (inputs/outputs documented, no secret leakage) — fbd56c8
 
 ### Phase 2: `review.yml` workflow
 
