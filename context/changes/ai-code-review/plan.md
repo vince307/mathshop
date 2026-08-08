@@ -345,8 +345,8 @@ Rollback is one commit revert: delete `packages/code-reviewer/`, restore the two
 
 #### Automated
 
-- [x] 4.1 `npm run lint` + Prettier check pass on edited docs
+- [x] 4.1 `npm run lint` + Prettier check pass on edited docs — 379d222
 
 #### Manual
 
-- [x] 4.2 README commands work verbatim from a fresh shell
+- [x] 4.2 README commands work verbatim from a fresh shell — 379d222
