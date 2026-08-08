@@ -76,6 +76,9 @@ const astroConfig = tseslint.config({
 
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
+  // packages/* are self-governed workspaces (own deps, own tsconfig) outside the
+  // root project service — linting them here throws "not found by project service".
+  { ignores: ["packages/**"] },
   baseConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

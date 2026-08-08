@@ -1,0 +1,20 @@
+{
+  "name": "code-reviewer",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Local AI code review agent (stage 1): git diff on stdin, JSON verdict on stdout, exit 0/1/2.",
+  "scripts": {
+    "review": "tsx review.ts",
+    "fixtures": "tsx fixtures.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.107",
+    "ai": "^6.0.246",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "tsx": "^4.20.6"
+  }
+}
