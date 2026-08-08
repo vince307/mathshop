@@ -1,0 +1,30 @@
+{
+  "scores": {
+    "correctness": 7,
+    "typeIdiom": 8,
+    "complexity": 8,
+    "testCoverage": 6,
+    "security": 7,
+    "configDeployment": 2
+  },
+  "findings": [
+    {
+      "file": "astro.config.mjs",
+      "line": 41,
+      "criterion": 6,
+      "severity": "major",
+      "description": "The env schema renames SUPABASE_KEY to SUPABASE_API_KEY, but neither .env.example nor the CI workflow is updated to match — the build will fail everywhere the old name is still provided.",
+      "suggestedFix": "Rename the variable in .env.example and .github/workflows/ci.yml in the same PR, or revert the schema rename."
+    },
+    {
+      "file": "src/lib/supabase.ts",
+      "line": 0,
+      "criterion": 4,
+      "severity": "minor",
+      "description": "The client factory change has no accompanying test although existing integration tests cover the previous behavior.",
+      "suggestedFix": "Extend tests/supabase-client.test.ts with a case for the new option."
+    }
+  ],
+  "verdict": "fail",
+  "summary": "The env-var rename is unsynchronized across `.env.example` and CI, which matches the rubric's criterion-6 failure anchor. Sync the rename in this PR or revert it; the remaining changes are sound."
+}

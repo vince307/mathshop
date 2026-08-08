@@ -1,0 +1,110 @@
+# AI code review gate (stage 2 of ai-code-review).
+#
+# The job id `review` is the required-check name (bare id, matching ci/e2e —
+# do not add a `name:` key). The agent is side-effect-free; this workflow owns
+# all GitHub side effects: one upserted bot comment and the ai-cr:* labels.
+# Exit codes: 0 pass / 1 review fail / 2 setup-or-budget error — 1 and 2 both
+# fail the check, but 2 never swaps labels (it is not a code verdict).
+name: Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# A new push cancels the stale review run (cost control).
+concurrency:
+  group: review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Run for: real PR events (any label other than ai-cr:review is ignored),
+    # non-draft, same-repo branches only. Fork PRs are skipped by policy — they
+    # get no secrets, and skipped checks satisfy branch protection; the
+    # maintainer reviews fork PRs by hand.
+    if: >-
+      (github.event.action != 'labeled' || github.event.label.name == 'ai-cr:review') &&
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The three-dot diff needs the merge base; a shallow checkout
+          # yields an empty diff.
+          fetch-depth: 0
+
+      # Remove the retry label unconditionally and early: re-adding an
+      # already-present label fires no `labeled` event, so leaving it attached
+      # after a failed run would kill the retry mechanism.
+      - if: github.event.action == 'labeled'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh api -X DELETE
+          "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/ai-cr:review"
+          || true
+
+      - uses: ./.github/actions/ai-reviewer
+        id: review
+        with:
+          base-ref: ${{ github.base_ref }}
+          model: ${{ vars.REVIEW_MODEL }}
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      # One bot comment per PR, updated in place (found via the marker the
+      # renderer puts first). Runs for every exit code — the exit-2 shape
+      # carries the "split this PR" budget message to the author.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          body_file="$RUNNER_TEMP/comment.md"
+          node .github/scripts/render-review-comment.mjs \
+            "${{ steps.review.outputs.json-path }}" \
+            "${{ steps.review.outputs.log-path }}" \
+            "${{ steps.review.outputs.exit-code }}" > "$body_file"
+          comment_id=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.body | startswith("<!-- ai-reviewer -->")) | .id' | head -n1)
+          if [ -n "$comment_id" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$comment_id" \
+              -F "body=@$body_file" > /dev/null
+          else
+            gh api -X POST "repos/${{ github.repository }}/issues/$PR/comments" \
+              -F "body=@$body_file" > /dev/null
+          fi
+
+      # Labels mirror the *verdict*, so exit 2 is excluded: ai-cr:failed must
+      # keep meaning "the code failed review", not "the reviewer broke".
+      - if: steps.review.outputs.exit-code == '0' || steps.review.outputs.exit-code == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          CODE: ${{ steps.review.outputs.exit-code }}
+        run: |
+          if [ "$CODE" = "0" ]; then
+            add="ai-cr:passed"; remove="ai-cr:failed"
+          else
+            add="ai-cr:failed"; remove="ai-cr:passed"
+          fi
+          gh api -X POST "repos/${{ github.repository }}/issues/$PR/labels" -f "labels[]=$add" > /dev/null
+          gh api -X DELETE "repos/${{ github.repository }}/issues/$PR/labels/$remove" > /dev/null 2>&1 || true
+
+      # The job's exit code IS the gate. Everything above already ran, so
+      # failing here is safe — and the annotations keep exit 1 and exit 2
+      # distinguishable at a glance.
+      - env:
+          CODE: ${{ steps.review.outputs.exit-code }}
+        run: |
+          case "$CODE" in
+            0) echo "AI review passed." ;;
+            1) echo "::error::AI review failed (verdict: fail) — see the PR comment." ;;
+            *) echo "::error::Review could not run (setup/budget error, exit $CODE) — not a code verdict; see the PR comment." ;;
+          esac
+          exit "$CODE"

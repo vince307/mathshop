@@ -1,0 +1,98 @@
+name: AI Reviewer
+description: >-
+  Run the packages/code-reviewer agent on the PR diff and capture its verdict.
+  Assumes the caller already checked out the repo with fetch-depth: 0 (the
+  three-dot diff needs the merge base). Never fails its own steps — the raw CLI
+  exit code (0 pass / 1 fail / 2 setup-or-budget error, never a verdict) is
+  exposed as an output so the calling workflow can run side effects (comment,
+  labels) before enforcing the verdict.
+
+inputs:
+  base-ref:
+    description: Base branch name to diff against (e.g. main).
+    required: true
+  model:
+    description: >-
+      Model override, forwarded to the CLI as REVIEW_MODEL. Leave empty to use
+      the CLI default. An unset repo variable renders as "" here — the run step
+      only exports REVIEW_MODEL when non-empty, so "" never reaches the CLI as
+      a real model id.
+    required: false
+    default: ""
+  anthropic-api-key:
+    description: Anthropic API key for the review call.
+    required: true
+
+outputs:
+  exit-code:
+    description: Raw CLI exit code (0 pass / 1 fail / 2 setup-or-budget error).
+    value: ${{ steps.run.outputs.exit-code }}
+  json-path:
+    description: Path to the captured stdout JSON (may be empty on a noise-only pass).
+    value: ${{ steps.run.outputs.json-path }}
+  log-path:
+    description: Path to the captured stderr log (progress, errors, cost).
+    value: ${{ steps.run.outputs.log-path }}
+  cost-line:
+    description: 'The "Tokens: ... | Cost: ... | Time: ..." stderr line, if present.'
+    value: ${{ steps.run.outputs.cost-line }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        # The sub-package has its own committed lockfile; the root lockfile
+        # would miss its dependency changes.
+        cache-dependency-path: packages/code-reviewer/package-lock.json
+
+    - run: npm --prefix packages/code-reviewer ci
+      shell: bash
+
+    - id: run
+      shell: bash
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        BASE_REF: ${{ inputs.base-ref }}
+        MODEL_INPUT: ${{ inputs.model }}
+      run: |
+        json="$RUNNER_TEMP/review.json"
+        log="$RUNNER_TEMP/review.log"
+
+        # Only a non-empty override may reach the CLI (its model resolution
+        # treats any set value, including "", as a real model id).
+        if [ -n "$MODEL_INPUT" ]; then
+          export REVIEW_MODEL="$MODEL_INPUT"
+        fi
+
+        # --no-color is load-bearing: ANSI-wrapped headers make the CLI reject
+        # the diff as "not a git diff" (exit 2).
+        git diff --no-color "origin/${BASE_REF}...HEAD" > "$RUNNER_TEMP/pr.diff"
+
+        if [ ! -s "$RUNNER_TEMP/pr.diff" ]; then
+          # Possible after merges/reverts. The CLI would exit 2 on empty stdin;
+          # an empty delta is a pass, shaped like the CLI's noise-only pass
+          # (exit 0, no stdout JSON).
+          echo "Empty diff against origin/${BASE_REF} — nothing to review." | tee "$log"
+          : > "$json"
+          code=0
+        else
+          set +e
+          npx --prefix packages/code-reviewer tsx packages/code-reviewer/review.ts \
+            < "$RUNNER_TEMP/pr.diff" 1> "$json" 2> "$log"
+          code=$?
+          set -e
+          cat "$log"
+          if [ "$code" -eq 2 ]; then
+            echo "::notice::Review exit 2 = setup/budget error — not a code verdict."
+          fi
+        fi
+
+        {
+          echo "exit-code=$code"
+          echo "json-path=$json"
+          echo "log-path=$log"
+          echo "cost-line=$(grep -m1 '^Tokens: ' "$log" || true)"
+        } >> "$GITHUB_OUTPUT"
