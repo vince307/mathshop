@@ -319,8 +319,8 @@ No data or code migration. Rollback = delete `review.yml` (check disappears) and
 
 #### Automated
 
-- [ ] 2.1 Introducing PR produces a `review` check run (no workflow-parse error)
-- [ ] 2.2 Introducing PR's review run completes with a readable verdict
+- [x] 2.1 Introducing PR produces a `review` check run (no workflow-parse error)
+- [x] 2.2 Introducing PR's review run completes with a readable verdict
 
 #### Manual
 
