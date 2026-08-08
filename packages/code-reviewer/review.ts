@@ -40,11 +40,26 @@ interface DiffSegment {
   binary: boolean;
 }
 
+function pathFromHeader(line: string): string {
+  const quoted = /"b\/(.+)"$/.exec(line);
+  if (quoted) return quoted[1];
+  const body = line.slice("diff --git ".length);
+  // Non-rename headers repeat the same path ("a/X b/X"): find the split where the
+  // two sides match — correct even when X itself contains " b/", so a crafted
+  // filename cannot smuggle itself into a stripped prefix like context/.
+  for (let i = body.indexOf(" b/"); i !== -1; i = body.indexOf(" b/", i + 1)) {
+    if (body.slice(2, i) === body.slice(i + 3)) return body.slice(i + 3);
+  }
+  // Rename (a and b sides differ): right-anchor on the last separator.
+  const last = body.lastIndexOf(" b/");
+  return last === -1 ? "unknown" : body.slice(last + 3);
+}
+
 function parseDiff(diff: string): DiffSegment[] {
   const chunks = diff.split(/^(?=diff --git )/m).filter((c) => c.startsWith("diff --git "));
   return chunks.map((text) => {
-    const header = /^diff --git (?:a\/|"a\/)?(?:.*?) (?:b\/|"b\/)?(.+?)"?$/m.exec(text);
-    const path = header?.[1] ?? "unknown";
+    const newline = text.indexOf("\n");
+    const path = pathFromHeader(newline === -1 ? text : text.slice(0, newline));
     const binary = text.includes("\nBinary files ") || text.includes("\nGIT binary patch");
     return { path, text, binary };
   });
@@ -98,9 +113,11 @@ function buildSystemPrompt(rubric: string): string {
     "  absent from .env.example or the CI workflow is unsynchronized, no matter which other",
     "  config files mention it — score criterion 6 in the 1-4 range in that case.",
     "- Calibrate severity by production impact, not by how easy the fix is: a change that",
-    "  can silently disable or weaken an auth/security control is at least major. A signing",
-    "  or HMAC secret that falls back to a constant (including empty) value instead of",
-    "  failing closed makes every signature forgeable — that is a blocker, not a weakening.",
+    "  can silently disable or weaken an auth/security control is at least major; a defect",
+    "  matching one of the rubric's blocker examples is a blocker, not a weakening. In",
+    "  particular (per the rubric's criterion-5 anchor): a signing or HMAC secret that falls",
+    "  back to an empty or constant value instead of failing closed makes every signature",
+    "  forgeable — that is a blocker.",
     "- Keep scores consistent with findings: a criterion whose defect matches the rubric's",
     "  1-anchor description scores in the 1-4 range; a criterion carrying a blocker finding",
     "  scores at most 4; one carrying a major finding scores at most 6.",
@@ -134,6 +151,9 @@ async function main(): Promise<void> {
   }
 
   const segments = parseDiff(rawDiff);
+  if (segments.length === 0) {
+    fail("stdin does not look like a unified git diff (no 'diff --git' headers found).", EXIT_SETUP);
+  }
   const kept = segments.filter((s) => !isNoise(s));
   const strippedCount = segments.length - kept.length;
   const diff = kept.map((s) => s.text).join("");
@@ -221,4 +241,7 @@ async function main(): Promise<void> {
   process.exit(verdict === "pass" ? EXIT_PASS : EXIT_FAIL);
 }
 
-await main();
+await main().catch((error: unknown) => {
+  // Anything unplanned is a setup error (exit 2) — exit 1 is reserved for "the code failed review".
+  fail(`Unexpected error: ${error instanceof Error ? error.message : String(error)}`, EXIT_SETUP);
+});

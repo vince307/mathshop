@@ -36,7 +36,7 @@ Not "are there tests" but "are the risky paths tested". Unit tests (vitest) for 
 
 Supabase/RLS discipline, secrets hygiene, and input trust boundaries.
 
-- **1**: `SERVICE_ROLE_KEY` used in request-path code; RLS bypassed or new tables without policies; secrets or URLs hardcoded in the diff; user input concatenated into queries; auth checks in UI only, not in middleware/API.
+- **1**: `SERVICE_ROLE_KEY` used in request-path code; RLS bypassed or new tables without policies; secrets or URLs hardcoded in the diff; user input concatenated into queries; auth checks in UI only, not in middleware/API; an auth/signing secret (e.g. an HMAC key) that falls back to an empty or constant default instead of failing closed — every signature becomes forgeable.
 - **10**: anon key + RLS on the request path; new tables/columns ship with policies and an isolation-test extension; secrets only via env (`.env` locally, GitHub/Vercel secrets in CI); every trust boundary validates input server-side.
 
 ## 6. Config & deployment safety
@@ -49,6 +49,6 @@ The class of change that caused the 2h-downtime incident: astro.config, vercel.j
 ## Verdict rules
 
 - **pass**: all criteria ≥ 5 and no blocker findings.
-- **fail**: any criterion < 5, or any blocker finding (secret in diff, RLS bypass, broken build).
+- **fail**: any criterion < 5, or any blocker finding (secret in diff, RLS bypass, broken build, an auth/signing secret that fails open instead of failing closed).
 - Every finding names the file/line, the criterion it falls under, severity (`blocker` / `major` / `minor`), and a concrete suggested fix.
 - The summary is 2–3 sentences of Markdown a human can act on — no restating the diff.

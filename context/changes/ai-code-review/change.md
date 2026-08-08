@@ -1,7 +1,7 @@
 ---
 change_id: ai-code-review
 title: Local AI code review agent (stage 1)
-status: implemented
+status: impl_reviewed
 created: 2026-08-08
 updated: 2026-08-08
 archived_at: null
@@ -18,3 +18,4 @@ introducing a local AI code review agent based on @context/changes/ai-code-revie
 - **Stale-docs sweep:** `AGENTS.md` (wrong branch `master`, wrong CI description), `README.md` §CI (predates check/test/e2e steps), root `CLAUDE.md` ("No test runner is wired yet" — false), `ci.yml:33` (stale "merge-blocking" comment).
 - **promptfoo eval set (M5L3):** `fixtures.ts` is the seed; the Haiku-vs-Sonnet matrix over the same diffs is a separate change.
 - **Prompt caching:** revisit if real token counts justify it — the rubric+instructions (~4.2K tokens input on a small diff) sit near Haiku's 4096-token cache minimum.
+- **Stage-2 hardening (from impl review):** bound stdin size before buffering (a multi-GB pipe is fully materialized before the budget guard); `loadEnvFile` pulls the entire repo `.env` (service-role key, SMTP creds) into `process.env` — narrow to `ANTHROPIC_API_KEY` if the tool ever spawns children; prompt-injection via diff content can steer model scores (inherent LLM-review limitation — document before gating third-party PRs); fixtures pin 7-char SHAs — use full SHAs + `fetch-depth: 0` on the CI clone; quoted/octal-escaped diff paths can still bypass the noise-filter prefix checks.

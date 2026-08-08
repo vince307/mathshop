@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "description": "Local AI code review agent (stage 1): git diff on stdin, JSON verdict on stdout, exit 0/1/2.",
   "scripts": {
     "review": "tsx review.ts",

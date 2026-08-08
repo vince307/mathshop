@@ -80,9 +80,13 @@ const FIXTURES: Fixture[] = [
 ];
 
 function gitShow(sha: string, reversed: boolean): string {
-  const args = ["show", sha, "--format="];
-  if (reversed) args.splice(2, 0, "-R");
+  // --no-color keeps the harness independent of the user's color.diff config —
+  // ANSI-wrapped headers would fail review.ts's diff parsing.
+  const args = ["show", "--no-color", "--format="];
+  if (reversed) args.push("-R");
+  args.push(sha);
   const res = spawnSync("git", args, { cwd: REPO_ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  if (res.error) throw new Error(`git show ${sha} failed to launch: ${res.error.message}`);
   if (res.status !== 0) throw new Error(`git show ${sha} failed: ${res.stderr}`);
   return res.stdout;
 }
@@ -94,6 +98,9 @@ function runReview(diff: string): Result {
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
   });
+  if (res.error) {
+    return { exitCode: 2, review: null, diffLine: `spawn failed: ${res.error.message}`, costLine: "" };
+  }
   let review: Review | null = null;
   try {
     review = JSON.parse(res.stdout) as Review;
@@ -116,7 +123,15 @@ for (const fixture of FIXTURES) {
   const name = fixture.reversed ? `${fixture.sha} (-R)` : fixture.sha;
   console.log(`\n=== ${name} — ${fixture.label}`);
   console.log(`    expectation: ${fixture.expectation}`);
-  const result = runReview(gitShow(fixture.sha, fixture.reversed));
+  let diff: string;
+  try {
+    diff = gitShow(fixture.sha, fixture.reversed);
+  } catch (error) {
+    setupFailures += 1;
+    console.log(`    RESULT: SETUP FAILURE — ${error instanceof Error ? error.message : String(error)}`);
+    continue;
+  }
+  const result = runReview(diff);
   const scores = result.review
     ? Object.entries(result.review.scores)
         .map(([k, v]) => `${k}=${String(v)}`)
