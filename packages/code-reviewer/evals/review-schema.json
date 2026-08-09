@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["scores", "findings", "verdict", "summary"],
+  "properties": {
+    "scores": {
+      "type": "object",
+      "required": ["correctness", "typeIdiom", "complexity", "testCoverage", "security", "configDeployment"],
+      "properties": {
+        "correctness": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "typeIdiom": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "complexity": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "testCoverage": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "security": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "configDeployment": { "type": "integer", "minimum": 1, "maximum": 10 }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "line", "criterion", "severity", "description", "suggestedFix"],
+        "properties": {
+          "file": { "type": "string" },
+          "line": { "type": "integer", "minimum": 0 },
+          "criterion": { "type": "integer", "minimum": 1, "maximum": 6 },
+          "severity": { "type": "string", "enum": ["blocker", "major", "minor"] },
+          "description": { "type": "string" },
+          "suggestedFix": { "type": "string" }
+        }
+      }
+    },
+    "verdict": { "type": "string", "enum": ["pass", "fail"] },
+    "summary": { "type": "string" }
+  }
+}

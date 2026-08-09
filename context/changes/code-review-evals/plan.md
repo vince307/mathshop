@@ -236,10 +236,10 @@ None — additive dev tooling. `fixtures.ts` and the CI gate are untouched. Futu
 
 #### Automated
 
-- [x] 1.1 All six `.diff` files exist under `evals/fixtures/` with `diff --git` headers
-- [x] 1.2 `generate-fixtures.mjs` re-run is idempotent
-- [x] 1.3 Reversed fixture carries real path (`a/.github/workflows/ci.yml`)
-- [x] 1.4 Secret scan over `evals/fixtures/` clean
+- [x] 1.1 All six `.diff` files exist under `evals/fixtures/` with `diff --git` headers — 5dee0cb
+- [x] 1.2 `generate-fixtures.mjs` re-run is idempotent — 5dee0cb
+- [x] 1.3 Reversed fixture carries real path (`a/.github/workflows/ci.yml`) — 5dee0cb
+- [x] 1.4 Secret scan over `evals/fixtures/` clean — 5dee0cb
 
 #### Manual
 
@@ -249,10 +249,10 @@ None — additive dev tooling. `fixtures.ts` and the CI gate are untouched. Futu
 
 #### Automated
 
-- [ ] 2.1 `npm install` succeeds with pinned promptfoo; lockfile committed
-- [ ] 2.2 `npx tsc --noEmit -p packages/code-reviewer` clean
-- [ ] 2.3 PR #20 smoke run: both providers graded, no error cells, cost ≈ $0.02
-- [ ] 2.4 Exit-2 negative check: missing API key surfaces as provider error, not graded fail
+- [x] 2.1 `npm install` succeeds with pinned promptfoo; lockfile committed
+- [x] 2.2 `npx tsc --noEmit -p packages/code-reviewer` clean
+- [x] 2.3 PR #20 smoke run: both providers graded, no error cells, cost ≈ $0.02
+- [x] 2.4 Exit-2 negative check: missing API key surfaces as provider error, not graded fail
 
 #### Manual
 
