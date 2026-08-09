@@ -262,8 +262,8 @@ None — additive dev tooling. `fixtures.ts` and the CI gate are untouched. Futu
 
 #### Automated
 
-- [x] 3.1 Full sweep exits green; total cost < $1
-- [x] 3.2 `evidence/results.json` committed
+- [x] 3.1 Full sweep exits green; total cost < $1 — 846c489
+- [x] 3.2 `evidence/results.json` committed — 846c489
 
 #### Manual
 
