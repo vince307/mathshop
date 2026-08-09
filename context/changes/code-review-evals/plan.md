@@ -249,10 +249,10 @@ None — additive dev tooling. `fixtures.ts` and the CI gate are untouched. Futu
 
 #### Automated
 
-- [x] 2.1 `npm install` succeeds with pinned promptfoo; lockfile committed
-- [x] 2.2 `npx tsc --noEmit -p packages/code-reviewer` clean
-- [x] 2.3 PR #20 smoke run: both providers graded, no error cells, cost ≈ $0.02
-- [x] 2.4 Exit-2 negative check: missing API key surfaces as provider error, not graded fail
+- [x] 2.1 `npm install` succeeds with pinned promptfoo; lockfile committed — bf9010a
+- [x] 2.2 `npx tsc --noEmit -p packages/code-reviewer` clean — bf9010a
+- [x] 2.3 PR #20 smoke run: both providers graded, no error cells, cost ≈ $0.02 — bf9010a
+- [x] 2.4 Exit-2 negative check: missing API key surfaces as provider error, not graded fail — bf9010a
 
 #### Manual
 
@@ -262,8 +262,8 @@ None — additive dev tooling. `fixtures.ts` and the CI gate are untouched. Futu
 
 #### Automated
 
-- [ ] 3.1 Full sweep exits green; total cost < $1
-- [ ] 3.2 `evidence/results.json` committed
+- [x] 3.1 Full sweep exits green; total cost < $1
+- [x] 3.2 `evidence/results.json` committed
 
 #### Manual
 

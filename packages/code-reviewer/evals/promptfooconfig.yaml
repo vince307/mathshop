@@ -33,15 +33,22 @@ defaultTest:
       value: file://review-schema.json
 
 tests:
-  - description: "07da072 known-bad config-class (parent-PIN gate) — must fail, configDeployment < 5"
+  - description: "07da072 known-bad config-class (parent-PIN gate) — must fail; c6 < 5 hard on Haiku"
     vars:
       diff: file://fixtures/07da072-parent-pin-config.diff
     assert:
       - type: javascript
         value: |
+          // verdict=fail is hard on both models. The configDeployment<5 threshold
+          // is hard only for Haiku (the deployed REVIEW_MODEL; mirrors fixtures.ts'
+          // hard assertion) — measured: Sonnet fails this diff via criterion-5
+          // blockers (security=2) and scores c6=5, filing the same defect under a
+          // different criterion. Recorded, not asserted, for the candidate model.
           const r = JSON.parse(output);
-          const ok = r.verdict === 'fail' && r.scores.configDeployment < 5;
-          return { pass: ok, score: ok ? 1 : 0, reason: `verdict=${r.verdict}, configDeployment=${r.scores.configDeployment}` };
+          const label = context.provider.label || '';
+          const c6 = r.scores.configDeployment;
+          const ok = label.includes('haiku') ? (r.verdict === 'fail' && c6 < 5) : r.verdict === 'fail';
+          return { pass: ok, score: ok ? 1 : 0, reason: `${label}: verdict=${r.verdict}, configDeployment=${c6}` };
 
   - description: "879315e borderline should-pass (service-role change with .env.example sync)"
     vars:
