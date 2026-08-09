@@ -68,6 +68,8 @@ export interface BuildContextOptions {
   /** Cookie jar to read the incoming `Cookie:` header from and capture writes into. */
   cookies?: CookieJar;
   locals?: Record<string, unknown>;
+  /** Extra request headers (e.g. the cron `Authorization:` bearer). */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -76,9 +78,16 @@ export interface BuildContextOptions {
  * to inspect captured writes / serialize the session for a follow-up request.
  */
 export function buildContext(options: BuildContextOptions = {}): APIContext {
-  const { url = "https://test.local/", method = "GET", formData, cookies = createCookieJar(), locals = {} } = options;
+  const {
+    url = "https://test.local/",
+    method = "GET",
+    formData,
+    cookies = createCookieJar(),
+    locals = {},
+    headers: extraHeaders = {},
+  } = options;
 
-  const headers = new Headers();
+  const headers = new Headers(extraHeaders);
   const cookieHeader = cookies.toCookieHeader();
   if (cookieHeader) {
     headers.set("Cookie", cookieHeader);
