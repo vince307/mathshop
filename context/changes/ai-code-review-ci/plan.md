@@ -85,6 +85,8 @@ An empty diff (possible after merges/reverts) is short-circuited before invoking
 
 **Contract**: Args: path to `review.json`, path to `review.log`, exit code. Stdout: markdown beginning with the upsert marker `<!-- ai-reviewer -->`. Three shapes: (a) exit 0/1 with JSON — verdict headline (✅/❌), six-criterion scores table, findings list (`file:line`, criterion, severity, description, suggested fix), summary, cost line + model; (b) exit 0 without JSON — minimal "nothing to review after noise stripping" pass note; (c) exit 2 — "setup/budget error — not a code verdict" plus the relevant stderr message (this is how the 4000-line "split this PR" message reaches the author). All copy in English (bot surface, not app UI — FR-013 does not apply).
 
+> **Addendum (impl-review F8, 2026-08-09):** two files landed beyond this list, both necessitated by the renderer: `eslint.config.js` fences `.github/scripts/**` out of the type-checked root lint (same rationale as `packages/**` — no tsconfig coverage), and `.github/scripts/README.md` documents that fencing plus the substitute quality bar (plain Node ≥22, no deps, `node --check`).
+
 #### 3. Renderer fixture
 
 **File**: `.github/scripts/render-review-comment.fixture.json`
@@ -280,6 +282,7 @@ The three scenario PRs from requirements, run against the finished gate; screens
 
 1. Phase 2 PR: verify comment upsert across two pushes (one comment, edited)
 2. Flip the Phase 2 PR to draft and back: skipped run appears, then a real run on ready-for-review… (note: `ready_for_review` is not a trigger type — a push or `ai-cr:review` label re-runs it; acceptable, documented behavior)
+   > **Addendum (impl-review F1, 2026-08-09):** superseded — a draft-turned-ready PR would merge with the review skipped (skipped satisfies required checks), so `ready_for_review` was added to the trigger types.
 3. Phase 4 scenarios as listed
 
 ## Performance Considerations

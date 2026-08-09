@@ -28,6 +28,13 @@ gh label create "ai-cr:failed" --repo "$REPO" --color d73a4a \
   --description "AI review verdict: fail" --force
 
 echo "== Branch protection on main =="
+# The PUT below REPLACES the whole protection object: any setting configured
+# outside this script (linear history, force-push blocks, extra contexts, ...)
+# is reset by a re-run. Show the current state first so a re-run is a
+# deliberate overwrite, not a silent one.
+echo "-- Current protection (about to be replaced):"
+gh api "repos/$REPO/branches/main/protection" --jq . 2>/dev/null \
+  || echo "(none — branch not protected yet)"
 # Solo-repo constraints, deliberately:
 # - required_pull_request_reviews: null — the author cannot approve their own
 #   PR; requiring approvals would deadlock every merge.

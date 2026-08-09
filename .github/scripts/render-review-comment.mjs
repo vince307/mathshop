@@ -42,6 +42,33 @@ function footer(log) {
   return parts.length > 0 ? `\n${parts.join(" · ")}\n` : "";
 }
 
+function couldNotRun(head, log, exitCode) {
+  // Last lines of stderr carry the reason (budget "split this PR" message,
+  // missing key, API failure) - surface them without dumping the whole log.
+  // The log is diff-influenced, so it must not be able to close the fence
+  // and render attacker markdown: the fence below is 4 backticks (legally
+  // contains ``` lines), and runs of 4+ backticks are capped at 3.
+  const tail = log
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .slice(-8)
+    .map((line) => line.replace(/`{4,}/g, "```"))
+    .join("\n");
+  return [
+    `${head} — ⚠️ could not run`,
+    "",
+    `The review agent hit a **setup or budget error** (exit ${exitCode}). This is _not_ a code verdict — the code was not judged.`,
+    "",
+    "````",
+    tail || "(no log output captured)",
+    "````",
+    "",
+    "Fix the cause (or split an oversized PR), then re-run by adding the `ai-cr:review` label.",
+    footer(log),
+  ].join("\n");
+}
+
 export function render(json, log, exitCode) {
   const head = `${MARKER}\n## 🤖 AI Code Review`;
 
@@ -49,21 +76,7 @@ export function render(json, log, exitCode) {
   // exit 1, so a non-zero code without JSON means the runner wrapper itself
   // failed - report it as a non-verdict error, never as a pass or a fail.
   if (exitCode === 2 || (exitCode !== 0 && json.trim() === "")) {
-    // Last lines of stderr carry the reason (budget "split this PR" message,
-    // missing key, API failure) - surface them without dumping the whole log.
-    const tail = log.trim().split("\n").filter(Boolean).slice(-8).join("\n");
-    return [
-      `${head} — ⚠️ could not run`,
-      "",
-      `The review agent hit a **setup or budget error** (exit ${exitCode}). This is _not_ a code verdict — the code was not judged.`,
-      "",
-      "```",
-      tail || "(no log output captured)",
-      "```",
-      "",
-      "Fix the cause (or split an oversized PR), then re-run by adding the `ai-cr:review` label.",
-      footer(log),
-    ].join("\n");
+    return couldNotRun(head, log, exitCode);
   }
 
   if (json.trim() === "") {
@@ -75,7 +88,15 @@ export function render(json, log, exitCode) {
     ].join("\n");
   }
 
-  const review = JSON.parse(json);
+  // A truncated/malformed review.json must not crash the comment step - it
+  // would skip the label and gate steps and leave the author with a bare
+  // stack trace instead of the non-verdict error shape.
+  let review;
+  try {
+    review = JSON.parse(json);
+  } catch {
+    return couldNotRun(head, log, exitCode);
+  }
   const emoji = review.verdict === "pass" ? "✅" : "❌";
 
   const scores = [
