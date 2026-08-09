@@ -74,9 +74,7 @@ describe("keep-alive cron route", () => {
   });
 
   it("returns 200 and queries Supabase with the anon key when authorized", async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response("[]", { status: 200 }));
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("[]", { status: 200 }));
 
     const response = await request({ Authorization: `Bearer ${SECRET}` });
 
