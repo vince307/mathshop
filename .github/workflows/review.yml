@@ -9,7 +9,7 @@ name: Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches: [main]
 
 permissions:
@@ -43,7 +43,8 @@ jobs:
       # Remove the retry label unconditionally and early: re-adding an
       # already-present label fires no `labeled` event, so leaving it attached
       # after a failed run would kill the retry mechanism.
-      - if: github.event.action == 'labeled'
+      - name: Remove ai-cr:review retry label
+        if: github.event.action == 'labeled'
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
@@ -51,7 +52,8 @@ jobs:
           "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels/ai-cr:review"
           || true
 
-      - uses: ./.github/actions/ai-reviewer
+      - name: Run AI review
+        uses: ./.github/actions/ai-reviewer
         id: review
         with:
           base-ref: ${{ github.base_ref }}
@@ -61,17 +63,22 @@ jobs:
       # One bot comment per PR, updated in place (found via the marker the
       # renderer puts first). Runs for every exit code — the exit-2 shape
       # carries the "split this PR" budget message to the author.
-      - env:
+      - name: Upsert review comment
+        env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
+          JSON_PATH: ${{ steps.review.outputs.json-path }}
+          LOG_PATH: ${{ steps.review.outputs.log-path }}
+          CODE: ${{ steps.review.outputs.exit-code }}
         run: |
           body_file="$RUNNER_TEMP/comment.md"
           node .github/scripts/render-review-comment.mjs \
-            "${{ steps.review.outputs.json-path }}" \
-            "${{ steps.review.outputs.log-path }}" \
-            "${{ steps.review.outputs.exit-code }}" > "$body_file"
+            "$JSON_PATH" "$LOG_PATH" "$CODE" > "$body_file"
+          # No pipe here on purpose: `| head -n1` would make a mid-pagination
+          # gh failure exit 0 (head's status) and silently POST a duplicate.
           comment_id=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
-            --jq '.[] | select(.body | startswith("<!-- ai-reviewer -->")) | .id' | head -n1)
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- ai-reviewer -->"))) | .id')
+          comment_id=${comment_id%%$'\n'*}
           if [ -n "$comment_id" ]; then
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$comment_id" \
               -F "body=@$body_file" > /dev/null
@@ -82,12 +89,20 @@ jobs:
 
       # Labels mirror the *verdict*, so exit 2 is excluded: ai-cr:failed must
       # keep meaning "the code failed review", not "the reviewer broke".
-      - if: steps.review.outputs.exit-code == '0' || steps.review.outputs.exit-code == '1'
+      - name: Swap verdict labels
+        if: steps.review.outputs.exit-code == '0' || steps.review.outputs.exit-code == '1'
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           CODE: ${{ steps.review.outputs.exit-code }}
+          JSON_PATH: ${{ steps.review.outputs.json-path }}
         run: |
+          # The CLI always emits JSON with exit 1, so 1-without-JSON means the
+          # wrapper/CLI crashed — a non-verdict, like exit 2: leave labels alone.
+          if [ "$CODE" = "1" ] && [ ! -s "$JSON_PATH" ]; then
+            echo "::notice::Exit 1 without JSON = crash, not a verdict — labels unchanged."
+            exit 0
+          fi
           if [ "$CODE" = "0" ]; then
             add="ai-cr:passed"; remove="ai-cr:failed"
           else
@@ -99,7 +114,8 @@ jobs:
       # The job's exit code IS the gate. Everything above already ran, so
       # failing here is safe — and the annotations keep exit 1 and exit 2
       # distinguishable at a glance.
-      - env:
+      - name: Enforce verdict
+        env:
           CODE: ${{ steps.review.outputs.exit-code }}
         run: |
           case "$CODE" in

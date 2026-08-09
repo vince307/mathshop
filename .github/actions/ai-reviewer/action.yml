@@ -2,10 +2,12 @@ name: AI Reviewer
 description: >-
   Run the packages/code-reviewer agent on the PR diff and capture its verdict.
   Assumes the caller already checked out the repo with fetch-depth: 0 (the
-  three-dot diff needs the merge base). Never fails its own steps — the raw CLI
-  exit code (0 pass / 1 fail / 2 setup-or-budget error, never a verdict) is
-  exposed as an output so the calling workflow can run side effects (comment,
-  labels) before enforcing the verdict.
+  three-dot diff needs the merge base). The review step itself never fails —
+  the raw CLI exit code (0 pass / 1 fail / 2 setup-or-budget error, never a
+  verdict) is exposed as an output so the calling workflow can run side
+  effects (comment, labels) before enforcing the verdict. The setup steps
+  (node, npm ci) can still hard-fail the action; that reads as a red job with
+  no comment, which is the right shape for an infra failure.
 
 inputs:
   base-ref:
