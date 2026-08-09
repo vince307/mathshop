@@ -1,0 +1,542 @@
+diff --git a/.env.example b/.env.example
+index dca4d10..f7451c5 100644
+--- a/.env.example
++++ b/.env.example
+@@ -4,6 +4,11 @@ SUPABASE_KEY=###
+ # actions). Without it the gate fails closed — PIN routes 500 and the report is
+ # unreachable. Generate: openssl rand -hex 32
+ PARENT_SESSION_SECRET=###
++# Service-role key — powers ONLY account self-deletion (/api/account/delete).
++# Local: `npx supabase status -o env` → SERVICE_ROLE_KEY (public demo JWT).
++# Production: Supabase dashboard → Settings → API; Vercel PRODUCTION scope only.
++# Absent → the deletion route answers 503 (fails closed).
++SUPABASE_SERVICE_ROLE_KEY=###
+ # Brevo SMTP credentials — needed only when running `supabase config push` against
+ # the hosted project (see README "Email confirmation"); not read by the app itself.
+ BREVO_SMTP_USER=###
+diff --git a/astro.config.mjs b/astro.config.mjs
+index e604460..cd9af9e 100644
+--- a/astro.config.mjs
++++ b/astro.config.mjs
+@@ -26,6 +26,12 @@ export default defineConfig({
+       // Vercel (Production + Preview). Optional so builds without it don't fail;
+       // the marker helpers fall back to an empty key only when it's absent.
+       PARENT_SESSION_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
++      // Service-role key (MAT-17) — powers exactly ONE operation: account
++      // self-deletion (auth.admin.deleteUser). The most sensitive value in the
++      // project: Vercel PRODUCTION scope only, never Preview/Development
++      // (infrastructure.md), never the browser. Optional so builds without it
++      // don't fail; createAdminClient() fails closed (null → route 503).
++      SUPABASE_SERVICE_ROLE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
+     },
+   },
+ });
+diff --git a/context/changes/account-deletion/plan.md b/context/changes/account-deletion/plan.md
+index 52c93c5..3d5515d 100644
+--- a/context/changes/account-deletion/plan.md
++++ b/context/changes/account-deletion/plan.md
+@@ -265,34 +265,34 @@ No schema changes. Rollback = revert commits (UI/routes disappear; no data shape
+ 
+ #### Automated
+ 
+-- [x] 1.1 Type checking passes: `npm run check`
+-- [x] 1.2 Linting passes: `npm run lint`
+-- [x] 1.3 Build succeeds: `npm run build`
+-- [x] 1.4 Full suite passes against a fresh DB incl. new profile-deletion tests
+-- [x] 1.5 L-003 grep clean on new/edited components
++- [x] 1.1 Type checking passes: `npm run check` — 26dd33e
++- [x] 1.2 Linting passes: `npm run lint` — 26dd33e
++- [x] 1.3 Build succeeds: `npm run build` — 26dd33e
++- [x] 1.4 Full suite passes against a fresh DB incl. new profile-deletion tests — 26dd33e
++- [x] 1.5 L-003 grep clean on new/edited components — 26dd33e
+ 
+ #### Manual
+ 
+-- [x] 1.6 Local flow: PIN → report → typed-name delete → card + shift history gone; cap slot freed
+-- [x] 1.7 Last-profile delete degrades to wizard/empty-state; active_profile cookie cleared
+-- [x] 1.8 Stale/no marker bounces to PIN gate; wrong typed name keeps button disabled
+-- [x] 1.9 Dialog calm/Polish; destructive styling on confirm only
++- [x] 1.6 Local flow: PIN → report → typed-name delete → card + shift history gone; cap slot freed — 26dd33e
++- [x] 1.7 Last-profile delete degrades to wizard/empty-state; active_profile cookie cleared — 26dd33e
++- [x] 1.8 Stale/no marker bounces to PIN gate; wrong typed name keeps button disabled — 26dd33e
++- [x] 1.9 Dialog calm/Polish; destructive styling on confirm only — 26dd33e
+ 
+ ### Phase 2: Parent-account deletion end-to-end
+ 
+ #### Automated
+ 
+-- [ ] 2.1 Type checking passes: `npm run check`
+-- [ ] 2.2 Linting passes: `npm run lint`
+-- [ ] 2.3 Build succeeds: `npm run build`
+-- [ ] 2.4 Full suite passes against a fresh DB incl. new account-deletion tests
+-- [ ] 2.5 L-003 grep clean on new/edited files
++- [x] 2.1 Type checking passes: `npm run check`
++- [x] 2.2 Linting passes: `npm run lint`
++- [x] 2.3 Build succeeds: `npm run build`
++- [x] 2.4 Full suite passes against a fresh DB incl. new account-deletion tests
++- [x] 2.5 L-003 grep clean on new/edited files
+ 
+ #### Manual
+ 
+-- [ ] 2.6 Local flow: danger zone → typed email + fresh PIN → signed out with farewell; Studio shows full erasure
+-- [ ] 2.7 Wrong PIN throttled; stale marker 403s; back-button post-deletion is clean
+-- [ ] 2.8 Second local account untouched
++- [x] 2.6 Local flow: danger zone → typed email + fresh PIN → signed out with farewell; Studio shows full erasure
++- [x] 2.7 Wrong PIN throttled; stale marker 403s; back-button post-deletion is clean
++- [x] 2.8 Second local account untouched
+ 
+ ### Phase 3: Ops + production proof
+ 
+diff --git a/src/components/parent/DeleteAccountSection.tsx b/src/components/parent/DeleteAccountSection.tsx
+new file mode 100644
+index 0000000..12bda23
+--- /dev/null
++++ b/src/components/parent/DeleteAccountSection.tsx
+@@ -0,0 +1,95 @@
++import { useState } from "react";
++import { ConfirmDeleteDialog } from "@/components/parent/ConfirmDeleteDialog";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Label } from "@/components/ui/label";
++import { t } from "@/i18n";
++
++interface Props {
++  /** The signed-in parent's e-mail — the string the dialog demands retyped. */
++  email: string;
++}
++
++/**
++ * Danger zone on the report page (MAT-17): whole-account deletion. The dialog
++ * stacks THREE gates the route re-verifies server-side: the parent_verified
++ * marker (page + route), the account e-mail retyped (typed confirmation), and
++ * the PIN entered FRESH — a possibly-15-min-old marker alone must not arm the
++ * nuclear option. On success the route has already signed the browser out;
++ * the island hard-navigates to the farewell landing. All copy via
++ * `t.deletion.*` (L-003).
++ */
++export default function DeleteAccountSection({ email }: Props) {
++  const [open, setOpen] = useState(false);
++  const [pin, setPin] = useState("");
++  const copy = t.deletion;
++
++  const deleteAccount = async (): Promise<string | null> => {
++    try {
++      const body = new FormData();
++      body.set("pin", pin);
++      body.set("email", email);
++      const response = await fetch("/api/account/delete", { method: "POST", body });
++      if (response.ok) {
++        window.location.href = "/?deleted=1";
++        return null;
++      }
++      if (response.status === 403) {
++        window.location.href = "/app/parent-pin";
++        return copy.sessionExpired;
++      }
++      if (response.status === 401) return copy.errors.wrongPin;
++      if (response.status === 429) return copy.errors.pinLocked;
++      const payload = (await response.json().catch(() => null)) as { reason?: string } | null;
++      if (payload?.reason === "email-mismatch") return copy.errors.emailMismatch;
++      return copy.genericError;
++    } catch {
++      return copy.genericError;
++    }
++  };
++
++  return (
++    <section className="border-destructive/30 bg-card mt-10 w-full max-w-md rounded-3xl border p-6 shadow-sm">
++      <h2 className="text-foreground text-lg font-extrabold">{copy.accountHeading}</h2>
++      <p className="text-muted-foreground mt-1 text-sm">{copy.accountIntro}</p>
++      <Button
++        type="button"
++        variant="destructive"
++        className="mt-4"
++        onClick={() => {
++          setPin("");
++          setOpen(true);
++        }}
++      >
++        {copy.accountAction}
++      </Button>
++
++      <ConfirmDeleteDialog
++        open={open}
++        onOpenChange={setOpen}
++        title={copy.accountTitle}
++        consequence={copy.accountConsequence}
++        expectedText={email}
++        confirmLabel={copy.accountConfirm}
++        extraFields={
++          <div className="flex flex-col gap-2">
++            <Label htmlFor="delete-account-pin" className="text-sm">
++              {copy.accountPinLabel}
++            </Label>
++            <Input
++              id="delete-account-pin"
++              type="password"
++              inputMode="numeric"
++              autoComplete="off"
++              value={pin}
++              onChange={(event) => {
++                setPin(event.target.value);
++              }}
++            />
++          </div>
++        }
++        onConfirm={deleteAccount}
++      />
++    </section>
++  );
++}
+diff --git a/src/lib/supabase-admin.ts b/src/lib/supabase-admin.ts
+new file mode 100644
+index 0000000..3e8132c
+--- /dev/null
++++ b/src/lib/supabase-admin.ts
+@@ -0,0 +1,24 @@
++import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
++import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "astro:env/server";
++
++/**
++ * Service-role admin client (MAT-17) — the first and ONLY production
++ * service-role surface. It exists for exactly one operation: account
++ * self-deletion (`auth.admin.deleteUser`). Discipline (mirrors the test
++ * helpers' rule): NEVER use this client to act as a user or to read/write app
++ * tables — that bypasses RLS, the project's highest-risk invariant. Identity
++ * and ownership are always established through the request-scoped RLS client
++ * first; the admin client then receives only a session-derived id.
++ *
++ * Plain `@supabase/supabase-js` client — deliberately NOT `createServerClient`:
++ * it must never touch the request's cookie jar or mint sessions. A fresh,
++ * factory-scoped instance per call site; no module-level singleton so tests can
++ * mock the env module for the absent-key branch. Fails closed: missing
++ * URL/key → null → the route answers 503.
++ */
++export function createAdminClient(): SupabaseClient | null {
++  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
++  return createSupabaseClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
++    auth: { autoRefreshToken: false, persistSession: false },
++  });
++}
+diff --git a/src/pages/api/account/delete.ts b/src/pages/api/account/delete.ts
+new file mode 100644
+index 0000000..9c32884
+--- /dev/null
++++ b/src/pages/api/account/delete.ts
+@@ -0,0 +1,80 @@
++import type { APIRoute } from "astro";
++import { z } from "zod";
++import { clearAuthCookies, createClient } from "@/lib/supabase";
++import { createAdminClient } from "@/lib/supabase-admin";
++import { applyNoStore } from "@/lib/http";
++import { PARENT_VERIFIED_COOKIE, verifyMarker, verifyPin } from "@/lib/services/parent-pin";
++import { ACTIVE_PROFILE_COOKIE } from "@/lib/services/active-profile";
++
++export const prerender = false;
++
++// PIN (4–6 digits) + the account e-mail retyped in the dialog. The e-mail is
++// defense-in-depth against a mis-targeted request — the real gates are the
++// marker and the fresh PIN. No account id is ever accepted from the client:
++// the deletion target is strictly the session's own user (L-002).
++const deleteSchema = z.object({ pin: z.string().regex(/^\d{4,6}$/), email: z.string().min(1) });
++
++function json(status: number, body: unknown): Response {
++  return applyNoStore(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
++}
++
++// PIN-failure statuses mirror pin/verify.ts so the island can reuse its copy map.
++const STATUS_FOR: Record<string, number> = { locked: 429, "no-pin": 400, wrong: 401, error: 500 };
++
++/**
++ * POST /api/account/delete — the nuclear option (MAT-17): erase the parent's
++ * auth user; every owned row (child_profiles → shift_log, account_settings)
++ * plus auth.sessions dies by the F-01 cascades. Hard delete, irreversible —
++ * this IS the GDPR right-to-erasure surface.
++ *
++ * Two privilege planes, strictly ordered: the request-scoped RLS client
++ * establishes WHO (session) and re-authenticates (marker + FRESH PIN under the
++ * atomic throttle — a possibly-15-min-old marker alone is not enough for the
++ * nuclear option); the service-role admin client then performs exactly one
++ * operation with the session-derived id. It never reads app tables and never
++ * sees request input.
++ *
++ * Cleanup: the auth user is already gone, so signOut() may fail — best-effort,
++ * ignored. Cookies are cleared explicitly (middleware redirects on a dead
++ * session but never clears cookies).
++ */
++export const POST: APIRoute = async (context) => {
++  const supabase = createClient(context.request.headers, context.cookies);
++  const admin = createAdminClient();
++  if (!supabase || !admin) return json(503, { ok: false });
++
++  const {
++    data: { user },
++  } = await supabase.auth.getUser();
++  if (!user) return json(401, { ok: false });
++
++  const marker = context.cookies.get(PARENT_VERIFIED_COOKIE)?.value;
++  if (!verifyMarker(marker, user.id)) return json(403, { ok: false, reason: "forbidden" });
++
++  const form = await context.request.formData();
++  const parsed = deleteSchema.safeParse({ pin: form.get("pin"), email: form.get("email") });
++  if (!parsed.success) return json(400, { ok: false, reason: "invalid" });
++
++  // Fresh PIN, throttle included — wrong attempts count toward the lockout.
++  const pinResult = await verifyPin(supabase, parsed.data.pin);
++  if (!pinResult.ok) return json(STATUS_FOR[pinResult.reason] ?? 400, { ok: false, reason: pinResult.reason });
++
++  if (parsed.data.email.trim().toLowerCase() !== (user.email ?? "").toLowerCase()) {
++    return json(400, { ok: false, reason: "email-mismatch" });
++  }
++
++  const { error } = await admin.auth.admin.deleteUser(user.id);
++  if (error) return json(500, { ok: false });
++
++  // Best-effort local sign-out; the user no longer exists, so errors are moot.
++  try {
++    await supabase.auth.signOut();
++  } catch {
++    // ignored — cookie clearing below is the effective cleanup
++  }
++  clearAuthCookies(context.request.headers, context.cookies);
++  context.cookies.delete(ACTIVE_PROFILE_COOKIE, { path: "/" });
++  context.cookies.delete(PARENT_VERIFIED_COOKIE, { path: "/" });
++
++  return json(200, { ok: true });
++};
+diff --git a/src/pages/app/report.astro b/src/pages/app/report.astro
+index f877d93..fcb93c9 100644
+--- a/src/pages/app/report.astro
++++ b/src/pages/app/report.astro
+@@ -1,6 +1,7 @@
+ ---
+ import Layout from "@/layouts/Layout.astro";
+ import WeeklyReport from "@/components/parent/WeeklyReport";
++import DeleteAccountSection from "@/components/parent/DeleteAccountSection";
+ import type { ChildReport } from "@/components/parent/WeeklyReport";
+ import { buttonVariants } from "@/components/ui/button";
+ import { createClient } from "@/lib/supabase";
+@@ -65,5 +66,8 @@ const reports: ChildReport[] = await Promise.all(
+         {t.report.back}
+       </a>
+     </div>
++
++    {/* Danger zone (MAT-17): whole-account deletion — typed e-mail + fresh PIN in the dialog. */}
++    <DeleteAccountSection client:load email={user.email ?? ""} />
+   </div>
+ </Layout>
+diff --git a/src/pages/index.astro b/src/pages/index.astro
+index 298203f..a82e5c2 100644
+--- a/src/pages/index.astro
++++ b/src/pages/index.astro
+@@ -1,8 +1,23 @@
+ ---
+ import Welcome from "@/components/Welcome.astro";
+ import Layout from "@/layouts/Layout.astro";
++import { t } from "@/i18n";
++
++// Post-account-deletion farewell (MAT-17): the delete route signs the browser
++// out and the island lands here with ?deleted=1 — a calm one-liner, no CTA.
++const deleted = Astro.url.searchParams.get("deleted") === "1";
+ ---
+ 
+ <Layout>
++  {
++    deleted && (
++      <p
++        role="status"
++        class="bg-card border-border text-foreground mx-auto mt-6 w-fit rounded-2xl border px-6 py-3 text-center text-sm font-semibold shadow-sm"
++      >
++        {t.deletion.accountDeleted}
++      </p>
++    )
++  }
+   <Welcome />
+ </Layout>
+diff --git a/tests/account-deletion.test.ts b/tests/account-deletion.test.ts
+new file mode 100644
+index 0000000..c3e9102
+--- /dev/null
++++ b/tests/account-deletion.test.ts
+@@ -0,0 +1,171 @@
++import { afterAll, describe, expect, it } from "vitest";
++import { POST as signinPOST } from "@/pages/api/auth/signin";
++import { POST as deleteAccountPOST } from "@/pages/api/account/delete";
++import { createChildProfile } from "@/lib/services/child-profiles";
++import { setPin, signMarker, PARENT_VERIFIED_COOKIE } from "@/lib/services/parent-pin";
++import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
++import { buildContext, createCookieJar, type CookieJar } from "./helpers/astro";
++
++/**
++ * Account-deletion route contract (MAT-17) — the GDPR-erasure proof. One route
++ * call must erase the auth user and EVERY owned row across all three tables
++ * (F-01 cascades), and none of the stacked gates (session, marker, fresh PIN,
++ * typed e-mail) can be skipped. L-002 discipline: durable state asserted via
++ * the service-role `admin` client, never the response alone. Requires the
++ * local Supabase stack + `.env.test`.
++ */
++
++async function signedInJar(account: TestAccount): Promise<CookieJar> {
++  const jar = createCookieJar();
++  const context = buildContext({
++    url: "https://test.local/api/auth/signin",
++    method: "POST",
++    formData: { email: account.email, password: PASSWORD },
++    cookies: jar,
++  });
++  const response = await signinPOST(context);
++  expect(response.headers.get("Location")).toBe("/app");
++  return jar;
++}
++
++function armMarker(jar: CookieJar, accountId: string): void {
++  jar.set(PARENT_VERIFIED_COOKIE, signMarker(accountId, Date.now() + 60_000));
++}
++
++/** Seed a full owned footprint: profile + shift_log row + PIN (account_settings). */
++async function seedFootprint(account: TestAccount, pin: string): Promise<string> {
++  const { data, error } = await createChildProfile(account.client, {
++    accountId: account.id,
++    name: "Dziecko",
++    age: 7,
++    avatar: "kuba",
++    theme: "kawiarnia",
++    startingLevel: 1,
++  });
++  if (error) throw error;
++  const { error: logError } = await account.client.from("shift_log").insert({
++    account_id: account.id,
++    profile_id: data.id,
++    skills: { counting: { firstTryCorrect: 1, completed: 1, misses: 0 } },
++  });
++  if (logError) throw logError;
++  expect(await setPin(account.client, pin)).toBe(true);
++  return data.id;
++}
++
++async function ownedRowCount(table: string, accountId: string): Promise<number> {
++  const { count } = await admin.from(table).select("*", { count: "exact", head: true }).eq("account_id", accountId);
++  return count ?? 0;
++}
++
++async function authUserExists(id: string): Promise<boolean> {
++  const { data, error } = await admin.auth.admin.getUserById(id);
++  if (error) return false;
++  return Boolean(data.user);
++}
++
++function deleteContext(jar: CookieJar, fields: Record<string, string>) {
++  return buildContext({
++    url: "https://test.local/api/account/delete",
++    method: "POST",
++    formData: fields,
++    cookies: jar,
++  });
++}
++
++describe("account deletion route (MAT-17)", () => {
++  // Torn down defensively in afterAll; the happy path deletes its own account.
++  const cleanup: string[] = [];
++
++  afterAll(async () => {
++    for (const id of cleanup) await deleteUser(id);
++  });
++
++  it("erases the auth user and every owned row across all three tables", async () => {
++    const a = await createSignedInUser("accdel-happy");
++    cleanup.push(a.id);
++    await seedFootprint(a, "1234");
++    const jar = await signedInJar(a);
++    armMarker(jar, a.id);
++
++    const response = await deleteAccountPOST(deleteContext(jar, { pin: "1234", email: a.email }));
++
++    expect(response.status).toBe(200);
++    // L-002: the durable proof — auth user gone, zero rows in every owned table.
++    expect(await authUserExists(a.id)).toBe(false);
++    expect(await ownedRowCount("child_profiles", a.id)).toBe(0);
++    expect(await ownedRowCount("shift_log", a.id)).toBe(0);
++    expect(await ownedRowCount("account_settings", a.id)).toBe(0);
++    // Session cookies cleared in the response jar (sb-* set empty / deleted).
++    const liveAuthCookies = jar.getAll().filter((c) => c.name.startsWith("sb-") && c.value !== "");
++    expect(liveAuthCookies).toHaveLength(0);
++  });
++
++  it("wrong PIN refuses (401), counts toward the throttle, and nothing is deleted", async () => {
++    const a = await createSignedInUser("accdel-wrongpin");
++    cleanup.push(a.id);
++    await seedFootprint(a, "1234");
++    const jar = await signedInJar(a);
++    armMarker(jar, a.id);
++
++    const response = await deleteAccountPOST(deleteContext(jar, { pin: "9999", email: a.email }));
++
++    expect(response.status).toBe(401);
++    expect(await authUserExists(a.id)).toBe(true);
++    expect(await ownedRowCount("child_profiles", a.id)).toBe(1);
++    // Throttle is live: the failed attempt was recorded on the settings row.
++    const { data } = await admin
++      .from("account_settings")
++      .select("failed_attempts")
++      .eq("account_id", a.id)
++      .single()
++      .overrideTypes<{ failed_attempts: number }, { merge: false }>();
++    expect(data?.failed_attempts).toBeGreaterThanOrEqual(1);
++  });
++
++  it("missing marker refuses (403) even with the correct PIN and e-mail", async () => {
++    const a = await createSignedInUser("accdel-nomarker");
++    cleanup.push(a.id);
++    await seedFootprint(a, "1234");
++    const jar = await signedInJar(a); // authed, NOT parent-verified
++
++    const response = await deleteAccountPOST(deleteContext(jar, { pin: "1234", email: a.email }));
++
++    expect(response.status).toBe(403);
++    expect(await authUserExists(a.id)).toBe(true);
++  });
++
++  it("e-mail mismatch refuses (400) after the PIN check and nothing is deleted", async () => {
++    const a = await createSignedInUser("accdel-badmail");
++    cleanup.push(a.id);
++    await seedFootprint(a, "1234");
++    const jar = await signedInJar(a);
++    armMarker(jar, a.id);
++
++    const response = await deleteAccountPOST(deleteContext(jar, { pin: "1234", email: "kto-inny@example.test" }));
++
++    expect(response.status).toBe(400);
++    expect(((await response.json()) as { reason?: string }).reason).toBe("email-mismatch");
++    expect(await authUserExists(a.id)).toBe(true);
++  });
++
++  it("a second account is untouched by a neighbor's deletion", async () => {
++    const a = await createSignedInUser("accdel-self");
++    const b = await createSignedInUser("accdel-bystander");
++    cleanup.push(a.id, b.id);
++    await seedFootprint(a, "1234");
++    await seedFootprint(b, "5678");
++    const jar = await signedInJar(a);
++    armMarker(jar, a.id);
++
++    const response = await deleteAccountPOST(deleteContext(jar, { pin: "1234", email: a.email }));
++
++    expect(response.status).toBe(200);
++    expect(await authUserExists(a.id)).toBe(false);
++    // The bystander's world is intact — the admin call is pinned to the session id.
++    expect(await authUserExists(b.id)).toBe(true);
++    expect(await ownedRowCount("child_profiles", b.id)).toBe(1);
++    expect(await ownedRowCount("shift_log", b.id)).toBe(1);
++    expect(await ownedRowCount("account_settings", b.id)).toBe(1);
++  });
++});
+diff --git a/tests/helpers/stubs/astro-env-server.ts b/tests/helpers/stubs/astro-env-server.ts
+index 1f53a6b..4725445 100644
+--- a/tests/helpers/stubs/astro-env-server.ts
++++ b/tests/helpers/stubs/astro-env-server.ts
+@@ -9,3 +9,5 @@ export const SUPABASE_URL = process.env.SUPABASE_URL;
+ export const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+ // HMAC key for the parent-verified session marker (S-07). From `.env.test`.
+ export const PARENT_SESSION_SECRET = process.env.PARENT_SESSION_SECRET;
++// Service-role key (MAT-17 account deletion). Local-stack demo key from `.env.test`.
++export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
