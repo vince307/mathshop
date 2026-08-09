@@ -11,3 +11,6 @@ export const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 export const PARENT_SESSION_SECRET = process.env.PARENT_SESSION_SECRET;
 // Service-role key (MAT-17 account deletion). Local-stack demo key from `.env.test`.
 export const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Bearer secret for the keep-alive cron route. Not in `.env.test` — the route's
+// suite mocks this module per-scenario (`tests/keep-alive.test.ts`).
+export const CRON_SECRET = process.env.CRON_SECRET;
