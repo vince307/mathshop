@@ -1,0 +1,12 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 7af0e46..d9c80da 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -50,7 +50,6 @@ jobs:
+             echo "SUPABASE_URL=$API_URL"
+             echo "SUPABASE_ANON_KEY=$ANON_KEY"
+             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+-            echo "PARENT_SESSION_SECRET=ci-parent-session-secret-0123456789"
+           } >> "$GITHUB_ENV"
+           rm -f sb.env
+       - name: Run per-account isolation test

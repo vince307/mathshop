@@ -9,7 +9,8 @@
   "description": "Local AI code review agent (stage 1): git diff on stdin, JSON verdict on stdout, exit 0/1/2.",
   "scripts": {
     "review": "tsx review.ts",
-    "fixtures": "tsx fixtures.ts"
+    "fixtures": "tsx fixtures.ts",
+    "evals": "PROMPTFOO_DISABLE_TELEMETRY=1 PROMPTFOO_DISABLE_SHARING=true promptfoo eval -c evals/promptfooconfig.yaml --env-file ../../.env -o ../../context/changes/code-review-evals/evidence/results.json"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.107",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "promptfoo": "0.120.27",
     "tsx": "^4.20.6"
   }
 }

@@ -1,0 +1,884 @@
+diff --git a/.env.test.example b/.env.test.example
+index fd234cf..8fc2ec8 100644
+--- a/.env.test.example
++++ b/.env.test.example
+@@ -15,3 +15,8 @@
+ SUPABASE_URL=http://127.0.0.1:54321
+ SUPABASE_ANON_KEY=replace-with-local-anon-key
+ SUPABASE_SERVICE_ROLE_KEY=replace-with-local-service-role-key
++
++# HMAC key for the parent-verified session marker (S-07 parent-PIN gate). Any
++# non-empty string works locally; on Vercel set PARENT_SESSION_SECRET to a strong
++# random value (Production + Preview).
++PARENT_SESSION_SECRET=test-parent-session-secret-0123456789
+diff --git a/astro.config.mjs b/astro.config.mjs
+index ddcbc0f..e604460 100644
+--- a/astro.config.mjs
++++ b/astro.config.mjs
+@@ -22,6 +22,10 @@ export default defineConfig({
+     schema: {
+       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),
+       SUPABASE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
++      // HMAC key for the short-lived parent-verified session marker (S-07). Set on
++      // Vercel (Production + Preview). Optional so builds without it don't fail;
++      // the marker helpers fall back to an empty key only when it's absent.
++      PARENT_SESSION_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
+     },
+   },
+ });
+diff --git a/context/changes/skill-path-upgrade-gate/plan.md b/context/changes/skill-path-upgrade-gate/plan.md
+index e96f53f..143fe47 100644
+--- a/context/changes/skill-path-upgrade-gate/plan.md
++++ b/context/changes/skill-path-upgrade-gate/plan.md
+@@ -476,32 +476,32 @@ Three non-destructive migrations: `skill_state` column (default `'{}'`, normaliz
+ 
+ #### Automated
+ 
+-- [x] 4.1 Isolation + persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shift-log-isolation.test.ts tests/shifts-complete.test.ts`)
+-- [x] 4.2 Type checking passes: `npm run check`
+-- [x] 4.3 Linting passes: `npm run lint`
+-- [x] 4.4 Build succeeds: `npm run build`
+-- [x] 4.5 Policy-removal meta-check turns the `shift_log` isolation test red (documented, reverted)
++- [x] 4.1 Isolation + persistence pass against a fresh DB (`supabase db reset` + `vitest run tests/shift-log-isolation.test.ts tests/shifts-complete.test.ts`) — a0c0fea
++- [x] 4.2 Type checking passes: `npm run check` — a0c0fea
++- [x] 4.3 Linting passes: `npm run lint` — a0c0fea
++- [x] 4.4 Build succeeds: `npm run build` — a0c0fea
++- [x] 4.5 Policy-removal meta-check turns the `shift_log` isolation test red (documented, reverted) — a0c0fea
+ 
+ #### Manual
+ 
+-- [x] 4.6 Completing shifts creates per-shift log rows for the right profile (Studio)
+-- [x] 4.7 Weekly aggregation returns a sensible per-child summary tying upgrades to skills
++- [x] 4.6 Completing shifts creates per-shift log rows for the right profile (Studio) — a0c0fea
++- [x] 4.7 Weekly aggregation returns a sensible per-child summary tying upgrades to skills — a0c0fea
+ 
+ ### Phase 5: Parent-PIN gate
+ 
+ #### Automated
+ 
+-- [ ] 5.1 Isolation + PIN round-trip pass against a fresh DB (`supabase db reset` + `vitest run tests/account-settings-isolation.test.ts tests/parent-pin.test.ts`)
+-- [ ] 5.2 Type checking passes: `npm run check`
+-- [ ] 5.3 Linting passes: `npm run lint`
+-- [ ] 5.4 Build succeeds: `npm run build`
+-- [ ] 5.5 PIN stored hashed (never plaintext) — asserted in the round-trip test
++- [x] 5.1 Isolation + PIN round-trip pass against a fresh DB (`supabase db reset` + `vitest run tests/account-settings-isolation.test.ts tests/parent-pin.test.ts`)
++- [x] 5.2 Type checking passes: `npm run check`
++- [x] 5.3 Linting passes: `npm run lint`
++- [x] 5.4 Build succeeds: `npm run build`
++- [x] 5.5 PIN stored hashed (never plaintext) — asserted in the round-trip test
+ 
+ #### Manual
+ 
+-- [ ] 5.6 First visit prompts to set a PIN; later visits require entering it; wrong PIN rejected
+-- [ ] 5.7 The parent_verified marker expires (short TTL) so the gate re-prompts
+-- [ ] 5.8 Account B cannot read or set account A's PIN
++- [x] 5.6 First visit prompts to set a PIN; later visits require entering it; wrong PIN rejected
++- [x] 5.7 The parent_verified marker expires (short TTL) so the gate re-prompts
++- [x] 5.8 Account B cannot read or set account A's PIN
+ 
+ ### Phase 6: Parent weekly report screen
+ 
+diff --git a/docs/reference/contract-surfaces.md b/docs/reference/contract-surfaces.md
+index f29cbd5..1d93b64 100644
+--- a/docs/reference/contract-surfaces.md
++++ b/docs/reference/contract-surfaces.md
+@@ -37,6 +37,22 @@ Per-profile, per-shift history log (S-07) backing the parent weekly report (FR-0
+ - **Consumed by:** `src/lib/services/reports.ts` (`getWeeklyReport` / `aggregateWeeklyReport`), `src/lib/services/child-profiles.ts` (writers).
+ - **Isolation test:** `tests/shift-log-isolation.test.ts`.
+ 
++## public.account_settings
++
++Per-account parent settings (S-07) holding the scrypt-hashed parent PIN (FR-016 gate) and a verify throttle. One row per account (`account_id` is the PK). Written server-side (`src/lib/services/parent-pin.ts`); the PIN is **never stored in plaintext** and never logged.
++
++- **Defined in:** `supabase/migrations/20260701160000_create_account_settings.sql` (S-07).
++- **Owner column:** `account_id uuid primary key references auth.users(id) on delete cascade` — RLS predicate `auth.uid() = account_id`.
++- **Columns:** `account_id` (PK), `pin_hash` text (scrypt `salt:hash` hex), `failed_attempts` integer (check `>= 0`), `locked_until` timestamptz null, `created_at`, `updated_at`.
++- **`updated_at` trigger:** `account_settings_set_updated_at` (`before update`, reuses `set_updated_at()`).
++- **RLS:** enabled; four per-operation policies, all `to authenticated`:
++  - `account_settings_select_own` — `for select using (auth.uid() = account_id)`
++  - `account_settings_insert_own` — `for insert with check (auth.uid() = account_id)`
++  - `account_settings_update_own` — `for update using (...) with check (...)`
++  - `account_settings_delete_own` — `for delete using (auth.uid() = account_id)`
++- **Env dependency:** `PARENT_SESSION_SECRET` (astro.config.mjs `env.schema`) — HMAC key for the signed `parent_verified` session marker. Set on Vercel (Production + Preview).
++- **Isolation test:** `tests/account-settings-isolation.test.ts`.
++
+ ## set_updated_at()
+ 
+ Shared trigger function that stamps `new.updated_at = now()` on every UPDATE.
+diff --git a/src/components/parent/ParentPinGate.tsx b/src/components/parent/ParentPinGate.tsx
+new file mode 100644
+index 0000000..124b7c4
+--- /dev/null
++++ b/src/components/parent/ParentPinGate.tsx
+@@ -0,0 +1,134 @@
++import React, { useState } from "react";
++import { KeyRound } from "lucide-react";
++import { t } from "@/i18n";
++
++interface Props {
++  /** "set" when the parent has no PIN yet (first visit), "enter" otherwise. */
++  mode: "set" | "enter";
++}
++
++/**
++ * Parent-PIN gate island (S-07 / FR-016). Prompts the parent to set a PIN (first
++ * time) or enter it, posts to the server-authoritative set/verify routes, and on
++ * success navigates to the report. All copy via `t.parentPin.*` (L-003). Inputs
++ * are numeric + oversized; the PIN never touches the URL (POST body only).
++ */
++export default function ParentPinGate({ mode }: Props) {
++  const copy = t.parentPin;
++  const [pin, setPin] = useState("");
++  const [confirm, setConfirm] = useState("");
++  const [error, setError] = useState<string | null>(null);
++  const [pending, setPending] = useState(false);
++
++  const isSet = mode === "set";
++
++  function reasonToMessage(reason: string | undefined): string {
++    switch (reason) {
++      case "wrong":
++        return copy.errors.wrong;
++      case "locked":
++        return copy.errors.locked;
++      case "invalid":
++        return copy.errors.invalid;
++      default:
++        return copy.errors.generic;
++    }
++  }
++
++  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
++    e.preventDefault();
++    setError(null);
++    if (!/^\d{4,6}$/.test(pin)) {
++      setError(copy.errors.invalid);
++      return;
++    }
++    if (isSet && pin !== confirm) {
++      setError(copy.errors.mismatch);
++      return;
++    }
++
++    setPending(true);
++    const body = new FormData();
++    body.set("pin", pin);
++    try {
++      const res = await fetch(isSet ? "/api/parent/pin/set" : "/api/parent/pin/verify", { method: "POST", body });
++      if (res.ok) {
++        window.location.href = "/app/report";
++        return;
++      }
++      const data = (await res.json().catch(() => ({}))) as { reason?: string };
++      setError(reasonToMessage(data.reason));
++      setPending(false);
++    } catch {
++      setError(copy.errors.generic);
++      setPending(false);
++    }
++  }
++
++  const inputClass =
++    "w-full rounded-2xl border border-border bg-card px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] shadow-sm outline-none focus:border-primary";
++
++  return (
++    <div className="bg-card border-border w-full max-w-sm rounded-3xl border p-8 shadow-sm">
++      <div className="flex flex-col items-center gap-2 text-center">
++        <span className="bg-secondary text-secondary-foreground flex size-12 items-center justify-center rounded-full">
++          <KeyRound className="size-6" />
++        </span>
++        <h1 className="text-foreground text-2xl font-extrabold">{isSet ? copy.setHeading : copy.enterHeading}</h1>
++        <p className="text-muted-foreground text-sm">{copy.intro}</p>
++      </div>
++
++      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
++        <label className="flex flex-col gap-1">
++          <span className="text-muted-foreground text-sm font-semibold">{copy.pinLabel}</span>
++          <input
++            type="password"
++            inputMode="numeric"
++            pattern="\d*"
++            maxLength={6}
++            autoComplete="off"
++            value={pin}
++            onChange={(e) => {
++              setPin(e.target.value.replace(/\D/g, ""));
++              setError(null);
++            }}
++            className={inputClass}
++          />
++        </label>
++
++        {isSet && (
++          <label className="flex flex-col gap-1">
++            <span className="text-muted-foreground text-sm font-semibold">{copy.confirmLabel}</span>
++            <input
++              type="password"
++              inputMode="numeric"
++              pattern="\d*"
++              maxLength={6}
++              autoComplete="off"
++              value={confirm}
++              onChange={(e) => {
++                setConfirm(e.target.value.replace(/\D/g, ""));
++                setError(null);
++              }}
++              className={inputClass}
++            />
++          </label>
++        )}
++
++        {error && (
++          <p className="text-destructive text-center text-sm font-semibold" role="alert">
++            {error}
++          </p>
++        )}
++
++        <button
++          type="submit"
++          disabled={pending}
++          className="bg-primary text-primary-foreground min-h-14 rounded-2xl px-6 text-lg font-bold shadow-sm transition-opacity disabled:opacity-60"
++        >
++          {pending ? copy.pending : isSet ? copy.setSubmit : copy.enterSubmit}
++        </button>
++      </form>
++    </div>
++  );
++}
+diff --git a/src/i18n/pl.ts b/src/i18n/pl.ts
+index 690a086..aa7829a 100644
+--- a/src/i18n/pl.ts
++++ b/src/i18n/pl.ts
+@@ -272,6 +272,27 @@ export const pl = {
+     upgradesNudgeLink: "Zobacz ulepszenia",
+   },
+ 
++  // Parent-PIN gate (S-07 / FR-016). A soft gate over the session protecting the
++  // parent report from the child. First visit sets a PIN; later visits enter it.
++  parentPin: {
++    title: "Panel rodzica",
++    setHeading: "Ustaw PIN rodzica",
++    enterHeading: "Podaj PIN rodzica",
++    intro: "PIN chroni panel rodzica przed dzieckiem.",
++    pinLabel: "PIN (4–6 cyfr)",
++    confirmLabel: "Powtórz PIN",
++    setSubmit: "Ustaw PIN",
++    enterSubmit: "Otwórz panel",
++    pending: "Sprawdzam…",
++    errors: {
++      invalid: "PIN musi mieć od 4 do 6 cyfr.",
++      mismatch: "PIN-y nie są takie same.",
++      wrong: "Nieprawidłowy PIN.",
++      locked: "Za dużo prób. Spróbuj ponownie za chwilę.",
++      generic: "Coś poszło nie tak. Spróbuj ponownie.",
++    },
++  },
++
+   confirmEmail: {
+     autoConfirmed: {
+       emoji: "✅",
+diff --git a/src/lib/services/parent-pin.ts b/src/lib/services/parent-pin.ts
+new file mode 100644
+index 0000000..8dc9f1c
+--- /dev/null
++++ b/src/lib/services/parent-pin.ts
+@@ -0,0 +1,157 @@
++import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
++import type { AstroCookies } from "astro";
++import type { SupabaseClient } from "@supabase/supabase-js";
++import { PARENT_SESSION_SECRET } from "astro:env/server";
++
++/**
++ * Parent-PIN gate (S-07 / FR-016). Hash + store the PIN, verify it server-side
++ * with a brute-force throttle, and mint/read a short-lived signed session marker.
++ * Every function takes the request-scoped RLS client so `account_settings` reads/
++ * writes are scoped to the authenticated parent (a non-owner sees no row). The PIN
++ * and the HMAC secret are NEVER logged and the PIN is NEVER stored in plaintext.
++ */
++
++/** Cookie carrying the parent-verified marker. httpOnly + short TTL (see setParentVerified). */
++export const PARENT_VERIFIED_COOKIE = "parent_verified";
++/** Marker lifetime — the report re-prompts for the PIN after this elapses. */
++export const MARKER_TTL_MS = 15 * 60_000; // 15 minutes
++
++/** Wrong-PIN attempts before a cooldown kicks in (bounds brute-force of a 4–6 digit PIN). */
++const MAX_FAILED_ATTEMPTS = 5;
++/** Cooldown applied once the threshold is hit. */
++const LOCKOUT_MS = 60_000; // 1 minute
++const SCRYPT_KEYLEN = 64;
++
++interface AccountSettingsRow {
++  account_id: string;
++  pin_hash: string;
++  failed_attempts: number;
++  locked_until: string | null;
++}
++
++/** Hash a PIN as `salt:hash` hex (scrypt, per-PIN random salt). */
++function hashPin(pin: string): string {
++  const salt = randomBytes(16);
++  const derived = scryptSync(pin, salt, SCRYPT_KEYLEN);
++  return `${salt.toString("hex")}:${derived.toString("hex")}`;
++}
++
++/** Constant-time check of a PIN against a stored `salt:hash`. */
++function matchesPin(pin: string, stored: string): boolean {
++  const [saltHex, hashHex] = stored.split(":");
++  if (!saltHex || !hashHex) return false;
++  const expected = Buffer.from(hashHex, "hex");
++  const derived = scryptSync(pin, Buffer.from(saltHex, "hex"), expected.length);
++  return expected.length === derived.length && timingSafeEqual(expected, derived);
++}
++
++/** The authenticated parent's account id (from the session — never client input, L-002). */
++async function currentUserId(client: SupabaseClient): Promise<string | null> {
++  const {
++    data: { user },
++  } = await client.auth.getUser();
++  return user?.id ?? null;
++}
++
++/** Whether the authenticated parent has already set a PIN (RLS-scoped). */
++export async function hasPin(client: SupabaseClient): Promise<boolean> {
++  const { data } = await client.from("account_settings").select("account_id").limit(1);
++  return (data?.length ?? 0) > 0;
++}
++
++/**
++ * Set (or reset) the parent PIN: hash it and upsert the row under RLS, clearing
++ * any throttle. `account_id` comes from the session; the INSERT `with check`
++ * policy is the backstop. Returns false if unauthenticated or the write fails.
++ */
++export async function setPin(client: SupabaseClient, pin: string): Promise<boolean> {
++  const accountId = await currentUserId(client);
++  if (!accountId) return false;
++  const { error } = await client
++    .from("account_settings")
++    .upsert(
++      { account_id: accountId, pin_hash: hashPin(pin), failed_attempts: 0, locked_until: null },
++      { onConflict: "account_id" },
++    );
++  return !error;
++}
++
++export type VerifyResult = { ok: true } | { ok: false; reason: "no-pin" | "locked" | "wrong" | "error" };
++
++/**
++ * Verify a PIN under the throttle: a live `locked_until` rejects WITHOUT checking
++ * the PIN; a correct PIN resets the counter; a wrong PIN increments it and, at the
++ * threshold, sets a short cooldown. All state lives on the RLS-scoped row, so this
++ * only ever affects the authenticated parent's own settings.
++ */
++export async function verifyPin(client: SupabaseClient, pin: string): Promise<VerifyResult> {
++  const { data, error } = await client
++    .from("account_settings")
++    .select("account_id, pin_hash, failed_attempts, locked_until")
++    .limit(1);
++  if (error) return { ok: false, reason: "error" };
++  const row = data[0] as AccountSettingsRow | undefined;
++  if (!row) return { ok: false, reason: "no-pin" };
++
++  if (row.locked_until && new Date(row.locked_until).getTime() > Date.now()) {
++    return { ok: false, reason: "locked" };
++  }
++
++  if (matchesPin(pin, row.pin_hash)) {
++    await client
++      .from("account_settings")
++      .update({ failed_attempts: 0, locked_until: null })
++      .eq("account_id", row.account_id);
++    return { ok: true };
++  }
++
++  const failedAttempts = row.failed_attempts + 1;
++  const lockedUntil = failedAttempts >= MAX_FAILED_ATTEMPTS ? new Date(Date.now() + LOCKOUT_MS).toISOString() : null;
++  await client
++    .from("account_settings")
++    .update({ failed_attempts: failedAttempts, locked_until: lockedUntil })
++    .eq("account_id", row.account_id);
++  return { ok: false, reason: lockedUntil ? "locked" : "wrong" };
++}
++
++/** HMAC-sign an `accountId.expiresAt` marker payload with the session secret. */
++export function signMarker(accountId: string, expiresAt: number): string {
++  const payload = `${accountId}.${expiresAt}`;
++  const sig = createHmac("sha256", PARENT_SESSION_SECRET ?? "")
++    .update(payload)
++    .digest("hex");
++  return `${payload}.${sig}`;
++}
++
++/**
++ * Validate a `parent_verified` cookie: right account, unexpired, and a signature
++ * that verifies under the secret (constant-time). A missing/garbage/tampered/
++ * expired marker returns false so the report route re-prompts for the PIN.
++ */
++export function verifyMarker(cookie: string | undefined, accountId: string): boolean {
++  if (!cookie) return false;
++  const parts = cookie.split(".");
++  if (parts.length !== 3) return false;
++  const [acct, expStr, sig] = parts;
++  if (acct !== accountId) return false;
++  const exp = Number(expStr);
++  if (!Number.isFinite(exp) || exp < Date.now()) return false;
++  const expected = createHmac("sha256", PARENT_SESSION_SECRET ?? "")
++    .update(`${acct}.${expStr}`)
++    .digest("hex");
++  const given = Buffer.from(sig);
++  const want = Buffer.from(expected);
++  return given.length === want.length && timingSafeEqual(given, want);
++}
++
++/** Set the signed, httpOnly, short-TTL parent-verified cookie for `accountId`. */
++export function setParentVerified(cookies: AstroCookies, accountId: string): void {
++  const expiresAt = Date.now() + MARKER_TTL_MS;
++  cookies.set(PARENT_VERIFIED_COOKIE, signMarker(accountId, expiresAt), {
++    httpOnly: true,
++    sameSite: "lax",
++    secure: import.meta.env.PROD,
++    path: "/",
++    maxAge: Math.floor(MARKER_TTL_MS / 1000),
++  });
++}
+diff --git a/src/pages/api/parent/pin/set.ts b/src/pages/api/parent/pin/set.ts
+new file mode 100644
+index 0000000..7cd8d05
+--- /dev/null
++++ b/src/pages/api/parent/pin/set.ts
+@@ -0,0 +1,36 @@
++import type { APIRoute } from "astro";
++import { z } from "zod";
++import { createClient } from "@/lib/supabase";
++import { applyNoStore } from "@/lib/http";
++import { setParentVerified, setPin } from "@/lib/services/parent-pin";
++
++export const prerender = false;
++
++// Only the PIN is accepted (4–6 digits); account_id comes from the session (L-002).
++const setSchema = z.object({ pin: z.string().regex(/^\d{4,6}$/) });
++
++function json(status: number, body: unknown): Response {
++  return applyNoStore(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
++}
++
++// POST /api/parent/pin/set — set (or reset) the parent PIN, then mark this session
++// parent-verified so a first-time set flows straight into the report.
++export const POST: APIRoute = async (context) => {
++  const supabase = createClient(context.request.headers, context.cookies);
++  if (!supabase) return json(503, { ok: false });
++
++  const {
++    data: { user },
++  } = await supabase.auth.getUser();
++  if (!user) return json(401, { ok: false });
++
++  const form = await context.request.formData();
++  const parsed = setSchema.safeParse({ pin: form.get("pin") });
++  if (!parsed.success) return json(400, { ok: false, reason: "invalid" });
++
++  const ok = await setPin(supabase, parsed.data.pin);
++  if (!ok) return json(500, { ok: false });
++
++  setParentVerified(context.cookies, user.id);
++  return json(200, { ok: true });
++};
+diff --git a/src/pages/api/parent/pin/verify.ts b/src/pages/api/parent/pin/verify.ts
+new file mode 100644
+index 0000000..79361d8
+--- /dev/null
++++ b/src/pages/api/parent/pin/verify.ts
+@@ -0,0 +1,39 @@
++import type { APIRoute } from "astro";
++import { z } from "zod";
++import { createClient } from "@/lib/supabase";
++import { applyNoStore } from "@/lib/http";
++import { setParentVerified, verifyPin } from "@/lib/services/parent-pin";
++
++export const prerender = false;
++
++// Only the PIN is accepted (4–6 digits); account_id comes from the session (L-002).
++const verifySchema = z.object({ pin: z.string().regex(/^\d{4,6}$/) });
++
++function json(status: number, body: unknown): Response {
++  return applyNoStore(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
++}
++
++// Map a verify failure to an HTTP status (the island reads `reason` for copy).
++const STATUS_FOR: Record<string, number> = { locked: 429, "no-pin": 400, wrong: 401, error: 500 };
++
++// POST /api/parent/pin/verify — check the PIN under the throttle; on success set
++// the short-lived signed parent_verified marker.
++export const POST: APIRoute = async (context) => {
++  const supabase = createClient(context.request.headers, context.cookies);
++  if (!supabase) return json(503, { ok: false });
++
++  const {
++    data: { user },
++  } = await supabase.auth.getUser();
++  if (!user) return json(401, { ok: false });
++
++  const form = await context.request.formData();
++  const parsed = verifySchema.safeParse({ pin: form.get("pin") });
++  if (!parsed.success) return json(400, { ok: false, reason: "invalid" });
++
++  const result = await verifyPin(supabase, parsed.data.pin);
++  if (!result.ok) return json(STATUS_FOR[result.reason] ?? 400, { ok: false, reason: result.reason });
++
++  setParentVerified(context.cookies, user.id);
++  return json(200, { ok: true });
++};
+diff --git a/src/pages/app/parent-pin.astro b/src/pages/app/parent-pin.astro
+new file mode 100644
+index 0000000..9a2fc85
+--- /dev/null
++++ b/src/pages/app/parent-pin.astro
+@@ -0,0 +1,20 @@
++---
++import Layout from "@/layouts/Layout.astro";
++import ParentPinGate from "@/components/parent/ParentPinGate";
++import { createClient } from "@/lib/supabase";
++import { hasPin } from "@/lib/services/parent-pin";
++import { t } from "@/i18n";
++
++// Parent-PIN gate (S-07 / FR-016). Already auth-gated under /app by middleware.
++// Whether the parent has a PIN decides set vs enter mode; the island posts to the
++// server-authoritative routes and, on success, navigates to /app/report.
++const supabase = createClient(Astro.request.headers, Astro.cookies);
++const alreadyHasPin = supabase ? await hasPin(supabase) : false;
++const mode = alreadyHasPin ? "enter" : "set";
++---
++
++<Layout title={t.brand}>
++  <div class="bg-background flex min-h-screen flex-col items-center justify-center px-4 py-10">
++    <ParentPinGate client:load mode={mode} />
++  </div>
++</Layout>
+diff --git a/supabase/migrations/20260701160000_create_account_settings.sql b/supabase/migrations/20260701160000_create_account_settings.sql
+new file mode 100644
+index 0000000..82ed9f4
+--- /dev/null
++++ b/supabase/migrations/20260701160000_create_account_settings.sql
+@@ -0,0 +1,66 @@
++-- =============================================================================
++-- Migration: create account_settings  (S-07)  — new account-owned table, RLS in-migration
++-- =============================================================================
++-- Per-account parent settings holding the hashed parent PIN (FR-016 gate) plus a
++-- brute-force throttle (`failed_attempts` / `locked_until`). One row per account
++-- (account_id is the PK). Ships the full L-001 contract IN THIS MIGRATION: owner
++-- column `account_id` referencing auth.users, RLS enabled, and FOUR per-operation
++-- policies (all `to authenticated`, all predicated on auth.uid() = account_id).
++-- The shared set_updated_at() trigger is REUSED (do NOT redefine it).
++--
++-- The PIN is stored ONLY as a scrypt hash ("salt:hash" hex) written server-side
++-- (src/lib/services/parent-pin.ts) — never plaintext, never logged. A wrong/missing
++-- policy here is a SILENT DATA LEAK, not a crash — see docs/reference/rls-isolation.md
++-- and the isolation test tests/account-settings-isolation.test.ts.
++--
++-- Deploy note: also set the PARENT_SESSION_SECRET env var on Vercel (Production +
++-- Preview) — the HMAC key for the parent-verified session marker (astro.config.mjs).
++-- Rollback: drop table public.account_settings.
++-- =============================================================================
++
++create table public.account_settings (
++  account_id      uuid        primary key references auth.users (id) on delete cascade,
++  pin_hash        text        not null,
++  failed_attempts integer     not null default 0 check (failed_attempts >= 0),
++  locked_until    timestamptz null,
++  created_at      timestamptz not null default now(),
++  updated_at      timestamptz not null default now()
++);
++
++comment on table public.account_settings is
++  'Per-account parent settings (S-07): scrypt-hashed parent PIN (FR-016) + verify throttle. One row per account (account_id PK, RLS-isolated). Written server-side; PIN never stored plaintext.';
++
++-- Keep updated_at honest (reuses the shared function — do NOT redefine it).
++create trigger account_settings_set_updated_at
++  before update on public.account_settings
++  for each row
++  execute function public.set_updated_at();
++
++alter table public.account_settings enable row level security;
++
++create policy account_settings_select_own
++  on public.account_settings
++  for select
++  to authenticated
++  using (auth.uid() = account_id);
++
++-- INSERT uses WITH CHECK (not USING) — blocks inserting a row owned by someone else.
++create policy account_settings_insert_own
++  on public.account_settings
++  for insert
++  to authenticated
++  with check (auth.uid() = account_id);
++
++-- UPDATE uses BOTH USING and WITH CHECK (can't reassign owner).
++create policy account_settings_update_own
++  on public.account_settings
++  for update
++  to authenticated
++  using (auth.uid() = account_id)
++  with check (auth.uid() = account_id);
++
++create policy account_settings_delete_own
++  on public.account_settings
++  for delete
++  to authenticated
++  using (auth.uid() = account_id);
+diff --git a/tests/account-settings-isolation.test.ts b/tests/account-settings-isolation.test.ts
+new file mode 100644
+index 0000000..0bc2008
+--- /dev/null
++++ b/tests/account-settings-isolation.test.ts
+@@ -0,0 +1,120 @@
++import { afterAll, beforeAll, describe, expect, it } from "vitest";
++import { admin, createSignedInUser, type TestAccount } from "./helpers/supabase";
++
++/**
++ * Cross-account data-isolation contract test for `account_settings` (S-07, L-001).
++ *
++ * Proves the RLS policies in
++ * supabase/migrations/20260701160000_create_account_settings.sql isolate one
++ * parent account from another — critically, one parent must never read or set
++ * another's PIN. Each assertion maps 1:1 to one of the four per-operation
++ * policies, acting as *signed-in users* (never the service-role client) so RLS is
++ * genuinely exercised. Admin is used ONLY to provision users and confirm durable
++ * state for INSERT-isolation (L-002 — no chained `.select()` read-back).
++ *
++ * Requires the local Supabase stack + `.env.test`.
++ */
++
++interface AccountSettingsRow {
++  account_id: string;
++  pin_hash: string;
++  failed_attempts: number;
++  locked_until: string | null;
++}
++
++describe("account_settings per-account isolation (RLS contract)", () => {
++  let accountA: TestAccount;
++  let accountB: TestAccount;
++  let accountC: TestAccount; // a victim with NO row — the INSERT-on-behalf target (avoids PK conflict)
++
++  beforeAll(async () => {
++    accountA = await createSignedInUser("settings");
++    accountB = await createSignedInUser("settings");
++    accountC = await createSignedInUser("settings");
++
++    // A owns its settings row (positive control for INSERT + SELECT).
++    const { error } = await accountA.client
++      .from("account_settings")
++      .insert({ account_id: accountA.id, pin_hash: "seed-hash" });
++    expect(error).toBeNull();
++  });
++
++  afterAll(async () => {
++    if (accountA.id) await admin.auth.admin.deleteUser(accountA.id);
++    if (accountB.id) await admin.auth.admin.deleteUser(accountB.id);
++    if (accountC.id) await admin.auth.admin.deleteUser(accountC.id);
++  });
++
++  it("positive control: account A can read its own settings", async () => {
++    const { data, error } = await accountA.client
++      .from("account_settings")
++      .select("*")
++      .overrideTypes<AccountSettingsRow[], { merge: false }>();
++    expect(error).toBeNull();
++    expect(data).toHaveLength(1);
++    expect(data?.[0].account_id).toBe(accountA.id);
++  });
++
++  it("SELECT isolation: account B cannot see account A's PIN", async () => {
++    const { data, error } = await accountB.client
++      .from("account_settings")
++      .select("*")
++      .overrideTypes<AccountSettingsRow[], { merge: false }>();
++    expect(error).toBeNull(); // RLS filters silently
++    expect(data).toHaveLength(0);
++  });
++
++  it("UPDATE isolation: account B cannot modify account A's settings", async () => {
++    const { data, error } = await accountB.client
++      .from("account_settings")
++      .update({ pin_hash: "hacked", failed_attempts: 99 })
++      .eq("account_id", accountA.id)
++      .select()
++      .overrideTypes<AccountSettingsRow[], { merge: false }>();
++    expect(error).toBeNull();
++    expect(data).toHaveLength(0); // USING filtered the row out
++
++    const { data: aData } = await accountA.client
++      .from("account_settings")
++      .select("pin_hash")
++      .eq("account_id", accountA.id)
++      .single()
++      .overrideTypes<Pick<AccountSettingsRow, "pin_hash">, { merge: false }>();
++    expect(aData?.pin_hash).toBe("seed-hash"); // unchanged
++  });
++
++  it("DELETE isolation: account B cannot delete account A's settings", async () => {
++    const { data, error } = await accountB.client
++      .from("account_settings")
++      .delete()
++      .eq("account_id", accountA.id)
++      .select()
++      .overrideTypes<AccountSettingsRow[], { merge: false }>();
++    expect(error).toBeNull();
++    expect(data).toHaveLength(0);
++
++    const { data: aData } = await accountA.client
++      .from("account_settings")
++      .select("account_id")
++      .eq("account_id", accountA.id)
++      .overrideTypes<Pick<AccountSettingsRow, "account_id">[], { merge: false }>();
++    expect(aData).toHaveLength(1); // still present
++  });
++
++  it("INSERT-on-behalf isolation: account B cannot set a PIN owned by account C", async () => {
++    // Target C (which has NO row) so the ONLY possible rejection is the RLS WITH
++    // CHECK — not a primary-key conflict (which would be a false green, L-002).
++    const { error } = await accountB.client
++      .from("account_settings")
++      .insert({ account_id: accountC.id, pin_hash: "on-behalf" });
++    expect(error).not.toBeNull();
++
++    // Service-role confirmation that no row was actually written for C.
++    const { data: cRows } = await admin
++      .from("account_settings")
++      .select("account_id")
++      .eq("account_id", accountC.id)
++      .overrideTypes<Pick<AccountSettingsRow, "account_id">[], { merge: false }>();
++    expect(cRows).toHaveLength(0);
++  });
++});
+diff --git a/tests/helpers/stubs/astro-env-server.ts b/tests/helpers/stubs/astro-env-server.ts
+index a82cef9..1f53a6b 100644
+--- a/tests/helpers/stubs/astro-env-server.ts
++++ b/tests/helpers/stubs/astro-env-server.ts
+@@ -7,3 +7,5 @@
+ // `vi.mock("astro:env/server", () => ({ SUPABASE_URL: undefined, SUPABASE_KEY: undefined }))`.
+ export const SUPABASE_URL = process.env.SUPABASE_URL;
+ export const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
++// HMAC key for the parent-verified session marker (S-07). From `.env.test`.
++export const PARENT_SESSION_SECRET = process.env.PARENT_SESSION_SECRET;
+diff --git a/tests/parent-pin.test.ts b/tests/parent-pin.test.ts
+new file mode 100644
+index 0000000..2f2212c
+--- /dev/null
++++ b/tests/parent-pin.test.ts
+@@ -0,0 +1,115 @@
++import { afterAll, describe, expect, it } from "vitest";
++import { admin, createSignedInUser, deleteUser, type TestAccount } from "./helpers/supabase";
++import { hasPin, setPin, signMarker, verifyMarker, verifyPin } from "@/lib/services/parent-pin";
++
++/**
++ * Parent-PIN service (S-07 / FR-016): set/verify round-trip, hashed-at-rest,
++ * brute-force throttle, cross-account isolation, and the signed session marker.
++ * Acts as real signed-in users so the RLS-scoped `account_settings` access is
++ * genuinely exercised. Requires the local Supabase stack + `.env.test` (which
++ * supplies PARENT_SESSION_SECRET for the marker).
++ */
++
++const created: string[] = [];
++async function fresh(): Promise<TestAccount> {
++  const account = await createSignedInUser("pinsvc");
++  created.push(account.id);
++  return account;
++}
++
++afterAll(async () => {
++  for (const id of created) await deleteUser(id);
++});
++
++describe("parent-pin set/verify", () => {
++  it("round-trips: no PIN → set → hasPin → correct verifies, wrong is rejected", async () => {
++    const a = await fresh();
++    expect(await hasPin(a.client)).toBe(false);
++    expect(await setPin(a.client, "1234")).toBe(true);
++    expect(await hasPin(a.client)).toBe(true);
++    expect(await verifyPin(a.client, "1234")).toEqual({ ok: true });
++    expect(await verifyPin(a.client, "9999")).toEqual({ ok: false, reason: "wrong" });
++  });
++
++  it("stores the PIN hashed, never in plaintext", async () => {
++    const a = await fresh();
++    await setPin(a.client, "246810");
++    const { data } = await admin
++      .from("account_settings")
++      .select("pin_hash")
++      .eq("account_id", a.id)
++      .single()
++      .overrideTypes<{ pin_hash: string }, { merge: false }>();
++    expect(data?.pin_hash).toBeTruthy();
++    expect(data?.pin_hash).not.toBe("246810"); // never plaintext
++    expect(data?.pin_hash).toContain(":"); // salt:hash shape
++  });
++
++  it("reports no-pin when verifying before any PIN is set", async () => {
++    const a = await fresh();
++    expect(await verifyPin(a.client, "1234")).toEqual({ ok: false, reason: "no-pin" });
++  });
++
++  it("throttles: repeated wrong PINs trip a lockout that rejects even the correct PIN", async () => {
++    const a = await fresh();
++    await setPin(a.client, "1234");
++
++    const results = [];
++    for (let i = 0; i < 5; i++) results.push(await verifyPin(a.client, "0000"));
++    // Early attempts are plain wrong; the threshold attempt trips the lockout.
++    expect(results[0]).toEqual({ ok: false, reason: "wrong" });
++    expect(results[4]).toEqual({ ok: false, reason: "locked" });
++
++    // While locked, even the correct PIN is rejected without being checked.
++    expect(await verifyPin(a.client, "1234")).toEqual({ ok: false, reason: "locked" });
++  });
++
++  it("isolates accounts: B cannot read or verify A's PIN, and sets only its own", async () => {
++    const a = await fresh();
++    const b = await fresh();
++    await setPin(a.client, "1234");
++
++    expect(await hasPin(b.client)).toBe(false); // B sees no settings
++    expect(await verifyPin(b.client, "1234")).toEqual({ ok: false, reason: "no-pin" });
++
++    // B setting a PIN creates B's OWN row; A's row is untouched.
++    expect(await setPin(b.client, "5678")).toBe(true);
++    const { data: bRows } = await b.client
++      .from("account_settings")
++      .select("account_id")
++      .overrideTypes<{ account_id: string }[], { merge: false }>();
++    expect(bRows).toHaveLength(1);
++    expect(bRows?.[0].account_id).toBe(b.id);
++
++    expect(await verifyPin(a.client, "1234")).toEqual({ ok: true }); // A's PIN still works
++  });
++});
++
++describe("parent-verified session marker", () => {
++  const account = "11111111-1111-1111-1111-111111111111";
++
++  it("verifies a fresh marker for the right account", () => {
++    const marker = signMarker(account, Date.now() + 60_000);
++    expect(verifyMarker(marker, account)).toBe(true);
++  });
++
++  it("rejects a marker for a different account", () => {
++    const marker = signMarker(account, Date.now() + 60_000);
++    expect(verifyMarker(marker, "22222222-2222-2222-2222-222222222222")).toBe(false);
++  });
++
++  it("rejects a tampered signature", () => {
++    const marker = signMarker(account, Date.now() + 60_000);
++    expect(verifyMarker(`${marker}tamper`, account)).toBe(false);
++  });
++
++  it("rejects an expired marker", () => {
++    const marker = signMarker(account, Date.now() - 1000);
++    expect(verifyMarker(marker, account)).toBe(false);
++  });
++
++  it("rejects a missing / malformed marker", () => {
++    expect(verifyMarker(undefined, account)).toBe(false);
++    expect(verifyMarker("not-a-marker", account)).toBe(false);
++  });
++});

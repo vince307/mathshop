@@ -1,0 +1,149 @@
+diff --git a/.env.example b/.env.example
+index d4bb225..6a4f693 100644
+--- a/.env.example
++++ b/.env.example
+@@ -13,7 +13,9 @@ SUPABASE_SERVICE_ROLE_KEY=###
+ # the hosted project (see README "Email confirmation"); not read by the app itself.
+ BREVO_SMTP_USER=###
+ BREVO_SMTP_KEY=###
+-# Anthropic API key — powers ONLY the local code-review agent
+-# (packages/code-reviewer); the app never reads it (not in astro.config env.schema).
++# Anthropic API key — powers ONLY the code-review agent (packages/code-reviewer),
++# locally and as the CI review gate (.github/workflows/review.yml, where it comes
++# from the ANTHROPIC_API_KEY repository Actions secret — keep the two in sync).
++# The app never reads it (not in astro.config env.schema).
+ # Get one from the Anthropic Console (commercial terms): https://console.anthropic.com
+ ANTHROPIC_API_KEY=###
+diff --git a/.github/scripts/README.md b/.github/scripts/README.md
+new file mode 100644
+index 0000000..c768a38
+--- /dev/null
++++ b/.github/scripts/README.md
+@@ -0,0 +1,21 @@
++# .github/scripts
++
++Dependency-free Node helpers used by workflow steps. They are deliberately
++outside the root ESLint project service (`eslint.config.js` ignores
++`.github/scripts/**` — same fencing as `packages/**`): the root config runs
++type-checked rules against `tsconfig.json`, which does not cover this
++directory, and adding a per-directory toolchain for two small scripts is not
++worth the moving parts.
++
++Quality bar in lieu of lint: scripts here must be plain Node >=22 with no
++dependencies, pass `node --check`, and carry a usage comment at the top.
++They are exercised by the `review` job on every PR
++(`.github/workflows/review.yml`), which consumes `render-review-comment.mjs`
++with the `ANTHROPIC_API_KEY` Actions secret via the `ai-reviewer` composite
++action.
++
++- `render-review-comment.mjs` — renders the AI review PR comment from the
++  `ai-reviewer` action's outputs (three shapes: full review / noise-only pass
++  / setup-error). Test locally against `render-review-comment.fixture.json`.
++- `render-review-comment.fixture.json` — sample CLI output for exercising the
++  renderer; not consumed at runtime.
+diff --git a/context/changes/ai-code-review-ci/plan.md b/context/changes/ai-code-review-ci/plan.md
+index d2b44ad..af9c823 100644
+--- a/context/changes/ai-code-review-ci/plan.md
++++ b/context/changes/ai-code-review-ci/plan.md
+@@ -319,23 +319,23 @@ No data or code migration. Rollback = delete `review.yml` (check disappears) and
+ 
+ #### Automated
+ 
+-- [x] 2.1 Introducing PR produces a `review` check run (no workflow-parse error)
+-- [x] 2.2 Introducing PR's review run completes with a readable verdict
++- [x] 2.1 Introducing PR produces a `review` check run (no workflow-parse error) — abc23d3
++- [x] 2.2 Introducing PR's review run completes with a readable verdict — abc23d3
+ 
+ #### Manual
+ 
+-- [ ] 2.3 Comment upserts across pushes (one comment, edited)
+-- [ ] 2.4 Label matches verdict; exit-code annotation visible in logs
+-- [ ] 2.5 Draft PR produces a skipped run
++- [x] 2.3 Comment upserts across pushes (one comment, edited) — abc23d3
++- [x] 2.4 Label matches verdict; exit-code annotation visible in logs — abc23d3
++- [x] 2.5 Draft PR produces a skipped run — abc23d3
+ 
+ ### Phase 3: Enforcement script + repo sync
+ 
+ #### Automated
+ 
+-- [ ] 3.1 `scripts/setup-review-gate.sh` runs clean against the live repo
+-- [ ] 3.2 Protection contexts verify as `["ci","e2e","review"]`
+-- [ ] 3.3 All three `ai-cr:*` labels exist
+-- [ ] 3.4 `npm run lint` passes
++- [x] 3.1 `scripts/setup-review-gate.sh` runs clean against the live repo
++- [x] 3.2 Protection contexts verify as `["ci","e2e","review"]`
++- [x] 3.3 All three `ai-cr:*` labels exist
++- [x] 3.4 `npm run lint` passes
+ 
+ #### Manual
+ 
+diff --git a/eslint.config.js b/eslint.config.js
+index d09c24d..4149a66 100644
+--- a/eslint.config.js
++++ b/eslint.config.js
+@@ -78,7 +78,8 @@ export default tseslint.config(
+   includeIgnoreFile(gitignorePath),
+   // packages/* are self-governed workspaces (own deps, own tsconfig) outside the
+   // root project service — linting them here throws "not found by project service".
+-  { ignores: ["packages/**"] },
++  // .github/scripts/* are dependency-free Node CI helpers with the same problem.
++  { ignores: ["packages/**", ".github/scripts/**"] },
+   baseConfig,
+   reactConfig,
+   eslintPluginAstro.configs["flat/recommended"],
+diff --git a/scripts/setup-review-gate.sh b/scripts/setup-review-gate.sh
+new file mode 100755
+index 0000000..840f602
+--- /dev/null
++++ b/scripts/setup-review-gate.sh
+@@ -0,0 +1,49 @@
++#!/usr/bin/env bash
++# One-time (re-runnable) setup for the AI review merge gate — the reproducible
++# record of the enforcement config. Requires: gh authenticated with admin on
++# the repo. Safe to re-run: label creation is --force, the protection PUT is
++# last-write-wins.
++#
++# Verification (the script performs step 1 itself at the end; 2-3 are manual):
++#   1. `gh api repos/<repo>/branches/main/protection` shows contexts
++#      ["ci","e2e","review"], strict=false, enforce_admins=false.
++#   2. GitHub Settings -> Branches shows the rule on main; an open PR's merge
++#      box lists all three required checks.
++#   3. A PR with a failing `review` check reports mergeStateStatus=BLOCKED.
++# Rollback: `gh api -X DELETE repos/<repo>/branches/main/protection`.
++#
++# Consumed by: .github/workflows/review.yml (the gate this script enforces);
++# the ANTHROPIC_API_KEY Actions secret must exist for that workflow to run.
++# Context: context/changes/ai-code-review-ci/ (stage 2 of ai-code-review).
++set -euo pipefail
++
++REPO="${1:-vince307/mathshop}"
++
++echo "== Labels (ai-cr:*) on $REPO =="
++gh label create "ai-cr:review" --repo "$REPO" --color 0075ca \
++  --description "Re-run the AI review on this PR" --force
++gh label create "ai-cr:passed" --repo "$REPO" --color 1a7f37 \
++  --description "AI review verdict: pass" --force
++gh label create "ai-cr:failed" --repo "$REPO" --color d73a4a \
++  --description "AI review verdict: fail" --force
++
++echo "== Branch protection on main =="
++# Solo-repo constraints, deliberately:
++# - required_pull_request_reviews: null — the author cannot approve their own
++#   PR; requiring approvals would deadlock every merge.
++# - enforce_admins: false — admin bypass stays possible; the gate's job is to
++#   make skipping a deliberate act, not impossible (requirements.md).
++# - strict: false — no update-branch-before-merge friction for a solo flow.
++gh api -X PUT "repos/$REPO/branches/main/protection" --input - <<'JSON'
++{
++  "required_status_checks": { "strict": false, "contexts": ["ci", "e2e", "review"] },
++  "enforce_admins": false,
++  "required_pull_request_reviews": null,
++  "restrictions": null
++}
++JSON
++
++echo "== Verify =="
++gh api "repos/$REPO/branches/main/protection" \
++  --jq '{contexts: .required_status_checks.contexts, strict: .required_status_checks.strict, enforce_admins: .enforce_admins.enabled}'
++echo "Done. Required checks on main: ci, e2e, review."

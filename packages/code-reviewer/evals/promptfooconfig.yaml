@@ -1,0 +1,115 @@
+# Promptfoo eval set for the code review agent (M5L3, change: code-review-evals).
+#
+# Wiring: custom JS provider wrapping the unchanged review.ts CLI — the eval
+# exercises exactly what CI runs (diff filtering, prompt assembly, deriveVerdict).
+# Fixtures are committed .diff files (see generate-fixtures.mjs); evals never
+# read git history at run time.
+#
+# Run from packages/code-reviewer: npm run evals   (full 2x6 matrix, real spend,
+# no caching for JS providers — don't re-run casually).
+description: "Review agent: Haiku vs Sonnet over 6 historical fixture diffs"
+
+prompts:
+  - "{{diff}}"
+
+providers:
+  - id: file://./review-provider.mjs
+    label: haiku-4-5
+    config:
+      model: claude-haiku-4-5
+  - id: file://./review-provider.mjs
+    label: sonnet-4-6
+    config:
+      model: claude-sonnet-4-6
+
+defaultTest:
+  options:
+    # Grader pin for model-graded asserts: no OpenAI key exists in this repo,
+    # and auto-selection is version-dependent. Haiku judges (decision: cheap,
+    # the single rubric assert is string-presence-level).
+    provider: anthropic:messages:claude-haiku-4-5
+  assert:
+    - type: is-json
+      value: file://review-schema.json
+
+tests:
+  - description: "07da072 known-bad config-class (parent-PIN gate) — must fail; c6 < 5 hard on Haiku"
+    vars:
+      diff: file://fixtures/07da072-parent-pin-config.diff
+    assert:
+      - type: javascript
+        value: |
+          // verdict=fail is hard on both models. The configDeployment<5 threshold
+          // is hard only for Haiku (the deployed REVIEW_MODEL; mirrors fixtures.ts'
+          // hard assertion) — measured: Sonnet fails this diff via criterion-5
+          // blockers (security=2) and scores c6=5, filing the same defect under a
+          // different criterion. Recorded, not asserted, for the candidate model.
+          const r = JSON.parse(output);
+          const label = context.provider.label || '';
+          const c6 = r.scores.configDeployment;
+          const ok = label.includes('haiku') ? (r.verdict === 'fail' && c6 < 5) : r.verdict === 'fail';
+          return { pass: ok, score: ok ? 1 : 0, reason: `${label}: verdict=${r.verdict}, configDeployment=${c6}` };
+
+  - description: "879315e borderline should-pass (service-role change with .env.example sync)"
+    vars:
+      diff: file://fixtures/879315e-account-deletion-synced.diff
+    assert:
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const ok = r.verdict === 'pass';
+          return { pass: ok, score: ok ? 1 : 0, reason: `verdict=${r.verdict}` };
+
+  - description: "pr21 clean docs-typo control — must pass"
+    vars:
+      diff: file://fixtures/pr21-clean-docs.diff
+    assert:
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const ok = r.verdict === 'pass';
+          return { pass: ok, score: ok ? 1 : 0, reason: `verdict=${r.verdict}` };
+
+  - description: "d6c93d8-R env var removed from CI — must fail, criterion-6"
+    vars:
+      diff: file://fixtures/d6c93d8-R-env-var-removed-from-ci.diff
+    assert:
+      - type: javascript
+        value: |
+          const r = JSON.parse(output);
+          const ok = r.verdict === 'fail' && r.scores.configDeployment < 5;
+          return { pass: ok, score: ok ? 1 : 0, reason: `verdict=${r.verdict}, configDeployment=${r.scores.configDeployment}` };
+
+  - description: "pr20 SUPABASE_KEY rename without sync — must fail with a criterion-6 finding"
+    vars:
+      diff: file://fixtures/pr20-supabase-key-rename.diff
+    assert:
+      - type: javascript
+        value: |
+          // Hard on verdict + criterion-6 finding presence; severity is recorded,
+          // not asserted — models calibrate blocker-vs-major differently (measured:
+          // Haiku=blocker, Sonnet=major on this diff) and deriveVerdict fails the
+          // diff on the score threshold either way.
+          const r = JSON.parse(output);
+          const c6 = r.findings.filter(f => f.criterion === 6);
+          const ok = r.verdict === 'fail' && c6.length > 0;
+          const severities = c6.map(f => f.severity).join(',') || 'none';
+          return { pass: ok, score: ok ? 1 : 0, reason: `verdict=${r.verdict}, c6 findings=${c6.length} (severity: ${severities})` };
+      - type: llm-rubric
+        value: "The review names the environment-variable desynchronization concretely: SUPABASE_KEY was renamed to SUPABASE_API_KEY without updating .env.example or CI/deployment config."
+
+  - description: "pr19 gate-setup infra PR (documented false positive) — REPORT-ONLY: desired pass, records each model's verdict"
+    vars:
+      diff: file://fixtures/pr19-gate-setup.diff
+    assert:
+      - type: javascript
+        value: |
+          // Report-only on both models (plan decision): never red, but the
+          // score and reason record the false-positive answer per model.
+          const r = JSON.parse(output);
+          const label = context.provider.label || context.provider.id;
+          return {
+            pass: true,
+            score: r.verdict === 'pass' ? 1 : 0,
+            reason: `${label}: verdict=${r.verdict}, configDeployment=${r.scores.configDeployment} (report-only; desired pass)`,
+          };

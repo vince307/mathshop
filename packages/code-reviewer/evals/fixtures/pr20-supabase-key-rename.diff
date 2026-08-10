@@ -1,0 +1,57 @@
+diff --git a/astro.config.mjs b/astro.config.mjs
+index c5b71a8..d854bf2 100644
+--- a/astro.config.mjs
++++ b/astro.config.mjs
+@@ -21,7 +21,7 @@ export default defineConfig({
+   env: {
+     schema: {
+       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),
+-      SUPABASE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
++      SUPABASE_API_KEY: envField.string({ context: "server", access: "secret", optional: true }),
+       // HMAC key for the short-lived parent-verified session marker (S-07). Set on
+       // Vercel Production scope (Preview would fail closed — no marker minting).
+       // Optional so builds without it don't fail; the marker helpers throw / return
+diff --git a/src/lib/config-status.ts b/src/lib/config-status.ts
+index 731e5e6..e219605 100644
+--- a/src/lib/config-status.ts
++++ b/src/lib/config-status.ts
+@@ -1,4 +1,4 @@
+-import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
++import { SUPABASE_URL, SUPABASE_API_KEY } from "astro:env/server";
+ 
+ export interface ConfigStatus {
+   name: string;
+@@ -11,7 +11,7 @@ export interface ConfigStatus {
+ export const configStatuses: ConfigStatus[] = [
+   {
+     name: "Supabase",
+-    configured: Boolean(SUPABASE_URL && SUPABASE_KEY),
++    configured: Boolean(SUPABASE_URL && SUPABASE_API_KEY),
+     message: "Supabase nie jest skonfigurowany — funkcje uwierzytelniania są wyłączone.",
+     docsUrl: "https://github.com/przeprogramowani/10x-astro-starter#supabase-configuration",
+     docsLabel: "Zobacz instrukcję konfiguracji",
+diff --git a/src/lib/supabase.ts b/src/lib/supabase.ts
+index 166772e..b25d7f8 100644
+--- a/src/lib/supabase.ts
++++ b/src/lib/supabase.ts
+@@ -1,6 +1,6 @@
+ import { createServerClient, parseCookieHeader } from "@supabase/ssr";
+ import type { AstroCookies } from "astro";
+-import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
++import { SUPABASE_URL, SUPABASE_API_KEY } from "astro:env/server";
+ 
+ /**
+  * Hardened cookie options for the Supabase auth cookies. `httpOnly` keeps the
+@@ -19,10 +19,10 @@ const AUTH_COOKIE_OPTIONS = {
+ const AUTH_COOKIE_RE = /^sb-.+-auth-token(\.\d+)?$/;
+ 
+ export function createClient(requestHeaders: Headers, cookies: AstroCookies) {
+-  if (!SUPABASE_URL || !SUPABASE_KEY) {
++  if (!SUPABASE_URL || !SUPABASE_API_KEY) {
+     return null;
+   }
+-  return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
++  return createServerClient(SUPABASE_URL, SUPABASE_API_KEY, {
+     cookies: {
+       getAll() {
+         return parseCookieHeader(requestHeaders.get("Cookie") ?? "").map(({ name, value }) => ({
