@@ -1,10 +1,10 @@
 ---
 change_id: code-review-evals
 title: Promptfoo eval set for the code review agent
-status: implemented
+status: archived
 created: 2026-08-09
-updated: 2026-08-09
-archived_at: null
+updated: 2026-08-10
+archived_at: 2026-08-10T18:54:04Z
 ---
 
 ## Notes
