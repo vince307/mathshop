@@ -339,8 +339,8 @@ No database changes, so no migration and no RLS surface (L-001 does not apply). 
 
 #### Automated
 
-- [ ] 4.1 Local stack still starts with the new config block
-- [ ] 4.2 Full suites green after the config change
+- [x] 4.1 Local stack still starts with the new config block — note: `db reset` alone restarts containers without re-applying auth env; a full `supabase stop && start` was needed, after which `GOTRUE_URI_ALLOW_LIST` carries `/auth/update-password`
+- [x] 4.2 Full suites green after the config change
 
 #### Manual
 

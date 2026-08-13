@@ -155,10 +155,12 @@ enabled = true
 # verification email ({{ .SiteURL }}) — must match where the app actually runs.
 site_url = "http://localhost:4321"
 # A list of *exact* URLs that auth providers are permitted to redirect to post
-# authentication. Includes the post-confirm target (/app) and the confirm route.
+# authentication. Includes the post-confirm target (/app), the confirm route, and
+# the recovery landing page the emailed link forwards to.
 additional_redirect_urls = [
   "http://localhost:4321/app",
   "http://localhost:4321/api/auth/confirm",
+  "http://localhost:4321/auth/update-password",
   "http://127.0.0.1:3000",
   "https://127.0.0.1:3000",
 ]
@@ -416,9 +418,11 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # `npx -y supabase@latest config push`, which uploads auth config INCLUDING the
 # email template by content_path and SMTP settings). Local behavior is untouched:
 # this block only applies when operating against the linked production project.
-# ALWAYS read the push diff before confirming — site_url/redirect URLs below must
-# match the values set in the dashboard on 2026-07-10 (MAT-14), so they should
-# show NO change; SMTP/rate-limit/confirmations are the expected additions.
+# ALWAYS read the push diff before confirming — site_url must match the value set
+# in the dashboard on 2026-07-10 (MAT-14) and show NO change; SMTP, rate limits,
+# otp_length and the MFA flags must likewise show no change. The 2026-08-13
+# password-reset push expects exactly two additions: the recovery email template
+# and the /auth/update-password redirect URL.
 # Secrets stay out of the repo: BREVO_SMTP_USER / BREVO_SMTP_KEY are read from
 # the pusher's environment at push time (Brevo SMTP & API page; regenerate the
 # login/key pair if the auto-generated login exposes the account email).
@@ -430,6 +434,7 @@ site_url = "https://mathshop.vercel.app"
 additional_redirect_urls = [
   "https://mathshop.vercel.app/app",
   "https://mathshop.vercel.app/api/auth/confirm",
+  "https://mathshop.vercel.app/auth/update-password",
 ]
 
 [remotes.production.auth.email]
