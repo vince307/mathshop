@@ -324,10 +324,10 @@ No database changes, so no migration and no RLS surface (L-001 does not apply). 
 
 #### Automated
 
-- [x] 3.1 Update-route tests pass (refusal + durable no-change; success; revocation; `same_password`)
-- [x] 3.2 E2E recovery journey passes
-- [x] 3.3 Full vitest + playwright suites green
-- [x] 3.4 Lint + types clean
+- [x] 3.1 Update-route tests pass (refusal + durable no-change; success; revocation; `same_password`) — 60c668a
+- [x] 3.2 E2E recovery journey passes — 60c668a
+- [x] 3.3 Full vitest + playwright suites green — 60c668a
+- [x] 3.4 Lint + types clean — 60c668a
 
 #### Manual
 
