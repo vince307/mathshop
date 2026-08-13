@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { POST as resetPOST } from "@/pages/api/auth/reset";
 import { createSignedInUser, deleteUser, type TestAccount } from "./helpers/supabase";
 import { buildContext } from "./helpers/astro";
@@ -16,6 +16,41 @@ import { t } from "@/i18n";
  *
  * Requires the local Supabase stack + `.env.test`.
  */
+
+/**
+ * Flag-driven stub for a failing mail transport. The route's real client is used
+ * untouched unless `enabled` is set, so the rest of this file still exercises
+ * Supabase for real; when set, `resetPasswordForEmail` fails the way a dead SMTP
+ * makes it fail. Proxies (not spreads) so every other client method keeps its
+ * binding.
+ */
+const sendFailure = vi.hoisted(() => ({ enabled: false }));
+
+vi.mock("@/lib/supabase", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/supabase")>();
+  return {
+    ...actual,
+    createClient: (...args: Parameters<typeof actual.createClient>) => {
+      const client = actual.createClient(...args);
+      if (!client || !sendFailure.enabled) return client;
+      return new Proxy(client, {
+        get(target, prop, receiver): unknown {
+          if (prop !== "auth") return Reflect.get(target, prop, receiver);
+          return new Proxy(target.auth, {
+            get(authTarget, authProp, authReceiver): unknown {
+              if (authProp !== "resetPasswordForEmail") return Reflect.get(authTarget, authProp, authReceiver);
+              return () =>
+                Promise.resolve({
+                  data: null,
+                  error: { code: "unexpected_failure", status: 500, message: "smtp down" },
+                });
+            },
+          });
+        },
+      });
+    },
+  };
+});
 
 function resetRequest(email: string | undefined) {
   return buildContext({
@@ -49,6 +84,29 @@ describe("password-reset request route (real Supabase)", () => {
     const response = await resetPOST(resetRequest(`reset-notice-${randomUUID()}@example.test`));
 
     expect(response.headers.get("Location")).toBe("/auth/reset-password?sent=1");
+  });
+
+  /**
+   * The oracle this closes: a send is attempted only for a REGISTERED address,
+   * so when the transport is down the registered case errors while an unknown
+   * one still "succeeds" — which is precisely how production behaved on
+   * 2026-08-13 with SMTP blanked. Both must read as sent, and the operator must
+   * still get the signal in the logs.
+   */
+  it("masks a dead transport as the sent notice, and logs it server-side", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    sendFailure.enabled = true;
+    try {
+      const known = await resetPOST(resetRequest(`reset-fail-known-${randomUUID()}@example.test`));
+      const unknown = await resetPOST(resetRequest(`reset-fail-unknown-${randomUUID()}@example.test`));
+
+      expect(known.headers.get("Location")).toBe("/auth/reset-password?sent=1");
+      expect(unknown.headers.get("Location")).toBe("/auth/reset-password?sent=1");
+      expect(logged).toHaveBeenCalled();
+    } finally {
+      sendFailure.enabled = false;
+      logged.mockRestore();
+    }
   });
 
   it("carries the anti-CDN-cache headers", async () => {

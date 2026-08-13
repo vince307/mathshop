@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { applyNoStore } from "@/lib/http";
-import { resendFailureMessage } from "@/lib/auth-errors";
 import { t } from "@/i18n";
 
 export const prerender = false;
@@ -19,6 +18,18 @@ export const prerender = false;
  * `next=/auth/update-password` as a path, because the confirm route's `safeNext`
  * accepts only same-origin paths and silently falls back to /app for the
  * absolute URL that `{{ .RedirectTo }}` renders (see recovery.html).
+ *
+ * EVERY `resetPasswordForEmail` failure is masked as the sent notice, because
+ * every one of them is address-correlated and would rebuild the oracle this
+ * route exists to avoid:
+ *   - transport/SMTP failures fire only when a send is ATTEMPTED, i.e. only for
+ *     a registered address — an unknown one short-circuits and "succeeds". A
+ *     dead mailer therefore split the two cases apart, which is exactly what
+ *     happened in production on 2026-08-13 when a config push blanked SMTP.
+ *   - `max_frequency` (1m in production) throttles per ADDRESS, so a repeated
+ *     request returns 429 for a registered parent and success for a stranger.
+ * The failure is logged server-side instead, where it belongs: a mail outage is
+ * an operator problem, and telling the parent about it is what leaks.
  */
 export const POST: APIRoute = async (context) => {
   const form = await context.request.formData();
@@ -37,11 +48,17 @@ export const POST: APIRoute = async (context) => {
 
   const { error } = await supabase.auth.resetPasswordForEmail(email);
 
-  // Only transport/throttle failures surface — never "no such account". The
-  // rate-limit branch reuses the resend mapper so a throttled parent sees the
-  // established Polish "Zbyt wiele prób…" message.
+  // Deliberately NOT surfaced to the parent — see the enumeration note above.
+  // Logged with the stable code/status only; the address stays out of the log.
   if (error) {
-    return applyNoStore(context.redirect(`${back}?error=${encodeURIComponent(resendFailureMessage(error))}`));
+    // Same deliberate exception as the signup route's enumeration branch: masking
+    // the failure is what protects the parent, but it also makes a mail outage
+    // invisible from the outside, so the operator signal has to live in the log.
+    // eslint-disable-next-line no-console
+    console.error("[auth/reset] resetPasswordForEmail failed", {
+      code: error.code,
+      status: error.status,
+    });
   }
 
   return applyNoStore(context.redirect(`${back}?sent=1`));

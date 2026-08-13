@@ -28,15 +28,20 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
       # Per-account data-isolation gate (Foundation F-01). Spins up only the
-      # services the isolation test needs — postgres + gotrue (auth) + postgrest
-      # (rest) + kong (gateway) — and runs the cross-account RLS test as a
-      # merge-blocking check. The local-stack keys are fixed public demo JWTs,
-      # so no GitHub secrets are required here. Docker is preinstalled on the
-      # ubuntu-latest runner.
-      - name: Start Supabase (local stack — db + auth + rest only)
+      # services the tests need — postgres + gotrue (auth) + postgrest (rest) +
+      # kong (gateway) + mailpit (mailer) — and runs the cross-account RLS test
+      # as a merge-blocking check. The local-stack keys are fixed public demo
+      # JWTs, so no GitHub secrets are required here. Docker is preinstalled on
+      # the ubuntu-latest runner.
+      #
+      # mailpit is NOT excluded: without a mail server GoTrue fails every send,
+      # so `resetPasswordForEmail` errors and the password-reset request route
+      # redirects to ?error= instead of ?sent=1. Dropping it turned CI red while
+      # the same suites passed locally, where mailpit runs by default.
+      - name: Start Supabase (local stack — db + auth + rest + mailer)
         run: >-
           npx supabase start -x
-          realtime,storage-api,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+          realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
       # Apply migrations explicitly so the gate can't silently run against a
       # table-less DB (don't rely on `supabase start` applying them implicitly).
       - name: Apply migrations to a fresh DB
@@ -75,10 +80,12 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
-      - name: Start Supabase (local stack — db + auth + rest only)
+      # mailpit included for the same reason as the `ci` job above — the e2e
+      # recovery journey submits the real reset form and asserts the sent notice.
+      - name: Start Supabase (local stack — db + auth + rest + mailer)
         run: >-
           npx supabase start -x
-          realtime,storage-api,imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+          realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
       - name: Apply migrations to a fresh DB
         run: npx supabase db reset
       # playwright.config.ts reads these names (dotenv .env.test is absent in CI)

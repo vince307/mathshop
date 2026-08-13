@@ -48,6 +48,25 @@ Plus `supabase/templates/recovery.html` (Polish), template + redirect-URL wiring
 
 **Testing.** vitest: marker helper (sign/verify/expiry/tamper/cross-purpose replay); request route (identical response for existing vs unknown address); update route (no marker → refused *and* password durably unchanged; valid → new password signs in, **old password fails**, a second device's session dies). e2e: full journey via `admin.generateLink({ type: "recovery" })`, the inbox-free technique `onboarding.spec.ts` already uses. Plus a local Mailpit round-trip for the template, and a deliberate-break check on the marker assertions.
 
+### Amendment (2026-08-13, during phase 4): send failures are masked
+
+Phase 2's contract mapped transport/rate-limit failures from `/api/auth/reset`
+to `?error=` via `resendFailureMessage`. **Superseded** — that reopened the
+enumeration oracle this slice promised to close, and it did so in production:
+
+- A send is attempted only for a REGISTERED address (enumeration protection
+  short-circuits unknown ones), so a dead transport answers `?error=` for a
+  parent who has an account and `?sent=1` for a stranger. Live on the hosted
+  site once a `config push` blanked Brevo SMTP.
+- `max_frequency` (1m in prod) throttles per ADDRESS, so a repeated request
+  leaks the same bit even with a healthy mailer.
+
+Every `resetPasswordForEmail` failure now returns `?sent=1`; the failure is
+logged server-side (`console.error`, code/status only, no address) following the
+signup route's deliberate `no-console` exception. Covered by a regression test
+that stubs a failing transport, and verified against a genuinely stopped mailer
+container.
+
 **Open questions for `/10x-research`**
 
 1. Does `signOut({ scope: "others" })` behave correctly through the `@supabase/ssr` cookie client — specifically, does the current session survive it?
