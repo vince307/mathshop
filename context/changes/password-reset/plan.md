@@ -295,24 +295,24 @@ No database changes, so no migration and no RLS surface (L-001 does not apply). 
 
 #### Automated
 
-- [x] 1.1 Marker unit tests pass
-- [x] 1.2 Confirm-route recovery test passes
-- [x] 1.3 Full vitest suite green
-- [x] 1.4 Lint clean
-- [x] 1.5 Type check clean
+- [x] 1.1 Marker unit tests pass — 38453ef
+- [x] 1.2 Confirm-route recovery test passes — 38453ef
+- [x] 1.3 Full vitest suite green — 38453ef
+- [x] 1.4 Lint clean — 38453ef
+- [x] 1.5 Type check clean — 38453ef
 
 #### Manual
 
-- [ ] 1.6 Deliberate break of `verifyResetMarker` turns Phase 3 refusal tests red
-- [ ] 1.7 A `parent_verified` cookie value is rejected as a reset marker
+- [ ] 1.6 Deliberate break of `verifyResetMarker` turns Phase 3 refusal tests red — deferred to phase 3 (needs those tests to exist)
+- [x] 1.7 A `parent_verified` cookie value is rejected as a reset marker — 38453ef (automated: cross-purpose replay case, both directions)
 
 ### Phase 2: Request half — page, route, Polish email
 
 #### Automated
 
-- [ ] 2.1 Request-route tests pass (identical redirect, existing vs unknown address)
-- [ ] 2.2 Full vitest suite green
-- [ ] 2.3 Lint + types clean
+- [x] 2.1 Request-route tests pass (identical redirect, existing vs unknown address)
+- [x] 2.2 Full vitest suite green
+- [x] 2.3 Lint + types clean
 
 #### Manual
 

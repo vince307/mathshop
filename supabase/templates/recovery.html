@@ -1,0 +1,23 @@
+<!--
+  Password-reset (recovery) email template (Polish) for BOTH the local stack and
+  production — `supabase config push` uploads this file to the hosted project by
+  content_path (config.toml [auth.email.template.recovery]), so the environments
+  cannot drift.
+
+  `next` is a LITERAL PATH, not `{{ .RedirectTo }}`. The confirm route's
+  `safeNext` accepts only same-origin paths and falls back to /app for anything
+  else — and `{{ .RedirectTo }}` renders as an ABSOLUTE url. Interpolating it
+  here would silently land the parent in /app with a valid session and no way to
+  set a password: a failure that looks exactly like success. (The confirmation
+  template interpolates it and is saved only by its fallback happening to equal
+  its target.) Keep this byte-compatible with the route + tests.
+-->
+<h2>Zmiana hasła w MatmaVerse</h2>
+<p>Cześć! Otrzymaliśmy prośbę o zmianę hasła do Twojego konta rodzica. Kliknij poniższy link, aby ustawić nowe hasło:</p>
+<p>
+  <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/auth/update-password">
+    Ustaw nowe hasło
+  </a>
+</p>
+<p>Link jest ważny przez godzinę i można go użyć tylko raz.</p>
+<p>Jeśli to nie Ty prosiłaś/eś o zmianę hasła, zignoruj tę wiadomość — Twoje hasło pozostanie bez zmian.</p>

@@ -24,6 +24,13 @@ const error = Astro.url.searchParams.get("error");
         <SignInForm serverError={error} client:load />
       </div>
 
+      <a
+        href="/auth/reset-password"
+        class="text-muted-foreground hover:text-primary mt-4 block text-center text-sm hover:underline"
+      >
+        {t.auth.reset.signinLinkLabel}
+      </a>
+
       <div class="my-5 flex items-center gap-3">
         <span class="bg-border h-px flex-1"></span>
         <span class="text-muted-foreground text-xs">{t.marketing.or}</span>

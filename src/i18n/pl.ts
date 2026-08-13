@@ -27,6 +27,19 @@ export const pl = {
       hasAccount: "Masz już konto?",
       signinLink: "Zaloguj się",
     },
+    // Password-reset request screen (mockup 04-password-reset). `sentNotice` is
+    // worded as a condition on purpose: the route cannot reveal whether the
+    // address has an account, so the same notice must fit both cases.
+    reset: {
+      title: "Reset hasła",
+      heading: "Nie pamiętasz hasła?",
+      description: "Podaj adres e-mail konta rodzica, a wyślemy link do zmiany hasła.",
+      submit: "Wyślij link",
+      pending: "Wysyłanie…",
+      sentNotice: "Jeśli konto z tym adresem istnieje, wysłaliśmy na nie link do zmiany hasła. Sprawdź też spam.",
+      backToSignin: "Wróć do logowania",
+      signinLinkLabel: "Nie pamiętasz hasła?",
+    },
     fields: {
       emailLabel: "Adres e-mail",
       emailPlaceholder: "ty@przyklad.pl",

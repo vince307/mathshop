@@ -248,6 +248,14 @@ otp_expiry = 3600
 subject = "Potwierdź swój adres e-mail w MatmaVerse"
 content_path = "./supabase/templates/confirmation.html"
 
+# Polish password-reset email. Unlike the confirmation template this one is
+# environment-agnostic — recovery mail sends regardless of enable_confirmations,
+# so the local stack exercises the same file production does (config push syncs
+# it by content_path). The link's `next` is a literal path; see recovery.html.
+[auth.email.template.recovery]
+subject = "Zmiana hasła w MatmaVerse"
+content_path = "./supabase/templates/recovery.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true
