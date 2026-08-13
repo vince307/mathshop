@@ -40,6 +40,18 @@ export const pl = {
       backToSignin: "Wróć do logowania",
       signinLinkLabel: "Nie pamiętasz hasła?",
     },
+    // Set-new-password screen — the page the recovery link lands on. No mockup
+    // exists for it, so the copy and layout follow the sign-in card (decision
+    // recorded in context/changes/password-reset/change.md).
+    updatePassword: {
+      title: "Nowe hasło",
+      heading: "Ustaw nowe hasło",
+      description: "Wybierz nowe hasło do konta rodzica. Na innych urządzeniach nastąpi wylogowanie.",
+      newPasswordLabel: "Nowe hasło",
+      repeatLabel: "Powtórz nowe hasło",
+      submit: "Zapisz nowe hasło",
+      pending: "Zapisywanie…",
+    },
     fields: {
       emailLabel: "Adres e-mail",
       emailPlaceholder: "ty@przyklad.pl",
@@ -71,6 +83,8 @@ export const pl = {
       notConfigured: "Usługa logowania jest chwilowo niedostępna.",
       linkInvalid:
         "Link aktywacyjny jest nieprawidłowy lub wygasł. Zarejestruj się ponownie lub wyślij link jeszcze raz.",
+      samePassword: "Nowe hasło musi różnić się od obecnego.",
+      sessionExpired: "Link do zmiany hasła wygasł. Poproś o nowy.",
       default: "Coś poszło nie tak. Spróbuj ponownie.",
     },
   },

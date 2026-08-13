@@ -23,6 +23,12 @@ const messageByCode: Record<string, string> = {
   // Email-verification (token_hash + verifyOtp) failures — expired or already-used link.
   otp_expired: t.auth.serverError.linkInvalid,
   otp_disabled: t.auth.serverError.linkInvalid,
+  // Password-reset failures. `same_password` is the one a parent actually hits:
+  // resetting to the password they believed they had is rejected outright, and
+  // the generic default ("Coś poszło nie tak") would read as a bug, not a rule.
+  same_password: t.auth.serverError.samePassword,
+  session_expired: t.auth.serverError.sessionExpired,
+  session_not_found: t.auth.serverError.sessionExpired,
 };
 
 export function mapAuthError(error: AuthError): string {

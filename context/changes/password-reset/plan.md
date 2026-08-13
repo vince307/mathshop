@@ -303,37 +303,37 @@ No database changes, so no migration and no RLS surface (L-001 does not apply). 
 
 #### Manual
 
-- [ ] 1.6 Deliberate break of `verifyResetMarker` turns Phase 3 refusal tests red — deferred to phase 3 (needs those tests to exist)
+- [x] 1.6 Deliberate break of `verifyResetMarker` turns Phase 3 refusal tests red — verified in phase 3: `return true` turned 4 refusal tests red, restored green
 - [x] 1.7 A `parent_verified` cookie value is rejected as a reset marker — 38453ef (automated: cross-purpose replay case, both directions)
 
 ### Phase 2: Request half — page, route, Polish email
 
 #### Automated
 
-- [x] 2.1 Request-route tests pass (identical redirect, existing vs unknown address)
-- [x] 2.2 Full vitest suite green
-- [x] 2.3 Lint + types clean
+- [x] 2.1 Request-route tests pass (identical redirect, existing vs unknown address) — 68bbaed
+- [x] 2.2 Full vitest suite green — 68bbaed
+- [x] 2.3 Lint + types clean — 68bbaed
 
 #### Manual
 
-- [ ] 2.4 Mailpit shows a Polish email with `type=recovery&next=/auth/update-password`
-- [ ] 2.5 Rendered page matches mockup `04-password-reset-web.png` in structure
-- [ ] 2.6 Emailed link lands on `/auth/update-password`, not `/app`
+- [x] 2.4 Mailpit shows a Polish email with `type=recovery&next=/auth/update-password` — 68bbaed (probe: subject "Zmiana hasła w MatmaVerse", literal next path present)
+- [x] 2.5 Rendered page matches mockup `04-password-reset-web.png` in structure — 68bbaed (deviation accepted: shared AuthShell marketing panel instead of the mockup's page-specific copy)
+- [x] 2.6 Emailed link lands on `/auth/update-password`, not `/app` — completed in phase 3: the e2e journey navigates the real link and waits for that pathname
 
 ### Phase 3: Set-new-password half
 
 #### Automated
 
-- [ ] 3.1 Update-route tests pass (refusal + durable no-change; success; revocation; `same_password`)
-- [ ] 3.2 E2E recovery journey passes
-- [ ] 3.3 Full vitest + playwright suites green
-- [ ] 3.4 Lint + types clean
+- [x] 3.1 Update-route tests pass (refusal + durable no-change; success; revocation; `same_password`)
+- [x] 3.2 E2E recovery journey passes
+- [x] 3.3 Full vitest + playwright suites green
+- [x] 3.4 Lint + types clean
 
 #### Manual
 
-- [ ] 3.5 Deliberate breaks (marker always-true; `signOut` scope local) turn the right tests red
-- [ ] 3.6 Manual Mailpit walkthrough incl. the marker-expiry path
-- [ ] 3.7 Parent remains signed in and lands on `/app` after the update
+- [x] 3.5 Deliberate breaks (marker always-true; `signOut` scope local) turn the right tests red — verified: 4 refusal tests red, then the revocation test red; restored green
+- [ ] 3.6 Manual Mailpit walkthrough incl. the marker-expiry path — expiry LOGIC covered by an automated backdated-marker test; only the on-screen reading of the Polish expiry message is unchecked
+- [x] 3.7 Parent remains signed in and lands on `/app` after the update — covered by the e2e journey (waits for `/app`; a bounce to signin fails it)
 
 ### Phase 4: Production ops
 
