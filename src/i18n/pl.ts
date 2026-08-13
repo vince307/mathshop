@@ -410,7 +410,14 @@ export const pl = {
       emoji: "📧",
       heading: "Potwierdź e-mail",
       description: "Wysłaliśmy link aktywacyjny na Twój adres e-mail. Kliknij go, aby aktywować konto.",
-      linkText: "Wróć do logowania",
+      // Shown to everyone, never only to accounts that exist: Supabase answers a
+      // signup for an already-confirmed address with this same page and sends no
+      // e-mail (enumeration protection), so this hint is the only way that parent
+      // learns why the inbox stays empty. Wording it as a condition keeps the page
+      // identical for every address — which is the point of the protection.
+      troubleHint:
+        "Nie widzisz wiadomości? Sprawdź folder ze spamem. Jeśli masz już konto z tym adresem, nie wysyłamy kolejnego linku — zaloguj się.",
+      linkText: "Zaloguj się",
       sentToPrefix: "Adres:",
       resendButton: "Wyślij link ponownie",
       resentNotice: "Link aktywacyjny został wysłany ponownie.",

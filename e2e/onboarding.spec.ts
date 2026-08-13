@@ -32,6 +32,13 @@ test("onboarding: signup → confirm link → first profile → start screen (Ri
     // Interstitial: the signup route always lands here, email echoed in the URL.
     await page.waitForURL((url) => url.pathname === "/auth/confirm-email");
     await expect(page.getByRole("heading", { name: t.confirmEmail.checkEmail.heading })).toBeVisible();
+    // The page must not be a dead end. In production, signing up an address that
+    // already has a confirmed account is answered with this same interstitial and
+    // NO email (Supabase enumeration protection) — the hint plus a sign-in link is
+    // the only way out for that parent, and it renders for everyone so the page
+    // never betrays which addresses exist.
+    await expect(page.getByText(t.confirmEmail.checkEmail.troubleHint)).toBeVisible();
+    await expect(page.getByRole("link", { name: t.confirmEmail.checkEmail.linkText })).toBeVisible();
     userId = await findUserIdByEmail(email);
     expect(userId, "signup should have created the user").not.toBeNull();
 
