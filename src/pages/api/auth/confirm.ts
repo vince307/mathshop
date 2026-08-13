@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { mapAuthError } from "@/lib/auth-errors";
 import { applyNoStore } from "@/lib/http";
+import { setResetMarker } from "@/lib/services/password-reset";
 import { t } from "@/i18n";
 
 export const prerender = false;
@@ -59,9 +60,17 @@ export const GET: APIRoute = async (context) => {
     return applyNoStore(context.redirect(`/auth/signin?error=${encodeURIComponent(t.auth.serverError.linkInvalid)}`));
   }
 
-  const { error } = await supabase.auth.verifyOtp({ type, token_hash });
+  const { data, error } = await supabase.auth.verifyOtp({ type, token_hash });
   if (error) {
     return applyNoStore(context.redirect(`/auth/signin?error=${encodeURIComponent(mapAuthError(error))}`));
+  }
+
+  // A recovery link is the ONLY thing that authorizes setting a new password, so
+  // the marker is minted here and nowhere else — after verifyOtp has proved the
+  // holder controls the mailbox. Every other OTP type is untouched: a signup
+  // confirmation must never authorize a password change.
+  if (type === "recovery" && data.user) {
+    setResetMarker(context.cookies, data.user.id);
   }
 
   return applyNoStore(context.redirect(next));

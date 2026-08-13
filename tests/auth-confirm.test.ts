@@ -3,8 +3,9 @@ import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it } from "vitest";
 import { createClient as createAppClient } from "@/lib/supabase";
 import { GET as confirmGET } from "@/pages/api/auth/confirm";
-import { admin, deleteUser, PASSWORD } from "./helpers/supabase";
+import { admin, createSignedInUser, deleteUser, PASSWORD } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
+import { RESET_MARKER_COOKIE, verifyResetMarker } from "@/lib/services/password-reset";
 import { t } from "@/i18n";
 
 /**
@@ -104,6 +105,46 @@ describe("Risk #4 — email verification confirm route (real Supabase)", () => {
     const response = await confirmGET(context);
 
     expect(response.headers.get("Location")).toBe("/app");
+  });
+
+  it("a recovery token mints BOTH a session and the reset marker, landing on the update page", async () => {
+    // The password-reset gate: a recovery link is the only thing that authorizes
+    // setting a new password, so the marker must be minted here — after verifyOtp
+    // proves mailbox control — and nowhere else.
+    const account = await createSignedInUser("confirm-recovery");
+    createdIds.push(account.id);
+    const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email: account.email });
+    if (error) throw error;
+
+    const jar = createCookieJar();
+    const context = buildContext({
+      url: `https://test.local/api/auth/confirm?token_hash=${data.properties.hashed_token}&type=recovery&next=${encodeURIComponent("/auth/update-password")}`,
+      cookies: jar,
+    });
+
+    const response = await confirmGET(context);
+
+    expect(response.headers.get("Location")).toBe("/auth/update-password");
+    expect((await userFromJar(jar))?.id).toBe(account.id);
+    expect(verifyResetMarker(jar.get(RESET_MARKER_COOKIE)?.value, account.id)).toBe(true);
+  });
+
+  it("mints NO reset marker for a signup confirmation", async () => {
+    // Guards the blast radius of the recovery branch: only a recovery link may
+    // authorize a password change, never an ordinary email verification.
+    const email = `confirm-nomarker-${randomUUID()}@example.test`;
+    const { tokenHash, userId } = await generateSignupToken(email);
+    createdIds.push(userId);
+
+    const jar = createCookieJar();
+    const context = buildContext({
+      url: `https://test.local/api/auth/confirm?token_hash=${tokenHash}&type=signup`,
+      cookies: jar,
+    });
+
+    await confirmGET(context);
+
+    expect(jar.get(RESET_MARKER_COOKIE)?.value ?? "").toBe("");
   });
 
   it("a bad/expired token_hash redirects to a Polish ?error= and mints no session", async () => {
