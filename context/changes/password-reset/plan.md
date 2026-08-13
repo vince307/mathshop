@@ -340,11 +340,11 @@ No database changes, so no migration and no RLS surface (L-001 does not apply). 
 #### Automated
 
 - [x] 4.1 Local stack still starts with the new config block — note: `db reset` alone restarts containers without re-applying auth env; a full `supabase stop && start` was needed, after which `GOTRUE_URI_ALLOW_LIST` carries `/auth/update-password` — 478bd65
-- [x] 4.2 Full suites green after the config change — 478bd65
+- [x] 4.2 Full suites green after the config change — 478bd65 locally; GitHub CI was RED on that commit (its stack excluded mailpit, so every send failed) and went green at 07957e2 (run 31747732163). Local green is not CI green — the two stacks differ.
 
 #### Manual
 
 - [x] 4.3 `config push` diff reviewed interactively — only the expected additions — took TWO pushes. The first reported success and applied the redirect URL, but silently did NOT write the recovery template: production sent the stock English "Reset Password" mail, whose link goes to `…supabase.co/auth/v1/verify?…&redirect_to=<site_url>` and lands on the site root, so `/api/auth/confirm` was never reached. Diagnosed by reading hosted state in the dashboard (Authentication → Emails), not the CLI output. A second, explicitly-confirmed push wrote it. **Lesson: `config push` success output is not proof — verify the template in the dashboard afterwards.**
-- [ ] 4.4 Production reset on a `+suffix` address delivers Polish mail and signs the parent in
+- [x] 4.4 Production reset on a `+suffix` address delivers Polish mail and signs the parent in — 07957e2 (maintainer-verified on https://mathshop.vercel.app, 2026-08-14, after restoring the Brevo SMTP credentials that an earlier `config push` had blanked)
 - [ ] 4.5 Old production password rejected after the reset
 - [ ] 4.6 Second signed-in browser is signed out

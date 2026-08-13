@@ -1,9 +1,9 @@
 ---
 change_id: password-reset
 title: Parent password reset — request page, Polish recovery email, marker-gated update
-status: implementing
+status: implemented
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-14
 archived_at: null
 ---
 
@@ -47,6 +47,21 @@ Plus `supabase/templates/recovery.html` (Polish), template + redirect-URL wiring
 **Error handling.** Rate limits (prod `max_frequency = 1m0s`) map to the existing Polish "Zbyt wiele prób…" via `resendFailureMessage`. Expired marker → `/auth/reset-password` with "link wygasł, poproś o nowy". Missing session or marker → `/auth/signin`.
 
 **Testing.** vitest: marker helper (sign/verify/expiry/tamper/cross-purpose replay); request route (identical response for existing vs unknown address); update route (no marker → refused *and* password durably unchanged; valid → new password signs in, **old password fails**, a second device's session dies). e2e: full journey via `admin.generateLink({ type: "recovery" })`, the inbox-free technique `onboarding.spec.ts` already uses. Plus a local Mailpit round-trip for the template, and a deliberate-break check on the marker assertions.
+
+### Outstanding at close-out (2026-08-14)
+
+Closed at the maintainer's direction with three manual Progress rows still open;
+they are deferred, not waived, and `/10x-archive` will surface them:
+
+- **4.5** old production password rejected after the reset — narrow property; the
+  full loop (4.4) is proven.
+- **4.6** a second signed-in browser is signed out. The one property with **no**
+  production evidence: `signOut({ scope: "others" })` is covered by local tests
+  against the local stack only. Research also found the revoked token still
+  authenticates to PostgREST until its JWT expires (`jwt_expiry = 3600`), so the
+  hosted behavior is worth one look.
+- **3.6** on-screen reading of the Polish marker-expiry copy (logic already
+  covered by an automated backdated-marker test).
 
 ### Amendment (2026-08-13, during phase 4): send failures are masked
 
