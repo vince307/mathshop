@@ -1,7 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { buttonVariants } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, MailCheck, UserRoundPlus, ShieldCheck, RotateCw } from "lucide-react";
 import { t } from "@/i18n";
 
 const email = Astro.url.searchParams.get("email");
@@ -13,10 +13,11 @@ const resendError = Astro.url.searchParams.get("error");
 // post-signup flow always carries ?email= and shows the check-your-email panel.
 const isAutoConfirmed = import.meta.env.DEV && !email;
 const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.checkEmail;
+const canResend = !!email && !isAutoConfirmed;
 ---
 
 <Layout title={content.heading}>
-  <div class="bg-background flex min-h-screen flex-col items-center justify-center p-4">
+  <div class="bg-background flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:px-6">
     {/* Brand */}
     <div class="mb-8 flex items-center gap-3">
       <span
@@ -30,62 +31,105 @@ const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.
       </div>
     </div>
 
-    <div
-      class="bg-card text-card-foreground border-border w-full max-w-md rounded-3xl border p-6 text-center shadow-md sm:p-8"
-    >
-      <div class="mb-4 text-5xl">{content.emoji}</div>
-      <h1 class="text-foreground mb-3 text-3xl font-extrabold">
-        {content.heading}
-      </h1>
-      <p class="text-muted-foreground mb-4">{content.description}</p>
+    {
+      /* Wide two-panel card (mockup `03`): the mail moment on the left, what to do
+        on the right. Stacks to one column below `sm`. */
+    }
+    <div class="bg-card text-card-foreground border-border w-full max-w-3xl rounded-3xl border p-6 shadow-md sm:p-8">
+      <div class="grid items-center gap-8 sm:grid-cols-2">
+        <div class="flex justify-center">
+          <span class="bg-primary/10 text-primary inline-flex size-32 items-center justify-center rounded-full">
+            <MailCheck className="size-16" />
+          </span>
+        </div>
 
-      {
-        email && !isAutoConfirmed && (
-          <p class="text-muted-foreground mb-6 text-sm break-all">
-            {t.confirmEmail.checkEmail.sentToPrefix} <span class="text-foreground font-medium">{email}</span>
+        <div class="text-center sm:text-left">
+          <h1 class="text-foreground text-3xl font-extrabold">{content.heading}</h1>
+          <p class="text-muted-foreground mt-3">{content.description}</p>
+
+          {
+            canResend && (
+              <p class="text-muted-foreground mt-3 text-sm break-all">
+                {t.confirmEmail.checkEmail.sentToPrefix} <span class="text-foreground font-medium">{email}</span>
+              </p>
+            )
+          }
+
+          {
+            resent && (
+              <p
+                role="status"
+                class="border-success/30 bg-success/10 text-success mt-4 rounded-xl border px-3 py-2 text-sm font-semibold"
+              >
+                {t.confirmEmail.checkEmail.resentNotice}
+              </p>
+            )
+          }
+
+          {
+            resendError && (
+              <p
+                role="alert"
+                class="border-destructive/30 text-destructive mt-4 rounded-xl border bg-red-50 px-3 py-2 text-sm"
+              >
+                {resendError}
+              </p>
+            )
+          }
+
+          {
+            canResend && (
+              <form method="POST" action="/api/auth/resend" class="mt-5">
+                <input type="hidden" name="email" value={email} />
+                <button
+                  type="submit"
+                  class:list={buttonVariants({ variant: "outline", size: "lg", className: "w-full font-medium" })}
+                >
+                  <RotateCw className="size-4" />
+                  {t.confirmEmail.checkEmail.resendButton}
+                </button>
+              </form>
+            )
+          }
+
+          <a
+            href="/auth/signin"
+            class:list={[buttonVariants({ variant: "default", size: "lg" }), "mt-3 w-full font-medium"]}
+          >
+            {content.linkText}
+          </a>
+        </div>
+      </div>
+
+      {/* Next step + why it matters — the mockup's two footer panels */}
+      <div class="border-border mt-8 grid gap-4 border-t pt-6 sm:grid-cols-2">
+        <div class="bg-success/10 flex items-center gap-3 rounded-2xl p-4">
+          <span class="bg-card text-success inline-flex size-10 shrink-0 items-center justify-center rounded-full">
+            <UserRoundPlus className="size-5" />
+          </span>
+          <p class="text-muted-foreground text-sm">
+            {t.confirmEmail.nextStepLabel}
+            <span class="text-success block font-bold">{t.confirmEmail.nextStepValue}</span>
           </p>
-        )
-      }
-
-      {
-        resent && (
-          <p class="mb-4 rounded-lg border border-green-600/30 bg-green-50 px-3 py-2 text-sm text-green-700">
-            {t.confirmEmail.checkEmail.resentNotice}
+        </div>
+        <div class="bg-primary/5 flex items-center gap-3 rounded-2xl p-4">
+          <span class="bg-card text-primary inline-flex size-10 shrink-0 items-center justify-center rounded-full">
+            <ShieldCheck className="size-5" />
+          </span>
+          <p class="text-sm">
+            <span class="text-foreground block font-bold">{t.confirmEmail.protectsTitle}</span>
+            <span class="text-muted-foreground">{t.confirmEmail.protectsBody}</span>
           </p>
-        )
-      }
-
-      {
-        resendError && (
-          <p class="border-destructive/30 text-destructive mb-4 rounded-lg border bg-red-50 px-3 py-2 text-sm">
-            {resendError}
-          </p>
-        )
-      }
-
-      {
-        email && !isAutoConfirmed && (
-          <form method="POST" action="/api/auth/resend" class="mb-6">
-            <input type="hidden" name="email" value={email} />
-            <button
-              type="submit"
-              class:list={buttonVariants({ variant: "outline", size: "lg", className: "w-full font-medium" })}
-            >
-              {t.confirmEmail.checkEmail.resendButton}
-            </button>
-          </form>
-        )
-      }
+        </div>
+      </div>
 
       {
         !isAutoConfirmed && (
-          <p class="text-muted-foreground mb-4 text-xs leading-relaxed">{t.confirmEmail.checkEmail.troubleHint}</p>
+          <p class="text-muted-foreground mt-6 text-center text-xs leading-relaxed">
+            {t.confirmEmail.checkEmail.troubleHint}
+          </p>
         )
       }
-
-      <a href="/auth/signin" class="text-primary text-sm font-medium hover:underline">
-        {content.linkText}
-      </a>
     </div>
   </div>
 </Layout>

@@ -468,13 +468,11 @@ export const pl = {
 
   confirmEmail: {
     autoConfirmed: {
-      emoji: "✅",
       heading: "Rejestracja zakończona",
       description: "Twoje konto zostało utworzone. Możesz się teraz zalogować.",
       linkText: "Przejdź do logowania",
     },
     checkEmail: {
-      emoji: "📧",
       heading: "Potwierdź e-mail",
       description: "Wysłaliśmy link aktywacyjny na Twój adres e-mail. Kliknij go, aby aktywować konto.",
       // Shown to everyone, never only to accounts that exist: Supabase answers a
@@ -490,6 +488,13 @@ export const pl = {
       resentNotice: "Link aktywacyjny został wysłany ponownie.",
       resendError: "Nie udało się wysłać linku. Spróbuj ponownie za chwilę.",
     },
+    // Side panel of the verification screen (auth-v2 `03`). The next step is
+    // stated, not linked: /app/new-profile is behind auth, so a parent who has
+    // not confirmed yet would only bounce back to sign-in.
+    nextStepLabel: "Następny krok:",
+    nextStepValue: "dodaj profil dziecka",
+    protectsTitle: "To chroni konto rodzica i dane dziecka",
+    protectsBody: "Bezpieczna nauka zaczyna się od weryfikacji.",
   },
 
   // Authenticated landing (the gated /app surface; built in Phase 5).
