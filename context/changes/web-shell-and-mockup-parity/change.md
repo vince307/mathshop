@@ -25,8 +25,9 @@ same content under a bottom tab bar. The gap was therefore "no shell", not
   locators unambiguous, and the `touch` project runs at 712 px).
 - Dashboard, mission, upgrade shop and the parent report re-laid onto the shell
   (hero, skill cards, result tiles, mission/next-upgrade rails).
-- Auth split view, profile wizard, PIN gate, profile picker and the shift-result
-  panel brought up to the mockups' scale; the signed-out landing rebuilt from
+- Auth split view, e-mail verification, profile wizard, PIN gate, profile picker
+  and the shift-result panel brought up to the mockups' scale; the signed-out
+  landing rebuilt from
   `t.marketing.*` instead of the starter's developer pitch (unused
   `Topbar.astro` deleted with it).
 
