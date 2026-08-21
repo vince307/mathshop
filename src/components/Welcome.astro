@@ -38,9 +38,13 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
           </a>
         ) : (
           <div class="flex items-center gap-2">
-            <a href="/auth/signin" class:list={buttonVariants({ variant: "ghost" })}>
-              {t.nav.signIn}
-            </a>
+            {/* Wrapper carries the breakpoint: `hidden` on the anchor itself would
+                collide with the button's own `inline-flex` display utility. */}
+            <div class="hidden sm:block">
+              <a href="/auth/signin" class:list={buttonVariants({ variant: "ghost" })}>
+                {t.nav.signIn}
+              </a>
+            </div>
             <a href="/auth/signup" class:list={buttonVariants({ variant: "default" })}>
               <UserPlus className="size-4" />
               {t.nav.signUp}
