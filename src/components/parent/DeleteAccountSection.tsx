@@ -52,7 +52,7 @@ export default function DeleteAccountSection({ email }: Props) {
   };
 
   return (
-    <section className="border-destructive/30 bg-card mt-10 w-full max-w-md rounded-3xl border p-6 shadow-sm">
+    <section className="border-destructive/30 bg-card w-full rounded-3xl border p-6 shadow-sm">
       <h2 className="text-foreground text-lg font-extrabold">{copy.accountHeading}</h2>
       <p className="text-muted-foreground mt-1 text-sm">{copy.accountIntro}</p>
       <Button

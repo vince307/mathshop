@@ -62,12 +62,8 @@ export default function WeeklyReport({ reports }: Props) {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <header className="mb-6">
-        <h1 className="text-foreground text-2xl font-extrabold">{copy.heading}</h1>
-        <p className="text-muted-foreground mt-1 text-sm">{copy.intro}</p>
-      </header>
-
+    <div className="w-full">
+      {/* The heading + intro live in the page shell (mockup's parent top bar). */}
       {children.length === 0 ? (
         <p className="bg-card border-border text-muted-foreground rounded-2xl border p-6 text-center text-sm shadow-sm">
           {copy.noProfiles}
@@ -133,10 +129,23 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
   // Only competencies actually practiced this week (completed > 0) — nothing to
   // shame for the rest. Order follows the canonical competency list.
   const practiced = COMPETENCIES.filter((competency) => practice[competency].completed > 0);
+  // Summary tiles: both are sums of what the week's shift log recorded.
+  const tasksThisWeek = COMPETENCIES.reduce((sum, competency) => sum + practice[competency].completed, 0);
 
   return (
     <section className="bg-card border-border rounded-3xl border p-6 shadow-sm">
       <ChildIdentity child={child} />
+
+      <ul className="mt-5 grid grid-cols-2 gap-3">
+        <li className="bg-primary/5 rounded-2xl p-4">
+          <p className="text-foreground text-2xl font-extrabold">{tasksThisWeek}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statTasks}</p>
+        </li>
+        <li className="bg-success/10 rounded-2xl p-4">
+          <p className="text-foreground text-2xl font-extrabold">{upgrades.length}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statUpgrades}</p>
+        </li>
+      </ul>
 
       <div className="mt-5">
         <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">

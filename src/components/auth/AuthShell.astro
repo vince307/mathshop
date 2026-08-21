@@ -25,7 +25,7 @@ const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
 const featureIcons = [ShieldCheck, Globe, TrendingUp];
 ---
 
-<div class="bg-background min-h-screen px-4 py-8 sm:px-6 lg:px-10">
+<div class="bg-background flex min-h-screen flex-col justify-center px-4 py-8 sm:px-6 lg:px-10">
   <div class="mx-auto w-full max-w-6xl">
     {/* Brand */}
     <div class="mb-8 flex items-center justify-center gap-3 lg:justify-start">
@@ -48,13 +48,13 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
           src="/illustrations/coin.png"
           alt=""
           aria-hidden="true"
-          class="pointer-events-none absolute -top-6 right-4 hidden size-14 rotate-12 lg:block"
+          class="pointer-events-none absolute -top-8 right-4 hidden size-20 rotate-12 lg:block"
         />
 
         <div class="hidden lg:block">
-          <p class="text-foreground text-4xl font-extrabold tracking-tight">{heading}</p>
-          <p class="text-primary mt-1 text-2xl font-bold">{accent}</p>
-          <p class="text-muted-foreground mt-3 text-base">{tagline}</p>
+          <p class="text-foreground text-5xl font-extrabold tracking-tight xl:text-6xl">{heading}</p>
+          <p class="text-primary mt-2 text-3xl font-bold xl:text-4xl">{accent}</p>
+          <p class="text-muted-foreground mt-4 text-lg">{tagline}</p>
         </div>
 
         {/* Feature cards */}
@@ -64,11 +64,11 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
               const Icon = featureIcons[i];
               return (
                 <div class="bg-card border-border rounded-2xl border p-4 shadow-sm">
-                  <span class="bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl">
-                    <Icon className="size-5" />
+                  <span class="bg-primary/10 text-primary inline-flex size-11 items-center justify-center rounded-2xl">
+                    <Icon className="size-6" />
                   </span>
-                  <p class="text-foreground mt-3 text-sm font-bold">{feature.title}</p>
-                  <p class="text-muted-foreground mt-1 text-xs leading-snug">{feature.description}</p>
+                  <p class="text-foreground mt-3 text-base font-bold">{feature.title}</p>
+                  <p class="text-muted-foreground mt-1 text-sm leading-snug">{feature.description}</p>
                 </div>
               );
             })
@@ -81,7 +81,7 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
             t.marketing.worlds.map((world) => (
               <div class="bg-card border-border overflow-hidden rounded-2xl border shadow-sm">
                 <img src={world.image} alt={world.name} loading="lazy" class="aspect-square w-full object-cover" />
-                <p class="text-foreground px-2 py-2 text-center text-xs font-semibold">{world.name}</p>
+                <p class="text-foreground px-2 py-2.5 text-center text-sm font-semibold">{world.name}</p>
               </div>
             ))
           }

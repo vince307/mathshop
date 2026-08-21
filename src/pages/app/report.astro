@@ -1,5 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AppShell from "@/components/app/AppShell.astro";
+import { ShieldCheck, Check } from "lucide-react";
 import WeeklyReport from "@/components/parent/WeeklyReport";
 import DeleteAccountSection from "@/components/parent/DeleteAccountSection";
 import type { ChildReport } from "@/components/parent/WeeklyReport";
@@ -50,24 +52,50 @@ const reports: ChildReport[] = await Promise.all(
 ---
 
 <Layout title={t.brand}>
-  <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
-    <WeeklyReport client:load reports={reports} />
+  <AppShell heading={t.report.heading} subtitle={t.report.intro} active="parent">
+    <div class="grid items-start gap-6 lg:grid-cols-3">
+      {/* ---------- Per-child report cards ---------- */}
+      <div class="flex flex-col gap-6 lg:col-span-2">
+        <WeeklyReport client:load reports={reports} />
 
-    <div class="mt-8 flex flex-col items-center gap-3">
-      {
-        /* Parent-side add-a-child entry (S-11) — hidden once the soft cap is reached. */
-        profiles.length < MAX_PROFILES_PER_ACCOUNT && (
-          <a href="/app/new-profile" class:list={buttonVariants({ variant: "default", size: "lg" })}>
-            {t.report.addChild}
+        {/* Danger zone (MAT-17): whole-account deletion — typed e-mail + fresh PIN in the dialog. */}
+        <DeleteAccountSection client:load email={user.email ?? ""} />
+      </div>
+
+      {/* ---------- Rail: actions + how the environment is kept safe ---------- */}
+      <aside class="flex flex-col gap-6">
+        <div class="flex flex-col gap-3">
+          {
+            /* Parent-side add-a-child entry (S-11) — hidden once the soft cap is reached. */
+            profiles.length < MAX_PROFILES_PER_ACCOUNT && (
+              <a href="/app/new-profile" class:list={[buttonVariants({ variant: "default", size: "lg" }), "w-full"]}>
+                {t.report.addChild}
+              </a>
+            )
+          }
+          <a href="/app/start" class:list={[buttonVariants({ variant: "outline", size: "lg" }), "w-full"]}>
+            {t.report.back}
           </a>
-        )
-      }
-      <a href="/app/start" class:list={buttonVariants({ variant: "outline", size: "lg" })}>
-        {t.report.back}
-      </a>
-    </div>
+        </div>
 
-    {/* Danger zone (MAT-17): whole-account deletion — typed e-mail + fresh PIN in the dialog. */}
-    <DeleteAccountSection client:load email={user.email ?? ""} />
-  </div>
+        {/* Product guarantees, not measurements — safe to state without data. */}
+        <div class="bg-card border-border rounded-3xl border p-5 shadow-sm">
+          <p class="text-foreground flex items-center gap-2 font-extrabold">
+            <ShieldCheck className="text-success size-5" />
+            {t.report.safetyHeading}
+          </p>
+          <ul class="mt-3 flex flex-col gap-2">
+            {
+              t.report.safetyPoints.map((point) => (
+                <li class="text-muted-foreground flex items-start gap-2 text-sm">
+                  <Check className="text-success mt-0.5 size-4 shrink-0" />
+                  {point}
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </AppShell>
 </Layout>

@@ -402,6 +402,21 @@ export const pl = {
     loadError: "Nie udało się wczytać raportu tego dziecka. Spróbuj ponownie za chwilę.",
     addChild: "Dodaj profil dziecka",
     back: "Wróć do sklepu",
+
+    // Per-child summary tiles (missing-screens-v3 `05-parent-weekly-report`).
+    // Both counts are read straight off the week's aggregated shift log — the
+    // mockup's correctness %, daily chart and earnings have no source yet, so
+    // they are not rendered rather than estimated.
+    statTasks: "Ukończone zadania",
+    statUpgrades: "Odblokowane ulepszenia",
+    // Safety panel — statements of how the product is built, not measurements.
+    safetyHeading: "Bezpieczne środowisko",
+    safetyPoints: [
+      "Brak reklam i zakupów w aplikacji.",
+      "Treści dopasowane do wieku 6–9 lat.",
+      "Panel rodzica chroniony PIN-em.",
+      "Dane dziecka widoczne tylko dla Ciebie.",
+    ],
   },
 
   // Deletion surfaces (MAT-17): child-profile + whole-account deletion. Parent-zone

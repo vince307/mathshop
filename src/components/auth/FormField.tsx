@@ -50,7 +50,7 @@ export function FormField({
           }}
           placeholder={placeholder}
           aria-invalid={Boolean(error)}
-          className={cn("h-11 pl-10", endContent && "pr-10")}
+          className={cn("h-12 rounded-xl pl-10 text-base", endContent && "pr-10")}
         />
         {endContent}
       </div>

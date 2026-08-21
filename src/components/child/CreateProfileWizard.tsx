@@ -21,6 +21,7 @@ import { t } from "@/i18n";
  */
 
 const AGES = [6, 7, 8, 9];
+const STEP_LABELS = [t.profileWizard.steps.identity, t.profileWizard.steps.profile, t.profileWizard.steps.confirm];
 const MAX_NAME = 30;
 const TOTAL_STEPS = 3;
 
@@ -98,7 +99,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
       method="POST"
       action="/api/profiles/create"
       onSubmit={handleSubmit}
-      className={childCard("2xl", "text-card-foreground p-6 sm:p-8")}
+      className={childCard("3xl", "text-card-foreground p-6 shadow-md sm:p-8")}
     >
       {/* State carried into the POST regardless of which step is visible. */}
       <input type="hidden" name="name" value={name.trim()} />
@@ -106,15 +107,42 @@ export default function CreateProfileWizard({ serverError }: Props) {
       <input type="hidden" name="avatar" value={avatar} />
       <input type="hidden" name="theme" value={theme} />
 
-      <p className="text-primary text-sm font-semibold">{stepProgress}</p>
-      <h1 className="text-foreground mt-1 text-2xl font-bold">{t.profileWizard.title}</h1>
-      <p className="text-muted-foreground mt-1 text-sm">{t.profileWizard.subtitle}</p>
+      {/* Numbered stepper (mockup `05`): the current step is named, not just filled. */}
+      <ol className="flex items-center gap-2 sm:gap-3">
+        {STEP_LABELS.map((label, i) => {
+          const n = i + 1;
+          return (
+            <li key={label} className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+              {i > 0 && <span className={cn("h-0.5 flex-1 rounded-full", n <= step ? "bg-primary" : "bg-muted")} />}
+              <span
+                aria-current={n === step ? "step" : undefined}
+                className={cn(
+                  "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                  n < step
+                    ? "bg-success text-success-foreground"
+                    : n === step
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
+                )}
+              >
+                {n < step ? <Check className="size-4" /> : n}
+              </span>
+              <span
+                className={cn(
+                  "hidden truncate text-sm font-semibold sm:block",
+                  n === step ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
-      <div className="mt-4 flex gap-2">
-        {[1, 2, 3].map((n) => (
-          <span key={n} className={cn("h-1.5 flex-1 rounded-full", n <= step ? "bg-primary" : "bg-muted")} />
-        ))}
-      </div>
+      <p className="text-primary mt-6 text-sm font-semibold sm:hidden">{stepProgress}</p>
+      <h1 className="text-foreground mt-1 text-2xl font-extrabold sm:mt-6 sm:text-3xl">{t.profileWizard.title}</h1>
+      <p className="text-muted-foreground mt-1 text-sm">{t.profileWizard.subtitle}</p>
 
       {serverError && (
         <p className="border-destructive/30 text-destructive mt-4 flex items-center gap-2 rounded-lg border bg-red-50 px-3 py-2 text-sm">
@@ -184,7 +212,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
         )}
 
         {step === 2 && (
-          <>
+          <div className="grid gap-6 lg:grid-cols-2">
             <div>
               <Label className="text-foreground mb-3 block">{t.profileWizard.avatarLabel}</Label>
               <div className="flex flex-wrap gap-3">
@@ -213,7 +241,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
 
             <div>
               <Label className="text-foreground mb-3 block">{t.profileWizard.interestLabel}</Label>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
                 {WORLDS.map((w) => (
                   <SelectTile
                     key={w.slug}
@@ -236,7 +264,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
                 </p>
               )}
             </div>
-          </>
+          </div>
         )}
 
         {step === 3 && (

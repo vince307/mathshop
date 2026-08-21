@@ -11,12 +11,12 @@ const error = Astro.url.searchParams.get("error");
 
 <Layout title={t.auth.signup.title}>
   <AuthShell heading={t.marketing.parentPanel} accent={t.auth.signup.heading}>
-    <div class="bg-card text-card-foreground border-border rounded-2xl border p-8 shadow-sm">
+    <div class="bg-card text-card-foreground border-border rounded-3xl border p-6 shadow-md sm:p-8">
       <div class="flex flex-col items-center text-center">
         <span class="bg-primary/10 text-primary inline-flex size-14 items-center justify-center rounded-2xl">
           <UserPlus className="size-7" />
         </span>
-        <h1 class="text-foreground mt-4 text-2xl font-bold">{t.auth.signup.heading}</h1>
+        <h1 class="text-foreground mt-4 text-3xl font-extrabold">{t.auth.signup.heading}</h1>
         <p class="text-muted-foreground mt-1 text-sm">{t.marketing.parentPanel}</p>
       </div>
 
