@@ -33,10 +33,11 @@ export default defineConfig({
       // (infrastructure.md), never the browser. Optional so builds without it
       // don't fail; createAdminClient() fails closed (null → route 503).
       SUPABASE_SERVICE_ROLE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
-      // Shared secret for the daily Supabase keep-alive cron (/api/keep-alive,
-      // vercel.json crons) — Vercel sends it as the Authorization bearer on cron
-      // invocations. Vercel Production scope. Optional so builds without it
-      // don't fail; the route answers 401 when it's absent (fails closed).
+      // Shared secret for the daily Supabase keep-alive ping (/api/keep-alive),
+      // sent as the Authorization bearer by .github/workflows/keep-alive.yml.
+      // Vercel Production scope; must match the CRON_SECRET repository secret.
+      // Optional so builds without it don't fail; the route answers 401 when
+      // it's absent (fails closed).
       CRON_SECRET: envField.string({ context: "server", access: "secret", optional: true }),
     },
   },

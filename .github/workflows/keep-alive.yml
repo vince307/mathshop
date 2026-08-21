@@ -1,0 +1,78 @@
+name: Supabase keep-alive
+
+# Keeps the free-tier Supabase project (ref hozkukbsfdcrbszgdxbg) from
+# auto-pausing after ~7 days without API activity. A pause takes production
+# auth down AND breaks every Vercel deploy ("Resource provisioning failed").
+#
+# Why GitHub Actions and not the Vercel cron this originally shipped as:
+# Vercel registers a cron against the *generated deployment URL*
+# (mathshop-<hash>-kamilps-projects.vercel.app), and this project runs Vercel
+# Authentication with Standard Protection — which restricts exactly that URL.
+# The edge answered 302 -> vercel.com/sso-api, and per Vercel's docs "cron jobs
+# do not follow redirects" and a redirected run "will not be shown in the logs".
+# So the function never executed, no log was ever written, and the cron looked
+# green for 12 days while Supabase saw zero activity. The production alias
+# (mathshop.vercel.app) is NOT protected on the Hobby plan, so we ping that
+# instead, from a scheduler we can trigger by hand and whose logs persist.
+#
+# Requires the CRON_SECRET repository secret to match the CRON_SECRET
+# environment variable on Vercel's Production scope — the route fails closed
+# (401) on any mismatch. Rotate the two together.
+
+on:
+  schedule:
+    # 03:17 UTC daily. Deliberately off the hour: GitHub delays schedules that
+    # land on :00 because every repo piles onto the same minute.
+    - cron: "17 3 * * *"
+  # Manual runs, for verifying a change without waiting a day.
+  workflow_dispatch:
+
+# A missed ping is recoverable (the pause window is ~7 days); overlapping runs
+# are pointless. Newest wins.
+concurrency:
+  group: keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/keep-alive
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "::error::CRON_SECRET repository secret is not set — the route would answer 401 and Supabase would never be pinged."
+            exit 1
+          fi
+
+          url="https://mathshop.vercel.app/api/keep-alive"
+          body_file="$(mktemp)"
+
+          # Body to a file, status via -w. Not `-o /dev/stdout`: interleaving
+          # both on the same stream makes curl fail with exit 56 on some hosts.
+          # No -f either — a non-2xx body is the diagnostic here (the route
+          # reports Supabase's own status back), so we print it rather than let
+          # curl swallow it.
+          status="$(curl -sS --max-time 30 --retry 2 --retry-delay 10 \
+                      -o "${body_file}" -w '%{http_code}' \
+                      -H "Authorization: Bearer ${CRON_SECRET}" \
+                      "${url}")" || {
+            echo "::error::Could not reach ${url} at all. Supabase was NOT pinged."
+            exit 1
+          }
+
+          echo "HTTP ${status} — $(cat "${body_file}")"
+
+          # 401 => secret drift between GitHub and Vercel.
+          # 503 => Supabase env missing on Vercel.
+          # 502 => the request reached Supabase but it answered non-2xx (or the
+          #        fetch failed) — the table contract may have drifted.
+          if [ "${status}" != "200" ]; then
+            echo "::error::Keep-alive ping failed (HTTP ${status}). Supabase was NOT pinged — the project will auto-pause if this keeps failing."
+            exit 1
+          fi
+
+          echo "Supabase pinged; the inactivity clock is reset."
