@@ -1,0 +1,65 @@
+---
+import { Calculator, ShoppingBasket, Lightbulb } from "lucide-react";
+import type { SkillState } from "@/types";
+import { COMPETENCIES, skillProgress } from "@/data/skills";
+import { childCard } from "@/components/child/childCard";
+import { t } from "@/i18n";
+
+/**
+ * Dashboard skill cards (ui-v2 `02-child-dashboard`): one card per competency —
+ * tinted icon, name, one-line description, and the climb toward the next level.
+ * Same `skill_state` source as `SkillBars` (which stays the compact list used on
+ * the shop/report surfaces); this is the dashboard's card treatment.
+ */
+interface Props {
+  skillState: SkillState;
+  class?: string;
+}
+
+const { skillState, class: className } = Astro.props;
+
+const META = {
+  math: { icon: Calculator, tint: "bg-primary/10 text-primary" },
+  money: { icon: ShoppingBasket, tint: "bg-success/10 text-success" },
+  decisions: { icon: Lightbulb, tint: "bg-accent/20 text-accent-foreground" },
+} as const;
+---
+
+<section class:list={["flex flex-col gap-4", className]}>
+  <h2 class="text-foreground text-lg font-bold lg:text-xl">{t.skills.heading}</h2>
+  <ul class="grid gap-4 sm:grid-cols-3">
+    {
+      COMPETENCIES.map((competency) => {
+        const { fraction } = skillProgress(skillState[competency].firstTryCorrect);
+        const percent = Math.round(fraction * 100);
+        const { icon: Icon, tint } = META[competency];
+        return (
+          <li class:list={[childCard("2xl", "flex flex-col gap-3 p-4")]}>
+            <div class="flex items-center gap-3">
+              <span class:list={["inline-flex size-11 shrink-0 items-center justify-center rounded-2xl", tint]}>
+                <Icon className="size-6" />
+              </span>
+              <div class="min-w-0">
+                <p class="text-foreground font-bold">{t.skills[competency]}</p>
+                <p class="text-muted-foreground text-xs leading-snug">{t.skills.descriptions[competency]}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div
+                class="bg-secondary h-2.5 w-full overflow-hidden rounded-full"
+                role="progressbar"
+                aria-label={t.skills[competency]}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+              >
+                <div class="bg-success h-full rounded-full transition-all" style={`width: ${percent}%`} />
+              </div>
+              <span class="text-muted-foreground shrink-0 text-sm font-bold">{percent}%</span>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ul>
+</section>

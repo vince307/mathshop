@@ -119,13 +119,23 @@ export const pl = {
     or: "lub",
   },
 
-  // App chrome / navigation (Topbar).
+  // App chrome / navigation (Topbar + the signed-in AppShell: desktop sidebar,
+  // mobile bottom tab bar). Item labels follow the ui-v2 mockups' sidebar; only
+  // destinations that exist as routes are listed (no dead nav).
   nav: {
     app: "Aplikacja",
     signIn: "Zaloguj się",
     signUp: "Utwórz konto",
     signOut: "Wyloguj się",
     notSignedIn: "Niezalogowany",
+    shellTagline: "Ucz się i zarabiaj",
+    primaryLabel: "Nawigacja główna",
+    items: {
+      dashboard: "Pulpit",
+      missions: "Misje",
+      shop: "Mój sklep",
+      parent: "Panel rodzica",
+    },
   },
 
   // Unauthenticated `/` scaffold (Welcome.astro). Placeholder landing — no `/`
@@ -200,6 +210,21 @@ export const pl = {
     levelLabel: "Poziom sklepu {level}",
     upgradesLink: "Rozbuduj sklep",
     worldTagline: "Twój sklep rośnie dzięki matematyce!",
+
+    // Dashboard sections (ui-v2 `02-child-dashboard`). Every tile below reports a
+    // value the profile actually stores — no invented metrics (the mockup's
+    // sales/satisfaction tiles have no data source yet, so they are not rendered).
+    missionHeading: "Dzisiaj nauczysz się",
+    missionBody: "Policz monety i wydaj resztę klientom w swoim sklepie.",
+    nextUpgradeHeading: "Następne ulepszenie",
+    resultsHeading: "Twój sklep — wyniki",
+    statLevel: "Poziom sklepu",
+    statShifts: "Ukończone zmiany",
+    statWallet: "W portfelu",
+    statUpgrades: "Ulepszenia",
+    amountZl: "{amount} zł",
+    safetyTitle: "Bezpieczna nauka",
+    safetyBody: "Twoje postępy są zapisywane i chronione. Rodzic ma wgląd i kontrolę w panelu rodzica.",
   },
 
   // Counting task in shop narrative (S-02). Copy is keyed by scenario so the
@@ -209,6 +234,11 @@ export const pl = {
   task: {
     check: "Sprawdź",
     tally: "Naliczono: {count}",
+    // Mission chrome (ui-v2 `03-change-mission`): the shell heading and the side
+    // panel that names the competency the current task exercises.
+    missionTitle: "Misja w sklepie",
+    learningHeading: "Uczysz się",
+    encouragement: "Każda poprawna odpowiedź rozwija Twój sklep.",
     retry: "Spróbuj jeszcze raz!",
     hintTitle: "Wskazówka",
     coinLabel: "Moneta {n}",
@@ -268,6 +298,13 @@ export const pl = {
     decisions: "Decyzje",
     levelLabel: "Poziom {level}",
     maxLabel: "Maks. poziom",
+    // One-line "what this competency is" copy for the dashboard skill cards
+    // (ui-v2 `02-child-dashboard`).
+    descriptions: {
+      math: "Rozwiązuj zadania i licz z łatwością.",
+      money: "Kupuj, sprzedawaj i zarabiaj mądrze.",
+      decisions: "Planuj, porównuj i wybieraj najlepiej.",
+    },
   },
 
   // Dedicated /app/upgrades screen (S-06): choose-and-buy surface. Warm, factual,

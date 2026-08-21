@@ -167,32 +167,56 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
     );
   }
 
+  // What the current task exercises — the mockup's side panel, derived (never
+  // invented) from the task type the child is actually playing.
+  const competency = competencyForTaskType(task.type);
+
   return (
-    <div className="flex w-full max-w-md flex-col items-center gap-4">
+    <div className="flex w-full flex-col gap-6">
       {offline && <OfflineOverlay />}
+
       {/* Progress strip (S-13): segmented fill driven by index/total — the
-          mockup's mission progress in the wizard's existing step-bar idiom. */}
-      <div className="w-full">
-        <p className="text-muted-foreground text-center text-sm font-semibold">
-          {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(tasks.length))}
-        </p>
-        <div className="mt-2 flex items-center gap-1.5" aria-hidden="true">
-          {tasks.map((_, i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-2 flex-1 rounded-full transition-colors",
-                i < index ? "bg-success" : i === index ? "bg-primary" : "bg-muted",
-              )}
-            />
-          ))}
+          mockup's mission progress bar, in its own card (ui-v2 `03`). */}
+      <div className="bg-card border-border rounded-2xl border px-5 py-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <p className="text-muted-foreground shrink-0 text-sm font-bold">
+            {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(tasks.length))}
+          </p>
+          <div className="flex flex-1 items-center gap-1.5" aria-hidden="true">
+            {tasks.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "h-2 flex-1 rounded-full transition-colors",
+                  i < index ? "bg-success" : i === index ? "bg-primary" : "bg-muted",
+                )}
+              />
+            ))}
+          </div>
         </div>
       </div>
-      {task.type === "counting" ? (
-        <CountingTask key={index} task={task} world={world} onComplete={advance} />
-      ) : (
-        <ChangeMakingTask key={index} task={task} world={world} onComplete={advance} />
-      )}
+
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="flex justify-center lg:col-span-2">
+          {task.type === "counting" ? (
+            <CountingTask key={index} task={task} world={world} onComplete={advance} />
+          ) : (
+            <ChangeMakingTask key={index} task={task} world={world} onComplete={advance} />
+          )}
+        </div>
+
+        {/* Side panel: what this task teaches + a calm, factual encouragement. */}
+        <aside className="flex flex-col gap-4">
+          <div className="bg-card border-border rounded-2xl border p-5 shadow-sm">
+            <p className="text-muted-foreground text-sm font-bold">{t.task.learningHeading}</p>
+            <p className="text-primary mt-1 text-lg font-extrabold">{t.skills[competency]}</p>
+            <p className="text-muted-foreground mt-2 text-sm leading-snug">{t.skills.descriptions[competency]}</p>
+          </div>
+          <div className="bg-success/10 rounded-2xl p-5">
+            <p className="text-foreground text-sm font-semibold">{t.task.encouragement}</p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -1,11 +1,12 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import AppShell from "@/components/app/AppShell.astro";
 import UpgradeShop from "@/components/child/UpgradeShop";
-import ParentControls from "@/components/child/ParentControls.astro";
 import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
 import { createClient } from "@/lib/supabase";
 import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
+import { getAvatar } from "@/data/avatars";
 import { readPurchased } from "@/data/upgrades";
 import { readSkillState } from "@/data/skills";
 import { t } from "@/i18n";
@@ -17,6 +18,8 @@ import { t } from "@/i18n";
 // via readPurchased, robust to pre-S-06 '{}' rows), then mounts the
 // choose-and-buy island. The no-profile branch is the 0-profile defensive
 // fallback (direct nav), mirroring start.astro.
+// Chrome (sidebar / bottom tabs / wallet chip) comes from the shared AppShell,
+// per the `02-upgrades` mockup; the island owns the catalog and the buy flow.
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 const resolved = supabase ? await resolvePageProfile(supabase, Astro.cookies) : { profile: null, profileCount: 0 };
 if (!resolved.profile && resolved.profileCount >= 2) return Astro.redirect("/app");
@@ -25,14 +28,23 @@ const profile = resolved.profile;
 const world = profile ? worldForTheme(profile.theme) : null;
 const purchased = profile ? readPurchased(profile.shop_state) : [];
 const skillState = readSkillState(profile?.skill_state);
+const avatar = profile ? getAvatar(profile.avatar) : null;
 ---
 
 <Layout title={t.brand}>
-  <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
-    <ParentControls />
-
-    {
-      profile && world ? (
+  {
+    profile && world ? (
+      <AppShell
+        heading={t.upgradeShop.title}
+        subtitle={world.name}
+        active="shop"
+        profile={{
+          name: profile.name,
+          avatarImage: avatar?.image ?? null,
+          level: profile.business_level,
+          wallet: profile.wallet_balance,
+        }}
+      >
         <UpgradeShop
           client:load
           profileId={profile.id}
@@ -42,9 +54,11 @@ const skillState = readSkillState(profile?.skill_state);
           skillState={skillState}
           world={world}
         />
-      ) : (
+      </AppShell>
+    ) : (
+      <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
         <EmptyStateCard />
-      )
-    }
-  </div>
+      </div>
+    )
+  }
 </Layout>

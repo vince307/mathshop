@@ -1,0 +1,221 @@
+---
+import { Home, Target, Store, ShoppingCart, ShieldCheck, LogOut } from "lucide-react";
+import { AvatarCircle } from "@/components/child/AvatarCircle";
+import { WalletPill, LevelBadge } from "@/components/child/HudChip";
+import { t } from "@/i18n";
+
+/**
+ * The signed-in application shell (UI-polish phase) — the chrome every `/app`
+ * surface shares, built to the `matmaverse-ui-v2` mockups:
+ *
+ * - `lg+` (web mockups): a persistent left sidebar — brand, child identity card,
+ *   primary nav, and the parent entry pinned to the bottom.
+ * - below `lg` (mobile mockups): the sidebar collapses to a fixed bottom tab bar,
+ *   and the same page header shrinks to the mobile greeting row.
+ *
+ * Both navs are rendered once and toggled with `hidden` (display:none), so only
+ * one copy of each accessible name is ever in the a11y tree — locators (and the
+ * e2e suite) stay unambiguous at every viewport. The page heading is likewise a
+ * single, responsive `h1`, never a mobile/desktop pair.
+ *
+ * Presentation only: it renders the profile data the page already loaded and
+ * never fetches or derives progress of its own.
+ */
+
+export interface ShellProfile {
+  name: string;
+  avatarImage: string | null;
+  level: number;
+  wallet: number;
+}
+
+interface Props {
+  /** Page heading — the mockups' greeting on the dashboard, the mission name on a task, … */
+  heading: string;
+  /** Optional line under the heading. */
+  subtitle?: string | null;
+  /** Which primary nav item is current. */
+  active: "dashboard" | "missions" | "shop" | "parent";
+  /** Active child profile; `null` renders the shell without the identity block/HUD. */
+  profile?: ShellProfile | null;
+  /** Show the child's avatar beside the heading (mockups do so on the dashboard). */
+  showAvatar?: boolean;
+  /** Progress toward the next milestone, 0–100, when the page has one to show. */
+  progressPercent?: number | null;
+  /** Caption under the sidebar progress bar (e.g. the gap to the next upgrade). */
+  progressLabel?: string | null;
+}
+
+const {
+  heading,
+  subtitle = null,
+  active,
+  profile = null,
+  showAvatar = false,
+  progressPercent = null,
+  progressLabel = null,
+} = Astro.props;
+
+const items = [
+  { key: "dashboard", href: "/app/start", label: t.nav.items.dashboard, icon: Home },
+  { key: "missions", href: "/app/task", label: t.nav.items.missions, icon: Target },
+  { key: "shop", href: "/app/upgrades", label: t.nav.items.shop, icon: Store },
+] as const;
+
+const tabs = [...items, { key: "parent", href: "/app/report", label: t.nav.items.parent, icon: ShieldCheck }] as const;
+---
+
+<div class="bg-background min-h-screen lg:flex">
+  {/* ---------- Desktop sidebar (lg+) ---------- */}
+  <aside class="bg-card border-border sticky top-0 hidden h-screen w-68 shrink-0 flex-col border-r px-5 py-6 lg:flex">
+    <a href="/app/start" class="flex items-center gap-3">
+      <span
+        class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
+      >
+        <ShoppingCart className="size-5" />
+      </span>
+      <span>
+        <span class="text-foreground block text-lg leading-none font-extrabold">{t.brand}</span>
+        <span class="text-muted-foreground mt-1 block text-xs">{t.nav.shellTagline}</span>
+      </span>
+    </a>
+
+    {
+      profile && (
+        <div class="mt-8 flex flex-col items-center text-center">
+          {/* Decorative: the name sits right beside it as text. */}
+          {profile.avatarImage && <AvatarCircle src={profile.avatarImage} alt="" size={16} className="size-20" />}
+          <p class="text-foreground mt-3 text-lg font-extrabold">{profile.name}</p>
+          {progressPercent !== null && (
+            <div class="mt-3 w-full">
+              <div class="bg-secondary h-2 w-full overflow-hidden rounded-full" aria-hidden="true">
+                <div class="bg-primary h-full rounded-full" style={`width: ${progressPercent}%`} />
+              </div>
+              {progressLabel && <p class="text-muted-foreground mt-2 text-xs font-semibold">{progressLabel}</p>}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    <nav class="mt-8 flex flex-col gap-1" aria-label={t.nav.primaryLabel}>
+      {
+        items.map(({ key, href, label, icon: Icon }) => (
+          <a
+            href={href}
+            aria-current={active === key ? "page" : undefined}
+            class:list={[
+              "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-colors",
+              active === key ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground hover:bg-secondary/70",
+            ]}
+          >
+            <Icon className="size-5 shrink-0" />
+            {label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="mt-auto flex flex-col gap-2 pt-6">
+      <a
+        href="/app/report"
+        aria-current={active === "parent" ? "page" : undefined}
+        class:list={[
+          "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition-colors",
+          active === "parent" ? "bg-primary text-primary-foreground shadow-sm" : "bg-primary/10 text-primary",
+        ]}
+      >
+        <ShieldCheck className="size-5 shrink-0" />
+        {t.nav.items.parent}
+      </a>
+      <form method="POST" action="/api/auth/signout">
+        <button
+          type="submit"
+          class="text-muted-foreground hover:text-foreground flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors"
+        >
+          <LogOut className="size-5 shrink-0" />
+          {t.nav.signOut}
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  {/* ---------- Main column ---------- */}
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="flex items-center gap-3 px-4 pt-5 pb-3 lg:gap-4 lg:px-8 lg:pt-8 lg:pb-4">
+      {
+        showAvatar && profile?.avatarImage && (
+          <AvatarCircle src={profile.avatarImage} alt="" size={12} className="shrink-0 lg:size-16 lg:border-4" />
+        )
+      }
+      <div class="min-w-0 flex-1">
+        <h1 class="text-foreground truncate text-xl font-extrabold lg:text-3xl">{heading}</h1>
+        {subtitle && <p class="text-muted-foreground truncate text-xs lg:mt-1 lg:text-sm">{subtitle}</p>}
+      </div>
+      {
+        profile && (
+          <div class="flex shrink-0 items-center gap-2 lg:gap-3">
+            <WalletPill amount={profile.wallet} label={t.start.walletLabel} live />
+            <div class="hidden sm:block">
+              <LevelBadge withStar>{t.start.levelLabel.replace("{level}", String(profile.level))}</LevelBadge>
+            </div>
+          </div>
+        )
+      }
+      {
+        /* Sign-out lives in the sidebar on `lg+`; below it, the bottom bar is nav-only,
+          so the header carries the (icon-only, labelled) control. */
+      }
+      <form method="POST" action="/api/auth/signout" class="shrink-0 lg:hidden">
+        <button
+          type="submit"
+          aria-label={t.nav.signOut}
+          class="text-muted-foreground hover:text-foreground bg-card border-border flex size-9 items-center justify-center rounded-full border shadow-sm transition-colors"
+        >
+          <LogOut className="size-4" />
+        </button>
+      </form>
+    </header>
+
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 lg:px-8 lg:pb-12">
+      <slot />
+    </main>
+  </div>
+
+  {/* ---------- Mobile bottom tab bar (below lg) ---------- */}
+  <nav
+    class="bg-card border-border fixed inset-x-0 bottom-0 z-20 flex items-stretch justify-around border-t px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:hidden"
+    aria-label={t.nav.primaryLabel}
+  >
+    {
+      tabs.map(({ key, href, label, icon: Icon }) => (
+        <a
+          href={href}
+          aria-current={active === key ? "page" : undefined}
+          class:list={[
+            "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-[0.7rem] font-bold transition-colors",
+            active === key ? "text-primary" : "text-muted-foreground",
+          ]}
+        >
+          <Icon className="size-6 shrink-0" />
+          <span class="truncate">{label}</span>
+        </a>
+      ))
+    }
+  </nav>
+</div>
+
+{
+  /* The wallet lives in the shell (mockups put it in the top bar), but the upgrade
+     shop spends it inside an island. That island announces the new balance and the
+     chip re-renders it — no page reload, and no second wallet on screen. */
+}
+<script is:inline define:vars={{ template: t.start.amountZl }}>
+  document.addEventListener("matmaverse:wallet", (event) => {
+    const amount = event.detail;
+    if (typeof amount !== "number") return;
+    for (const el of document.querySelectorAll("[data-wallet-amount]")) {
+      el.textContent = template.replace("{amount}", String(amount));
+    }
+  });
+</script>
