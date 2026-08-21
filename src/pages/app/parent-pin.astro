@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import ParentPinGate from "@/components/parent/ParentPinGate";
+import { ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { hasPin } from "@/lib/services/parent-pin";
 import { t } from "@/i18n";
@@ -15,6 +16,14 @@ const mode = alreadyHasPin ? "enter" : "set";
 
 <Layout title={t.brand}>
   <div class="bg-background flex min-h-screen flex-col items-center justify-center px-4 py-10">
+    <div class="mb-6 flex items-center gap-3">
+      <span
+        class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
+      >
+        <ShoppingCart className="size-5" />
+      </span>
+      <p class="text-foreground text-lg font-extrabold">{t.brand}</p>
+    </div>
     <ParentPinGate client:load mode={mode} />
   </div>
 </Layout>

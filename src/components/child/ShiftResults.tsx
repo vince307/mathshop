@@ -27,7 +27,7 @@ interface ShiftResultsProps {
 export default function ShiftResults({ earned, stars, leveledUp, canUpgrade, nextInfo }: ShiftResultsProps) {
   const starCopy = [t.results.star0, t.results.star1, t.results.star2, t.results.star3][stars];
   return (
-    <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 text-center">
       {/* Celebration panel — success-tinted, never punishing */}
       <div className="bg-success/10 border-success/30 flex w-full flex-col items-center gap-4 rounded-3xl border p-6">
         <span className="bg-success text-success-foreground animate-in zoom-in inline-flex size-14 items-center justify-center rounded-full shadow-sm">

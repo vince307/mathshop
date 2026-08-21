@@ -138,7 +138,7 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
 
   if (phase === "error") {
     return (
-      <div className="flex w-full max-w-md flex-col items-center gap-6 text-center" role="status">
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 text-center" role="status">
         <p className="text-foreground text-xl font-bold">{t.results.saveError}</p>
         <ChildButton
           variant="primary"

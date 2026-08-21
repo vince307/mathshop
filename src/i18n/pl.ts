@@ -119,7 +119,7 @@ export const pl = {
     or: "lub",
   },
 
-  // App chrome / navigation (Topbar + the signed-in AppShell: desktop sidebar,
+  // App chrome / navigation (the landing header + the signed-in AppShell: desktop sidebar,
   // mobile bottom tab bar). Item labels follow the ui-v2 mockups' sidebar; only
   // destinations that exist as routes are listed (no dead nav).
   nav: {
@@ -138,25 +138,11 @@ export const pl = {
     },
   },
 
-  // Unauthenticated `/` scaffold (Welcome.astro). Placeholder landing — no `/`
-  // mockup exists yet; strings live here so the page is Polish + locale-swappable.
+  // Signed-out landing (`/`). No mockup exists for this route; the page reuses
+  // `marketing.*` (shared with the auth split view) plus this one product line.
   welcome: {
     heroSubtitle:
-      "Nauka matematyki przez prowadzenie własnego sklepu — z uwierzytelnianiem i nowoczesnymi narzędziami.",
-    features: [
-      {
-        title: "Gotowe uwierzytelnianie",
-        description: "Wbudowane logowanie Supabase z rejestracją i chronionymi trasami.",
-      },
-      {
-        title: "Nowoczesny stack",
-        description: "Astro, React, Tailwind i TypeScript — najnowsze narzędzia, gotowe do pracy.",
-      },
-      {
-        title: "Komfort pracy",
-        description: "ESLint, Prettier i hooki pre-commit utrzymują porządek w kodzie od pierwszego dnia.",
-      },
-    ],
+      "Dziecko prowadzi własny sklep: liczy monety, wydaje resztę i decyduje, w co zainwestować zarobek. Matematyka w praktyce, nigdy jako suche działanie.",
   },
 
   // Create-first-child-profile wizard (S-01b). Placeholders {current}/{total}/{name}
@@ -220,7 +206,7 @@ export const pl = {
     resultsHeading: "Twój sklep — wyniki",
     statLevel: "Poziom sklepu",
     statShifts: "Ukończone zmiany",
-    statWallet: "W portfelu",
+    statWallet: "Oszczędności",
     statUpgrades: "Ulepszenia",
     amountZl: "{amount} zł",
     safetyTitle: "Bezpieczna nauka",
@@ -367,6 +353,8 @@ export const pl = {
     setHeading: "Ustaw PIN rodzica",
     enterHeading: "Podaj PIN rodzica",
     intro: "PIN chroni panel rodzica przed dzieckiem.",
+    // Says what is behind the gate — no promise of settings that do not exist yet.
+    note: "Za PIN-em znajdziesz raport tygodniowy i ustawienia konta.",
     pinLabel: "PIN (4–6 cyfr)",
     confirmLabel: "Powtórz PIN",
     setSubmit: "Ustaw PIN",

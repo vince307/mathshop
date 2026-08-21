@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { KeyRound } from "lucide-react";
+import { KeyRound, ShieldCheck } from "lucide-react";
 import { t } from "@/i18n";
 
 interface Props {
@@ -69,12 +69,12 @@ export default function ParentPinGate({ mode }: Props) {
     "w-full rounded-2xl border border-border bg-card px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] shadow-sm outline-none focus:border-primary";
 
   return (
-    <div className="bg-card border-border w-full max-w-sm rounded-3xl border p-8 shadow-sm">
+    <div className="bg-card border-border w-full max-w-md rounded-3xl border p-6 shadow-md sm:p-8">
       <div className="flex flex-col items-center gap-2 text-center">
-        <span className="bg-secondary text-secondary-foreground flex size-12 items-center justify-center rounded-full">
-          <KeyRound className="size-6" />
+        <span className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-2xl">
+          <KeyRound className="size-7" />
         </span>
-        <h1 className="text-foreground text-2xl font-extrabold">{isSet ? copy.setHeading : copy.enterHeading}</h1>
+        <h1 className="text-foreground mt-2 text-3xl font-extrabold">{isSet ? copy.setHeading : copy.enterHeading}</h1>
         <p className="text-muted-foreground text-sm">{copy.intro}</p>
       </div>
 
@@ -129,6 +129,11 @@ export default function ParentPinGate({ mode }: Props) {
           {pending ? copy.pending : isSet ? copy.setSubmit : copy.enterSubmit}
         </button>
       </form>
+
+      <p className="text-muted-foreground mt-6 flex items-start gap-2 text-xs leading-snug">
+        <ShieldCheck className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        {copy.note}
+      </p>
     </div>
   );
 }

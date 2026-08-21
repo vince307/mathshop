@@ -145,7 +145,10 @@ export default function UpgradeShop({
               <p className="text-muted-foreground text-sm">{fill(t.upgradeShop.decisionPrompt, { wallet })}</p>
               <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {affordable.map((u) => (
-                  <li key={u.id} className={childCard("2xl", "flex flex-col items-center gap-2 p-4 text-center")}>
+                  <li
+                    key={u.id}
+                    className={childCard("2xl", "flex h-full flex-col items-center gap-2 p-4 text-center")}
+                  >
                     <span className="bg-success/15 text-success rounded-full px-2.5 py-0.5 text-xs font-bold">
                       {t.upgradeShop.availableTag}
                     </span>
@@ -161,7 +164,7 @@ export default function UpgradeShop({
                     )}
                     <ChildButton
                       variant="primary"
-                      className="min-h-14 w-full px-4 text-lg"
+                      className="mt-auto min-h-14 w-full px-4 text-lg"
                       disabled={buyingId !== null}
                       onClick={() => buy(u)}
                     >
@@ -184,7 +187,7 @@ export default function UpgradeShop({
               {locked.map((u) => (
                 <li
                   key={u.id}
-                  className="border-border flex flex-col items-center gap-2 rounded-2xl border border-dashed p-4 text-center opacity-80"
+                  className="border-border flex h-full flex-col items-center gap-2 rounded-2xl border border-dashed p-4 text-center opacity-80"
                 >
                   <img src={u.art} alt="" className="size-20 object-contain grayscale" />
                   <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
