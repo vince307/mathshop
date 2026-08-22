@@ -1,12 +1,12 @@
 # Illustration slice map
 
 These illustrations are **raster crops** sliced from the flattened, local-only design
-mockups (`assets/matma-verse/…`, gitignored per CLAUDE.md) into committed `public/`
+mockups (`assets/matmaverse-*/`, gitignored per CLAUDE.md) into committed `public/`
 assets so they ship to Vercel. Fixed-resolution PNGs — **swappable** if true vector /
 source exports become available later. Reproduce a slice by re-cropping the source PNG
 with the listed crop box `(x0, y0, x1, y1)` in source-pixel coordinates.
 
-Source: `assets/matma-verse/math-economy-auth-v2-web/01-parent-login-web.png` (1536×1024)
+Source: `assets/matmaverse-auth-v2-web/01-parent-login-web.png` (1536×1024)
 
 | Output file | Crop box (x0, y0, x1, y1) | What it is |
 | --- | --- | --- |
@@ -20,11 +20,11 @@ Source: `assets/matma-verse/math-economy-auth-v2-web/01-parent-login-web.png` (1
 ## Upgrade icons (S-06)
 
 Copied **as-is** (not cropped) from the local-only progression asset pack
-`assets/atomic-assets-v3-progression/svg/icons/` (gitignored) into committed
+`assets/atomic-assets-v3/svg/icons/` (gitignored) into committed
 `public/illustrations/` so the upgrade catalog art ships to Vercel. SVG — scalable,
 theme-neutral, swappable for per-world art later.
 
-| Output file | Source (`assets/atomic-assets-v3-progression/svg/icons/`) | Upgrade |
+| Output file | Source (`assets/atomic-assets-v3/svg/icons/`) | Upgrade |
 | --- | --- | --- |
 | `upgrade-sign.svg` | `upgrade-spark.svg` | Szyld (sign / decoration) |
 | `upgrade-shelf.svg` | `shelf-upgrade.svg` | Półka (shelf) |
