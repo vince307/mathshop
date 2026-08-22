@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { charsNeeded, t, upgradeCopy } from "@/i18n";
+import { charsNeeded, t, tasksDone, upgradeCopy } from "@/i18n";
 import { UPGRADES } from "@/data/upgrades";
 
 /**
@@ -17,6 +17,18 @@ describe("charsNeeded — Polish plural forms", () => {
     expect(charsNeeded(5)).toBe("Jeszcze 5 znaków"); // many
     expect(charsNeeded(12)).toBe("Jeszcze 12 znaków"); // teens are many, not few
     expect(charsNeeded(22)).toBe("Jeszcze 22 znaki"); // x2–x4 above 20 → few again
+  });
+});
+
+describe("tasksDone — Polish plural forms for the activity feed", () => {
+  it("selects one/few/many forms per the Polish plural rules", () => {
+    expect(tasksDone(1)).toBe("1 zadanie"); // one
+    expect(tasksDone(2)).toBe("2 zadania"); // few (2–4)
+    expect(tasksDone(4)).toBe("4 zadania");
+    expect(tasksDone(5)).toBe("5 zadań"); // many
+    expect(tasksDone(12)).toBe("12 zadań"); // teens are many, not few
+    expect(tasksDone(22)).toBe("22 zadania"); // x2–x4 above 20 → few again
+    expect(tasksDone(0)).toBe("0 zadań"); // the degenerate row never renders this, but must not crash
   });
 });
 
