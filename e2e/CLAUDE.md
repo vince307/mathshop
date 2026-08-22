@@ -39,3 +39,18 @@ the plan/research in `context/changes/testing-e2e-playwright/`.
 - Internal boundaries (auth, routing, DB) stay REAL — that's where integration
   risk hides. This app calls no external APIs from these flows; do not mock.
 - Run a single spec with: `npx playwright test e2e/<file> --project=desktop`.
+
+## Workflow and tooling boundaries
+
+**Use the `/10x-e2e` skill** — it is the single source of truth for the workflow
+(risk → seed test + rules → generate → review against the five anti-patterns →
+re-prompt → verify). Its `references/` carry the full rules, anti-patterns, seed
+pattern, and prompt-template. The rules above are the hard constraints that hold
+even before you invoke it.
+
+- **DOM (snapshot) is the default.** Vision (`--caps=vision`) is a supplement for
+  visual-only risks (layout, z-index, animation); for pixel regression prefer
+  deterministic tools (`toMatchSnapshot`, Argos, Lost Pixel).
+- **Healer helps on selectors, harms on logic.** A changed selector → healer
+  re-finds it (route through PR review). A changed business behavior → healer
+  masks the bug, so a failing test there is a finding, not a thing to auto-fix.

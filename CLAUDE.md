@@ -16,33 +16,21 @@ The mockup sets directly under `assets/` are the **canonical UI/UX designs** —
 
 ## Deployment
 
-Target is **Vercel** — `astro.config.mjs` uses the `@astrojs/vercel` adapter (v10; SSR routes compile to Vercel Functions). The full decision, operational story, and risk register live in `@context/foundation/infrastructure.md`. The Cloudflare scaffold (adapter, `wrangler`, `wrangler.jsonc`) has been removed. Two non-obvious deploy gotchas captured there: pin the function region to the EU (`fra1`/`arn1`) — Vercel defaults to US, taxing the Polish audience + EU Supabase on every SSR request — and budget **Pro ($20/mo)**, since the Hobby tier is non-commercial-use only.
-
-## Commands
-
-- `npm run dev` — dev server (Astro/Node)
-- `npm run build` — production build (SSR)
-- `npm run preview` — preview the production build
-- `npm run lint` / `npm run lint:fix` — ESLint, type-checked rules
-- `npm run format` — Prettier (astro + tailwind plugins)
-
-Pre-commit (husky + lint-staged): `eslint --fix` on `*.{ts,tsx,astro}`, `prettier --write` on `*.{json,css,md}`. No test runner is wired yet — add one before relying on `npm test`.
+Target is **Vercel** — `astro.config.mjs` uses the `@astrojs/vercel` adapter (v10; SSR routes compile to Vercel Functions). The full decision, operational story, and risk register live in `@context/foundation/infrastructure.md`. Two non-obvious deploy gotchas captured there: pin the function region to the EU (`fra1`/`arn1`) — Vercel defaults to US, taxing the Polish audience + EU Supabase on every SSR request — and budget **Pro ($20/mo)**, since the Hobby tier is non-commercial-use only.
 
 ## Architecture
 
-Astro 6 in full SSR mode (`output: "server"`) with React 19 islands, Tailwind 4, shadcn/ui ("new-york"), and Supabase auth. **Every route under `src/pages/api/` must `export const prerender = false`** — otherwise it is statically built and breaks at runtime.
+**Every route under `src/pages/api/` must `export const prerender = false`** — otherwise it is statically built and breaks at runtime.
 
 Auth is the spine of the app:
 
 - `src/lib/supabase.ts` — SSR Supabase client (`@supabase/ssr`, cookie sessions). Secrets resolve through `astro:env/server` (`SUPABASE_URL`, `SUPABASE_KEY`), declared in `astro.config.mjs`'s `env.schema` — never read these via `import.meta.env`.
 - `src/middleware.ts` — runs on every request, resolves the user into `context.locals.user`, and redirects unauthenticated hits to routes in `PROTECTED_ROUTES`. Gate a new route by adding it to that array.
-- Auth API: `src/pages/api/auth/{signin,signup,signout}.ts`. Auth pages: `src/pages/auth/*.astro`. React forms: `src/components/auth/`.
 
 MathShop requires **per-account data isolation** — one parent's child profiles must never be visible to another (PRD FR-012 / FR-015). When you add Supabase tables, enable row-level security with granular per-operation, per-role policies *in the same migration*. This is the highest-risk correctness requirement in the project; getting it wrong is a silent data leak, not a crash.
 
 ## Conventions
 
-- `@/*` → `./src/*` (tsconfig path alias).
 - Astro components for static/layout; React only where interactivity is needed. No Next.js directives (`"use client"` etc.).
 - Merge Tailwind classes with `cn()` from `@/lib/utils` — never hand-concatenate class strings.
 - Add shadcn components via `npx shadcn@latest add <name>` (they land in `src/components/ui/`).
@@ -50,41 +38,8 @@ MathShop requires **per-account data isolation** — one parent's child profiles
 - Shared types in `src/types.ts`; extracted React hooks in `src/components/hooks/`; business logic in `src/lib/services/`.
 - Supabase migrations live in `supabase/migrations/`, named `YYYYMMDDHHmmss_description.sql`.
 - All user-visible strings are Polish, authored so a future locale can be added by swapping content, not editing code (PRD FR-013).
+- **E2E tests:** use the `/10x-e2e` skill; the binding rules live in `@e2e/CLAUDE.md`.
 
 ## Local environment
 
-- Node 22.14.0 (`.nvmrc`).
-- Copy `.env.example` → `.env`, then set `SUPABASE_URL` and `SUPABASE_KEY`.
 - Local Supabase stack: `npx supabase start` (needs Docker; Studio at `http://localhost:54323`). Full setup steps in `@README.md`.
-
-<!-- BEGIN @przeprogramowani/10x-cli -->
-
-## 10xDevs AI Toolkit - Module 3, Lesson 4 (E2E Tests)
-
-**For E2E tests, use the `/10x-e2e` skill.** It is the single source of truth
-for the workflow — risk → seed test + rules → generate → review against the five
-anti-patterns → re-prompt → verify. The skill's `references/` carry the full
-rules, anti-patterns, seed pattern, and prompt-template.
-
-A few hard rules that hold even before you invoke the skill:
-
-- **Locators:** `getByRole` / `getByLabel` / `getByText` first; `getByTestId`
-  only when accessibility attributes are ambiguous. Never CSS selectors, XPath,
-  or DOM structure.
-- **Never `page.waitForTimeout()`.** Wait for state: `toBeVisible()`,
-  `waitForURL()`, `waitForResponse()`.
-- **Test independence + cleanup.** Each test runs standalone — its own setup,
-  action, assertion, and cleanup; unique ids (timestamp suffix) so parallel runs
-  and re-runs don't collide.
-
-Two boundaries to keep straight:
-
-- **DOM (snapshot) is the default.** Vision (`--caps=vision`) is a supplement for
-  visual-only risks (layout, z-index, animation); for pixel regression prefer
-  deterministic tools (`toMatchSnapshot`, Argos, Lost Pixel). VLM model
-  selection/cost is a debugging topic (Lesson 5), not testing.
-- **Healer helps on selectors, harms on logic.** A changed selector → healer
-  re-finds it (route through PR review). A changed business behavior → healer
-  masks the bug; that failing-test-to-fix case is Lesson 5.
-
-<!-- END @przeprogramowani/10x-cli -->
