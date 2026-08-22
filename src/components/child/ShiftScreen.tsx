@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Task } from "@/types";
 import type { World } from "@/data/worlds";
 import CountingTask from "@/components/child/CountingTask";
@@ -7,16 +7,23 @@ import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
-import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
+import { earningsForShift, starsForShift } from "@/data/shift";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
-import { nextUpgrade, shiftBonusTasks } from "@/data/upgrades";
+import { nextUpgrade } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
 interface ShiftScreenProps {
-  startingLevel: number;
+  /**
+   * The shift's tasks, generated ONCE on the server. Generating them here would
+   * draw different random tasks during SSR and again at hydration — React would
+   * discard the server tree (a hydration mismatch) and the child would see one
+   * task flash into another. Server-generated, prop-passed tasks make both
+   * renders identical. Nothing is persisted: this is render data, not state.
+   */
+  tasks: Task[];
   world: World;
   profileId: string;
   /** Pre-shift wallet balance — the shift's earnings add to it (S-06 results nudge). */
@@ -46,13 +53,7 @@ interface Outcome {
  * gentle fallback on persist failure. Mid-shift state is never persisted (FR-016);
  * the only server write is the single shift-end POST.
  */
-export default function ShiftScreen({ startingLevel, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
-  // Owned upgrades lengthen the shift (capacity effect, S-06): a busier shop means
-  // more practice + more earning via the unchanged `earningsForShift`.
-  const tasks = useMemo<Task[]>(
-    () => generateShift(startingLevel, shiftBonusTasks(purchased)),
-    [startingLevel, purchased],
-  );
+export default function ShiftScreen({ tasks, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
   const [index, setIndex] = useState(0);
   const [results, setResults] = useState<TaskOutcome[]>([]);
   const [phase, setPhase] = useState<Phase>("playing");

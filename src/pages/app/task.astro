@@ -6,13 +6,14 @@ import { createClient } from "@/lib/supabase";
 import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
-import { readPurchased } from "@/data/upgrades";
+import { readPurchased, shiftBonusTasks } from "@/data/upgrades";
+import { generateShift } from "@/data/shift";
 import { t } from "@/i18n";
 
 // Shift surface (S-04). Gated under /app. Loads the ACTIVE profile (S-11 fallback
-// ladder: valid selection → sole profile → back to the /app router) and mounts the
-// shift orchestrator, which generates a 5–10 task shift (mixing S-02 counting +
-// S-03 change-making) from starting_level, runs it client-side, then persists the
+// ladder: valid selection → sole profile → back to the /app router), draws the
+// shift (mixing S-02 counting + S-03 change-making) from starting_level, and
+// mounts the orchestrator island, which plays it client-side and persists the
 // result once at shift end. Mid-shift state is never persisted (FR-016). Defensive
 // fallbacks: no SSR client → sign-in; no resolvable profile → the /app router.
 // Chrome comes from the shared AppShell (ui-v2 `03-change-mission`); the mission
@@ -26,6 +27,13 @@ if (!profile) return Astro.redirect("/app");
 const world = worldForTheme(profile.theme);
 const purchased = readPurchased(profile.shop_state);
 const avatar = getAvatar(profile.avatar);
+
+// The shift is drawn HERE, once per request, and handed to the island as data.
+// Drawing it inside the island would roll different random tasks during SSR and
+// again at hydration — React discards the server tree on the mismatch and the
+// child watches one task flip into another. Owned upgrades lengthen the shift
+// (capacity effect, S-06): a busier shop means more practice + more earning.
+const tasks = generateShift(profile.starting_level, shiftBonusTasks(purchased));
 ---
 
 <Layout title={t.brand}>
@@ -42,7 +50,7 @@ const avatar = getAvatar(profile.avatar);
   >
     <ShiftScreen
       client:load
-      startingLevel={profile.starting_level}
+      tasks={tasks}
       world={world}
       profileId={profile.id}
       walletBalance={profile.wallet_balance}

@@ -50,9 +50,10 @@ nav.
 
 - "Zapamiętaj mnie" on sign-in (mockup `01`) needs a session-lifetime decision
   before it can be more than a decorative checkbox.
-- `/app/task` logs a React hydration mismatch: the shift is generated with
-  `Math.random()` on the server and again on the client. Pre-existing, not
-  introduced here; fix by generating the shift client-side (or seeding it).
+- ~~`/app/task` logs a React hydration mismatch~~ — fixed: the shift is now drawn
+  once in the page's frontmatter and handed to the island as a `tasks` prop, so
+  SSR and hydration render the same task. It was also a visible bug, not just a
+  console error: the child briefly saw one task flip into another.
 
 ## Verification
 
