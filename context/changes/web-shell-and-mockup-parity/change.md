@@ -55,6 +55,12 @@ nav.
   SSR and hydration render the same task. It was also a visible bug, not just a
   console error: the child briefly saw one task flip into another.
 
+## Handoff
+
+`handoff.md` (in this folder) carries the session summary, the working rules to
+keep, and the screen-by-screen backlog with the functionality each screen needs
+behind it — start there next session.
+
 ## Verification
 
 `npm run lint`, `npm test` (299), `npx playwright test` (15, desktop + touch)
