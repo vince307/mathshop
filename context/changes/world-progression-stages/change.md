@@ -1,7 +1,7 @@
 ---
 change_id: world-progression-stages
 title: Named shop growth stages with per-stage art, plus per-shift earnings in shift_log
-status: implemented
+status: impl_reviewed
 created: 2026-08-22
 updated: 2026-08-23
 archived_at: null
