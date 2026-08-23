@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { admin, PASSWORD } from "../tests/helpers/supabase";
 
-const BASE_URL = "http://localhost:4321";
+// Mirrors playwright.config.ts's E2E_PORT override (see the comment there).
+const BASE_URL = `http://localhost:${process.env.E2E_PORT ?? "4321"}`;
 
 /**
  * Backend-identity probe (impl-review F3): with `reuseExistingServer`, a

@@ -25,6 +25,9 @@ interface ShiftLogRow {
   created_at: string;
   skills: Record<string, unknown>;
   upgrade_purchased: string | null;
+  // Nullable with no default (F4) — the insert below deliberately omits it, which
+  // is what proves an additive nullable column cannot break an existing writer.
+  earned: number | null;
 }
 
 /** A math-heavy shift delta — the shape the write path stores. */

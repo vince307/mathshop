@@ -26,9 +26,9 @@ The first account-owned table. Child play-profiles owned by a parent account. Ca
 
 Per-profile, per-shift history log (S-07) backing the parent weekly report (FR-016). One row per completed shift, plus one per upgrade purchase. Written server-side (`recordShiftResult` / `buyUpgrade`), `account_id` taken from the RLS-verified profile row (never client input, L-002).
 
-- **Defined in:** `supabase/migrations/20260701150000_create_shift_log.sql` (S-07).
+- **Defined in:** `supabase/migrations/20260701150000_create_shift_log.sql` (S-07); `earned` added by `supabase/migrations/20260822120000_shift_log_add_earned.sql` (F4).
 - **Owner column:** `account_id uuid not null references auth.users(id) on delete cascade` — RLS predicate `auth.uid() = account_id`.
-- **Columns:** `id`, `account_id`, `profile_id` (`references child_profiles(id) on delete cascade`), `created_at`, `skills` jsonb (the per-competency delta this event exercised), `upgrade_purchased` text null (set only on a purchase event). No `updated_at` (append-mostly; rows aren't mutated in normal flow).
+- **Columns:** `id`, `account_id`, `profile_id` (`references child_profiles(id) on delete cascade`), `created_at`, `skills` jsonb (the per-competency delta this event exercised), `upgrade_purchased` text null (set only on a purchase event), `earned` integer null (F4 — the server-computed payout for a shift; **null means unknown**: a purchase event, or a pre-migration row, since there was no backfill. `sum(earned)` is therefore a lower bound, because `appendShiftLog` is best-effort and swallows its insert error). No `updated_at` (append-mostly; rows aren't mutated in normal flow).
 - **Indexes:** `shift_log_account_id_idx` (`account_id`), `shift_log_profile_created_idx` (`profile_id, created_at` — the weekly-report query path).
 - **RLS:** enabled; four per-operation policies, all `to authenticated`:
   - `shift_log_select_own` — `for select using (auth.uid() = account_id)`
