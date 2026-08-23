@@ -5,7 +5,7 @@ import { ConfirmDeleteDialog } from "@/components/parent/ConfirmDeleteDialog";
 import WeeklyActivityChart from "@/components/parent/WeeklyActivityChart";
 import { Button } from "@/components/ui/button";
 import type { Competency, WeeklyReport as WeeklyReportData, WeeklyReportUpgrade } from "@/types";
-import { COMPETENCIES } from "@/data/skills";
+import { COMPETENCIES, firstTryPercent } from "@/data/skills";
 import { t } from "@/i18n";
 
 /**
@@ -130,17 +130,35 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
   // Only competencies actually practiced this week (completed > 0) — nothing to
   // shame for the rest. Order follows the canonical competency list.
   const practiced = COMPETENCIES.filter((competency) => practice[competency].completed > 0);
-  // Summary tiles: both are sums of what the week's shift log recorded.
+  // Summary tiles: every figure is a sum of what the week's shift log recorded.
   const tasksThisWeek = COMPETENCIES.reduce((sum, competency) => sum + practice[competency].completed, 0);
+  // `null` (not NaN, not 0) when nothing countable was practised — and math +
+  // money only, because a purchase is 100 % correct by construction.
+  const firstTry = firstTryPercent(practice);
 
   return (
     <section className="bg-card border-border rounded-3xl border p-6 shadow-sm">
       <ChildIdentity child={child} />
 
-      <ul className="mt-5 grid grid-cols-2 gap-3">
+      {/* Two-up on a phone, three-up from `sm`: at 390 px a three-column row
+          leaves ~63 px of text per tile, which these multi-word Polish labels
+          do not fit. A responsive grid class, not a duplicated element — the
+          accessibility tree is identical at every width. */}
+      <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <li className="bg-primary/5 rounded-2xl p-4">
           <p className="text-foreground text-2xl font-extrabold">{tasksThisWeek}</p>
           <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statTasks}</p>
+        </li>
+        {/* Named for what is measured — tasks nailed with no wrong taps — not
+            for an error rate. No verdict line, no colour coding, no threshold
+            and no comparison: a number a parent can read is fine, a product
+            that grades the child is not (guardrail). */}
+        <li className="bg-accent/10 rounded-2xl p-4">
+          <p className="text-foreground text-2xl font-extrabold">
+            {firstTry === null ? copy.statFirstTryNone : copy.statFirstTryValue.replace("{percent}", String(firstTry))}
+            {firstTry === null && <span className="sr-only">{copy.statFirstTryNoData}</span>}
+          </p>
+          <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statFirstTry}</p>
         </li>
         <li className="bg-success/10 rounded-2xl p-4">
           <p className="text-foreground text-2xl font-extrabold">{upgrades.length}</p>

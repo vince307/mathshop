@@ -1188,11 +1188,11 @@ would make it real and who owns it.
 
 #### Automated
 
-- [x] 4.1 Type checking passes: `npm run check`
-- [x] 4.2 Linting passes: `npm run lint`
-- [x] 4.3 Build passes: `npm run build`
-- [x] 4.4 Unit tests pass: `npm test` (new chart test file ≥ 6 tests)
-- [x] 4.5 No `NaN` or `undefined` in rendered output for any fixture
+- [x] 4.1 Type checking passes: `npm run check` — b3c318c
+- [x] 4.2 Linting passes: `npm run lint` — b3c318c
+- [x] 4.3 Build passes: `npm run build` — b3c318c
+- [x] 4.4 Unit tests pass: `npm test` (new chart test file ≥ 6 tests) — b3c318c
+- [x] 4.5 No `NaN` or `undefined` in rendered output for any fixture — b3c318c
 
 #### Manual
 
@@ -1204,12 +1204,12 @@ would make it real and who owns it.
 
 #### Automated
 
-- [ ] 5.1 Type checking passes: `npm run check`
-- [ ] 5.2 Linting passes: `npm run lint`
-- [ ] 5.3 Build passes: `npm run build`
-- [ ] 5.4 Unit tests pass: `npm test` (new tile test file ≥ 4 tests; suite total ≥ 315)
-- [ ] 5.5 No `NaN` in rendered output for **every** fixture in `tests/weekly-report-tiles.test.tsx`
-- [ ] 5.6 `npx playwright test` still 15/15 — existing heading locators unambiguous
+- [x] 5.1 Type checking passes: `npm run check`
+- [x] 5.2 Linting passes: `npm run lint`
+- [x] 5.3 Build passes: `npm run build`
+- [x] 5.4 Unit tests pass: `npm test` (new tile test file ≥ 4 tests; suite total ≥ 315)
+- [x] 5.5 No `NaN` in rendered output for **every** fixture in `tests/weekly-report-tiles.test.tsx`
+- [x] 5.6 `npx playwright test` still 15/15 — existing heading locators unambiguous
 
 #### Manual
 
