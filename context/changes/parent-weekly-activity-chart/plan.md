@@ -1152,11 +1152,11 @@ would make it real and who owns it.
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npm run check`
-- [x] 1.2 Linting passes: `npm run lint`
-- [x] 1.3 Build passes: `npm run build`
-- [x] 1.4 Unit tests pass and the count went up: `npm test` (≥ 299, `tests/reports.test.ts` ≥ 19)
-- [x] 1.5 `tests/report-isolation.test.ts` passes against the live local stack
+- [x] 1.1 Type checking passes: `npm run check` — ec47dd1
+- [x] 1.2 Linting passes: `npm run lint` — ec47dd1
+- [x] 1.3 Build passes: `npm run build` — ec47dd1
+- [x] 1.4 Unit tests pass and the count went up: `npm test` (≥ 299, `tests/reports.test.ts` ≥ 19) — ec47dd1
+- [x] 1.5 `tests/report-isolation.test.ts` passes against the live local stack — ec47dd1
 
 #### Manual
 
@@ -1166,10 +1166,10 @@ would make it real and who owns it.
 
 #### Automated
 
-- [ ] 2.1 Unit tests pass: `npm test` (`tests/skills.test.ts` gains ≥ 5)
-- [ ] 2.2 The creep test goes red when `decisions` is added to `ACCURACY_COMPETENCIES` (break, confirm, revert)
-- [ ] 2.3 Type checking passes: `npm run check`
-- [ ] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm test` (`tests/skills.test.ts` gains ≥ 5)
+- [x] 2.2 The creep test goes red when `decisions` is added to `ACCURACY_COMPETENCIES` (break, confirm, revert)
+- [x] 2.3 Type checking passes: `npm run check`
+- [x] 2.4 Linting passes: `npm run lint`
 
 ### Phase 3: Polish copy
 
