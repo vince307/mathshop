@@ -1,7 +1,7 @@
 ---
 change_id: dashboard-recent-activity
 title: "Ostatnia aktywność" feed on the child dashboard, from shift_log
-status: implemented
+status: impl_reviewed
 created: 2026-08-22
 updated: 2026-08-23
 archived_at: null
@@ -47,3 +47,27 @@ The `/10x-plan-review` skill presents a report and then offers interactive triag
   `reviews/plan-review.md` → "Triage summary".
   *What would change the answer:* had the verdict been RETHINK, the plan would have
   been left intact for a fresh `/10x-plan` rather than edited.
+
+### Implementation-review step (2026-08-23)
+
+The `/10x-impl-review` skill presents a report and then offers interactive triage
+(`AskUserQuestion`). Neither the save prompt nor the per-finding triage was asked
+(agent contract, hard rule 1). Verdict **APPROVED** — 0 critical, 1 warning,
+6 observations; full report in `reviews/impl-review.md`.
+
+- **Reviewed from git objects rather than the working tree, and without the skill's
+  two parallel sub-agents.** A concurrent agent switched the shared tree to
+  `feat/parent-security-screen` mid-step, deleting this change folder from disk; the
+  sub-agents read files by path and would have reported another feature's source as
+  this one's. Every claim was grounded in
+  `git diff feat/ui-polish..feat/dashboard-recent-activity` and `git show <branch>:<path>`.
+  *What would change the answer:* a dedicated worktree for this branch.
+- **The suites were deliberately NOT re-run** — on that tree they would have exercised a
+  different feature. Static criteria were re-verified from git objects; the execution
+  claims were re-derived instead (318 = 299 + 19 new `it()`s; Playwright unchanged at 15
+  because the diff adds no `test()` block; `astro check` 168 = 163 + 5 new files).
+  Rejected running them anyway and attributing the result here.
+- **No source file was edited.** There was no CRITICAL finding to fix, and the one
+  doc-level warning (a stale Progress row) was written to `follow-ups/review-fixes.md`
+  as explicitly NON-BLOCKING rather than applied, since this step may not commit and an
+  uncommitted edit to a branch-tracked file would be lost on the next checkout.

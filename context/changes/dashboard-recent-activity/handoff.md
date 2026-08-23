@@ -6,11 +6,16 @@ back in ≤ 12 lines, and the project rules this run keeps tripping over).
 
 ## State
 
-**IMPLEMENTED. All four phases shipped; every `## Progress` row is `[x]` with a commit SHA.**
-`change.md` is `status: implemented`. Nothing is left pending.
+**IMPLEMENTED AND REVIEWED.** All four phases shipped; every `## Progress` row is `[x]` with a
+commit SHA. `change.md` is now `status: impl_reviewed`.
 
-Branch **`feat/dashboard-recent-activity`**, cut from `feat/ui-polish`. **Not pushed, no PR**
-(per the contract — the maintainer reviews locally).
+**Verdict: APPROVED — the branch is mergeable as-is. No follow-up commit is required.**
+0 critical findings, 1 warning (a stale line in the plan's own Progress table — doc only),
+6 observations. Full report: `reviews/impl-review.md`. Non-blocking tidies:
+`follow-ups/review-fixes.md`.
+
+Branch **`feat/dashboard-recent-activity`**, cut from `feat/ui-polish`, 5 commits. **Not pushed,
+no PR** (per the contract — the maintainer reviews locally).
 
 | Phase | Commit | What landed |
 |---|---|---|
@@ -18,118 +23,110 @@ Branch **`feat/dashboard-recent-activity`**, cut from `feat/ui-polish`. **Not pu
 | 2 — Profile-scoped query | **`909e4b9`** | `listRecentActivity` + `RecentActivityRow`, unit suite, isolation suite, contract-surfaces |
 | 3 — The section | **`21e07cc`** | `RecentActivity.astro`, `start.astro` wiring, D10/D11 |
 | 4 — E2E coverage | **`c83bb9a`** | assertions in `seed.spec.ts` + `gameplay-restore.spec.ts` |
+| epilogue | **`7a5d093`** | Phase-4 SHA write-back, `change.md` status flip |
 
-An epilogue commit lands the Phase-4 SHA write-back and the `change.md` status flip.
+## ⚠️ Read this before you touch the working tree
 
-## Files changed
-
-**New:** `src/data/activity.ts`, `src/components/child/RecentActivity.astro`,
-`tests/activity.test.ts`, `tests/recent-activity.test.ts`,
-`tests/recent-activity-isolation.test.ts`.
-**Edited:** `src/i18n/index.ts`, `src/i18n/pl.ts`, `src/lib/services/reports.ts` (append-only),
-`src/pages/app/start.astro`, `docs/reference/contract-surfaces.md`, `e2e/seed.spec.ts`,
-`e2e/gameplay-restore.spec.ts`, `tests/i18n-helpers.test.ts`.
-**No migration, no RLS change, no new index, no API route, no React island, no new dependency,
-no new artwork.**
-
-## Verification actually observed (not assumed)
+A concurrent agent switched the shared tree to **`feat/parent-security-screen`** during the
+review, which deleted this change folder from disk. The review artifacts were therefore written
+back as **untracked files** at their canonical paths:
 
 ```
-npm run lint          clean (eslint, no output)
-npm test              318 passed (318) / 42 files   ← baseline 299, +19 new
-npm run check         Result (168 files): 0 errors, 0 warnings, 8 hints
-npx playwright test   15 passed (15)  — run TWICE consecutively, green both times
+context/changes/dashboard-recent-activity/change.md            (updated → impl_reviewed)
+context/changes/dashboard-recent-activity/handoff.md           (this file)
+context/changes/dashboard-recent-activity/reviews/impl-review.md   (new)
+context/changes/dashboard-recent-activity/follow-ups/review-fixes.md (new)
 ```
 
-`npx playwright test` count is **unchanged at 15** by design — Phase 4 adds assertions inside
-two existing tests, not new test cases.
+`change.md` and `handoff.md` are **tracked** on `feat/dashboard-recent-activity`, so a plain
+`git checkout feat/dashboard-recent-activity` will refuse ("untracked working tree files would
+be overwritten"). Recovery — the untracked copies are the ones you want to keep:
 
-**Environment note that cost time and will cost the next agent time too:** the integration
-suites and e2e need `127.0.0.1:54321`, which the command sandbox blocks — every `npm test` /
-`playwright` / `supabase status` invocation must run with the sandbox disabled or 30 tests fail
-with `AuthRetryableFetchError: fetch failed`. Separately, a **stray dev server holding port
-4321/4322 makes 4 `gameplay-restore` runs fail**; they pass in isolation and pass in the full
-suite once the ports are freed (`lsof -ti:4321,4322 | xargs kill -9`). Neither is a defect in
-this change — both were reproduced and cleared.
-
-### The isolation test is real — verified by deliberate breakage, twice
-
-```
-remove .eq("profile_id", …)     → 4 failed (4)   ← ALL cases red, incl. cross-account
-restore                         → 8 passed (8)
-replace `throw error` → `return []` → 1 failed   ← the error-contract case
-restore                         → 8 passed (8)
+```bash
+mv context/changes/dashboard-recent-activity /tmp/dra-review
+git checkout feat/dashboard-recent-activity
+cp -R /tmp/dra-review/. context/changes/dashboard-recent-activity/
+git add context/changes/dashboard-recent-activity && git commit -m "docs(change): implementation review"
 ```
 
-The naive DST implementation was broken on purpose too: swapping the calendar-key step for
-`now − 86_400_000` turns the October fall-back case red (`expected 'older' to be 'yesterday'`).
-None of these three tests can pass a broken implementation.
+`plan.md`, `research.md`, `plan-brief.md` and `reviews/plan-review.md` were **not** rewritten —
+they come back intact from the branch.
 
-## Manual verification — performed by the agent, in a real browser (D11)
+## What the review confirmed (the six things it was asked to check)
 
-Signed in as `ui-polish-demo@example.test`, drove a **real 6-task shift** through the actual
-tap loop plus a real `Szyld` purchase (reusing the `solveShift` e2e helper from a throwaway
-spec, deleted immediately), then read `/app/start` at 390 / 712 / 1280px.
+1. **The `profile_id` filter.** `git grep 'from("shift_log")'` finds exactly three sites: the
+   insert, the pre-existing `getWeeklyReport` (already filtered), and the new
+   `listRecentActivity` — which carries `.eq("profile_id", profileId)`. **One query path, filter
+   present.** The isolation suite goes red **four ways** if it is dropped (case 1 returns 2 rows
+   instead of 1 and fails the row-id identity assertion; case 4 returns account B's own row
+   instead of `[]`), and the unit suite independently asserts the `eq` arguments.
+2. **Plan adherence + D10.** Every phase matches its contract. `RecentActivity.astro:60` is
+   `grid gap-3 sm:grid-cols-3`, i.e. D10 as decided. **Progress row 4.4's "stacked feed" wording
+   is a stale doc line, not a behaviour mismatch** — `sm` is 640px, so 712px is 3-across by
+   design; the row's real assertion (one copy of the heading) is unaffected. Recorded as F1.
+3. **Truthfulness.** No `zł` and no derived money anywhere — `grep -niE "zł|cost|earn"` over the
+   component and the data module hits only prose explaining why there is none. `N zadań` is
+   `math.completed + money.completed` off that row's own stored jsonb, and shift tasks map only
+   to those two competencies, so the number is a stored aggregate, never a re-derivation.
+4. **A11y / locators.** No new `h1`; the heading is unique; `Dzisiaj` is rendered but never
+   asserted (both specs say so inline); the empty line contains no `Ukończone zmiany`; the
+   blacklist audit is clean in both directions; no `data-testid`. The three render states use
+   pure booleans, so the `{0 && …}` literal-zero leak cannot occur.
+5. **Error containment.** `start.astro:53-62` wraps the query **and** the mapping in one
+   try/catch that sets `null` without rethrowing — a thrown service error degrades to the
+   section's honest error line while the rest of the dashboard renders. Same shape as
+   `report.astro:35-42`.
+6. **Patterns + scope.** `cn()` arrives through `childCard()` (no `.astro` file in this repo
+   calls `cn()` directly — `class:list` is the idiom); all copy via `pl.ts`; service logic in
+   `src/lib/services/`; SSR frontmatter, zero client JS. `reports.ts` is **45 insertions, 0
+   deletions** at EOF. `src/types.ts` and `tests/reports.test.ts` are absent from the diff.
+   Nothing from another feature was touched.
 
-- **Empty state** — a profile with zero rows shows the heading + the empty line. ✓
-- **Populated, correct order** — `Ulepszenie: Szyld` (today) sits **above**
-  `Zmiana ukończona · 6 zadań`, both `Dzisiaj`. The `6` is the count the shift actually ran. ✓
-- **Day labels** — back-dating rows with the service-role client (so the DB genuinely holds the
-  timestamps) produced `Wczoraj` and `19.08`. Singular form renders `1 zadanie`. ✓
-- **390px** — one card per row, no horizontal overflow; the longest catalogue name,
-  `Ulepszenie: Miejsce na produkt`, fits on one line. ✓
-- **712px / 1280px** — three across, exactly **one** copy of the heading in the a11y tree. ✓
-- **Console** — only the React DevTools info line. No hydration warning. ✓
-- **Unplanned bonus finding** — an `upgrade_purchased` id absent from the catalogue renders as
-  the raw id via `upgradeCopy`'s guarded fallback rather than throwing mid-render.
-- **No `zł` anywhere in the feed**, at any viewport, on either row kind.
+## What the review could NOT do
 
-## Decisions taken during implementation
-
-Both are written into `plan.md` under `## Autonomous decisions`.
-
-- **D10 — R3 resolved: `sm:grid-cols-3`, not `lg:grid-cols-3`.** The plan deferred this class
-  deliberately ("do not decide it before you can see it"). Seen at 712px, `lg:` made the feed
-  the only 1-across row on the page, between a 3-across `SkillCards` and 4-across results
-  tiles — full-width cards carrying a ~200px label, the heaviest block for the least
-  information. `sm:` puts it on the page's own breakpoint. Re-verified after the change at all
-  three widths; 390px is untouched (`sm` is 640px). **Progress row 4.4 says "stacked feed" at
-  712px — after D10 the feed is 3-across there instead. The row's real content (one copy of the
-  heading, correct render) holds; the stacking now happens below 640px.**
-- **D11 — manual verification was executed, not asked.** Hard rule 1 puts no human in the loop,
-  so `/10x-implement`'s manual-confirmation gate, its dirty-path prompt, its commit-message
-  prompt and its next-phase prompt were all decided autonomously.
+`npm test` / `npx playwright test` / `npm run check` were **not re-run** — the tree was on
+another feature's branch and running them there would have mis-attributed the result. Static
+criteria were verified from git objects; the implementer's counts re-derive exactly (318 = 299
++ the 19 new `it()` blocks in the diff; Playwright stays 15 because the diff adds **no**
+`test()` block; `astro check` 168 files = 163 + 5 new files). The three deliberate-break results
+were traced by reading rather than reproduced. **Before merge, run the four commands on a tree
+checked out at this branch** (see `follow-ups/review-fixes.md` §3).
 
 ## Risks carried forward
 
-- **R1 (unchanged, still live).** F1 (`context/changes/parent-weekly-activity-chart/`) has
-  **not landed** and still had no `plan.md` when this shipped. F2's `reports.ts` diff is
-  **45 insertions, 0 deletions** at the tail, so it rebases cleanly under F1's edits above it —
-  but if git conflicts at EOF, **keep both symbol sets, never resolve ours/theirs**. Same for
-  `docs/reference/contract-surfaces.md` `## public.shift_log`: the Consumed-by line must end up
-  naming both consumers.
-- **R2 (unchanged).** Do not collapse `RecentActivityRow` onto `ShiftLogRow` once F1 adds
-  `created_at` — the feed also needs `id`.
-- **R3 — CLOSED** by D10.
-- **R4 (unchanged, by design).** `appendShiftLog` is best-effort and un-transactional, so the
-  feed can legitimately miss an event. It is documented as such on `listRecentActivity` and in
-  `RecentActivity.astro`, and must never be read as a wallet or shift-count reconciliation.
+- **R1 (live).** `docs/reference/contract-surfaces.md` `## public.shift_log` — the Consumed-by
+  and Isolation-test lines are rewritten in place and the parallel weekly-chart feature edits the
+  same block. On conflict **keep both symbol sets, never `--ours`/`--theirs`**; nothing validates
+  that file, so a bad resolution fails silently. `reports.ts` is append-only and rebases cleanly,
+  but re-read `getWeeklyReport` afterwards.
+- **R2 (unchanged).** Do not collapse `RecentActivityRow` onto `ShiftLogRow` — the feed needs `id`.
+- **R3 — CLOSED** by D10, and the code was verified to match it.
+- **R4 (by design).** `appendShiftLog` is best-effort and un-transactional, so the feed can
+  legitimately miss an event. Never read it as a wallet or shift-count reconciliation.
 
-## Demo-data caveat
+## Demo-data caveat — judged harmless
 
-The `ui-polish-demo@example.test` profile "Ania" was mutated during manual verification: it now
-holds three `shift_log` rows (one purchase dated today with `upgrade_purchased: "slot"`, one
-shift back-dated to yesterday, one shift back-dated to 19.08), `completed_shift_count` 8,
-wallet 144 zł, one owned upgrade. Harmless, but do not read it as pristine seed data. E2E specs
-provision their own accounts and are unaffected.
+`ui-polish-demo@example.test` profile "Ania" holds three rows from D11's manual pass (a purchase
+today, a shift back-dated to yesterday, a shift back-dated to 19.08), `completed_shift_count` 8,
+wallet 144 zł, one owned upgrade. **`git grep -rn "ui-polish-demo"` over the whole branch hits
+only three `context/` documents — no spec, no helper, no source** — and every e2e spec provisions
+and tears down its own account, so nothing automated depends on it. The only downstream effect is
+on manual passes: the weekly-chart feature will see three rows over three distinct days for Ania
+(useful, if anything), and will find two shift rows that do **not** reconcile with
+`completed_shift_count` 8 — that is R4's documented best-effort behaviour, not a bug to chase.
 
 ## Next command
 
-```
-/10x-impl-review dashboard-recent-activity
-```
+**None for this feature — it is done.** No `/10x-e2e` run is warranted: the plan named no
+browser-level risk that is still open. Its only browser risk was R3 (the column breakpoint),
+which D10 closed at implementation time, and Phase 4 already landed the browser coverage the plan
+asked for — the empty state in `e2e/seed.spec.ts` and the populated feed in
+`e2e/gameplay-restore.spec.ts`, which runs in both the desktop and the 712px `touch` project.
+Adding a spec now would duplicate existing coverage.
 
-Review the whole plan (no phase number). The highest-value things to re-check: that the
-`reports.ts` addition really is append-only, that the isolation suite still goes red when the
-`profile_id` filter is dropped, and that D10's breakpoint change is the right call against the
-web mockup.
+Remaining work is bookkeeping only, all of it optional and none of it blocking:
+
+1. Commit the untracked review artifacts onto the branch (recovery block above).
+2. Apply the one doc fix in `follow-ups/review-fixes.md` §1 (stale Progress row 4.4).
+3. Re-run the four verification commands on this branch before merge.
+4. Then `/10x-archive dashboard-recent-activity` whenever the maintainer has merged.
