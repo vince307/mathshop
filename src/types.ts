@@ -139,6 +139,19 @@ export interface WeeklyReportUpgrade {
 }
 
 /**
+ * One day of the report week, as the parent-report activity chart consumes it.
+ * `date` is the **Europe/Warsaw civil date** (`YYYY-MM-DD`), `weekday` is
+ * `0` = Monday … `6` = Sunday, and `completed` is that day's tasks summed across
+ * all three competencies — so the seven days are exactly a decomposition of the
+ * "Ukończone zadania" tile. Plain JSON so it survives the SSR→island boundary.
+ */
+export interface WeeklyReportDay {
+  date: string;
+  weekday: number;
+  completed: number;
+}
+
+/**
  * A single child's weekly practice summary (S-07 / FR-016): per-competency practice
  * aggregated from `shift_log` within the current week, plus the upgrades unlocked
  * that week and the skills each exercised. Read-only, non-comparative (guardrail).
@@ -147,4 +160,9 @@ export interface WeeklyReport {
   profileId: string;
   practice: SkillState;
   upgrades: WeeklyReportUpgrade[];
+  /**
+   * The week's daily activity, **always exactly seven entries, Monday-first and
+   * zero-filled** — consumers index it positionally and never null-check.
+   */
+  daily: WeeklyReportDay[];
 }

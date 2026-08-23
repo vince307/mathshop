@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Competency, WeeklyReport, WeeklyReportUpgrade } from "@/types";
+import type { Competency, WeeklyReport, WeeklyReportDay, WeeklyReportUpgrade } from "@/types";
+import { warsawDayKey } from "@/data/activity";
 import { addSkillDelta, COMPETENCIES, readSkillState } from "@/data/skills";
 import { getUpgrade } from "@/data/upgrades";
 
@@ -9,8 +10,14 @@ import { getUpgrade } from "@/data/upgrades";
  * RLS-scoped query wrapper. Read-only, non-comparative, non-shaming (guardrail).
  */
 
-/** One `shift_log` row as the aggregator consumes it (skills jsonb + optional purchase). */
+/**
+ * One `shift_log` row as the aggregator consumes it (timestamp + skills jsonb +
+ * optional purchase). `created_at` is **required**, not optional: it is what
+ * places a row on a day of the week, and an optional field would let a caller
+ * silently produce an all-zero chart instead of failing to compile.
+ */
 export interface ShiftLogRow {
+  created_at: string;
   skills: unknown;
   upgrade_purchased: string | null;
 }
@@ -31,19 +38,44 @@ function upgradeSkillTie(upgradeId: string, practiced: Competency[]): WeeklyRepo
 
 /**
  * Fold a week's `shift_log` rows into a `WeeklyReport`: sum per-competency practice
- * (monotonic add — same fold the write path uses) and list each purchased upgrade
- * tied to the skills it exercised. Pure; unit-tested without a DB.
+ * (monotonic add — same fold the write path uses), list each purchased upgrade
+ * tied to the skills it exercised, and decompose the same rows across the week's
+ * seven Warsaw days. Pure; unit-tested without a DB.
+ *
+ * `now` is a **third, optional** parameter so no existing call site changes
+ * shape — but it is what fixes the seven-day frame, so a test asserting on
+ * `daily` must pass the same instant its fixture timestamps were built against.
+ *
+ * **`Σ daily[].completed === Σ practice[*].completed`** for rows inside the
+ * frame: both sides coerce through the same `safeCount` on the same field
+ * (`addSkillDelta` / `readSkillState`), so a parent adding the seven bars gets
+ * the number printed above them. A row inside the open-ended `.gte` window but
+ * outside the frame is counted in `practice` and skipped for `daily` — existing
+ * `practice` behaviour is unchanged by this addition.
  */
-export function aggregateWeeklyReport(profileId: string, rows: ShiftLogRow[]): WeeklyReport {
+export function aggregateWeeklyReport(profileId: string, rows: ShiftLogRow[], now: Date = new Date()): WeeklyReport {
   let practice = readSkillState(null);
   const purchasedIds: string[] = [];
+  const frame = weekDayKeys(now);
+  const perDay = new Map(frame.map((key) => [key, 0]));
   for (const row of rows) {
     practice = addSkillDelta(practice, row.skills ?? {});
     if (row.upgrade_purchased) purchasedIds.push(row.upgrade_purchased);
+    const dayKey = warsawDayKey(new Date(row.created_at));
+    const bucket = perDay.get(dayKey);
+    if (bucket === undefined) continue; // outside the seven-day frame — practice only
+    const rowSkills = readSkillState(row.skills);
+    const completed = COMPETENCIES.reduce((sum, competency) => sum + rowSkills[competency].completed, 0);
+    perDay.set(dayKey, bucket + completed);
   }
+  const daily: WeeklyReportDay[] = frame.map((date, weekday) => ({
+    date,
+    weekday,
+    completed: perDay.get(date) ?? 0,
+  }));
   const practiced = COMPETENCIES.filter((competency) => practice[competency].completed > 0);
   const upgrades = purchasedIds.map((id) => upgradeSkillTie(id, practiced));
-  return { profileId, practice, upgrades };
+  return { profileId, practice, upgrades, daily };
 }
 
 /** The report's calendar anchor: the audience's civil time (S-09, FR-016). */
@@ -51,7 +83,15 @@ const REPORT_TIME_ZONE = "Europe/Warsaw";
 
 const WEEKDAY_FROM_MONDAY: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
 
-/** The zone's UTC offset (minutes) in force at `instant`, via Intl (DST-correct, no dependency). */
+/**
+ * The zone's UTC offset (minutes) in force at `instant`, via Intl (DST-correct, no dependency).
+ *
+ * **This is the project's only UTC-offset parser — do not re-implement it.** A
+ * second copy is a DST bug waiting for the last Sunday in October. Anything that
+ * only needs to know *which civil day* an instant falls on wants
+ * `warsawDayKey` (`src/data/activity.ts`) instead, which compares date strings
+ * and needs no offset arithmetic at all.
+ */
 function zoneOffsetMinutes(instant: Date): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: REPORT_TIME_ZONE,
@@ -92,6 +132,26 @@ export function startOfWeek(now: Date): string {
 }
 
 /**
+ * The report week as seven `"YYYY-MM-DD"` Europe/Warsaw civil dates, Monday
+ * first — the fixed frame the activity chart buckets into.
+ *
+ * Derived by taking the Warsaw civil date of `startOfWeek(now)` and stepping the
+ * **key** forward 0–6 calendar days, mirroring `previousDayKey`
+ * (`src/data/activity.ts`). Stepping the key is a pure calendar operation with
+ * no timezone in it, so the 23- and 25-hour DST days cannot shift a bar; adding
+ * 86 400 000 ms to an instant would.
+ */
+export function weekDayKeys(now: Date): string[] {
+  const monday = warsawDayKey(new Date(startOfWeek(now)));
+  const [year, month, day] = monday.split("-").map(Number);
+  return Array.from({ length: 7 }, (_, offset) => {
+    const stepped = new Date(Date.UTC(year, month - 1, day + offset));
+    const pad2 = (value: number) => String(value).padStart(2, "0");
+    return `${stepped.getUTCFullYear()}-${pad2(stepped.getUTCMonth() + 1)}-${pad2(stepped.getUTCDate())}`;
+  });
+}
+
+/**
  * The current-week report for one profile (RLS-scoped — a non-owner reads no
  * rows, so the report is naturally empty rather than another account's data).
  * A query error THROWS rather than folding into an empty report, so a DB
@@ -106,12 +166,15 @@ export async function getWeeklyReport(
 ): Promise<WeeklyReport> {
   const { data, error } = await client
     .from("shift_log")
-    .select("skills, upgrade_purchased")
+    .select("created_at, skills, upgrade_purchased")
     .eq("profile_id", profileId)
     .gte("created_at", startOfWeek(now))
     .order("created_at", { ascending: true });
   if (error) throw error;
-  return aggregateWeeklyReport(profileId, data);
+  // The same `now` fixes the query window AND the seven-day frame: computing
+  // them from two instants would drop rows from the chart across a Sunday→Monday
+  // midnight while still counting them in `practice`.
+  return aggregateWeeklyReport(profileId, data, now);
 }
 
 /** One `shift_log` row as the activity feed consumes it (id + timestamp + payload). */
