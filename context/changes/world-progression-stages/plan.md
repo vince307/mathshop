@@ -1378,14 +1378,14 @@ blocks implementation; each is a thing to notice rather than a thing to do.
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` clean, including `astro check`
-- [ ] 4.2 `npm test` green, total ≥ `U₀ + ~14`
-- [ ] 4.3 `npx playwright test` green, total ≥ `E₀ + 5`
-- [ ] 4.4 `npx playwright test --project=touch` green at 712px
-- [ ] 4.5 `e2e/gameplay-restore.spec.ts` still passes in both projects (accessible-name regression)
+- [x] 4.1 `npm run lint` clean (0 errors, 0 warnings); `npm run check` 0 errors / 0 warnings
+- [x] 4.2 `npm test` green — **382 / 45 files** (= `U₀ + 36`)
+- [ ] 4.3 `npx playwright test` green, total ≥ `E₀ + 5` — **NOT DONE (Phase 4b, handed to `/10x-e2e`).** The existing suite is green and undisturbed at **17 = `E₀`**; the +5 arrives with `e2e/growth.spec.ts`, the smoke redirect and the `playwright.config.ts` widening
+- [x] 4.4 `npx playwright test --project=touch` green — both `gameplay-restore` specs pass at 712px with the fifth tab present
+- [x] 4.5 `e2e/gameplay-restore.spec.ts` passes in **both** projects — the `t.start.upgradesLink` locator stayed unambiguous, which is what the deliberately-distinct `t.growth.upgradesLink` was for
 
 #### Manual
 
-- [ ] 4.6 Six-tab simulation at 712px: no wrap, no overflow, labels readable (result recorded for F5)
-- [ ] 4.7 `aria-current="page"` on `/app/growth` only
-- [ ] 4.8 Exactly one copy of "Rozwój świata" in the a11y tree at every viewport
+- [x] 4.6 **Six-tab simulation done at 712px — D-6's arithmetic confirmed empirically, and this is the answer F5 needs so it does not have to repeat it.** A throwaway sixth tab labelled "Światy" was injected into the live bottom bar and removed immediately (nothing committed). Result: **6 tabs, ONE row, 116px each** — exactly the predicted `(712 − 16) / 6 = 116` — **zero truncated** (`scrollWidth === clientWidth` on every label span), no wrap, and no horizontal overflow on either the bar or the document. At 5 tabs each gets 139px. **No accommodation is needed for F5's sixth entry.**
+- [x] 4.7 `aria-current="page"` resolves to `/app/growth` on the growth screen and to `/app/start` on the dashboard, where the growth links carry no `aria-current`
+- [x] 4.8 Exactly **one** copy in the accessibility tree. The link is in the DOM twice (sidebar + bottom bar, the shell's existing shape) but the inactive one sits under a `display: none` ancestor, so an ancestor-walk finds `inDom: 2, inA11yTree: 1` at 712px — `getByRole` stays unambiguous

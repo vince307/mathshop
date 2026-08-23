@@ -92,6 +92,14 @@ describe("t.growth — the growth screen's copy contract (F4)", () => {
     }
   });
 
+  it("keeps the nav label distinct from the page heading in BOTH directions", () => {
+    // `getByRole` name matching is substring-based, so containment either way
+    // would make an e2e locator on this screen ambiguous — the nav label and the
+    // page heading share a prefix and must share nothing more.
+    expect(t.nav.items.growth).not.toContain(t.growth.title);
+    expect(t.growth.title).not.toContain(t.nav.items.growth);
+  });
+
   it("keeps the {n} placeholder in the stage ordinal", () => {
     expect(t.growth.stageOrdinal).toContain("{n}");
     expect(t.growth.stageOrdinal.replace("{n}", "3")).not.toContain("{n}");

@@ -134,6 +134,10 @@ export const pl = {
       dashboard: "Pulpit",
       missions: "Misje",
       shop: "Mój sklep",
+      // Deliberately NOT "Rozwój sklepu" (the page's own h1): `getByRole` name
+      // matching is substring-based, so a label that contained the heading — or
+      // vice versa — would make every locator on that screen ambiguous.
+      growth: "Rozwój świata",
       parent: "Panel rodzica",
     },
   },
