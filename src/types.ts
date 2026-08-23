@@ -88,9 +88,20 @@ export type Task = CountingTask | ChangeMakingTask;
  * effects, and progression are all derived from the catalog (`src/data/upgrades.ts`)
  * by id — the catalog is the single source of truth. Pre-S-06 rows default to
  * `{}` (no `purchased`); `readPurchased` normalizes a missing key to `[]`.
+ *
+ * `purchasedMeta` (F5) is **write-only in v1** — written by `buyUpgrade`, read by
+ * nothing, ignorable by every reader. It exists to preserve optionality: from the
+ * moment `/app/worlds` ships, `theme` is MUTABLE, so a purchase recorded without a
+ * world can never afterwards be attributed to one. Purchases stay global across
+ * worlds (the shop and its upgrades come with the child — that is the promise
+ * `/app/worlds` makes); if per-world purchases are ever wanted, this is the
+ * attribution data that change will need. Optional, so every legacy `{}` and
+ * `{ purchased: [] }` row stays valid and `readPurchased` is untouched.
  */
 export interface ShopState {
   purchased: string[];
+  /** Keyed by upgrade id (unique — `canBuy` blocks re-buying). Write-only in v1. */
+  purchasedMeta?: Record<string, { world: string; at: string }>;
 }
 
 /**

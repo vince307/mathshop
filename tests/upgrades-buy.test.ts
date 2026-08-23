@@ -4,6 +4,7 @@ import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
 import { getUpgrade } from "@/data/upgrades";
+import { DEFAULT_THEME } from "@/data/worlds";
 import { readSkillState, SKILL_THRESHOLDS, type SkillState } from "@/data/skills";
 
 /**
@@ -28,6 +29,7 @@ function upgrade(id: string) {
 const SIGN = upgrade("sign"); // cost 30, requiredWorldLevel 1
 const REGISTER = upgrade("register"); // cost 100, world 2, requiredSkill money level 1
 const CUSTOMERS = upgrade("customers"); // cost 300, world 3, requiredTaskHistory math 8
+const SHELF = upgrade("shelf"); // F5: a second level-1 buy, for the purchasedMeta accumulation test
 
 async function mintSession(email: string): Promise<CookieJar> {
   const jar = createCookieJar();
@@ -49,7 +51,14 @@ function buyContext(jar: CookieJar, formData: Record<string, string>) {
 /** Seed a profile owned by `accountId` with explicit gameplay state (bypasses RLS). */
 async function seedProfile(
   accountId: string,
-  state: { walletBalance: number; businessLevel: number; purchased?: string[]; skillState?: SkillState },
+  state: {
+    walletBalance: number;
+    businessLevel: number;
+    purchased?: string[];
+    skillState?: SkillState;
+    /** F5: defaults to the shipped value so every pre-existing call site is unchanged. */
+    theme?: string;
+  },
 ): Promise<string> {
   const { data } = await admin
     .from("child_profiles")
@@ -58,7 +67,7 @@ async function seedProfile(
       name: "Ala",
       age: 7,
       avatar: "lis",
-      theme: "kawiarnia",
+      theme: state.theme ?? "kawiarnia",
       wallet_balance: state.walletBalance,
       business_level: state.businessLevel,
       shop_state: { purchased: state.purchased ?? [] },
@@ -78,7 +87,11 @@ async function readState(profileId: string) {
     .eq("id", profileId)
     .single()
     .overrideTypes<
-      { wallet_balance: number; shop_state: { purchased: string[] }; skill_state: unknown },
+      {
+        wallet_balance: number;
+        shop_state: { purchased: string[]; purchasedMeta?: Record<string, { world: string; at: string }> };
+        skill_state: unknown;
+      },
       { merge: false }
     >();
   return data;
@@ -251,5 +264,47 @@ describe("POST /api/upgrades/buy (route money integrity + isolation)", () => {
     const state = await readState(profileId);
     expect(state?.wallet_balance).toBe(500); // no debit
     expect(state?.shop_state.purchased).toEqual([REGISTER.id]); // no duplicate
+  });
+
+  // --- F5: record the world on each purchase (write-only `purchasedMeta`) ---
+
+  it("records the world and a timestamp on purchase", async () => {
+    const profileId = await seedProfile(accountA.id, { walletBalance: 100, businessLevel: 1, theme: "piekarnia" });
+    const jar = await mintSession(accountA.email);
+
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: SIGN.id }));
+    expect(res.status).toBe(200);
+
+    const meta = (await readState(profileId))?.shop_state.purchasedMeta;
+    expect(meta?.[SIGN.id]?.world).toBe("piekarnia");
+    expect(Number.isNaN(Date.parse(meta?.[SIGN.id]?.at ?? ""))).toBe(false);
+  });
+
+  it("normalises the DB default theme to the fallback slug, never 'default'", async () => {
+    const profileId = await seedProfile(accountA.id, { walletBalance: 100, businessLevel: 1, theme: "default" });
+    const jar = await mintSession(accountA.email);
+
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: SIGN.id }));
+    expect(res.status).toBe(200);
+
+    const meta = (await readState(profileId))?.shop_state.purchasedMeta;
+    expect(meta?.[SIGN.id]?.world).toBe(DEFAULT_THEME);
+    expect(meta?.[SIGN.id]?.world).not.toBe("default");
+  });
+
+  it("leaves `purchased` untouched across two buys, and keeps BOTH meta entries", async () => {
+    const profileId = await seedProfile(accountA.id, { walletBalance: 500, businessLevel: 1 });
+    const jar = await mintSession(accountA.email);
+
+    expect((await buyPOST(buyContext(jar, { profileId, upgradeId: SIGN.id }))).status).toBe(200);
+    expect((await buyPOST(buyContext(jar, { profileId, upgradeId: SHELF.id }))).status).toBe(200);
+
+    const shopState = (await readState(profileId))?.shop_state;
+    // The flat list keeps its shape and its purchase order (cross-device-restore
+    // and the whole upgrade loop read it).
+    expect(shopState?.purchased).toEqual([SIGN.id, SHELF.id]);
+    // The inner spread is load-bearing: without it the second buy would discard
+    // the first entry, because naming the key shadows the outer spread.
+    expect(Object.keys(shopState?.purchasedMeta ?? {}).sort()).toEqual([SHELF.id, SIGN.id].sort());
   });
 });

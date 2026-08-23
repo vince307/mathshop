@@ -3,6 +3,7 @@ import type { ShopState, SkillState } from "@/types";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import { type BuyReason, canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
+import { worldForTheme } from "@/data/worlds";
 
 export { deriveStartingLevel } from "@/data/leveling";
 
@@ -275,7 +276,21 @@ export async function buyUpgrade(
     .from("child_profiles")
     .update({
       wallet_balance: walletBalance,
-      shop_state: { ...current.shop_state, purchased: nextPurchased },
+      shop_state: {
+        ...current.shop_state,
+        purchased: nextPurchased,
+        // Record the world this upgrade was bought in (F5, write-only in v1).
+        // The INNER spread is load-bearing: naming `purchasedMeta` as an explicit
+        // key SHADOWS the outer `...current.shop_state`, so without it every
+        // purchase would discard the prior entries. `?? {}` is required for the
+        // same reason `readPurchased` exists — `shop_state` is typed non-optional
+        // but `{}` rows are legal forever. `worldForTheme` normalizes the DB
+        // default 'default' to `kawiarnia`, so 'default' is never stored here.
+        purchasedMeta: {
+          ...(current.shop_state.purchasedMeta ?? {}),
+          [upgrade.id]: { world: worldForTheme(current.theme).slug, at: new Date().toISOString() },
+        },
+      },
       skill_state: nextSkillState,
     })
     .eq("id", profileId);

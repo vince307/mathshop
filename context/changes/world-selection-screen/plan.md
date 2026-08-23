@@ -1187,32 +1187,32 @@ every existing read already handles, and `purchasedMeta` is an ignorable extra j
 
 #### Automated
 
-- [x] 3.1 New guard suite passes: `npx vitest run tests/nav-labels.test.ts`
-- [x] 3.2 Full unit suite green and above the Phase 2 count: `npm test`
-- [x] 3.3 Lint + type-check clean: `npm run lint`
-- [x] 3.4 `npx playwright test` green with no pre-existing spec newly failing, including `touch` at 712px
+- [x] 3.1 New guard suite passes: `npx vitest run tests/nav-labels.test.ts` — 02af7c5
+- [x] 3.2 Full unit suite green and above the Phase 2 count: `npm test` — 02af7c5
+- [x] 3.3 Lint + type-check clean: `npm run lint` — 02af7c5
+- [x] 3.4 `npx playwright test` green with no pre-existing spec newly failing, including `touch` at 712px — 02af7c5
 
 #### Manual
 
-- [x] 3.5 "Światy" appears exactly once in the a11y tree at every viewport
-- [x] 3.6 The entry is highlighted on `/app/worlds` and nowhere else
-- [x] 3.7 The bottom bar (6 tabs once F4 has landed, 5 otherwise) is legible at 360px and 712px
-- [x] 3.8 Every other `/app` page still highlights its own entry
+- [x] 3.5 "Światy" appears exactly once in the a11y tree at every viewport — 02af7c5
+- [x] 3.6 The entry is highlighted on `/app/worlds` and nowhere else — 02af7c5
+- [x] 3.7 The bottom bar (6 tabs once F4 has landed, 5 otherwise) is legible at 360px and 712px — 02af7c5
+- [x] 3.8 Every other `/app` page still highlights its own entry — 02af7c5
 
 ### Phase 4: Record the world on each purchase (option E)
 
 #### Automated
 
-- [ ] 4.1 Extended suite passes with every pre-existing test unmodified and green (count at phase start; F4 adds one): `npx vitest run tests/upgrades-buy.test.ts`
-- [ ] 4.2 Full unit suite green and above the Phase 3 count: `npm test`
-- [ ] 4.3 Lint + type-check clean: `npm run lint`
-- [ ] 4.4 `npx playwright test` green
-- [ ] 4.5 No migration file added
-- [ ] 4.6 `grep -q "purchasedMeta" docs/reference/contract-surfaces.md`
+- [x] 4.1 Extended suite passes with every pre-existing test unmodified and green (count at phase start; F4 adds one): `npx vitest run tests/upgrades-buy.test.ts`
+- [x] 4.2 Full unit suite green and above the Phase 3 count: `npm test`
+- [x] 4.3 Lint + type-check clean: `npm run lint`
+- [x] 4.4 `npx playwright test` green
+- [x] 4.5 No migration file added
+- [x] 4.6 `grep -q "purchasedMeta" docs/reference/contract-surfaces.md`
 
 #### Manual
 
-- [ ] 4.7 A real purchase writes `shop_state.purchasedMeta` with the correct slug, leaving `purchased` unchanged in shape
+- [x] 4.7 A real purchase writes `shop_state.purchasedMeta` with the correct slug, leaving `purchased` unchanged in shape
 
 ### Phase 5: Per-world overlay coordinates (option D) — DROPPABLE
 
