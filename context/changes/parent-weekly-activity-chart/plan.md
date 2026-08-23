@@ -1191,7 +1191,7 @@ would make it real and who owns it.
 
 #### Manual
 
-- [x] 1.6 `/app/report` renders exactly as before — this phase is invisible to the parent
+- [x] 1.6 `/app/report` renders exactly as before — this phase is invisible to the parent — 0667d03
 
 ### Phase 2: The first-try ratio, with `decisions` structurally excluded
 
@@ -1213,7 +1213,7 @@ would make it real and who owns it.
 
 #### Manual
 
-- [x] 3.5 The rewritten comment at `pl.ts:411-414` is true of the shipped screen
+- [x] 3.5 The rewritten comment at `pl.ts:411-414` is true of the shipped screen — 0667d03
 
 ### Phase 4: The activity chart (the project's first `<svg>`)
 
@@ -1227,9 +1227,9 @@ would make it real and who owns it.
 
 #### Manual
 
-- [x] 4.6 390 px: chart fits inside the card, no horizontal page scroll, labels legible
-- [x] 4.7 1280 px: chart matches the mockup's shape and does not scale to a comic size
-- [x] 4.8 Correct in both the fresh-profile (empty) and played-week states
+- [x] 4.6 390 px: chart fits inside the card, no horizontal page scroll, labels legible — 0667d03
+- [x] 4.7 1280 px: chart matches the mockup's shape and does not scale to a comic size — 0667d03
+- [x] 4.8 Correct in both the fresh-profile (empty) and played-week states — 0667d03
 
 ### Phase 5: The first-try tile
 
@@ -1244,17 +1244,17 @@ would make it real and who owns it.
 
 #### Manual
 
-- [x] 5.7 Three tiles read cleanly at 390 px without truncating mid-word
-- [x] 5.8 A brand-new profile shows `—` and the card does not read as a failure report
+- [x] 5.7 Three tiles read cleanly at 390 px without truncating mid-word — 0667d03
+- [x] 5.8 A brand-new profile shows `—` and the card does not read as a failure report — 0667d03
 
 ### Phase 6: Browser-level verification (hand-off to `/10x-e2e`)
 
 #### Automated
 
-- [x] 6.1 `npx playwright test` green — 15 baseline plus Risk E2E-1
-- [x] 6.2 No existing spec became flaky or ambiguous (the three `t.report.heading` assertions)
-- [x] 6.3 Risk E2E-2 green: `/app/report` at 390 px has `scrollWidth <= innerWidth`
+- [x] 6.1 `npx playwright test` green — 15 baseline plus Risk E2E-1 — 0667d03
+- [x] 6.2 No existing spec became flaky or ambiguous (the three `t.report.heading` assertions) — 0667d03
+- [x] 6.3 Risk E2E-2 green: `/app/report` at 390 px has `scrollWidth <= innerWidth` — 0667d03
 
 #### Manual
 
-- [x] 6.4 The new spec goes red when `WeeklyActivityChart` is deliberately made to throw (break, confirm, revert)
+- [x] 6.4 The new spec goes red when `WeeklyActivityChart` is deliberately made to throw (break, confirm, revert) — 0667d03

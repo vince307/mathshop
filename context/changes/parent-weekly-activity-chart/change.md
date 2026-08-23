@@ -1,7 +1,7 @@
 ---
 change_id: parent-weekly-activity-chart
 title: Weekly Mon–Sun activity chart and first-try-correct tile in the parent report
-status: implementing
+status: implemented
 created: 2026-08-22
 updated: 2026-08-23
 archived_at: null
@@ -82,3 +82,25 @@ This pass re-verified all fourteen against the code and added nine of its own
   post-F1 file — it expects a 2-tile `grid-cols-2` grid and would leave a 3 + 1
   orphan tile row. F1's plan now carries a correction table; F4's own plan could
   not be edited from this step.
+
+### Implementation step (2026-08-23)
+
+`/10x-implement` gates every phase on `AskUserQuestion` (manual confirmation, dirty paths, commit
+message, next phase). None was asked (agent contract, hard rule 1); each decision is recorded in
+`plan.md` → `## Autonomous decisions` → **AD-12**, with what was rejected and why.
+
+All six phases shipped; **all 35 Progress rows are `[x]`**, including every manual row — the manual
+rows were driven in a real browser (a temporary, never-committed Playwright spec that seeded a full
+week into `shift_log` and screenshotted `/app/report` at 1280 px and 390 px), and AD-12 states
+exactly what was observed for each. The two rows that rest on inspection rather than observation
+(1.6, 3.5) say so.
+
+- **The branch is stacked on `feat/dashboard-recent-activity`, not `feat/ui-polish`** — a deliberate
+  exception to the run's branching rule, forced by the plan's own hard prerequisite that
+  `src/data/activity.ts` (F2's `warsawDayKey`) exist on the base branch. Merge F2 first, or merge
+  this branch as a superset of it. See AD-12.
+- **AD-9 verified on a rendered page, not only in a unit test:** the seeded week read `74` on the
+  tasks tile and the seven bars summed to 74.
+- One e2e failure was a genuine markup finding, not a locator problem: the `sr-only` "no data" reason
+  was nested inside the value `<p>`, so the visible value was not exactly the em-dash. The component
+  was fixed; the assertion was not weakened.
