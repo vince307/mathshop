@@ -14,6 +14,14 @@ interface ShopArtProps {
  * world-progression language) instead of a badge row in the corner. Percent
  * coordinates against the art box; per-world overrides can join the default
  * map as the art demands. An upgrade with no slot falls back to the corner row.
+ *
+ * **Per-stage art seam (F4).** The base `<img src={world.image}>` below is the one
+ * insertion point if per-world, per-stage shop art is ever produced: it becomes
+ * `stage.art ?? world.image`, fed by an `art?: string` field on `Stage` in
+ * `src/data/stages.ts` (whose header carries the full upgrade path). The base
+ * scene and the upgrade layer are already orthogonal — the upgrade layer never
+ * reads `world.image`, the base never reads `purchased` — so the seam costs
+ * nothing to leave closed until there is art to put through it.
  */
 const DEFAULT_SLOTS: Partial<Record<string, CSSProperties>> = {
   sign: { left: "10%", top: "6%" },

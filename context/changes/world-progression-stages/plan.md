@@ -1362,17 +1362,17 @@ blocks implementation; each is a thing to notice rather than a thing to do.
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` clean, including `astro check`
-- [ ] 3.2 `npm test` green, total ≥ `U₀ + ~14`
-- [ ] 3.3 No literal Polish in `growth.astro` / `StageRail.astro` (L-003 grep)
-- [ ] 3.4 `npx playwright test` green, total ≥ `E₀` (unchanged)
+- [x] 3.1 `npm run lint` clean (0 errors, 0 warnings); `npm run check` 0 errors / 0 warnings
+- [x] 3.2 `npm test` green — **381 / 45 files** (= `U₀ + 35`)
+- [x] 3.3 No literal Polish in `growth.astro` / `StageRail.astro` — the grep initially caught one *doc comment* quoting a rendered ordinal, rephrased to name the key instead
+- [x] 3.4 `npx playwright test` green — **17 passed**, `E₀` unchanged (re-run at the end of Phase 4)
 
 #### Manual
 
-- [ ] 3.5 Rail renders done / current / locked correctly at desktop and 712px; one `h1`; no horizontal overflow
-- [ ] 3.6 Hero shows the child's own world art with owned upgrades composited
-- [ ] 3.7 Terminal-stage check at `business_level = 9`: no fifth node, no next-stage bar, `t.growth.maxStage` visible
-- [ ] 3.8 "Zobacz ulepszenia" reaches `/app/upgrades`; no nav entry visible yet
+- [x] 3.5 Browser-verified on a **self-provisioned** account (`f4-growth-check@example.test`, profile "Zosia", `business_level = 2`) against an isolated dev server on **4327** — the shared 4321 server belongs to another agent's worktree (D-11). At 1440px: four stages side by side (x = 337/596/856/1115, 259px each), exactly **one** `h1` ("Rozwój sklepu"), each stage name in the DOM exactly once, "Aktualnie" exactly once, `scrollWidth == clientWidth`. At **712px**: the same four items stack vertically (identical x = 41, increasing y), still one `h1`, still no horizontal overflow. Computed styles confirm three visually distinct states — done `bg-success` + Check, current `bg-primary` + ordinal + `border-primary` ring + chip, locked `bg-muted` + Lock. `sr-only` states read done / current / locked / locked, and the ordinal badges carry `aria-label` "Etap 1..4"
+- [x] 3.6 Hero renders the child's **own** world art (`/illustrations/world-kawiarnia.webp`) via `ShopArt`, with the owned `sign` upgrade composited — not a stock stage image
+- [x] 3.7 Terminal-stage check at `business_level = 9` (on the throwaway profile, restored afterwards): stage 4 current, rail holds **exactly 4** nodes (no phantom fifth), `sr-only` reads done/done/done/current, `t.growth.maxStage` visible, `t.growth.noUnlocks` shown honestly, **only one** progress bar on the page (the savings bar — no unfillable next-stage bar), and the shell badge still reads "Poziom sklepu 9" — the formula is uncapped, saturation is presentational
+- [x] 3.8 The "Zobacz ulepszenia" CTA resolves to `/app/upgrades`; "Rozwój świata" is **absent** from the page at this phase — the screen exists unlinked, which is the correct direction of the no-dead-navigation rule
 
 ### Phase 4: Navigation entry and browser tests
 

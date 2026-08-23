@@ -62,3 +62,38 @@ describe("stageCopy — guarded growth-stage copy resolver (F4)", () => {
     expect(stageCopy("ghost-stage")).toEqual({ name: "ghost-stage", desc: "" });
   });
 });
+
+describe("t.growth — the growth screen's copy contract (F4)", () => {
+  // The screen is Astro-rendered, so there is no component unit test; this asserts
+  // the contract instead — every key the page and rail dereference exists and says
+  // something, so a missing key is a red test rather than a blank card in a child's
+  // face. (`growth.astro` / `StageRail.astro` carry no literal Polish — L-003.)
+  const KEYS = [
+    "title",
+    "intro",
+    "stagesHeading",
+    "stageOrdinal",
+    "current",
+    "stateDone",
+    "stateCurrent",
+    "stateLocked",
+    "maxStage",
+    "unlocksHeading",
+    "noUnlocks",
+    "upgradesLink",
+    "tipHeading",
+    "tip",
+  ] as const;
+
+  it("defines every key the page and the rail reference, non-empty", () => {
+    for (const key of KEYS) {
+      expect(t.growth[key], key).toBeTypeOf("string");
+      expect(t.growth[key].length, key).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps the {n} placeholder in the stage ordinal", () => {
+    expect(t.growth.stageOrdinal).toContain("{n}");
+    expect(t.growth.stageOrdinal.replace("{n}", "3")).not.toContain("{n}");
+  });
+});
