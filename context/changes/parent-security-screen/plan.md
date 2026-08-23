@@ -975,33 +975,33 @@ two labels never render on the same page.
 
 #### Automated
 
-- [x] 1.1 Lint clean: `npm run lint`
-- [x] 1.2 Unit suite green and grown: `npm test` — at least 305 `it()`
-- [x] 1.3 `tests/parent-pin-routes.test.ts` passes, including the untouched first-time-set case
-- [x] 1.4 `tests/parent-pin.test.ts` and `tests/account-settings-isolation.test.ts` pass unmodified (also the `hasPin`/`pinExists` regression check)
-- [x] 1.5 E2E baseline still green: `npx playwright test` — 15/15
-- [x] 1.6 `src/pages/api/parent/pin/set.ts` still exports `prerender = false`
+- [x] 1.1 Lint clean: `npm run lint` — 3d43c3c
+- [x] 1.2 Unit suite green and grown: `npm test` — at least 305 `it()` — 3d43c3c
+- [x] 1.3 `tests/parent-pin-routes.test.ts` passes, including the untouched first-time-set case — 3d43c3c
+- [x] 1.4 `tests/parent-pin.test.ts` and `tests/account-settings-isolation.test.ts` pass unmodified (also the `hasPin`/`pinExists` regression check) — 3d43c3c
+- [x] 1.5 E2E baseline still green: `npx playwright test` — 15/15 — 3d43c3c
+- [x] 1.6 `src/pages/api/parent/pin/set.ts` still exports `prerender = false` — 3d43c3c
 
 #### Manual
 
-- [x] 1.7 Deliberate-break check: skipping `verifyPin` turns route tests 1, 3, 4 red; revert
-- [x] 1.8 Guard order matches `account/delete.ts:41-64` step for step on a top-to-bottom read
+- [x] 1.7 Deliberate-break check: skipping `verifyPin` turns route tests 1, 3, 4 red; revert — 3d43c3c
+- [x] 1.8 Guard order matches `account/delete.ts:41-64` step for step on a top-to-bottom read — 3d43c3c
 
 ### Phase 2: `ChangePinSection` island + Polish strings, mounted on `/app/report`
 
 #### Automated
 
-- [ ] 2.1 Lint clean: `npm run lint`
-- [ ] 2.2 Unit suite green and grown: `npm test` — at least 312 `it()`
-- [ ] 2.3 `tests/change-pin-section.test.tsx` passes
-- [ ] 2.4 No inline user-visible literal in the new `.tsx` (L-003 grep)
-- [ ] 2.5 E2E baseline still green: `npx playwright test` — 15/15
+- [x] 2.1 Lint clean: `npm run lint`
+- [x] 2.2 Unit suite green and grown: `npm test` — at least 312 `it()`
+- [x] 2.3 `tests/change-pin-section.test.tsx` passes
+- [x] 2.4 No inline user-visible literal in the new `.tsx` (L-003 grep)
+- [x] 2.5 E2E baseline still green: `npx playwright test` — 15/15
 
 #### Manual
 
 - [ ] 2.6 At 712px the report reads report → change PIN → rail → danger zone, nothing overflows
-- [ ] 2.7 Exactly one `h1` on `/app/report`; the new card's heading is an `h2`
-- [ ] 2.8 The "Bezpieczne środowisko" card is byte-identical to before this change
+- [x] 2.7 Exactly one `h1` on `/app/report`; the new card's heading is an `h2`
+- [x] 2.8 The "Bezpieczne środowisko" card is byte-identical to before this change
 - [ ] 2.9 A real-browser PIN change shows the success line and does not navigate away
 
 ### Phase 3: E2E journey — the PIN actually changes
