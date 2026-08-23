@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { deleteUser, findUserIdByEmail, provisionAccount, signInViaUI } from "./helpers/accounts";
 import { waitForIslands } from "./helpers/hydration";
 import { fill, t } from "./helpers/i18n";
+import { setPinAndLandOnReport } from "./helpers/parent-pin";
 
 /**
  * Parent surfaces (test-plan.md §3 Phase 5 scope) — the PIN-gate cookie
@@ -17,20 +18,6 @@ import { fill, t } from "./helpers/i18n";
  * DESTRUCTIVE: each test provisions its own throwaway account; deletion is
  * cascade-isolated to that account (research.md §Parent surfaces).
  */
-
-const setPinAndLandOnReport = async (page: import("@playwright/test").Page, pin: string): Promise<void> => {
-  await page.goto("/app/report");
-  // No marker → the report page redirects to the gate, in SET mode (no PIN yet).
-  await page.waitForURL((url) => url.pathname.startsWith("/app/parent-pin"));
-  await expect(page.getByRole("heading", { name: t.parentPin.setHeading })).toBeVisible();
-  await waitForIslands(page);
-  await page.getByLabel(t.parentPin.pinLabel).fill(pin);
-  await page.getByLabel(t.parentPin.confirmLabel).fill(pin);
-  await page.getByRole("button", { name: t.parentPin.setSubmit }).click();
-  // First-time set mints the marker immediately → auto-land on the report.
-  await page.waitForURL((url) => url.pathname.startsWith("/app/report"));
-  await expect(page.getByRole("heading", { name: t.report.heading })).toBeVisible();
-};
 
 test("parent PIN gate: set → auto-land → marker persists → re-gate → wrong then right PIN", async ({
   page,

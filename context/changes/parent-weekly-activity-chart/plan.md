@@ -1077,6 +1077,37 @@ handling, commit-message approval, next-phase choice). None was asked — agent 
   driving a real browser are ticked and say so; the rest stay `- [ ]` so the next reader sees honestly
   what has and has not been looked at. Rejected: ticking them on the strength of passing automated
   checks — that is the failure mode the run contract calls "a claimed green".
+- **The manual rows were driven in a real browser, and here is exactly what was observed.** Rather than
+  ticking on the strength of green unit tests or leaving seven rows permanently unread, a temporary
+  Playwright spec provisioned a throwaway account, inserted a full seeded week into `shift_log`
+  (`[8, 10, 14, 12, 16, 6, 8]` Mon–Sun plus one purchase, matching the mockup's own numbers), landed
+  behind the PIN gate and captured `/app/report` at 1280 px and at 390 px. **The spec was deleted
+  before the Phase 6 commit** — it exists in no commit. What the screenshots showed:
+  - **4.7 / 1280 px:** the chart matches the mockup's shape — gridlines and ticks at `0 4 8 12 16`,
+    a value label above every bar, `Pon…Nd` beneath, legend swatch plus `Zadania ukończone w danym
+    dniu`. `max-w-md` keeps it card-sized, not comic-sized. Three tiles sit in one row.
+  - **AD-9, end to end:** the tile read **74** and the seven bars summed to `8+10+14+12+16+6+8 = 74`.
+    The invariant is not only unit-tested, it was read off a rendered page.
+  - **4.6 / 5.7 / 390 px:** three tiles wrap two-up plus one; every label breaks at a space, none
+    mid-word; the chart fits inside the card with legible day labels. No horizontal page scroll —
+    and that one is *also* under automation now (Risk E2E-2 asserts `scrollWidth <= innerWidth`).
+  - **4.8 / 5.8:** the empty-profile state is asserted in a real browser by Risk E2E-1 (`chartEmpty`
+    visible, the tile showing `—` with its spoken reason, no `NaN` anywhere on the page); the
+    played-week state is the screenshot above.
+  - **6.4:** `WeeklyActivityChart` was made to throw on hydration only
+    (`if (typeof window !== "undefined") throw`). **Both new e2e tests went red**; the break was
+    reverted immediately and appears in no commit. The spec protects a real risk.
+  - **1.6** rests on inspection, not a browser: at Phase 1's commit no component read `daily` and
+    `WeeklyReport.tsx` was untouched, so the phase was invisible by construction. Stated plainly
+    rather than dressed up as an observation.
+  - **3.5** is a read of the rewritten comment against the shipped screen: chart and first-try share
+    are computed from the aggregated `shift_log` (true), the share is `math + money` only (true),
+    only the earnings tile remains deferred (true — no earnings tile ships).
+- **One Phase 5 edit landed in the Phase 6 commit, deliberately.** The `sr-only` reason was originally
+  nested *inside* the value `<p>`, so the element's full text was `—Brak danych z tego tygodnia`.
+  Testing-library reads only direct text children and passed; Playwright reads `textContent` and
+  failed. The component was changed (span moved to a sibling of the value) rather than the assertion
+  weakened — the e2e failure was a real finding about the markup, not a locator problem.
 - **`AskUserQuestion` gates collapsed to their recommended option.** Dirty-path handling → "stage only
   the planned set" (the tree carries three other features' untracked `context/changes/` folders and
   `context/runs/`, none of which belong to F1); commit message → approve as proposed; next phase →
@@ -1160,7 +1191,7 @@ would make it real and who owns it.
 
 #### Manual
 
-- [ ] 1.6 `/app/report` renders exactly as before — this phase is invisible to the parent
+- [x] 1.6 `/app/report` renders exactly as before — this phase is invisible to the parent
 
 ### Phase 2: The first-try ratio, with `decisions` structurally excluded
 
@@ -1182,7 +1213,7 @@ would make it real and who owns it.
 
 #### Manual
 
-- [ ] 3.5 The rewritten comment at `pl.ts:411-414` is true of the shipped screen
+- [x] 3.5 The rewritten comment at `pl.ts:411-414` is true of the shipped screen
 
 ### Phase 4: The activity chart (the project's first `<svg>`)
 
@@ -1196,34 +1227,34 @@ would make it real and who owns it.
 
 #### Manual
 
-- [ ] 4.6 390 px: chart fits inside the card, no horizontal page scroll, labels legible
-- [ ] 4.7 1280 px: chart matches the mockup's shape and does not scale to a comic size
-- [ ] 4.8 Correct in both the fresh-profile (empty) and played-week states
+- [x] 4.6 390 px: chart fits inside the card, no horizontal page scroll, labels legible
+- [x] 4.7 1280 px: chart matches the mockup's shape and does not scale to a comic size
+- [x] 4.8 Correct in both the fresh-profile (empty) and played-week states
 
 ### Phase 5: The first-try tile
 
 #### Automated
 
-- [x] 5.1 Type checking passes: `npm run check`
-- [x] 5.2 Linting passes: `npm run lint`
-- [x] 5.3 Build passes: `npm run build`
-- [x] 5.4 Unit tests pass: `npm test` (new tile test file ≥ 4 tests; suite total ≥ 315)
-- [x] 5.5 No `NaN` in rendered output for **every** fixture in `tests/weekly-report-tiles.test.tsx`
-- [x] 5.6 `npx playwright test` still 15/15 — existing heading locators unambiguous
+- [x] 5.1 Type checking passes: `npm run check` — 35171ee
+- [x] 5.2 Linting passes: `npm run lint` — 35171ee
+- [x] 5.3 Build passes: `npm run build` — 35171ee
+- [x] 5.4 Unit tests pass: `npm test` (new tile test file ≥ 4 tests; suite total ≥ 315) — 35171ee
+- [x] 5.5 No `NaN` in rendered output for **every** fixture in `tests/weekly-report-tiles.test.tsx` — 35171ee
+- [x] 5.6 `npx playwright test` still 15/15 — existing heading locators unambiguous — 35171ee
 
 #### Manual
 
-- [ ] 5.7 Three tiles read cleanly at 390 px without truncating mid-word
-- [ ] 5.8 A brand-new profile shows `—` and the card does not read as a failure report
+- [x] 5.7 Three tiles read cleanly at 390 px without truncating mid-word
+- [x] 5.8 A brand-new profile shows `—` and the card does not read as a failure report
 
 ### Phase 6: Browser-level verification (hand-off to `/10x-e2e`)
 
 #### Automated
 
-- [ ] 6.1 `npx playwright test` green — 15 baseline plus Risk E2E-1
-- [ ] 6.2 No existing spec became flaky or ambiguous (the three `t.report.heading` assertions)
-- [ ] 6.3 Risk E2E-2 green: `/app/report` at 390 px has `scrollWidth <= innerWidth`
+- [x] 6.1 `npx playwright test` green — 15 baseline plus Risk E2E-1
+- [x] 6.2 No existing spec became flaky or ambiguous (the three `t.report.heading` assertions)
+- [x] 6.3 Risk E2E-2 green: `/app/report` at 390 px has `scrollWidth <= innerWidth`
 
 #### Manual
 
-- [ ] 6.4 The new spec goes red when `WeeklyActivityChart` is deliberately made to throw (break, confirm, revert)
+- [x] 6.4 The new spec goes red when `WeeklyActivityChart` is deliberately made to throw (break, confirm, revert)

@@ -156,8 +156,11 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
         <li className="bg-accent/10 rounded-2xl p-4">
           <p className="text-foreground text-2xl font-extrabold">
             {firstTry === null ? copy.statFirstTryNone : copy.statFirstTryValue.replace("{percent}", String(firstTry))}
-            {firstTry === null && <span className="sr-only">{copy.statFirstTryNoData}</span>}
           </p>
+          {/* A sibling of the value, not a child of it: a screen reader must
+              hear a reason instead of a punctuation mark, and the visible value
+              must stay exactly the em-dash for anything reading it whole. */}
+          {firstTry === null && <span className="sr-only">{copy.statFirstTryNoData}</span>}
           <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statFirstTry}</p>
         </li>
         <li className="bg-success/10 rounded-2xl p-4">
