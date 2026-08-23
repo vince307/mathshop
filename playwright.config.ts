@@ -71,6 +71,11 @@ export default defineConfig({
       PARENT_SESSION_SECRET: process.env.PARENT_SESSION_SECRET ?? "",
       // Without the service-role key the account-deletion endpoint answers 503.
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+      // Astro's dev toolbar is a fixed bottom-centre overlay that intercepts
+      // clicks on the mobile bottom nav. Which tab it covers depends on how many
+      // tabs there are, so it silently breaks a different test each time the nav
+      // grows. Off for the harness only.
+      ASTRO_DEV_TOOLBAR_DISABLED: "true",
     },
   },
 });
