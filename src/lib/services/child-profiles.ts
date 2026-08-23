@@ -117,6 +117,34 @@ export async function deleteChildProfile(client: SupabaseClient, profileId: stri
   return { ok: true };
 }
 
+export type UpdateThemeResult = { ok: true } | { failure: "not-found" } | { error: PostgrestError };
+
+/**
+ * Change one of the parent's own child profiles' world (F5, `/app/worlds`). The
+ * row is reached by `id` under the F-01 `child_profiles_update_own` RLS policy
+ * (`using` + `with check` on `auth.uid() = account_id`), so a non-owner's update
+ * matches 0 rows and reads as `not-found` — never touching another account's row.
+ * No manual `account_id` filter: RLS is the boundary (see the module doc).
+ *
+ * The theme flip is deliberately lossless — `wallet_balance`, `business_level`,
+ * `shop_state.purchased` and `skill_state` are untouched, and nothing in the
+ * upgrade loop reads `theme` — so the screen's promise that the shop and its
+ * upgrades come along is true by construction. The closed slug set is enforced
+ * in zod at the route (`WORLD_SLUGS`); there is no DB CHECK on the column.
+ */
+export async function updateChildProfileTheme(
+  client: SupabaseClient,
+  profileId: string,
+  theme: string,
+): Promise<UpdateThemeResult> {
+  // update().select() returns the updated rows, so 0 rows distinguishes
+  // not-found/not-owned from success without a prior read (deleteChildProfile's idiom).
+  const { data, error } = await client.from("child_profiles").update({ theme }).eq("id", profileId).select("id");
+  if (error) return { error };
+  if (data.length === 0) return { failure: "not-found" };
+  return { ok: true };
+}
+
 /**
  * Append one `shift_log` row (S-07) — the history the parent report reads. Best
  * effort: a log failure must NOT fail an already-persisted shift/purchase (the
