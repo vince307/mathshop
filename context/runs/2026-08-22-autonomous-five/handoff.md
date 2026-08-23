@@ -104,9 +104,62 @@ Każdy krok implementacji uruchamiał **celowe złamania** i oglądał czerwień
 - Reguły E2E przeniesione z `CLAUDE.md` do `e2e/CLAUDE.md`, gdzie mieszka suite —
   commit `22ddebd`.
 
-## 7. Następny krok
+## 7. Merge — WYKONANY 2026-08-23
 
-Merge w kolejności z §2, potem `/10x-archive` dla każdej zmiany. Jeśli chcesz najpierw
-obejrzeć całość na żywo: `npm run dev` po zmergowaniu, pamiętając, że F4 wnosi migrację
-(`20260822120000_shift_log_add_earned.sql`) — **deploy przed migracją zgubi zarobki po
-cichu**, bo `appendShiftLog` połyka błędy. To jeden z follow-upów F4.
+Wszystko jest złożone na gałęzi **`matmaverse-v2`**, odbitej od `main`.
+**`main` pozostaje nietknięty** (`4cc2c1d`). Nic nie jest wypchnięte.
+
+Kolejność, w jakiej złożono (53 commity ponad `main`):
+
+```
+main
+ └─ feat/ui-polish            (fast-forward — baza)
+    ├─ merge(F2) acdb0b3      dashboard-recent-activity
+    ├─ merge(F1) 5021cdd      parent-weekly-activity-chart
+    ├─ merge(F4) 26fdee9      world-progression-stages   ← migracja
+    ├─ merge(F3) f074311      parent-security-screen
+    └─ merge(F5) 599437d      world-selection-screen
+```
+
+Stos `F2 → F1 → F4` wszedł **bez konfliktów**. F5 dała dwa konflikty, oba w
+przewidzianym miejscu — spotkanie zakładek nawigacji:
+
+- `src/components/app/AppShell.astro` — rozstrzygnięte przez **zachowanie obu** wpisów
+  (`growth` z F4 i `worlds` z F5). Po merge'u istnieją obie trasy, więc reguła „żadnej
+  martwej nawigacji" jest spełniona.
+- `src/i18n/pl.ts` — obie etykiety zostają. Sprawdzone programowo, że **żadna nie jest
+  podłańcuchem drugiej** („Światy" vs „Rozwój świata"), więc lokatory `getByRole` obu
+  zakładek pozostają jednoznaczne.
+
+### Weryfikacja na złożonej gałęzi
+
+| | wynik |
+| --- | --- |
+| `npm run lint` | czysty |
+| `npm run check` | 0 błędów, 0 ostrzeżeń (187 plików) |
+| `npm test` | **418 / 50 plików** |
+| `npx playwright test` | **23 / 23** |
+| `npm run build` | Complete |
+
+418 = 382 (czubek stosu) + 13 (F3) + 23 (F5) — arytmetyka zgadza się co do jednego.
+23 = 22 (F4) + 1 (F3).
+
+### Błąd, który ujawnił dopiero merge
+
+Po złożeniu pasek nawigacji ma **sześć** zakładek zamiast pięciu, więc każda zwęziła się
+ze 142px do 116px — i zakładka „Rozwój świata" przesunęła się pod **pasek narzędziowy
+Astro**, wyśrodkowaną na dole nakładkę trybu dev. Test padał na timeout kliknięcia, choć
+link raportował się jako widoczny i unikalny; `elementFromPoint` w jego środku zwracał
+`ASTRO-DEV-TOOLBAR`.
+
+Nawigacja jest w porządku — mierzy 712px przy oknie 712px, `nowrap`, zero przepełnienia,
+dokładnie jak wyliczyła F4. Nakładka leżała na pasku **od zawsze**; to, którą zakładkę
+przykrywa, zależy od ich liczby, więc psułaby inny test przy każdym rozroście nawigacji.
+Wyłączona wyłącznie dla serwera uruchamianego przez Playwrighta (`f0587ad`) — zwykłe
+`npm run dev` działa bez zmian.
+
+## 8. Co dalej
+
+`/10x-archive` dla każdej z pięciu zmian. Przy wdrożeniu F4 pamiętaj: **migracja musi pójść
+przed kodem** (`20260822120000_shift_log_add_earned.sql`) — `appendShiftLog` połyka błędy,
+więc niezmigrowana baza gubiłaby zarobki po cichu.
