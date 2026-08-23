@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_WORLD, WORLDS, WORLD_SLUGS, getWorld, worldForTheme } from "@/data/worlds";
 import { AVATARS, AVATAR_IDS, getAvatar } from "@/data/avatars";
+import { STAGES, STAGE_IDS, getStage } from "@/data/stages";
 
 /**
  * Pure resolver logic for the world/avatar lookups (previously partial
@@ -47,5 +48,21 @@ describe("getAvatar — stored avatar id → avatar (or undefined for a stale id
   it("AVATAR_IDS mirrors AVATARS and is non-empty (zod refine source for profile creation)", () => {
     expect(AVATAR_IDS).toEqual(AVATARS.map((a) => a.id));
     expect(AVATAR_IDS.length).toBeGreaterThan(0);
+  });
+});
+
+describe("getStage — stored/derived stage id → stage (or undefined for a stale id)", () => {
+  it("resolves every real id", () => {
+    for (const s of STAGES) expect(getStage(s.id)).toBe(s);
+  });
+
+  it("returns undefined for an unknown id (callers render a graceful default, never crash)", () => {
+    expect(getStage("ghost")).toBeUndefined();
+    expect(getStage("")).toBeUndefined();
+  });
+
+  it("STAGE_IDS mirrors STAGES and is non-empty", () => {
+    expect(STAGE_IDS).toEqual(STAGES.map((s) => s.id));
+    expect(STAGE_IDS.length).toBeGreaterThan(0);
   });
 });

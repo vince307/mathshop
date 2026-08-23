@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { charsNeeded, t, tasksDone, upgradeCopy } from "@/i18n";
+import { charsNeeded, stageCopy, t, tasksDone, upgradeCopy } from "@/i18n";
 import { UPGRADES } from "@/data/upgrades";
+import { STAGES } from "@/data/stages";
 
 /**
  * The two exported i18n helpers (previously 0% function coverage). Not
@@ -44,5 +45,20 @@ describe("upgradeCopy — guarded catalog copy resolver", () => {
 
   it("falls back to the raw id (never throws) for an id missing from the dictionary", () => {
     expect(upgradeCopy("ghost-upgrade")).toEqual({ name: "ghost-upgrade", desc: "" });
+  });
+});
+
+describe("stageCopy — guarded growth-stage copy resolver (F4)", () => {
+  it("resolves name and desc for every real stage id (L-003: the catalogue carries no copy)", () => {
+    for (const stage of STAGES) {
+      const copy = stageCopy(stage.id);
+      expect(copy.name.length).toBeGreaterThan(0);
+      expect(copy.desc.length).toBeGreaterThan(0);
+      expect(copy).toBe(t.stages[stage.id as keyof typeof t.stages]);
+    }
+  });
+
+  it("falls back to the raw id (never throws) for a stage id missing from the dictionary", () => {
+    expect(stageCopy("ghost-stage")).toEqual({ name: "ghost-stage", desc: "" });
   });
 });

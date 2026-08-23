@@ -291,6 +291,19 @@ export const pl = {
     customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
   },
 
+  // Growth-stage names (F4). Keyed by stage id (`t.stages[id]`), so the catalogue
+  // (src/data/stages.ts) carries no literal copy (L-003). Draft Polish — pending
+  // native-speaker review. Two entries deviate from the mockup ON PURPOSE, and the
+  // reasons are in `src/data/stages.ts`'s header: `oferta` is world-neutral (the
+  // mockup's "Kawiarnia z ofertą" would call a bakery a café), and `popyt` does not
+  // promise the mockup's demand missions, which do not exist.
+  stages: {
+    stolik: { name: "Mały stolik", desc: "Pierwsze kroki w Twoim sklepie." },
+    stoisko: { name: "Stoisko", desc: "Pierwsze produkty i klienci." },
+    oferta: { name: "Sklep z ofertą", desc: "Więcej produktów i większe zyski!" },
+    popyt: { name: "Popyt i zysk", desc: "Twój sklep działa pełną parą." },
+  },
+
   // Per-competency skill labels (S-07). Keyed so components carry no literal copy
   // (L-003); the competency keys (math/money/decisions) match `Competency` in
   // src/types.ts. `{level}` interpolated in the island. Draft Polish — pending review.

@@ -1352,11 +1352,11 @@ blocks implementation; each is a thing to notice rather than a thing to do.
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` clean (incl. `astro check`)
-- [ ] 2.2 `npm test` green, total ≥ `U₀ + ~14`
-- [ ] 2.3 `tests/stages.test.ts` passes with no `.skip` / `.only`
-- [ ] 2.4 No Polish literal in `src/data/stages.ts` (L-003 grep)
-- [ ] 2.5 No react/astro/supabase import in `src/data/stages.ts` (purity grep)
+- [x] 2.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
+- [x] 2.2 `npm test` green — **379 / 45 files** (= `U₀ + 33`; +22 this phase)
+- [x] 2.3 `tests/stages.test.ts` passes — 16 cases, no `.skip`, no `.only`
+- [x] 2.4 No Polish literal in `src/data/stages.ts` — the grep initially caught a *doc comment* quoting the deviating stage name, which was rephrased to reference the id (`oferta`) instead, so the gate keeps meaning something
+- [x] 2.5 No react/astro/supabase import in `src/data/stages.ts` — only `@/data/upgrades`, itself pure
 
 ### Phase 3: The `/app/growth` screen
 
