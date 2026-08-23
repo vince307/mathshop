@@ -1007,31 +1007,31 @@ consequence, restated here so it is met at implementation time rather than redis
 
 #### Automated
 
-- [x] 3.1 Linting passes: `npm run lint`
-- [x] 3.2 Unit tests still pass: `npm test`
-- [x] 3.3 Existing Playwright suite still passes: `npx playwright test`
-- [x] 3.4 `RecentActivity.astro` contains no `client:` directive
-- [x] 3.5 `RecentActivity.astro` contains no hard-coded Polish literal
-- [x] 3.11 Type check passes: `npm run check` (`astro check` — the only `.astro` type gate)
+- [x] 3.1 Linting passes: `npm run lint` — 21e07cc
+- [x] 3.2 Unit tests still pass: `npm test` — 21e07cc
+- [x] 3.3 Existing Playwright suite still passes: `npx playwright test` — 21e07cc
+- [x] 3.4 `RecentActivity.astro` contains no `client:` directive — 21e07cc
+- [x] 3.5 `RecentActivity.astro` contains no hard-coded Polish literal — 21e07cc
+- [x] 3.11 Type check passes: `npm run check` (`astro check` — the only `.astro` type gate) — 21e07cc
 
 #### Manual
 
-- [x] 3.6 `/app/start` at 390px: cards stacked, no horizontal overflow, long names wrap
-- [x] 3.7 `/app/start` at 1280px: three across, under the results tiles, matches the web mockup
-- [x] 3.8 A fresh profile shows the heading plus the empty line
-- [x] 3.9 Purchase above shift after a real shift + purchase, both reading `Dzisiaj`
-- [x] 3.10 No hydration warning in the browser console
+- [x] 3.6 `/app/start` at 390px: cards stacked, no horizontal overflow, long names wrap — 21e07cc
+- [x] 3.7 `/app/start` at 1280px: three across, under the results tiles, matches the web mockup — 21e07cc
+- [x] 3.8 A fresh profile shows the heading plus the empty line — 21e07cc
+- [x] 3.9 Purchase above shift after a real shift + purchase, both reading `Dzisiaj` — 21e07cc
+- [x] 3.10 No hydration warning in the browser console — 21e07cc
 
 ### Phase 4: E2E coverage
 
 #### Automated
 
-- [ ] 4.1 Full Playwright suite passes in both projects: `npx playwright test`
-- [ ] 4.2 Unit tests still pass: `npm test`
-- [ ] 4.3 Linting passes: `npm run lint`
+- [x] 4.1 Full Playwright suite passes in both projects: `npx playwright test`
+- [x] 4.2 Unit tests still pass: `npm test`
+- [x] 4.3 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 4.4 The `touch` (712px) run shows the stacked feed with one copy of the heading
-- [ ] 4.6 Known risk R3 evaluated at 712px: the feed's `lg:grid-cols-3` breakpoint reads acceptably beside the `sm:`-breakpoint siblings, or is changed then
-- [ ] 4.5 Two consecutive suite runs are green (no flake)
+- [x] 4.4 The `touch` (712px) run shows the stacked feed with one copy of the heading
+- [x] 4.6 Known risk R3 evaluated at 712px: the feed's `lg:grid-cols-3` breakpoint reads acceptably beside the `sm:`-breakpoint siblings, or is changed then
+- [x] 4.5 Two consecutive suite runs are green (no flake)
