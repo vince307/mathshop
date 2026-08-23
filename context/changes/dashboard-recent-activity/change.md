@@ -1,9 +1,9 @@
 ---
 change_id: dashboard-recent-activity
 title: "Ostatnia aktywność" feed on the child dashboard, from shift_log
-status: implementing
+status: implemented
 created: 2026-08-22
-updated: 2026-08-22
+updated: 2026-08-23
 archived_at: null
 ---
 

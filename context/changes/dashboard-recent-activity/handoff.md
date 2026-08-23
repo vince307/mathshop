@@ -3,130 +3,133 @@
 Standing brief for this whole run: `context/runs/2026-08-22-autonomous-five/agent-contract.md`.
 **Read it first** — it binds every step (no human in the loop, always leave a handoff, report
 back in ≤ 12 lines, and the project rules this run keeps tripping over).
-Run log and feature list: `context/runs/2026-08-22-autonomous-five/run-log.md` (§ F2).
 
 ## State
 
-**Plan written AND reviewed. Verdict: REVISE → SOUND after fixes, which are applied.**
-The plan is cleared for implementation.
+**IMPLEMENTED. All four phases shipped; every `## Progress` row is `[x]` with a commit SHA.**
+`change.md` is `status: implemented`. Nothing is left pending.
 
-| Artifact | State |
-|---|---|
-| `change.md` | **`status: plan_reviewed`** |
-| `research.md` | complete (untouched by this step) |
-| `plan.md` | **edited by triage** — 4 phases, `## Autonomous decisions` D1–D9, new `## Known risks` R1–R4, `## Progress` (2 rows added) |
-| `plan-brief.md` | unchanged — still the 2-minute orientation, but see "one stale line" below |
-| `reviews/plan-review.md` | **new** — the full DEEP report + the triage audit trail |
-| `handoff.md` | this file |
+Branch **`feat/dashboard-recent-activity`**, cut from `feat/ui-polish`. **Not pushed, no PR**
+(per the contract — the maintainer reviews locally).
 
-Still true: **no production code, no migration, no git branch.** Working tree is on
-`feat/ui-polish`. The run cuts `feat/dashboard-recent-activity` at implementation time.
-Files this step touched: `plan.md`, `reviews/plan-review.md` (new), `change.md`, this handoff.
-
-## The verdict
-
-**REVISE, not RETHINK.** The approach is right and survives review intact: read `shift_log`
-newest-first with an app-side `profile_id` filter, map rows to entries in a pure module,
-render a zero-JS `.astro` section inside grid block B, show no number the database does not
-hold. All four phases, their ordering, and every decision D1–D9 stand. What was wrong was
-detail, and the detail is fixed.
-
-**Do not re-plan.** Go straight to implementation.
-
-## What the review fixed in `plan.md` (7 findings)
-
-| # | What was wrong | Now |
+| Phase | Commit | What landed |
 |---|---|---|
-| **F1** ❌ CRITICAL | Success criteria demanded "17 Playwright runs". `npx playwright test --list` says **"Total: 15 tests in 6 files"** and this change adds assertions, not test cases — the criterion could never close, and `/10x-goal-implement` drives exactly those rows | All three sites read `15/15` with the evidence inline |
-| **F2** ⚠️ | `npm run check` was never run, and it is the **only** gate that type-checks `.astro` — `.husky/pre-commit` runs `eslint --fix` alone. Phase 3 adds a component with a nullable typed array prop | Added to Phase 3 automated criteria + Progress `3.11`. Baseline measured green (0 errors, 0 warnings, 8 hints) |
-| **F3** ⚠️ | D2 justified stacking below `lg` with "every other multi-column row on this dashboard already does" — **false**: `SkillCards` is `sm:grid-cols-3`, results tiles are `sm:grid-cols-4` | Rationale corrected with the real class strings; the class choice itself deferred → **R3** |
-| **F4** ⚠️ | The isolation suite's cross-account case passed whether or not the `profile_id` filter existed (account B had no rows to leak) | B now seeds its own profile + row; case 1 asserts the row **`id`**, not just length |
-| **F5** ⚠️ | D5's F1-compatibility claim was blanket. Two same-hunk collisions survive append-only editing | Both named concretely in D5 → **R1** |
-| **F6** ⚠️ | Phase 2 SC put `git diff … appended lines only` under Manual; Progress had it under Automated as 2.6 | Moved to Automated; the two skills now agree |
-| **F7** ⚠️ | Manual step 3 said "matches what the results screen reported" — the results screen renders no task count | Compare against the `Zadanie N z M` line seen during the shift |
+| 1 — Pure core + Polish copy | **`e40d650`** | `src/data/activity.ts`, `tasksDone()`, 8 dictionary keys, 11 unit tests |
+| 2 — Profile-scoped query | **`909e4b9`** | `listRecentActivity` + `RecentActivityRow`, unit suite, isolation suite, contract-surfaces |
+| 3 — The section | **`21e07cc`** | `RecentActivity.astro`, `start.astro` wiring, D10/D11 |
+| 4 — E2E coverage | **`c83bb9a`** | assertions in `seed.spec.ts` + `gameplay-restore.spec.ts` |
 
-Recorded but **not** acted on (observations): F8 house-style colon on `#### … Verification`
-headings (breaks no tooling — verified against `progress-format.md`); F9 `templateRegex` is a
-more explicit locator than the prefix-substring trick; F10 nothing validates
-`docs/reference/contract-surfaces.md`.
+An epilogue commit lands the Phase-4 SHA write-back and the `change.md` status flip.
 
-## Unresolved risk the implementer must carry — new `## Known risks` in `plan.md`
+## Files changed
 
-**R1 — `src/lib/services/reports.ts` may conflict at EOF with F1.** F1
-(`context/changes/parent-weekly-activity-chart/`) has **no `plan.md` yet** — only `change.md`
-(`status: preparing`), `research.md`, `handoff.md` — so every compatibility claim is projected
-from F1's *research*. F2 appends `RecentActivityRow` + `listRecentActivity` at EOF; F1's
-research describes its day bucketing as a new pure fold that would most naturally go in the
-same file. **If git conflicts at the tail of `reports.ts`, rebase and keep BOTH symbol sets —
-never resolve ours/theirs on that hunk.** Same for `docs/reference/contract-surfaces.md:38`:
-the Consumed-by line must end up naming both consumers. (Nothing validates that file, so a
-mis-merge there is silent.)
+**New:** `src/data/activity.ts`, `src/components/child/RecentActivity.astro`,
+`tests/activity.test.ts`, `tests/recent-activity.test.ts`,
+`tests/recent-activity-isolation.test.ts`.
+**Edited:** `src/i18n/index.ts`, `src/i18n/pl.ts`, `src/lib/services/reports.ts` (append-only),
+`src/pages/app/start.astro`, `docs/reference/contract-surfaces.md`, `e2e/seed.spec.ts`,
+`e2e/gameplay-restore.spec.ts`, `tests/i18n-helpers.test.ts`.
+**No migration, no RLS change, no new index, no API route, no React island, no new dependency,
+no new artwork.**
 
-**R2 — do not reuse `ShiftLogRow` after F1 lands.** Once F1 adds `created_at` the two
-interfaces look nearly identical. The feed also needs `id`; keep them separate.
+## Verification actually observed (not assumed)
 
-**R3 — the feed's column breakpoint is unverified at 712px.** `grid gap-3 lg:grid-cols-3`
-makes the feed the only 1-across row on the dashboard in the `touch` project, between a
-3-across and a 4-across sibling. Defensible (entry labels are long) but a deviation.
-**Evaluate at manual criteria 3.6 / 3.7 / 4.4; Progress row 4.6 forces an explicit answer.**
-Switching to `sm:grid-cols-3` — or back — is one token on one element.
+```
+npm run lint          clean (eslint, no output)
+npm test              318 passed (318) / 42 files   ← baseline 299, +19 new
+npm run check         Result (168 files): 0 errors, 0 warnings, 8 hints
+npx playwright test   15 passed (15)  — run TWICE consecutively, green both times
+```
 
-**R4 — the feed may legitimately miss an event.** `appendShiftLog` swallows its error and
-shares no transaction with the profile UPDATE. Never word or read the feed as a reconciliation
-of `wallet_balance` / `completed_shift_count`.
+`npx playwright test` count is **unchanged at 15** by design — Phase 4 adds assertions inside
+two existing tests, not new test cases.
 
-## What the review confirmed (so nobody re-litigates it)
+**Environment note that cost time and will cost the next agent time too:** the integration
+suites and e2e need `127.0.0.1:54321`, which the command sandbox blocks — every `npm test` /
+`playwright` / `supabase status` invocation must run with the sandbox disabled or 30 tests fail
+with `AuthRetryableFetchError: fetch failed`. Separately, a **stray dev server holding port
+4321/4322 makes 4 `gameplay-restore` runs fail**; they pass in isolation and pass in the full
+suite once the ports are freed (`lsof -ti:4321,4322 | xargs kill -9`). Neither is a defect in
+this change — both were reproduced and cleared.
 
-- **RLS on `shift_log` is account-scoped** — all four policies are `auth.uid() = account_id`
-  (`…create_shift_log.sql:41-64`). The app-side `.eq("profile_id", …)` is the **only** thing
-  separating siblings. `getWeeklyReport:110` is the precedent.
-- **The isolation test genuinely goes red if the filter is dropped.** Traced: two profiles in
-  one account, one row each → the unfiltered query returns 2 rows where the test demands
-  exactly A1's one. `tests/shift-log-isolation.test.ts` and `tests/report-isolation.test.ts`
-  both stay green through that same break, so the new suite is not redundant.
-- **`Dzisiaj` IS a substring of `t.start.missionHeading`** (`src/i18n/pl.ts:203`, "Dzisiaj
-  nauczysz się", rendered at `start.astro:164`). **Never assert `t.start.activityToday`.**
-- **The empty-state copy does not contain `Ukończone zmiany`** (`t.start.statShifts`,
-  `pl.ts:208`), and `Zmiana ukończona` contains it in neither direction. Both wordings are
-  load-bearing — do not "tidy" either.
-- **No collision the plan missed.** `aktywno*` and `Ostatni*` appear nowhere else in `pl.ts`;
-  `grep -rn "t\.start\." e2e/` returns exactly the six locators the plan's audit table lists,
-  at the line numbers it gives; the reverse direction (new strings breaking old locators) is
-  clean too.
-- **Every rendered value is stored.** `N zadań` is `math.completed + money.completed`, and
-  `ShiftScreen.tsx:85-92` increments `completed` once per task posting only math/money — so
-  it is the shift's exact task count, not an estimate. No money figure of any kind.
-- **The mobile treatment is honestly labelled an extrapolation** (Overview, D2, brief), and
-  the placement works: block B is `order-last`, so nesting inside it keeps the feed last on
-  mobile; a fourth grid sibling would have rendered *before* it. Confirmed against
-  `start.astro:90`/`:139`.
-- **Phase granularity passes.** Stopping after any phase leaves a working app: 1 and 2 add
-  unreferenced code, 3 ships the feature, 4 adds coverage.
+### The isolation test is real — verified by deliberate breakage, twice
 
-## One stale line to ignore
+```
+remove .eq("profile_id", …)     → 4 failed (4)   ← ALL cases red, incl. cross-account
+restore                         → 8 passed (8)
+replace `throw error` → `return []` → 1 failed   ← the error-contract case
+restore                         → 8 passed (8)
+```
 
-`plan-brief.md`'s scope line still says "a one-line `contract-surfaces.md` update" and its D9
-row predates the F4 strengthening. The brief was deliberately **not** rewritten — `plan.md` is
-authoritative. Read `plan.md` § Phase 2 and § Known risks over the brief wherever they differ.
+The naive DST implementation was broken on purpose too: swapping the calendar-key step for
+`now − 86_400_000` turns the October fall-back case red (`expected 'older' to be 'yesterday'`).
+None of these three tests can pass a broken implementation.
+
+## Manual verification — performed by the agent, in a real browser (D11)
+
+Signed in as `ui-polish-demo@example.test`, drove a **real 6-task shift** through the actual
+tap loop plus a real `Szyld` purchase (reusing the `solveShift` e2e helper from a throwaway
+spec, deleted immediately), then read `/app/start` at 390 / 712 / 1280px.
+
+- **Empty state** — a profile with zero rows shows the heading + the empty line. ✓
+- **Populated, correct order** — `Ulepszenie: Szyld` (today) sits **above**
+  `Zmiana ukończona · 6 zadań`, both `Dzisiaj`. The `6` is the count the shift actually ran. ✓
+- **Day labels** — back-dating rows with the service-role client (so the DB genuinely holds the
+  timestamps) produced `Wczoraj` and `19.08`. Singular form renders `1 zadanie`. ✓
+- **390px** — one card per row, no horizontal overflow; the longest catalogue name,
+  `Ulepszenie: Miejsce na produkt`, fits on one line. ✓
+- **712px / 1280px** — three across, exactly **one** copy of the heading in the a11y tree. ✓
+- **Console** — only the React DevTools info line. No hydration warning. ✓
+- **Unplanned bonus finding** — an `upgrade_purchased` id absent from the catalogue renders as
+  the raw id via `upgradeCopy`'s guarded fallback rather than throwing mid-render.
+- **No `zł` anywhere in the feed**, at any viewport, on either row kind.
+
+## Decisions taken during implementation
+
+Both are written into `plan.md` under `## Autonomous decisions`.
+
+- **D10 — R3 resolved: `sm:grid-cols-3`, not `lg:grid-cols-3`.** The plan deferred this class
+  deliberately ("do not decide it before you can see it"). Seen at 712px, `lg:` made the feed
+  the only 1-across row on the page, between a 3-across `SkillCards` and 4-across results
+  tiles — full-width cards carrying a ~200px label, the heaviest block for the least
+  information. `sm:` puts it on the page's own breakpoint. Re-verified after the change at all
+  three widths; 390px is untouched (`sm` is 640px). **Progress row 4.4 says "stacked feed" at
+  712px — after D10 the feed is 3-across there instead. The row's real content (one copy of the
+  heading, correct render) holds; the stacking now happens below 640px.**
+- **D11 — manual verification was executed, not asked.** Hard rule 1 puts no human in the loop,
+  so `/10x-implement`'s manual-confirmation gate, its dirty-path prompt, its commit-message
+  prompt and its next-phase prompt were all decided autonomously.
+
+## Risks carried forward
+
+- **R1 (unchanged, still live).** F1 (`context/changes/parent-weekly-activity-chart/`) has
+  **not landed** and still had no `plan.md` when this shipped. F2's `reports.ts` diff is
+  **45 insertions, 0 deletions** at the tail, so it rebases cleanly under F1's edits above it —
+  but if git conflicts at EOF, **keep both symbol sets, never resolve ours/theirs**. Same for
+  `docs/reference/contract-surfaces.md` `## public.shift_log`: the Consumed-by line must end up
+  naming both consumers.
+- **R2 (unchanged).** Do not collapse `RecentActivityRow` onto `ShiftLogRow` once F1 adds
+  `created_at` — the feed also needs `id`.
+- **R3 — CLOSED** by D10.
+- **R4 (unchanged, by design).** `appendShiftLog` is best-effort and un-transactional, so the
+  feed can legitimately miss an event. It is documented as such on `listRecentActivity` and in
+  `RecentActivity.astro`, and must never be read as a wallet or shift-count reconciliation.
+
+## Demo-data caveat
+
+The `ui-polish-demo@example.test` profile "Ania" was mutated during manual verification: it now
+holds three `shift_log` rows (one purchase dated today with `upgrade_purchased: "slot"`, one
+shift back-dated to yesterday, one shift back-dated to 19.08), `completed_shift_count` 8,
+wallet 144 zł, one owned upgrade. Harmless, but do not read it as pristine seed data. E2E specs
+provision their own accounts and are unaffected.
 
 ## Next command
 
 ```
-/10x-implement dashboard-recent-activity phase 1
+/10x-impl-review dashboard-recent-activity
 ```
 
-Read `plan-brief.md` for orientation, then `plan.md` in full — especially the new
-`## Known risks` section. `reviews/plan-review.md` has the evidence behind every fix if a
-decision looks arbitrary.
-
-## Verification baseline (measured during this step, not assumed)
-
-```bash
-npm run lint          # clean
-npm run check         # astro check — 163 files, 0 errors, 0 warnings, 8 hints  ← NEW GATE (F2)
-npm test              # 299 tests; 30 fail ONLY when the local Supabase stack is down
-npx playwright test   # 15/15 = 13 desktop + 2 touch. NOT 17 — the count does not change (F1)
-```
-
-`npx supabase start` must be up for the integration suites and e2e. Demo account:
-`ui-polish-demo@example.test` / `test-password-123!`, parent PIN `2468`, profile "Ania".
+Review the whole plan (no phase number). The highest-value things to re-check: that the
+`reports.ts` addition really is append-only, that the isolation suite still goes red when the
+`profile_id` filter is dropped, and that D10's breakpoint change is the right call against the
+web mockup.

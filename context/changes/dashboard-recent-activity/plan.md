@@ -1026,12 +1026,12 @@ consequence, restated here so it is met at implementation time rather than redis
 
 #### Automated
 
-- [x] 4.1 Full Playwright suite passes in both projects: `npx playwright test`
-- [x] 4.2 Unit tests still pass: `npm test`
-- [x] 4.3 Linting passes: `npm run lint`
+- [x] 4.1 Full Playwright suite passes in both projects: `npx playwright test` — c83bb9a
+- [x] 4.2 Unit tests still pass: `npm test` — c83bb9a
+- [x] 4.3 Linting passes: `npm run lint` — c83bb9a
 
 #### Manual
 
-- [x] 4.4 The `touch` (712px) run shows the stacked feed with one copy of the heading
-- [x] 4.6 Known risk R3 evaluated at 712px: the feed's `lg:grid-cols-3` breakpoint reads acceptably beside the `sm:`-breakpoint siblings, or is changed then
-- [x] 4.5 Two consecutive suite runs are green (no flake)
+- [x] 4.4 The `touch` (712px) run shows the stacked feed with one copy of the heading — c83bb9a
+- [x] 4.6 Known risk R3 evaluated at 712px: the feed's `lg:grid-cols-3` breakpoint reads acceptably beside the `sm:`-breakpoint siblings, or is changed then — c83bb9a
+- [x] 4.5 Two consecutive suite runs are green (no flake) — c83bb9a
