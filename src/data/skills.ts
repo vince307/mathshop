@@ -87,6 +87,49 @@ export function addSkillDelta(current: SkillState, delta: SkillDelta): SkillStat
   return out;
 }
 
+/**
+ * The competencies the first-try share is computed over — **`decisions` is
+ * deliberately absent.**
+ *
+ * Every upgrade purchase writes `decisions: { firstTryCorrect: 1, completed: 1,
+ * misses: 0 }` (`src/lib/services/child-profiles.ts`), so the `decisions` term
+ * is 100 % by construction: there is no way to get a purchase "wrong". Folding
+ * it in would make the number rise with **shopping** instead of with learning,
+ * which is the opposite of what the parent report is for.
+ *
+ * This is a deliberate asymmetry with the "Ukończone zadania" tile and the
+ * activity bars, which count all three: a *volume* is not distorted by a term
+ * that is always 100 %, whereas a *rate* is.
+ */
+export const ACCURACY_COMPETENCIES: readonly Competency[] = ["math", "money"] as const;
+
+/**
+ * Share of practised tasks nailed with **no wrong taps**, as a whole percent —
+ * the parent report's "Zadania bez pomyłki" tile (FR-016).
+ *
+ * Returns **`null`, never `NaN` and never a misleading `0`**, when nothing in
+ * `ACCURACY_COMPETENCIES` was completed: `0/0` has no honest percentage, and
+ * `0 %` reads as "your child got nothing right". The caller renders an em-dash.
+ *
+ * Normalising through `readSkillState` first (the house idiom, as
+ * `skillLevelsFor` does) is what makes `NaN`-freedom a property of **this
+ * function** rather than of one call site: `safeCount` guarantees finite
+ * non-negative counters, so without it a future caller passing a raw
+ * jsonb-shaped object cast to `SkillState` would sail through the clamp
+ * (`Math.max(0, Math.min(100, Math.round(NaN)))` is `NaN`) and print `NaN%`.
+ */
+export function firstTryPercent(state: SkillState): number | null {
+  const normalized = readSkillState(state);
+  let firstTry = 0;
+  let completed = 0;
+  for (const competency of ACCURACY_COMPETENCIES) {
+    firstTry += normalized[competency].firstTryCorrect;
+    completed += normalized[competency].completed;
+  }
+  if (completed === 0) return null;
+  return Math.max(0, Math.min(100, Math.round((100 * firstTry) / completed)));
+}
+
 /** Per-competency progress toward the next level — feeds the child-facing bars (S-07). */
 export interface SkillProgress {
   level: number;
