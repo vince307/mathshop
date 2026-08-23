@@ -1,12 +1,11 @@
 # Handoff — `world-progression-stages` (feature F4)
 
-Rewritten by the `/10x-plan-review` step of the autonomous run
-`context/runs/2026-08-22-autonomous-five/`. You are the next agent and you have zero context.
-Read this file, then read the standing brief.
+Rewritten by the `/10x-implement` step of the autonomous run
+`context/runs/2026-08-22-autonomous-five/`. **The feature is implemented.** You are the next agent and
+you have zero context: read this, then the standing brief
+(`context/runs/2026-08-22-autonomous-five/agent-contract.md`).
 
-**Standing brief (binding, read it in full):**
-`context/runs/2026-08-22-autonomous-five/agent-contract.md`
-Run log / status table: `context/runs/2026-08-22-autonomous-five/run-log.md`
+**Next command: `/10x-impl-review world-progression-stages`.**
 
 ---
 
@@ -14,152 +13,155 @@ Run log / status table: `context/runs/2026-08-22-autonomous-five/run-log.md`
 
 | Item | Value |
 | --- | --- |
-| Change folder | `context/changes/world-progression-stages/` |
-| `change.md` | **`status: plan_reviewed`** (bumped this step), `updated: 2026-08-23` |
-| `research.md` | written — ground truth, ~1150 lines |
-| `plan.md` | **REVIEWED and AMENDED this step.** 4 phases, all questions closed. This is your input |
-| `plan-brief.md` | the 2-minute version — **note: written pre-review, so its hand-off summary is superseded by `plan.md`** |
-| **`reviews/plan-review.md`** | **NEW — the full review. Verdict: REVISE → SOUND after fixes** |
-| Git branch | **not created** — no branch, no migration, no production code exists |
-| **Next command** | **`/10x-implement world-progression-stages`** (Phases 1–3; Phase 4 splits — see §7) |
+| Branch | **`feat/world-progression-stages`**, cut from `feat/parent-weekly-activity-chart` (F1) |
+| Merge order | **F2 → F1 → F4.** F4 is third in the stack; both predecessors are already in its base |
+| Commits | 5, one per completed phase — see §3 |
+| Pushed? | **No.** No PR. The maintainer reviews locally |
+| Migration | `supabase/migrations/20260822120000_shift_log_add_earned.sql` — **applied to the local stack and verified in the live DB** |
+| Working tree | Clean apart from two folders that are not F4's (`context/changes/world-selection-screen/`, `context/runs/`) |
+| Phases done | 1, **1b (added)**, 2, 3, 4a. **4b is outstanding** — handed to `/10x-e2e` |
 
-This step changed exactly three files, all inside the change folder: `plan.md` (amended in place),
-`reviews/plan-review.md` (new), `change.md` (status + date), plus this handoff. **No source file, no
-migration, no sibling change folder was touched.** Nothing was committed, staged, or branched.
+## 2. Measured baselines (measure them yourself; do not trust a number in a document)
 
----
+`U₀ = 346` unit tests / 44 files and `E₀ = 17` Playwright tests, both measured on this branch **before
+any F4 code**. The run brief's "299/15" is the pre-F2 floor and is stale.
 
-## 2. The review verdict
+| After | `npm test` | `npx playwright test` | `npm run lint` | `npm run check` |
+| --- | --- | --- | --- | --- |
+| baseline | 346 / 44 files | 17 | clean | 0 err / 0 warn / 9 pre-existing hints |
+| Phase 1 | 348 (`U₀+2`) | 17 (unchanged) | clean | 0 / 0 |
+| Phase 1b | 357 (`U₀+11`) | — | clean | 0 / 0 |
+| Phase 2 | 379 (`U₀+33`) | — | clean | 0 / 0 |
+| Phase 3 | 381 (`U₀+35`) | 17 (unchanged) | clean | 0 / 0 |
+| **Phase 4a (final)** | **382 / 45 files (`U₀+36`)** | **17 (`E₀`, undisturbed)** | **clean** | **0 / 0** |
 
-**REVISE → SOUND after fixes.** 1 critical, 7 warnings, 2 observations. **All eight actionable
-findings were fixed directly in `plan.md`**; the two observations are recorded in the plan's new
-`## Known risks`. Nothing is left PENDING — do not re-run the review.
+All observed, not remembered. Lint counts warnings as failures here — the baseline had zero.
 
-Dimension verdicts after fixes: End-State Alignment **PASS**, Lean Execution **PASS**, Architectural
-Fitness **PASS**, Blind Spots **PASS**, Plan Completeness **PASS**.
+## 3. What shipped, commit by commit
 
-The four load-bearing decisions were attacked and **survived**: D-1 (nullable, no backfill), D-2
-(saturate at `stageForLevel`, never cap the formula), D-3 (ART-C, zero new assets), D-9 (no RLS
-change). Evidence per claim is in the review's **Grounding** table — including a first-hand read of
-all four `shift_log` policies, the `truncate`/accessible-name question, and the ordering proof that
-the write-path change cannot desync a shift from its earnings.
-
----
-
-## 3. What was fixed in `plan.md` (read these before implementing)
-
-| # | What | Where in `plan.md` |
+| SHA | Phase | What |
 | --- | --- | --- |
-| **F1 CRITICAL** | The earnings-tile suppression rule hid the tile **forever** in any week containing a purchase (purchase rows are `earned: null` by design). Predicate now scoped to **shift rows** — `r.upgrade_purchased === null && r.earned == null`. Self-healing claim corrected; the suggested F1 test **inverted** (it previously would have locked the defect in) | D-1a block quote; **Handed to F1** rows 3/5, rule 1, suggested tests |
-| **F2** | The **Handed to F1** recipe assumed F1 did not exist. F1 is `status: planned` with a full six-phase plan that edits every region the recipe names. Rows 2/5/6 corrected for the post-F1 file (with pre-F1 fallbacks), and the **four-tile layout decision** was made | D-7; **Handed to F1** header + rows + tile-grid note |
-| **F3** | Landing order **F2 → F1 → F4** recorded, plus the `contract-surfaces.md` adjacency F2 is already editing | Critical Implementation Details (new table) |
-| **F4** | Every absolute test count (`15/15`, `≥ 299`, `≥ 313`, `expected 20`) replaced with `U₀ + delta` / `E₀ + delta` against a floor **you measure on your own branch** | Current State Analysis; all four Success Criteria; Progress rows 1.3, 1.6, 2.2, 3.2, 3.4, 4.2, 4.3 |
-| **F5** | "Anchor on symbols, not line numbers", with the numbers already known to have rotted since F2 landed | Critical Implementation Details |
-| **F6** | Phase 4's e2e specs are a **hand-off to `/10x-e2e`**, not inline implement work | Phase 4 Overview |
-| **F7** | The migration's CHECK is now **named** `shift_log_earned_nonneg`, matching the `child_profiles_*_nonneg` precedent | Phase 1 §1 |
-| **F8** | `src/data/stages.ts`'s header must carry the art deviation + ART-A upgrade path + the two copy deviations, so they survive the plan's archival | Phase 2 §1 |
+| `aabb8b7` | 1 | The `shift_log.earned` migration, the write path, the contract registry, 2 tests, and the `E2E_PORT` fix |
+| `22b4df5` | **1b** | The parent weekly earnings tile (was "Handed to F1") + 9 tests |
+| `b5a756f` | 2 | `src/data/stages.ts`, `t.stages`, `stageCopy`, and the ladder tests (+22) |
+| `656b800` | 3 | `/app/growth`, `StageRail.astro`, `t.growth`, the `active` union, the `ShopArt` seam comment |
+| `3f955d7` | 4a | The "Rozwój świata" nav entry + the label-collision test |
 
-**Deferred, recorded only** (plan → `## Known risks`): the two `t.growth` strings that duplicate
-existing Polish verbatim (`"Zobacz ulepszenia"` = `results.upgradesNudgeLink:363`, `"Wskazówka"` =
-`task.hintTitle:246` — no same-page ambiguity); D-6 measuring "Panel rodzica" but not "Rozwój
-świata"; `change.md`'s title still saying "with per-stage art"; and the note that the new CHECK is an
-unreachable-but-real new way for `appendShiftLog` to lose a row.
+## 4. The migration — applied, not merely written
 
----
+`supabase/migrations/20260822120000_shift_log_add_earned.sql`, applied with `npx supabase migration up`
+and then verified directly against the running Postgres:
 
-## 4. The single thing most likely to be lost
+- `information_schema.columns` → `earned | integer | is_nullable = YES`
+- `pg_constraint` → `shift_log_earned_nonneg CHECK ((earned IS NULL) OR (earned >= 0))` — **named**, per
+  the `child_profiles_*_nonneg` precedent, so a later migration or the rollback can reference it
+- the 3 pre-existing `shift_log` rows all read `null` (`count(earned) = 0`) — **null, not 0**
 
-**A purchase row's `earned` is `null` forever, and that must not be read as "unknown".**
+**Nullable, no backfill, and no new RLS policy.** The header states why in prose: all four `shift_log`
+policies are `auth.uid() = account_id` with **no column reference**, so they already cover `earned` on
+all four operations; the project has **no column-level grant** anywhere; and two in-repo precedents did
+exactly this and said so. Rollback line is in the header.
 
-`recordShiftResult` logs without `upgradePurchased`; `buyUpgrade` always logs with it
-(`child-profiles.ts:187` vs `:257-262`), so the two row kinds never overlap. The tile's gate is
-therefore *"a **shift** row with no recorded payout"* — only a pre-migration row can be one:
+## 5. The defect the plan review caught — implemented in its corrected form, and proved
+
+A purchase row's `earned` is `null` **forever, by design**. The naive predicate ("any row in the window
+is null") would therefore hide the earnings tile in **every week the child buys a single upgrade** —
+permanently, not transitionally. Shipped predicate, in `aggregateWeeklyReport`:
 
 ```ts
-const hasUnknownEarnings = rows.some((r) => r.upgrade_purchased === null && r.earned == null);
+if (row.upgrade_purchased === null && row.earned == null) earningsKnown = false;
 ```
 
-Suppression is reserved for **unknown**, never for **zero**: an empty or purchases-only week renders
-`0 zł`, exactly as `statTasks` already renders `0`. This heals by the first Monday after the
-migration — not "within seven days", which was only true under a predicate that also never fires on
-purchases.
+**Proved, not asserted:** replacing it with the naive `row.earned == null` turns **exactly 2** tests red
+— the purchases-only case and the purchase-alongside-shifts case. The purchases-only test is the
+**inverted** one the review demanded: `earningsKnown: true, earned: 0`. Suppression is reserved for
+*unknown*; an empty or purchases-only week renders `0 zł`, exactly as `statTasks` already does.
 
-The other three copy rules from D-1a still bind: F4 itself ships **no** earnings figure; the label is
-`"Zarobione w tym tygodniu"` (never `suma`/`bilans`/`łącznie`/`razem`, never placed next to the
-wallet); and **no test may assert `wallet_balance == sum(earned)`** — `appendShiftLog` swallows its
-insert error, so that equality is flaky by construction.
+Copy rules honoured: the label is **"Zarobione w tym tygodniu"** — never `suma`/`bilans`/`łącznie`, never
+placed next to or reconciled against the wallet. **No test asserts `wallet == sum(earned)`**; the two
+DB-level assertions are per-row (`earned === 5*taskCount + 3*cleanCount = 29` for a shift; `null` for a
+purchase). A deliberate-break check confirmed the shift test genuinely exercises the write path.
 
----
+## 6. Decisions taken this step (full text under the plan's `## Autonomous decisions`)
 
-## 5. Landing order and the working tree — read before you branch
+- **D-10 — F4 ships the earnings tile itself.** The plan handed it to F1 on the premise that F1 had not
+  started; by implementation time F1 was implemented, reviewed and **merged into F4's base**, so the
+  recipe had no owner and the migration would have shipped a write-only column. Applied in its
+  **post-F1** form: the tile is the **fourth**, the grid is
+  `cn("mt-5 grid gap-3", earningsKnown ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-3")`
+  so neither state leaves a 3+1 orphan, and the `pl.ts` comment F1 rewrote to claim "`shift_log` has no
+  earnings column" is rewritten a **second** time, because the migration makes that claim false.
+- **D-11 — `E2E_PORT`.** `playwright.config.ts` hardcoded `:4321` with `reuseExistingServer`, and a dev
+  server from **another agent's git worktree** was listening there — so `npx playwright test` was about
+  to exercise *that tree* and report it as this branch's baseline. Both `playwright.config.ts` and
+  `e2e/global-setup.ts` now read `process.env.E2E_PORT ?? "4321"`; default behaviour is unchanged. Every
+  e2e number above was measured with `E2E_PORT=4327` against a dev server started from this checkout.
+- **Two L-003 greps initially failed on doc comments**, not on rendered copy (a comment quoting a stage
+  name; another quoting a rendered ordinal). Both were rephrased to name the *key* instead, so the
+  greps keep meaning something rather than being waived.
+- The plan's other decisions were implemented as written: uncapped formula with saturation in
+  `stageForLevel` (D-2), **ART-C with zero new assets** — no file added to `public/illustrations/`, no
+  `slice-map.md` row (D-3), route `/app/growth` with `active="growth"` leaving `/app/worlds` to F5 (D-4),
+  and `ShopArt` changed by **doc comment only** (D-5).
 
-**Cut `feat/world-progression-stages` from `feat/ui-polish`** — *not* from whatever branch happens to
-be checked out. At the time of writing the tree is on **`feat/dashboard-recent-activity`** with
-another agent's uncommitted work in it (`src/lib/services/reports.ts`,
-`docs/reference/contract-surfaces.md`, `context/changes/dashboard-recent-activity/plan.md`, plus two
-untracked test files). Do not branch from there, do not commit, do not stash it.
+## 7. Browser verification actually performed (Phase 3 + 4a manual rows)
 
-**F4 lands after F2 and F1.**
+On a **self-provisioned throwaway account** (`f4-growth-check@example.test`, profile "Zosia") against an
+isolated dev server on **4327** — the shared stack was not mutated, and **the account and its profile
+were deleted afterwards** (verified: 0 rows remain).
 
-| | Feature | State | Why it matters to you |
-| --- | --- | --- | --- |
-| 1st | **F2** `dashboard-recent-activity` | landing now — pure core committed (`e40d650`), `listRecentActivity` + a `contract-surfaces.md` edit still uncommitted | Raises the unit-test floor; moved every line number in `pl.ts` / `i18n/index.ts` / `start.astro` by 10–20; edits the **same `## public.shift_log` section** F4 Phase 1 §3 edits, four lines away |
-| 2nd | **F1** `parent-weekly-activity-chart` | `status: planned`, six-phase plan | Restructures `reports.ts` and the `WeeklyReport.tsx` tile grid — i.e. everything the **Handed to F1** recipe touches. F4's own phases touch none of those files |
-| 3rd | **F4** this change | plan reviewed | — |
-| — | **F5** `world-selection-screen` | `status: planned` | Independent regions: `/app/worlds`, `"worlds"` union token, `t.nav.items.worlds = "Światy"`, `ShopArt` `WORLD_SLOTS` only. See plan D-4/D-5/D-6 |
+- **1440px:** four stages side by side (259px each), exactly **one** `h1`, each stage name in the DOM
+  exactly once, "Aktualnie" once, `scrollWidth == clientWidth`. Computed styles confirm three distinct
+  states — done `bg-success`+Check, current `bg-primary`+ordinal+ring+chip, locked `bg-muted`+Lock.
+- **712px:** the same four items stack vertically (identical `x`, increasing `y`), one `h1`, no overflow.
+- **Terminal stage (`business_level = 9`, restored after):** stage 4 current, **exactly 4** nodes — no
+  phantom fifth — `t.growth.maxStage` visible, `t.growth.noUnlocks` shown honestly, **one** progress bar
+  on the page (the savings bar; no unfillable next-stage bar), and the shell badge still reads "Poziom
+  sklepu 9". The formula is uncapped; saturation is presentational, exactly as D-2 requires.
+- **Hero** renders the child's own `/illustrations/world-kawiarnia.webp` with the owned upgrade
+  composited — not stock stage art.
+- **Nav:** `aria-current="page"` on `/app/growth` only; **one** copy of "Rozwój świata" in the
+  accessibility tree (2 in the DOM, 1 under a `display: none` ancestor).
 
-**Verified clean-merge regions for F4's phases** (append-only, different regions from F2):
-`src/i18n/pl.ts` (new top-level `stages` + `growth` keys, plus `nav.items.growth`),
-`src/i18n/index.ts` (`stageCopy` appended after `upgradeCopy` — now at **`:52`**, not the plan's old
-`:29-35`), `tests/i18n-helpers.test.ts` (a new `describe`). **Re-read each file before editing; never
-paste over it.**
+### 7a. D-6 settled empirically — **read this if you are F5**
 
----
+A throwaway sixth tab labelled "Światy" was injected into the live bottom bar at 712px and removed
+immediately (nothing committed). Result: **6 tabs, ONE row, 116px each** — exactly the predicted
+`(712 − 16) / 6` — **zero truncated**, no wrap, no horizontal overflow on the bar or the document. At 5
+tabs each gets 139px. **F5's sixth entry needs no accommodation.** You do not have to repeat this.
 
-## 6. Measure the floor before Phase 1
+## 8. What is NOT done
 
-The plan no longer contains a single absolute test count. Run these on your branch and write the two
-numbers into the plan's Current State Analysis:
+**Phase 4b — the browser specs — is outstanding and is deliberately not `/10x-implement` work.** Run
+`/10x-e2e world-progression-stages`. Its brief is Phase 4 §2 of the plan:
 
-```bash
-npx vitest run --reporter=dot   # → U₀   (299 on 2026-08-22, before F2's tests)
-npx playwright test             # → E₀   (15 on 2026-08-22: 13 specs + gameplay-restore's 2 in `touch`)
-```
+- `e2e/smoke.spec.ts` — anonymous `/app/growth` redirects to signin (**already confirmed by hand**:
+  `GET /app/growth` returns `302 → /auth/signin`), desktop project only. +1
+- `e2e/growth.spec.ts` (new) — (1) the nav entry reaches the screen and all four stage names are visible
+  with `t.growth.current` present exactly once; (2) the bottom bar holds every entry at the touch
+  viewport, located by **full** accessible names, with no horizontal overflow. +2 × 2 projects
+- `playwright.config.ts:52` — `testMatch: /gameplay-restore\.spec\.ts/` → `/(gameplay-restore|growth)\.spec\.ts/`.
+  **F5 should extend the alternation, not replace it.**
 
-Then: Phase 1 ⇒ `U₀ + 2`, `E₀` unchanged · Phase 2 ⇒ `U₀ + ~14` · Phase 3 ⇒ `U₀ + ~14`, `E₀`
-unchanged · Phase 4 ⇒ `E₀ + 5`. The rule is "may only go up", never "must equal".
+Progress row **4.3** is the only unchecked automated row and is annotated with exactly this.
 
----
+## 9. Traps already paid for — do not rediscover
 
-## 7. The four phases, and where Phase 4 splits
+- The command sandbox blocks `127.0.0.1:54321` **and the Docker socket**. Run `npm test`, `npx playwright
+  test` and every `supabase` / `psql` command with the sandbox disabled, or ~30 tests fail for unrelated
+  reasons and `supabase status` reports a false negative.
+- **A dev server on 4321 may belong to another agent's worktree.** Check
+  `lsof -p <pid> -a -d cwd -Fn` before trusting a Playwright run; use `E2E_PORT=<free port>` (D-11).
+- Lint treats warnings as failures here. `class={helper(...)}` in an `.astro` file trips
+  `astro/prefer-class-list-directive` — use `class:list={[...]}`.
+- `ShopArt` is a **named** export (`import { ShopArt }`), not a default.
 
-| # | Delivers | Tool |
-| --- | --- | --- |
-| 1 | `shift_log.earned` migration (named check `shift_log_earned_nonneg`, no backfill) + the `appendShiftLog`/`recordShiftResult` fix + `contract-surfaces.md` + 2 tests | `/10x-implement` |
-| 2 | `src/data/stages.ts` (+ the art-deviation header) + `t.stages` + `stageCopy` + the ladder tests | `/10x-implement` |
-| 3 | `/app/growth` page + `StageRail.astro` + `t.growth` + the `active` union widening + the `ShopArt` doc comment | `/10x-implement`, then the manual browser check |
-| 4a | Nav entry in `AppShell` `items` + `t.nav.items.growth` | `/10x-implement` |
-| 4b | `e2e/growth.spec.ts` + the smoke redirect + `playwright.config.ts` widening | **`/10x-e2e world-progression-stages`** |
+## 10. Rules that still bind the reviewer
 
-Phase 3 builds the screen; Phase 4 adds the link — a screen may exist without a link, never the
-reverse. Phase 1 and Phase 3 each end in a manual confirmation pause (see their Implementation Notes).
-
-**Phase 1 also appends a three-line pointer** to
-`context/changes/parent-weekly-activity-chart/handoff.md` naming `shift_log.earned`, the plan's
-**Handed to F1** section, and the shift-scoped suppress-on-null rule. A pointer, not a paste — F1 is
-being edited concurrently.
-
----
-
-## 8. Rules that still bind implementation
-
-- All copy through `src/i18n/pl.ts` (L-003); `src/data/*` stays pure (no React/Astro/Supabase).
-- `cn()` from `@/lib/utils`; business logic in `src/lib/services/`; zod for API input.
+- All copy through `src/i18n/pl.ts` (L-003); `src/data/*` stays pure.
 - One copy of each accessible name; navs toggled with `display`, never `opacity`; one responsive `h1`.
-- New table or column ⇒ RLS reviewed in the same migration. **Verdict here: no policy change needed**
-  — all four `shift_log` policies are `auth.uid() = account_id` with no column reference — but the
-  migration header must say so and name them (L-001's spirit).
-- `npm run lint` clean; never bypass the pre-commit hook; **do not push, do not open a PR.**
-- Conventional Commits, one commit per completed phase, only on green.
+- New column ⇒ RLS reviewed **in the same migration** — verdict here is "no change needed", recorded
+  with evidence in the migration header.
+- `npm run lint` clean; never `--no-verify`; **do not push, do not open a PR.**
 
-**Next command: `/10x-implement world-progression-stages`.**
+**Next command: `/10x-impl-review world-progression-stages`.**
