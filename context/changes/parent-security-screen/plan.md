@@ -880,6 +880,26 @@ Restored → 16/16 in the file, 305/305 overall.
 **Why:** a security test that cannot fail certifies nothing, and F1's structure has no test of its own.
 **Reverses if:** nothing — this is evidence, not a preference.
 
+### D15 — The browser-only manual criteria were executed, not waived
+
+**Chosen.** 2.6 (712px reading order / no overflow) and 2.9 (a real-browser change shows the success
+line without navigating) were verified in a real browser rather than reasoned about from the markup.
+Rejected: leaving them unticked with "unattended run cannot check visuals".
+
+- **2.9** falls out of the Phase 3 e2e itself: it asserts the region's `role="status"` reads
+  `t.parentPin.changeSuccess` **and** that the URL is still `/app/report` afterwards.
+- **2.6** was checked with a throwaway spec (`e2e/_tmp712.spec.ts`, deleted after the run, never
+  committed) at a 712px viewport. Measured top offsets: report `20` → change PIN `195` → rail `432` →
+  danger zone `787`, i.e. exactly the order the plan specifies, with `document.documentElement`
+  `scrollWidth === clientWidth === 712` (no horizontal overflow).
+
+**Why:** these two rows are the only Phase 2 criteria that a static read cannot honestly settle, and a
+temporary spec makes them observations instead of assertions. 2.7 and 2.8 *were* settled statically
+(one `h1` from `AppShell`, the safety-card block byte-identical in `git diff` — only the `<aside>`'s
+`lg:row-span-2` → `lg:row-span-3` changed, which is the grid bookkeeping the plan itself mandates).
+**Reverses if:** nothing — but note both rows carry the **Phase 3** SHA, since the browser evidence
+only became available once the e2e existed.
+
 ### Known issues inherited, not widened
 
 > Superseded and expanded by `## Known risks` below (added by the plan review). Read that section;
@@ -991,29 +1011,29 @@ two labels never render on the same page.
 
 #### Automated
 
-- [x] 2.1 Lint clean: `npm run lint`
-- [x] 2.2 Unit suite green and grown: `npm test` — at least 312 `it()`
-- [x] 2.3 `tests/change-pin-section.test.tsx` passes
-- [x] 2.4 No inline user-visible literal in the new `.tsx` (L-003 grep)
-- [x] 2.5 E2E baseline still green: `npx playwright test` — 15/15
+- [x] 2.1 Lint clean: `npm run lint` — f5417e8
+- [x] 2.2 Unit suite green and grown: `npm test` — at least 312 `it()` — f5417e8
+- [x] 2.3 `tests/change-pin-section.test.tsx` passes — f5417e8
+- [x] 2.4 No inline user-visible literal in the new `.tsx` (L-003 grep) — f5417e8
+- [x] 2.5 E2E baseline still green: `npx playwright test` — 15/15 — f5417e8
 
 #### Manual
 
-- [ ] 2.6 At 712px the report reads report → change PIN → rail → danger zone, nothing overflows
-- [x] 2.7 Exactly one `h1` on `/app/report`; the new card's heading is an `h2`
-- [x] 2.8 The "Bezpieczne środowisko" card is byte-identical to before this change
-- [ ] 2.9 A real-browser PIN change shows the success line and does not navigate away
+- [x] 2.6 At 712px the report reads report → change PIN → rail → danger zone, nothing overflows
+- [x] 2.7 Exactly one `h1` on `/app/report`; the new card's heading is an `h2` — f5417e8
+- [x] 2.8 The "Bezpieczne środowisko" card is byte-identical to before this change — f5417e8
+- [x] 2.9 A real-browser PIN change shows the success line and does not navigate away
 
 ### Phase 3: E2E journey — the PIN actually changes
 
 #### Automated
 
-- [ ] 3.1 `npx playwright test` green with 16 runs
-- [ ] 3.2 The two existing tests in `e2e/parent-surfaces.spec.ts` pass unmodified
-- [ ] 3.3 Lint clean: `npm run lint`
-- [ ] 3.4 Unit suite unchanged and green: `npm test`
+- [x] 3.1 `npx playwright test` green with 16 runs
+- [x] 3.2 The two existing tests in `e2e/parent-surfaces.spec.ts` pass unmodified
+- [x] 3.3 Lint clean: `npm run lint`
+- [x] 3.4 Unit suite unchanged and green: `npm test`
 
 #### Manual
 
-- [ ] 3.5 The new test is stable across three consecutive runs
-- [ ] 3.6 No leaked `e2e-pinchange-*` users in the local stack after the run
+- [x] 3.5 The new test is stable across three consecutive runs
+- [x] 3.6 No leaked `e2e-pinchange-*` users in the local stack after the run
