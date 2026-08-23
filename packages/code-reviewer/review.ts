@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText, Output } from "ai";
+import { isNoise, parseDiff } from "./noise.ts";
 import { ReviewSchema, deriveVerdict } from "./schema.ts";
 
 const EXIT_PASS = 0;
@@ -33,46 +34,6 @@ const PRICES: Record<string, { input: number; output: number }> = {
 const REPO_ROOT = new URL("../../", import.meta.url);
 const RUBRIC_PATH = fileURLToPath(new URL("context/team/code-review-dod.md", REPO_ROOT));
 const ENV_PATH = fileURLToPath(new URL(".env", REPO_ROOT));
-
-interface DiffSegment {
-  path: string;
-  text: string;
-  binary: boolean;
-}
-
-function pathFromHeader(line: string): string {
-  const quoted = /"b\/(.+)"$/.exec(line);
-  if (quoted) return quoted[1];
-  const body = line.slice("diff --git ".length);
-  // Non-rename headers repeat the same path ("a/X b/X"): find the split where the
-  // two sides match — correct even when X itself contains " b/", so a crafted
-  // filename cannot smuggle itself into a stripped prefix like context/.
-  for (let i = body.indexOf(" b/"); i !== -1; i = body.indexOf(" b/", i + 1)) {
-    if (body.slice(2, i) === body.slice(i + 3)) return body.slice(i + 3);
-  }
-  // Rename (a and b sides differ): right-anchor on the last separator.
-  const last = body.lastIndexOf(" b/");
-  return last === -1 ? "unknown" : body.slice(last + 3);
-}
-
-function parseDiff(diff: string): DiffSegment[] {
-  const chunks = diff.split(/^(?=diff --git )/m).filter((c) => c.startsWith("diff --git "));
-  return chunks.map((text) => {
-    const newline = text.indexOf("\n");
-    const path = pathFromHeader(newline === -1 ? text : text.slice(0, newline));
-    const binary = text.includes("\nBinary files ") || text.includes("\nGIT binary patch");
-    return { path, text, binary };
-  });
-}
-
-/** Noise paths the model never sees: lockfiles, context/** churn, public binaries. */
-function isNoise(segment: DiffSegment): boolean {
-  const { path, binary } = segment;
-  if (path.split("/").pop() === "package-lock.json") return true;
-  if (path.startsWith("context/")) return true;
-  if (path.startsWith("public/") && binary) return true;
-  return false;
-}
 
 function changedLineCount(text: string): number {
   return text.split("\n").filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l)).length;
