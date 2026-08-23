@@ -1203,27 +1203,27 @@ every existing read already handles, and `purchasedMeta` is an ignorable extra j
 
 #### Automated
 
-- [x] 4.1 Extended suite passes with every pre-existing test unmodified and green (count at phase start; F4 adds one): `npx vitest run tests/upgrades-buy.test.ts`
-- [x] 4.2 Full unit suite green and above the Phase 3 count: `npm test`
-- [x] 4.3 Lint + type-check clean: `npm run lint`
-- [x] 4.4 `npx playwright test` green
-- [x] 4.5 No migration file added
-- [x] 4.6 `grep -q "purchasedMeta" docs/reference/contract-surfaces.md`
+- [x] 4.1 Extended suite passes with every pre-existing test unmodified and green (count at phase start; F4 adds one): `npx vitest run tests/upgrades-buy.test.ts` — 0c08440
+- [x] 4.2 Full unit suite green and above the Phase 3 count: `npm test` — 0c08440
+- [x] 4.3 Lint + type-check clean: `npm run lint` — 0c08440
+- [x] 4.4 `npx playwright test` green — 0c08440
+- [x] 4.5 No migration file added — 0c08440
+- [x] 4.6 `grep -q "purchasedMeta" docs/reference/contract-surfaces.md` — 0c08440
 
 #### Manual
 
-- [x] 4.7 A real purchase writes `shop_state.purchasedMeta` with the correct slug, leaving `purchased` unchanged in shape
+- [x] 4.7 A real purchase writes `shop_state.purchasedMeta` with the correct slug, leaving `purchased` unchanged in shape — 0c08440
 
 ### Phase 5: Per-world overlay coordinates (option D) — DROPPABLE
 
 #### Automated
 
-- [ ] 5.1 New suite passes: `npx vitest run tests/shop-art-slots.test.ts`
-- [ ] 5.2 Full unit suite green and above the Phase 4 count: `npm test`
-- [ ] 5.3 Lint + type-check clean: `npm run lint`
-- [ ] 5.4 `git diff -U0 src/components/child/ShopArt.tsx | grep '^[+-]' | grep -v '^[+-][+-]'` shows only lines inside the `WORLD_SLOTS` literal — no signature, prop, or JSX line
+- [x] 5.1 New suite passes: `npx vitest run tests/shop-art-slots.test.ts`
+- [x] 5.2 Full unit suite green and above the Phase 4 count: `npm test`
+- [x] 5.3 Lint + type-check clean: `npm run lint`
+- [x] 5.4 `git diff -U0 src/components/child/ShopArt.tsx | grep '^[+-]' | grep -v '^[+-][+-]'` shows only lines inside the `WORLD_SLOTS` literal — no signature, prop, or JSX line
 
 #### Manual
 
-- [ ] 5.5 All six overlays sit sensibly on each of the four world plates at both breakpoints
-- [ ] 5.6 No overlay clips the art box edge or covers another overlay
+- [x] 5.5 All six overlays sit sensibly on each of the four world plates at both breakpoints
+- [x] 5.6 No overlay clips the art box edge or covers another overlay
