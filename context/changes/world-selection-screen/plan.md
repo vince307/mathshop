@@ -345,6 +345,20 @@ its commit-message approval and its next-phase prompt all collapse to "decide an
   RLS alone still blocks; (b) additionally swapping the caller's RLS-scoped client for a
   service-role client turned **`rejects a foreign profileId …` red**. The test bites on a real
   loss of scoping. Both breaks were reverted before the phase commit.
+- **`WORLD_SLOTS` was exported so Phase 5's test can see it.** `tests/shop-art-slots.test.ts`
+  needs the literal, and the alternatives were worse: moving it to `src/data/` restructures the
+  component F4 owns, and duplicating the coordinates in the test would assert nothing. Criterion
+  5.4 is still met as written — the diff to `ShopArt.tsx` is the literal's own declaration line
+  plus its body, with no `interface ShopArtProps`, no `export function ShopArt`, and no JSX line
+  (verified with the criterion's own grep). The component's signature, props and render tree are
+  untouched, which is what D-11 actually protects.
+- **Three throwaway Playwright harnesses did the manual verification, then were deleted.**
+  An unattended run has no human to walk the screens, so `e2e/zz-manual-{verify,buy,slots}.spec.ts`
+  drove the real app instead: screenshots at 360/712/1440, the a11y-tree nav count at each width,
+  a real in-app purchase read back through `admin`, and all six overlays on all four plates. They
+  are verification instruments, not shipped specs — writing `e2e/` specs belongs to `/10x-e2e` —
+  so they were removed before the Phase 5 commit and appear in no commit. `npx playwright test
+  --list` is back to *"Total: 15 tests in 6 files"*.
 - **KR-7 left exactly as recorded** — neither closed nor widened. The route takes an explicit
   `profileId` and resolves it through the caller's client, matching `select.ts` / `delete.ts`;
   no active-profile equality check was added.
@@ -1218,12 +1232,12 @@ every existing read already handles, and `purchasedMeta` is an ignorable extra j
 
 #### Automated
 
-- [x] 5.1 New suite passes: `npx vitest run tests/shop-art-slots.test.ts`
-- [x] 5.2 Full unit suite green and above the Phase 4 count: `npm test`
-- [x] 5.3 Lint + type-check clean: `npm run lint`
-- [x] 5.4 `git diff -U0 src/components/child/ShopArt.tsx | grep '^[+-]' | grep -v '^[+-][+-]'` shows only lines inside the `WORLD_SLOTS` literal — no signature, prop, or JSX line
+- [x] 5.1 New suite passes: `npx vitest run tests/shop-art-slots.test.ts` — 652ed6a
+- [x] 5.2 Full unit suite green and above the Phase 4 count: `npm test` — 652ed6a
+- [x] 5.3 Lint + type-check clean: `npm run lint` — 652ed6a
+- [x] 5.4 `git diff -U0 src/components/child/ShopArt.tsx | grep '^[+-]' | grep -v '^[+-][+-]'` shows only lines inside the `WORLD_SLOTS` literal — no signature, prop, or JSX line — 652ed6a
 
 #### Manual
 
-- [x] 5.5 All six overlays sit sensibly on each of the four world plates at both breakpoints
-- [x] 5.6 No overlay clips the art box edge or covers another overlay
+- [x] 5.5 All six overlays sit sensibly on each of the four world plates at both breakpoints — 652ed6a
+- [x] 5.6 No overlay clips the art box edge or covers another overlay — 652ed6a
