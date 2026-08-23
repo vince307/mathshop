@@ -134,6 +134,7 @@ export const pl = {
       dashboard: "Pulpit",
       missions: "Misje",
       shop: "Mój sklep",
+      worlds: "Światy",
       parent: "Panel rodzica",
     },
   },

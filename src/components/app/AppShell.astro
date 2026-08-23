@@ -1,5 +1,5 @@
 ---
-import { Home, Target, Store, ShoppingCart, ShieldCheck, LogOut } from "lucide-react";
+import { Home, Target, Store, Globe, ShoppingCart, ShieldCheck, LogOut } from "lucide-react";
 import { AvatarCircle } from "@/components/child/AvatarCircle";
 import { WalletPill, LevelBadge } from "@/components/child/HudChip";
 import { t } from "@/i18n";
@@ -60,6 +60,7 @@ const items = [
   { key: "dashboard", href: "/app/start", label: t.nav.items.dashboard, icon: Home },
   { key: "missions", href: "/app/task", label: t.nav.items.missions, icon: Target },
   { key: "shop", href: "/app/upgrades", label: t.nav.items.shop, icon: Store },
+  { key: "worlds", href: "/app/worlds", label: t.nav.items.worlds, icon: Globe },
 ] as const;
 
 const tabs = [...items, { key: "parent", href: "/app/report", label: t.nav.items.parent, icon: ShieldCheck }] as const;

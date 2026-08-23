@@ -1170,34 +1170,34 @@ every existing read already handles, and `purchasedMeta` is an ignorable extra j
 
 #### Automated
 
-- [x] 2.1 New component suite passes: `npx vitest run tests/worlds-picker.test.tsx`
-- [x] 2.2 Full unit suite green and above the Phase 1 count: `npm test`
-- [x] 2.3 Lint + type-check clean: `npm run lint`
-- [x] 2.4 `npx playwright test` green with no pre-existing spec newly failing (count measured at phase start, not pinned)
+- [x] 2.1 New component suite passes: `npx vitest run tests/worlds-picker.test.tsx` — e20f717
+- [x] 2.2 Full unit suite green and above the Phase 1 count: `npm test` — e20f717
+- [x] 2.3 Lint + type-check clean: `npm run lint` — e20f717
+- [x] 2.4 `npx playwright test` green with no pre-existing spec newly failing (count measured at phase start, not pinned) — e20f717
 
 #### Manual
 
-- [x] 2.5 Screen matches the web and mobile mockups (grid, ring + badge, reassurance line, competency rail, CTA)
-- [x] 2.6 The 2×2 grid reads as deliberate at 360px, 712px and 1440px
-- [x] 2.7 Current world ringed on load; tapping another moves the ring and updates the rail
-- [x] 2.8 Start lands on `/app/start` with the new world and unchanged wallet/level/upgrades
-- [x] 2.9 No horizontal scroll at 360px
+- [x] 2.5 Screen matches the web and mobile mockups (grid, ring + badge, reassurance line, competency rail, CTA) — e20f717
+- [x] 2.6 The 2×2 grid reads as deliberate at 360px, 712px and 1440px — e20f717
+- [x] 2.7 Current world ringed on load; tapping another moves the ring and updates the rail — e20f717
+- [x] 2.8 Start lands on `/app/start` with the new world and unchanged wallet/level/upgrades — e20f717
+- [x] 2.9 No horizontal scroll at 360px — e20f717
 
 ### Phase 3: Navigation entry
 
 #### Automated
 
-- [ ] 3.1 New guard suite passes: `npx vitest run tests/nav-labels.test.ts`
-- [ ] 3.2 Full unit suite green and above the Phase 2 count: `npm test`
-- [ ] 3.3 Lint + type-check clean: `npm run lint`
-- [ ] 3.4 `npx playwright test` green with no pre-existing spec newly failing, including `touch` at 712px
+- [x] 3.1 New guard suite passes: `npx vitest run tests/nav-labels.test.ts`
+- [x] 3.2 Full unit suite green and above the Phase 2 count: `npm test`
+- [x] 3.3 Lint + type-check clean: `npm run lint`
+- [x] 3.4 `npx playwright test` green with no pre-existing spec newly failing, including `touch` at 712px
 
 #### Manual
 
-- [ ] 3.5 "Światy" appears exactly once in the a11y tree at every viewport
-- [ ] 3.6 The entry is highlighted on `/app/worlds` and nowhere else
-- [ ] 3.7 The bottom bar (6 tabs once F4 has landed, 5 otherwise) is legible at 360px and 712px
-- [ ] 3.8 Every other `/app` page still highlights its own entry
+- [x] 3.5 "Światy" appears exactly once in the a11y tree at every viewport
+- [x] 3.6 The entry is highlighted on `/app/worlds` and nowhere else
+- [x] 3.7 The bottom bar (6 tabs once F4 has landed, 5 otherwise) is legible at 360px and 712px
+- [x] 3.8 Every other `/app` page still highlights its own entry
 
 ### Phase 4: Record the world on each purchase (option E)
 
