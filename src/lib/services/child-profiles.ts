@@ -123,16 +123,23 @@ export async function deleteChildProfile(client: SupabaseClient, profileId: stri
  * authoritative profile UPDATE has committed by the time this runs), so its error
  * is swallowed. `account_id` comes from the RLS-verified profile row, never from
  * client input (L-002); the INSERT `with check` policy is the backstop.
+ *
+ * `earned` is the server-computed payout for a SHIFT (`earningsForShift`), and is
+ * omitted — i.e. stored as `null` — for a purchase event and for any caller that
+ * has no payout to record. `null` therefore reads as "unknown / not a shift", never
+ * as "earned nothing" (F4). Because this insert is best effort, `sum(earned)` is a
+ * lower bound on what was actually paid; never present it as an exact total.
  */
 async function appendShiftLog(
   client: SupabaseClient,
-  entry: { accountId: string; profileId: string; skills: SkillDelta; upgradePurchased?: string },
+  entry: { accountId: string; profileId: string; skills: SkillDelta; upgradePurchased?: string; earned?: number },
 ): Promise<void> {
   await client.from("shift_log").insert({
     account_id: entry.accountId,
     profile_id: entry.profileId,
     skills: entry.skills,
     upgrade_purchased: entry.upgradePurchased ?? null,
+    earned: entry.earned ?? null,
   });
 }
 
@@ -184,7 +191,7 @@ export async function recordShiftResult(
   if (updateErr) return { error: updateErr };
 
   // History row for the weekly report — account_id from the RLS-verified row (L-002).
-  await appendShiftLog(client, { accountId: current.account_id, profileId, skills: shift.skills });
+  await appendShiftLog(client, { accountId: current.account_id, profileId, skills: shift.skills, earned });
 
   return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
 }

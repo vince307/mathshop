@@ -134,6 +134,10 @@ export const pl = {
       dashboard: "Pulpit",
       missions: "Misje",
       shop: "Mój sklep",
+      // Deliberately NOT "Rozwój sklepu" (the page's own h1): `getByRole` name
+      // matching is substring-based, so a label that contained the heading — or
+      // vice versa — would make every locator on that screen ambiguous.
+      growth: "Rozwój świata",
       parent: "Panel rodzica",
     },
   },
@@ -291,6 +295,46 @@ export const pl = {
     customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
   },
 
+  // The growth screen (F4, missing-screens-v3 `01-world-progression`). Deliberately
+  // NOT rendered from that mockup, because nothing in the product stores them:
+  // the XP bar, "Zysk dzienny", "Klienci dziennie", "Zadowolenie %", the
+  // "Następne kroki" goal counters, the achievements button and the notification
+  // bell. Estimating any of them would be invented data. `heading` is world-neutral
+  // ("Rozwój sklepu" + the world name as subtitle) because Polish genitive
+  // declension differs per world and `src/data/worlds.ts` stores nominative names
+  // only — the same solution `upgradeShop` already uses.
+  growth: {
+    title: "Rozwój sklepu",
+    intro: "Rozwijaj swój sklep, odblokowuj nowe możliwości i zarabiaj więcej!",
+    stagesHeading: "Etapy rozwoju",
+    stageOrdinal: "Etap {n}",
+    current: "Aktualnie",
+    // Read out by a screen reader so the state that colour alone conveys is
+    // spoken — the rail this replaces was decorative and `aria-hidden`.
+    stateDone: "Etap ukończony",
+    stateCurrent: "Etap w trakcie",
+    stateLocked: "Etap zablokowany",
+    maxStage: "To najwyższy etap — Twój sklep działa pełną parą.",
+    unlocksHeading: "Co odblokowuje ten etap",
+    noUnlocks: "Ten etap nie odblokowuje nowych ulepszeń.",
+    upgradesLink: "Zobacz ulepszenia",
+    tipHeading: "Wskazówka",
+    tip: "Każda ukończona zmiana przybliża Twój sklep do kolejnego etapu.",
+  },
+
+  // Growth-stage names (F4). Keyed by stage id (`t.stages[id]`), so the catalogue
+  // (src/data/stages.ts) carries no literal copy (L-003). Draft Polish — pending
+  // native-speaker review. Two entries deviate from the mockup ON PURPOSE, and the
+  // reasons are in `src/data/stages.ts`'s header: `oferta` is world-neutral (the
+  // mockup's "Kawiarnia z ofertą" would call a bakery a café), and `popyt` does not
+  // promise the mockup's demand missions, which do not exist.
+  stages: {
+    stolik: { name: "Mały stolik", desc: "Pierwsze kroki w Twoim sklepie." },
+    stoisko: { name: "Stoisko", desc: "Pierwsze produkty i klienci." },
+    oferta: { name: "Sklep z ofertą", desc: "Więcej produktów i większe zyski!" },
+    popyt: { name: "Popyt i zysk", desc: "Twój sklep działa pełną parą." },
+  },
+
   // Per-competency skill labels (S-07). Keyed so components carry no literal copy
   // (L-003); the competency keys (math/money/decisions) match `Competency` in
   // src/types.ts. `{level}` interpolated in the island. Draft Polish — pending review.
@@ -414,10 +458,20 @@ export const pl = {
     // share. The first-try share is deliberately computed over **math + money
     // only** — a purchase is 100 % correct by construction, so including
     // `decisions` would make it rise with shopping (see `ACCURACY_COMPETENCIES`
-    // in `src/data/skills.ts`). The mockup's earnings tile ("+84 zł") is the
-    // only one still deferred: `shift_log` has no earnings column to read.
+    // in `src/data/skills.ts`). Nothing on this page is deferred any more: the
+    // mockup's earnings tile now reads `shift_log.earned` (F4).
+    //
+    // `statEarned` is worded as a description of LOGGED ACTIVITY, never a total.
+    // `appendShiftLog` is best effort and swallows its insert error, so the sum is
+    // permanently a lower bound on what the child actually earned. It must not be
+    // called `suma`, `bilans`, `łącznie` or `wszystkie zarobki`, and it must not be
+    // placed next to, or reconciled against, the wallet balance. The tile is hidden
+    // outright — never zeroed — while a shift row in the week has no recorded
+    // payout; see `earningsKnown` in `src/types.ts`.
     statTasks: "Ukończone zadania",
     statUpgrades: "Odblokowane ulepszenia",
+    statEarned: "Zarobione w tym tygodniu",
+    statEarnedValue: "{amount} zł",
     statFirstTry: "Zadania bez pomyłki",
     statFirstTryValue: "{percent}%",
     // Shown instead of a percentage when nothing countable was practised — `0%`

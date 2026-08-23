@@ -52,3 +52,12 @@ export function tasksDone(n: number): string {
 export function upgradeCopy(id: string): { name: string; desc: string } {
   return (t.upgrades as Record<string, { name: string; desc: string }>)[id] ?? { name: id, desc: "" };
 }
+
+/**
+ * Localized growth-stage copy by catalogue id (L-003). Guarded exactly as
+ * `upgradeCopy` is: a stage id missing from the dictionary falls back to the raw
+ * id rather than throwing mid-render.
+ */
+export function stageCopy(id: string): { name: string; desc: string } {
+  return (t.stages as Record<string, { name: string; desc: string }>)[id] ?? { name: id, desc: "" };
+}

@@ -18,7 +18,11 @@ for (const name of ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_
   }
 }
 
-const BASE_URL = "http://localhost:4321";
+// Port is overridable so two checkouts/worktrees can run e2e side by side. With
+// `reuseExistingServer` on, a dev server left running by another checkout would
+// otherwise be silently reused and the suite would test THAT tree, not this one.
+const PORT = process.env.E2E_PORT ?? "4321";
+const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -46,14 +50,16 @@ export default defineConfig({
     },
     {
       // Touch/tablet viewport — Chromium-engine preset (NOT an iPad preset; those
-      // pin WebKit). Scoped to the gameplay spec per the plan's 2×-runtime decision.
+      // pin WebKit). Deliberately scoped to the specs whose risk is viewport-shaped
+      // (the plan's 2×-runtime decision), not to the whole suite. EXTEND the
+      // alternation when adding one (`|worlds`); never replace it.
       name: "touch",
-      testMatch: /gameplay-restore\.spec\.ts/,
+      testMatch: /(gameplay-restore|growth)\.spec\.ts/,
       use: { ...devices["Galaxy Tab S4"] },
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

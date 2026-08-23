@@ -1,0 +1,161 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AppShell from "@/components/app/AppShell.astro";
+import StageRail from "@/components/child/StageRail.astro";
+import { ShopArt } from "@/components/child/ShopArt";
+import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
+import { childCard } from "@/components/child/childCard";
+import { createClient } from "@/lib/supabase";
+import { resolvePageProfile } from "@/lib/services/active-profile";
+import { worldForTheme } from "@/data/worlds";
+import { getAvatar } from "@/data/avatars";
+import { nextUpgrade, readPurchased } from "@/data/upgrades";
+import { STAGES, stageForLevel, unlocksForStage } from "@/data/stages";
+import { t, upgradeCopy } from "@/i18n";
+
+// The growth screen (F4, missing-screens-v3 `01-world-progression`). Gated under
+// /app by existing middleware (`PROTECTED_ROUTES = ["/app"]`, startsWith).
+//
+// READ-ONLY over state the page already loads: no new query, no new API route.
+// Every figure comes from `child_profiles` or the static catalogues — the mockup's
+// XP bar, daily profit, customer count, satisfaction % and goal counters are
+// deliberately absent because nothing stores them (see the `growth` comment in
+// src/i18n/pl.ts). `profile.name` is PII: interpolation only, never set:html.
+//
+// The heading is world-neutral with the world name as subtitle, copying
+// upgrades.astro — Polish genitive declension differs per world and
+// src/data/worlds.ts stores nominative names only.
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const resolved = supabase ? await resolvePageProfile(supabase, Astro.cookies) : { profile: null, profileCount: 0 };
+if (!resolved.profile && resolved.profileCount >= 2) return Astro.redirect("/app");
+const profile = resolved.profile;
+
+const world = profile ? worldForTheme(profile.theme) : null;
+const avatar = profile ? getAvatar(profile.avatar) : null;
+const purchased = profile ? readPurchased(profile.shop_state) : [];
+
+// `stageForLevel` is total and saturating, so an uncapped `business_level` — a
+// child 50 levels in — resolves to the top stage rather than off the end.
+const current = stageForLevel(profile?.business_level ?? 1);
+const unlocks = unlocksForStage(current.stage);
+
+// The savings nudge + bar, reused verbatim from the dashboard: the one progress
+// bar the data actually supports. No earnings total is computed here — sum(earned)
+// is a lower bound and belongs on the parent report, not on a child's screen.
+const next = profile ? nextUpgrade({ businessLevel: profile.business_level, purchased }) : null;
+const showNext = !!(next && profile && profile.wallet_balance < next.cost);
+const nextText =
+  next && profile
+    ? t.upgradeShop.nextProgress
+        .replace("{amount}", String(next.cost - profile.wallet_balance))
+        .replace("{name}", upgradeCopy(next.id).name)
+    : "";
+const savingPercent =
+  next && profile ? Math.max(0, Math.min(100, Math.round((profile.wallet_balance / next.cost) * 100))) : null;
+---
+
+<Layout title={t.brand}>
+  {
+    profile && world ? (
+      <AppShell
+        heading={t.growth.title}
+        subtitle={world.name}
+        active="growth"
+        profile={{
+          name: profile.name,
+          avatarImage: avatar?.image ?? null,
+          level: profile.business_level,
+          wallet: profile.wallet_balance,
+        }}
+        progressPercent={savingPercent}
+        progressLabel={showNext ? nextText : null}
+      >
+        <div class="flex flex-col gap-6">
+          {/* ---------- Hero: the child's OWN shop, not a stock stage image ---------- */}
+          <div
+            class:list={[
+              childCard("3xl", "overflow-hidden"),
+              "from-primary/10 via-primary/5 bg-gradient-to-r to-transparent",
+            ]}
+          >
+            <div class="flex flex-col items-center gap-4 p-5 sm:flex-row sm:gap-6 sm:p-6">
+              <div class="order-2 min-w-0 flex-1 text-center sm:order-1 sm:text-left">
+                <p class="text-foreground text-2xl font-extrabold lg:text-4xl">{world.name}</p>
+                <p class="text-muted-foreground mt-2 text-sm font-semibold">{t.growth.intro}</p>
+              </div>
+              <div class="order-1 w-full max-w-xs shrink-0 sm:order-2 sm:w-2/5 sm:max-w-sm">
+                <ShopArt world={world} purchased={purchased} />
+              </div>
+            </div>
+          </div>
+
+          {/* ---------- The stage rail ---------- */}
+          <StageRail stages={STAGES} current={current} />
+
+          {/* ---------- What this stage unlocks ---------- */}
+          <section class:list={[childCard("3xl", "p-5 sm:p-6")]}>
+            <h2 class="text-foreground text-lg font-extrabold">{t.growth.unlocksHeading}</h2>
+            {/* Derived from the upgrade catalogue, so it cannot drift from what the
+                shop actually gates. The mockup's effect strings ("+15% do zysku")
+                are NOT rendered — those percentages are not modelled anywhere. */}
+            {unlocks.length > 0 ? (
+              <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+                {unlocks.map((upgrade) => (
+                  <li class="border-border bg-muted/20 flex items-center gap-3 rounded-2xl border p-3">
+                    <img src={upgrade.art} alt="" aria-hidden="true" class="size-10 shrink-0" />
+                    <div class="min-w-0">
+                      <p class="text-foreground text-sm font-extrabold">{upgradeCopy(upgrade.id).name}</p>
+                      <p class="text-muted-foreground mt-0.5 text-xs font-semibold">{upgradeCopy(upgrade.id).desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              /* Honest empty, not an invented promise: nothing in the catalogue
+                 gates on the terminal stage's level. */
+              <p class="text-muted-foreground mt-4 text-sm font-semibold">{t.growth.noUnlocks}</p>
+            )}
+          </section>
+
+          {/* ---------- Next upgrade + CTA ---------- */}
+          <section class:list={[childCard("3xl", "p-5 sm:p-6")]}>
+            <h2 class="text-foreground text-lg font-extrabold">{t.start.nextUpgradeHeading}</h2>
+            {next && (
+              <div class="mt-4 flex items-center gap-4">
+                <img src={next.art} alt="" aria-hidden="true" class="size-12 shrink-0" />
+                <div class="min-w-0 flex-1">
+                  <p class="text-foreground text-sm font-extrabold">{upgradeCopy(next.id).name}</p>
+                  <p class="text-muted-foreground mt-0.5 text-xs font-semibold">
+                    {t.start.amountZl.replace("{amount}", String(next.cost))}
+                  </p>
+                  {savingPercent !== null && (
+                    <div class="bg-muted mt-2 h-2 w-full overflow-hidden rounded-full">
+                      <div class="bg-primary h-full rounded-full" style={`width: ${savingPercent}%`} />
+                    </div>
+                  )}
+                  {showNext && <p class="text-muted-foreground mt-2 text-xs font-semibold">{nextText}</p>}
+                </div>
+              </div>
+            )}
+            <a
+              href="/app/upgrades"
+              class="bg-primary text-primary-foreground mt-4 inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-bold shadow-sm"
+            >
+              {t.growth.upgradesLink}
+            </a>
+          </section>
+
+          {/* ---------- Tip: a statement of the mechanic, never a measurement ---------- */}
+          <section class:list={[childCard("3xl", "p-5 sm:p-6")]}>
+            <h2 class="text-foreground text-base font-extrabold">{t.growth.tipHeading}</h2>
+            <p class="text-muted-foreground mt-2 text-sm font-semibold">{t.growth.tip}</p>
+          </section>
+        </div>
+      </AppShell>
+    ) : (
+      <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
+        <EmptyStateCard />
+      </div>
+    )
+  }
+</Layout>

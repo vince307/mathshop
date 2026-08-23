@@ -165,4 +165,18 @@ export interface WeeklyReport {
    * zero-filled** — consumers index it positionally and never null-check.
    */
   daily: WeeklyReportDay[];
+  /**
+   * Sum of the week's recorded shift payouts, in zl (F4). A **lower bound**, not a
+   * balance: `appendShiftLog` is best-effort, so a paid shift can lose its log row.
+   * Never label it a total/`suma`/`bilans` and never compare it to `wallet_balance`.
+   */
+  earned: number;
+  /**
+   * False only while a **shift** row in the window has no recorded payout — i.e. a
+   * row written before the `earned` column existed. Consumers suppress the figure
+   * entirely rather than showing an undercount. A purchase row is `null` forever by
+   * design and does NOT clear this flag, so an empty or purchases-only week is
+   * `true` with `earned: 0` — zero is a fact, only unknown is a reason to hide.
+   */
+  earningsKnown: boolean;
 }

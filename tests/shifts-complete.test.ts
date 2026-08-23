@@ -90,9 +90,9 @@ async function readSkill(profileId: string): Promise<SkillState> {
 async function readLogRows(profileId: string) {
   const { data } = await admin
     .from("shift_log")
-    .select("skills, upgrade_purchased")
+    .select("skills, upgrade_purchased, earned")
     .eq("profile_id", profileId)
-    .overrideTypes<{ skills: unknown; upgrade_purchased: string | null }[], { merge: false }>();
+    .overrideTypes<{ skills: unknown; upgrade_purchased: string | null; earned: number | null }[], { merge: false }>();
   return data ?? [];
 }
 
@@ -236,6 +236,25 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const logged = readSkillState(rows[0].skills);
     expect(logged.math).toEqual({ firstTryCorrect: 2, completed: 2, misses: 1 });
     expect(logged.money).toEqual({ firstTryCorrect: 1, completed: 2, misses: 0 });
+  });
+
+  it("records the server-computed payout in shift_log.earned (F4)", async () => {
+    // The payout is recomputed server-side from taskCount/cleanCount; the client
+    // never supplies an amount. Asserted against the fixture, NOT against
+    // wallet_balance: appendShiftLog is best-effort and swallows its insert error,
+    // so `wallet == sum(earned)` would be flaky by construction.
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const skills = JSON.stringify({
+      math: { firstTryCorrect: 2, completed: 2, misses: 1 },
+      money: { firstTryCorrect: 1, completed: 2, misses: 0 },
+    });
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "4", cleanCount: "3", skills }));
+    expect(res.status).toBe(200);
+
+    const rows = await readLogRows(profileId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].earned).toBe(5 * 4 + 3 * 3); // earningsForShift(taskCount, cleanCount) = 29
   });
 
   it("PINS current behavior: a duplicate shift-end POST pays twice (no idempotency key — Risk #2 §6.3.4)", async () => {

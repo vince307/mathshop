@@ -27,7 +27,11 @@ const EMPTY_WEEK: WeeklyReportDay[] = Array.from({ length: 7 }, (_, weekday) => 
   completed: 0,
 }));
 
-function child(practiceDelta: SkillDelta, upgradeIds: string[] = []): ChildReport {
+function child(
+  practiceDelta: SkillDelta,
+  upgradeIds: string[] = [],
+  earnings: { earned?: number; earningsKnown?: boolean } = {},
+): ChildReport {
   return {
     profileId: "p1",
     name: "Ania",
@@ -38,6 +42,9 @@ function child(practiceDelta: SkillDelta, upgradeIds: string[] = []): ChildRepor
       practice: addSkillDelta(readSkillState(null), practiceDelta),
       upgrades: upgradeIds.map((upgradeId) => ({ upgradeId, competencies: [], generalPractice: true })),
       daily: EMPTY_WEEK,
+      earned: earnings.earned ?? 0,
+      // Default `true`: the tile is the normal state, suppression the exception.
+      earningsKnown: earnings.earningsKnown ?? true,
     },
   };
 }
@@ -50,6 +57,30 @@ function expectNoNaN(container: HTMLElement) {
 afterEach(cleanup);
 
 describe("WeeklyReport summary tiles", () => {
+  it("renders the weekly earnings tile with its label when the payouts are known (F4)", () => {
+    render(<WeeklyReport reports={[child({ math: { completed: 4 } }, [], { earned: 29 })]} />);
+    expect(screen.getByText(copy.statEarned, { exact: true })).toBeInTheDocument();
+    expect(screen.getByText(copy.statEarnedValue.replace("{amount}", "29"), { exact: true })).toBeInTheDocument();
+  });
+
+  it("renders 0 zł — not nothing — for a week with no recorded earnings (F4)", () => {
+    // Zero is a fact, and `statTasks` already renders 0 for the same week.
+    // Suppression is reserved for UNKNOWN; conflating the two would hide the tile
+    // in every week the child only bought upgrades.
+    render(<WeeklyReport reports={[child({}, ["sign"], { earned: 0, earningsKnown: true })]} />);
+    expect(screen.getByText(copy.statEarned, { exact: true })).toBeInTheDocument();
+    expect(screen.getByText(copy.statEarnedValue.replace("{amount}", "0"), { exact: true })).toBeInTheDocument();
+  });
+
+  it("suppresses the earnings tile entirely — no label, no zero — when a shift row's payout is unknown (F4)", () => {
+    render(<WeeklyReport reports={[child({ math: { completed: 4 } }, [], { earned: 12, earningsKnown: false })]} />);
+    expect(screen.queryByText(copy.statEarned, { exact: true })).not.toBeInTheDocument();
+    // Not merely hidden behind a different figure: the undercount never renders.
+    expect(screen.queryByText(copy.statEarnedValue.replace("{amount}", "12"), { exact: true })).not.toBeInTheDocument();
+    // The other three tiles are untouched.
+    expect(screen.getByText(copy.statTasks, { exact: true })).toBeInTheDocument();
+  });
+
   it("renders the first-try share as a whole percent for a played week", () => {
     const { container } = render(
       <WeeklyReport

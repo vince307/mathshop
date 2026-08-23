@@ -113,6 +113,25 @@ describe("POST /api/upgrades/buy (route money integrity + isolation)", () => {
     expect(state?.shop_state.purchased).toEqual([SIGN.id]);
   });
 
+  it("a purchase's shift_log row records earned as NULL, not 0 (F4)", async () => {
+    // `null` is what keeps "not a shift" distinguishable from "earned nothing".
+    // A recorded 0 would be indistinguishable from a real zero-earning shift, and
+    // any parent-facing earnings total would silently swallow it as fabricated data.
+    const profileId = await seedProfile(accountA.id, { walletBalance: 100, businessLevel: 1 });
+    const jar = await mintSession(accountA.email);
+    const res = await buyPOST(buyContext(jar, { profileId, upgradeId: SIGN.id }));
+    expect(res.status).toBe(200);
+
+    const { data: rows } = await admin
+      .from("shift_log")
+      .select("upgrade_purchased, earned")
+      .eq("profile_id", profileId)
+      .overrideTypes<{ upgrade_purchased: string | null; earned: number | null }[], { merge: false }>();
+    expect(rows).toHaveLength(1);
+    expect(rows?.[0].upgrade_purchased).toBe(SIGN.id);
+    expect(rows?.[0].earned).toBeNull();
+  });
+
   it("insufficient funds → 400, wallet + state unchanged", async () => {
     const profileId = await seedProfile(accountA.id, { walletBalance: 10, businessLevel: 1 });
     const jar = await mintSession(accountA.email);

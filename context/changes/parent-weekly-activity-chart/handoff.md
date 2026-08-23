@@ -158,3 +158,15 @@ would re-derive the same "no seeder" conclusion the plan already reached.
 Remaining work is the eight items in `follow-ups/review-fixes.md`. Follow-up 1 (~12 lines of test) is
 the cheapest and closes the only real gap in the feature's headline invariant; take it first if
 anything is taken at all. Otherwise: merge F2, then merge this.
+
+---
+
+## Pointer from F4 `world-progression-stages` (appended 2026-08-23)
+
+- `shift_log.earned` now exists (`supabase/migrations/20260822120000_shift_log_add_earned.sql`) —
+  nullable, no backfill. F4 also **shipped the parent weekly earnings tile itself** (the "Handed to
+  F1" recipe in `context/changes/world-progression-stages/plan.md`), because F1 had already landed by
+  the time F4 was implemented.
+- The tile's gate is scoped to **shift** rows: `r.upgrade_purchased === null && r.earned == null`.
+  A purchase row is `earned: null` forever by design; an unscoped predicate would hide the tile in
+  every week the child buys anything. See F4's plan, D-1a.
