@@ -6,163 +6,149 @@ Read it in full before doing anything. Run log and feature list:
 
 ## State
 
-- `change.md` — status advanced `planned` → **`plan_reviewed`**.
-- `research.md` — ground truth, unchanged (898 lines). Do not re-research it.
-- `plan-brief.md` — **stale in two places** (see "Brief drift" below). `plan.md` wins.
-- `plan.md` — **reviewed and amended in place**. 3 phases, 11 autonomous decisions (D1–D11)
-  unchanged, plus a new `## Known risks` section (K1–K6).
-- `reviews/plan-review.md` — **new**, the full deep review report (1 critical, 6 warnings,
-  3 observations, with the triage decision recorded on each).
-- No production code, no migration, no git branch, no security behaviour changed. Still on
-  `feat/ui-polish`. This step touched only `plan.md`, `change.md`, and the new review file.
+**Implemented — all 3 phases, all 23 Progress rows `[x]`.** `change.md` status is now `implemented`.
 
-## Verdict
+Branch **`feat/parent-security-screen`**, cut from `feat/ui-polish` (`64e3373`) — *not* from
+`feat/dashboard-recent-activity`, which happened to be checked out. Nothing pushed, no PR.
 
-**REVISE → SOUND after fixes.** The approach is right; the details needed tightening. Six findings
-were fixed directly in `plan.md`, one was recorded as a carried risk, three were recorded only. **Not
-RETHINK** — no fresh `/10x-plan` is needed.
+| Commit | Phase | What landed |
+| --- | --- | --- |
+| `3d43c3c` | 1 — route contract | `currentPin` required on every change path, fail-closed `pinExists`, contract-surfaces entry, 6 net-new route tests |
+| `f5417e8` | 2 — island + strings + mount | `ChangePinSection`, `parentPin.change*` keys, mounted on `/app/report`, 7 jsdom tests |
+| `ae5fa42` | 3 — e2e | one browser journey in `e2e/parent-surfaces.spec.ts`, 15 → 16 runs |
+| *(epilogue)* | — | final SHA write-back + `change.md` → `implemented` |
 
-Dimension verdicts (pre-fix → post-fix): End-State Alignment PASS · Lean Execution PASS ·
-Architectural Fitness PASS · Blind Spots **FAIL → PASS** (one recorded risk) · Plan Completeness
-**WARNING → PASS**.
+## What shipped
+
+**The hole is closed.** Before this change, `POST /api/parent/pin/set` overwrote an existing PIN on a
+**marker alone** — a possibly-15-minute-old cookie. A child on the parent's logged-in device could
+POST inside that window and silently change the PIN, and with no forgot-PIN recovery (K2) that is a
+permanent, silent lockout from the parent zone. It now requires the marker **and** the current PIN,
+re-proved through the shared atomic throttle — the bar `POST /api/account/delete` already sets.
+
+- `src/pages/api/parent/pin/set.ts` — the change gate. **One `if (isChange)` block**: presence check
+  with an early `return` (that `return` is the TypeScript narrowing), then `verifyPin`, then
+  same-as-current. No `!`, no `?? ""`, no truthiness-gated verification. `STATUS_FOR` added, matching
+  `verify.ts:17` verbatim.
+- `src/lib/services/parent-pin.ts` — additive `pinExists(client): Promise<boolean | null>`, fail-closed
+  (query error → `null` → the route answers 503). `hasPin` re-expressed over it; its contract and its
+  one caller (`parent-pin.astro:13`) are untouched.
+- `src/components/parent/ChangePinSection.tsx` — three PIN fields; status→copy map copied from
+  `DeleteAccountSection` (F5 lesson included: a 401 is "wrong PIN" only with `reason: "wrong"`);
+  403 → hard-nav back to the gate. `aria-labelledby` → its `h2`, so it exposes `role="region"`.
+- `src/i18n/pl.ts` — `parentPin.change*` + `errors.sameAsCurrent`, inside the existing `parentPin` block.
+- `src/pages/app/report.astro` — mounted at `lg:row-start-2`; deletion → `row-start-3`, aside →
+  `lg:row-span-3`. The "Bezpieczne środowisko" card is untouched.
+- `docs/reference/contract-surfaces.md` — new **"Parent PIN routes (RLS surface)"** section recording
+  both gate orders, the first-set-open vs change-requires-both split, and the `STATUS_FOR` vocabulary.
+- Tests: `tests/parent-pin-routes.test.ts` (`:83` updated in place + 6 net-new),
+  `tests/change-pin-section.test.tsx` (new, 7), `e2e/parent-surfaces.spec.ts` (+1 journey).
+
+**No migration, no new endpoint, no nav change, no `PROTECTED_ROUTES` edit** — exactly as planned.
+
+## Verification actually observed
+
+Run with the command sandbox disabled (it blocks `127.0.0.1:54321`; ~30 tests fail for the wrong
+reason otherwise). No stray dev server on 4321/4322 — checked before starting.
+
+| Gate | Baseline measured on this branch | After |
+| --- | --- | --- |
+| `npm test` | **299 passed (39 files)** | **312 passed (40 files)** — 305 after Phase 1, 312 after Phase 2, unchanged by Phase 3 |
+| `npm run lint` | clean | **clean** |
+| `npm run check` (astro) | — | **0 errors, 0 warnings** (10 pre-existing hints in `src/pages/app.astro`) |
+| `npx playwright test` | **15 passed** | **16 passed** (the new test is `desktop`-only) |
+
+The plan's floors were ≥305 after Phase 1 and ≥312 after Phase 2 — both met exactly.
+
+Extra checks run: the new spec passed **3 consecutive runs** (3.5); an admin `listUsers` sweep found
+**0 leaked** `e2e-pinchange-*` / `e2e-tmp712-*` / `pinsetlock-*` users (3.6).
+
+## Deliberate-break evidence (the security tests can fail)
+
+Run **before** the Phase 1 commit, both shapes the plan review named, red then restored to green:
+
+1. **Truthiness-gated verification** — presence check deleted, `verifyPin` wrapped in
+   `if (currentPin) { … }`. This is F1's exact "natural implementation" and a full bypass.
+   **Red:** *"a marker WITHOUT currentPin no longer changes the PIN: 400 'invalid', nothing written,
+   no attempt burnt"* (got 200) — the anti-bypass assertion — plus *"same-as-current"* as a cascade.
+2. **`verifyPin` skipped** on the change path, presence check kept (criterion 1.7's own wording).
+   **Red:** *"a wrong currentPin is 401 'wrong' and burns exactly one throttle attempt"* and
+   *"the throttle locks the change path, and a LIVE lock rejects even the CORRECT current PIN"*.
+
+Restored → **16/16** in that file, **305/305** overall at the time.
+
+**Hostile re-read of the shipped route** (each is a way in, each is closed): field omitted → `null` →
+`?? undefined` → `!currentPin` → 400 before any comparison. Empty string / non-digits / wrong length /
+a file part → zod 400. A literal `null` cannot survive `FormData`, and `"null"` fails the regex. Note
+`"0000"` is a *truthy* string, so the falsiness check cannot reject a valid PIN. Wrong value →
+`verifyPin` → 401 + one burnt attempt. Live lock, even with the **correct** PIN → 429, and `setPin`
+(which zeroes `failed_attempts`/`locked_until`) is never reached, so the free-throttle-reset path that
+was live before this change is gone. `pinExists` error → 503 before anything. **The only way to reach
+`setPin` on a change path is a `verifyPin` that returned `ok`.**
+
+## Autonomous decisions taken this step
+
+Recorded in full under `plan.md` → `## Autonomous decisions` as **D12–D15**:
+
+- **D12** — the skill's four interactive gates (manual confirmation, dirty paths, commit message, next
+  phase) were decided, not asked, per the agent contract. Staging was by explicit path only: the tree
+  carries four other features' `context/changes/` folders plus `context/runs/`.
+- **D13** — route test 4 ships as **one** `it()` carrying both the 4a and 4b assertions, because 4b
+  must run inside the same live 60-second lock window 4a creates. Net-new count is therefore exactly
+  6 → 305, which is the plan's floor.
+- **D14** — the deliberate-break check was run in **both** bypass shapes (see above).
+- **D15** — the two browser-only manual criteria were **executed, not waived**. 2.9 falls out of the
+  Phase 3 e2e (success copy + URL still `/app/report`). 2.6 was measured with a throwaway spec at
+  712px — top offsets report `20` → change PIN `195` → rail `432` → danger zone `787`, and
+  `scrollWidth === clientWidth === 712`. That spec was deleted and never committed. 2.7/2.8 were
+  settled statically. **2.6 and 2.9 therefore carry the Phase 3 SHA**, not Phase 2's.
+
+Two small adaptations, neither a plan deviation: `pinExists` returns `data.length > 0` rather than
+`(data?.length ?? 0) > 0` (the `?? 0` is unreachable after the error check and
+`@typescript-eslint/no-unnecessary-condition` rejects it), and the island types its submit handler
+`SubmitEvent<HTMLFormElement>` because `@typescript-eslint/no-deprecated` rejects `FormEvent` —
+matching `ParentPinGate.tsx:37`.
 
 ## Next command
 
 ```
-/10x-implement parent-security-screen
+/10x-impl-review parent-security-screen
 ```
 
-## What the review verified and found sound
+## What the reviewer should look at first
 
-Checked against code, not against the plan's own summary:
+1. **The change gate in `set.ts`** — F1's structure has **no test of its own**. Criteria 1.7 and 1.8
+   plus the STRUCTURAL REQUIREMENT comment in the route are its entire defence. Read it top-to-bottom
+   against `account/delete.ts:41-64`; the orders match step for step, with the change-only
+   conditionality and one extra fail-closed 503 for `pinExists`.
+2. **Test 4's second half** — the throttle-reset oracle. If a future refactor moves `setPin` ahead of
+   the change branch, that assertion is the only thing that goes red.
+3. **`hasPin` vs `pinExists`** — every security-critical caller must use `pinExists`. `hasPin` keeps
+   its fail-open contract for `parent-pin.astro` only (K3).
 
-- **The live hole is real and closing it breaks nothing.** `set.ts:31-34` checks the marker and falls
-  straight to `setPin` — no PIN check at all. The only production client is `ParentPinGate.tsx:54`,
-  which posts to `/set` only in `set` mode, which `parent-pin.astro:13-14` renders only when
-  `hasPin()` is false. **No legitimate caller depends on marker-only change.** Exactly one test
-  (`tests/parent-pin-routes.test.ts:83`) does, and the plan updates it deliberately.
-- **The throttle is genuinely shared.** `verifyPin` is the only exported reader of `pin_hash`; the RPC
-  is `security invoker`, `set search_path = ''`, pinned by `where s.account_id = auth.uid()`, and does
-  the increment + lockout decision in one atomic UPDATE. `verifyPin` short-circuits on a live
-  `locked_until` before any comparison. The route compares nothing itself.
-- **First-time set is untouched**, verified across every seeding call site: `parent-pin-routes.test.ts`
-  `:52 :63 :93 :104 :128`, all `setPin()` calls in `parent-pin.test.ts` / `account-deletion.test.ts` /
-  `profile-deletion.test.ts`, and both e2e uses of `setPinAndLandOnReport` — all on PIN-less accounts.
-- **Placement holds on every path.** `output: "server"`, no `prerender` on the page; middleware gates
-  `/app` for auth; `report.astro:22-29` re-verifies the signed marker on **every render**, including a
-  direct URL hit — absent/stale/tampered → redirect to `/app/parent-pin`. No cached or static path.
-- **CSRF is fine and improves.** Auth cookies and the marker are both `httpOnly` + `sameSite: "lax"`,
-  so a cross-site POST carries neither.
-- **The scope collapse is honest.** Both PRD non-goals re-read (content correct, line numbers were
-  wrong — fixed). Both mockup PNGs opened: web draws 4 toggles, mobile 3 — the "tell" is real. Neither
-  mockup has a current-PIN field; both are `Wpisz 4 cyfry` + `Potwierdź PIN` inside a "Krok 3 z 3"
-  wizard, i.e. first-time set. The web mockup's own footnote — *"PIN będzie wymagany przy zmianie
-  ważnych ustawień"* — actively supports D4. The "Bezpieczne środowisko" card ships at
-  `report.astro:87-103` and criterion 2.8 asserts it stays byte-identical.
-- **Phase granularity is fail-safe.** Phase 1 is a pure tightening with no client on the affected path,
-  so a stop after any phase leaves auth strictly stronger, never half-changed.
+## Risks carried forward (unchanged by this step)
 
-## What was fixed in `plan.md`
+`plan.md` → `## Known risks` K1–K6. The two that should drive the next change:
 
-| # | Finding | Fix |
-| --- | --- | --- |
-| **F1** ❌ CRITICAL | The `currentPin` gate was specified as three independent `isChange` tests in a flat list, in a route the plan itself flags as a null/undefined minefield. The natural implementation needs a `currentPin!` assertion, and `if (isChange && currentPin) { verifyPin(…) }` — the obvious shape for an `optional()` field — is a **full bypass**: omit the field, skip the PIN check. A `=== null` absence check is dead code after the `?? undefined` normalisation. | Guard order rewritten as a **single `if (isChange) { … }` block** — presence check with early `return` (that `return` is the TS narrowing), then `verifyPin`, then same-as-current. Added a **STRUCTURAL REQUIREMENT** paragraph: no `!`, no `?? ""`, never gate `verifyPin` on truthiness ("the presence check must `return`, never `skip`"), plus the enumerated rejected shapes (omitted / empty / file part / wrong length). |
-| **F2** ⚠️ | `hasPin` (`parent-pin.ts:57-60`) reads a query **error** as "no PIN" — which on this route means skip the marker guard *and* skip the `currentPin` requirement. Pre-existing, but this change makes it the sole gate separating "open onboarding" from "locked-down change". | New **Phase 1 §1b**: additive fail-closed `pinExists(client): Promise<boolean \| null>`; `hasPin` re-expressed over it so `parent-pin.astro:13` is untouched; `set.ts` returns `503` on `null`. Test gap stated (no mocks in this suite) → K3. |
-| **F3** ⚠️ | No test proved a live `locked_until` rejects a change carrying the **correct** current PIN. Sharper: `setPin` unconditionally zeroes `failed_attempts`/`locked_until` (`:73`) — it and `verifyPin`'s success branch are the *only* two writers repo-wide — so any path reaching `setPin` while locked is a **free lockout reset**, and that path is live today. | Test 4 split; new **4b** asserts correct-PIN-during-lock → 429, `pin_hash` original, `failed_attempts` still ≥5, `locked_until` still future — labelled the throttle-reset-oracle assertion. `failed_attempts`-unchanged added to tests 2 and 7. Standing rule: every "did not change" assertion reads back through the **admin** client (L-002), because a status-only assertion would pass against a route that 400s and *then* writes. |
-| **F5** ⚠️ | Test list said "7 new `it()`" while the criterion said "+6", and test 1 duplicated the `:83` case it also said to update. | Test 1 relabelled an explicit **in-place update** of `:83` ("do not add a second happy-path test"); tests 2–7 are the 6 net-new. Criterion reworded as a floor. |
-| **F6** ⚠️ | PRD citations `:167` / `:170` were both wrong — the actual lines are **:158** and **:161**. Content was correct; the pointers were not. These are the load-bearing evidence for dropping 4 of the 5 scoped things. | Corrected, both quoted in full, drift flagged and auditable. Surfaced that `:161` also names **"settings UI"** as out — independently supporting D3. Recorded the direct PNG re-verification. |
-| **F7** ⚠️ | The stated label constraint checked `t.deletion.accountPinLabel` but missed the real collision: `t.parentPin.pinLabel` = `"PIN (4–6 cyfr)"` **is** a substring of `newPinLabel` = `"Nowy PIN (4–6 cyfr)"`, and `getByLabel` matches substrings. | Label kept; collision documented with two containment rules (never `getByLabel(pinLabel)` in an `/app/report` context; rename `newPinLabel` if a `pinLabel` field ever lands there). → K6. |
+- **K1 — the sticky `failed_attempts` counter.** Nothing resets it but a correct PIN or `setPin`, so
+  after 5 failures the 60 s lock lapses with the counter still ≥5 and the next wrong PIN re-locks
+  instantly — one guess per minute, indefinitely. **This change adds a new way to reach that state**
+  (a form where the current PIN is typed from memory). Confirmed by reading, not pending discovery;
+  D7's reversal trigger was never going to fire in an unattended run. It needs a migration to
+  `register_pin_failure`, deliberately kept out of the commit that adds a new *caller* of that RPC.
+- **K2 — no forgot-PIN recovery.** The reason D4 went the strict way and the reason K1 has no escape
+  hatch. Highest-value follow-up; if it ships, revisit D4.
 
-Also added to Critical Implementation Details: (a) `setPin` is a throttle reset, so never move it
-ahead of the change branch; (b) `getByRole("region", …)` resolves uniquely **only** because
-`DeleteAccountSection.tsx:55` is a `<section>` with no accessible name — so the new section's
-`aria-labelledby` is load-bearing for Phase 3, not decoration.
+Also open: K3 (`pinExists`'s `null` branch has no test — real-Supabase suite, no mocks), K4 (a PIN
+change does not revoke a marker held in another browser), K5 (the marker has no domain-separation
+prefix), K6 (`t.parentPin.pinLabel` is a substring of `newPinLabel` — safe only while the two never
+co-render; the new tests and the e2e all locate by `newPinLabel`).
 
-## What was deferred, and what the implementer must carry
+## Notes for whoever runs the suites next
 
-New `## Known risks` section in `plan.md` (K1–K6). The two that matter:
-
-1. **K1 — the sticky `failed_attempts` counter (was F4).** Verified: nothing resets the counter except
-   a correct PIN or `setPin`. After 5 failures the 60 s lock lapses with the counter still ≥5, so the
-   next wrong PIN re-locks instantly — one guess per minute, indefinitely. **This change creates a new
-   way to reach that state** (a form where the current PIN is typed from memory), and with no
-   forgot-PIN recovery that is the permanent-lockout scenario D4 exists to prevent, reached by
-   accident. D7's decision to defer the RPC fix is right. **But D7's reversal trigger ("if manual
-   testing shows it") depends on Manual testing step 3, which an unattended run does not execute** —
-   so the plan now records K1 as *confirmed by reading, not pending discovery*, and names it the next
-   change rather than something to wait and observe.
-2. **K3 — `pinExists`'s `null` branch has no test.** The suite runs against real Supabase with no
-   mocks, so the error path cannot be induced cheaply. It is a fail-closed defence-in-depth guard,
-   verified by reading. Stated in the plan rather than hidden.
-
-Also carried: K2 no forgot-PIN recovery · K4 a PIN change does not revoke a marker held in another
-browser (per-cookie, ≤15 min, and that browser can no longer change the PIN again) · K5 the marker has
-no domain-separation prefix · K6 the label substring collision.
-
-**One thing has no test at all: F1's structure.** Manual criteria 1.7 (deliberate-break) and 1.8
-(guard-order read) are the only enforcement, and **1.7 will not run in an unattended pass**. If the
-implementer skips it, the STRUCTURAL REQUIREMENT paragraph is the entire defence. Read Phase 1 §1
-before writing the route, and read the finished route top-to-bottom against
-`account/delete.ts:41-64`.
-
-## Recorded only (no plan change)
-
-- **F8** — `### Success Criteria` / `#### Automated Verification` are written without the template's
-  trailing colons. The `## Progress` block itself is fully well-formed (3 phases, 23 checkboxes,
-  1.1–1.8 / 2.1–2.9 / 3.1–3.6, names matching the body headings verbatim, no stray checkboxes in phase
-  bodies). No parse risk found for `/10x-implement`.
-- **F9** — D9 (same-as-current) costs a reason code, a string, a client branch and a test to prevent a
-  no-op. Rationale is honest and the ordering is right; it is just the one droppable thing. D9 already
-  records the reversal condition.
-- **F10** — `e2e/CLAUDE.md` does not *forbid* `getByTestId`; it permits it as a documented fallback
-  when a11y attributes are ambiguous, preferring the ambiguity be surfaced as a product finding first
-  (which is exactly what the Phase 2 `aria-labelledby` does). `clearCookies({ name: "parent_verified" })`
-  **is** sanctioned verbatim, and specifically in `parent-surfaces.spec.ts` — where Phase 3 puts the
-  new test. `page.waitForTimeout` **is** forbidden, as the plan says.
-
-## Brief drift — `plan-brief.md` is stale in two places
-
-It was not regenerated. `plan.md` is authoritative. The two divergences:
-
-1. It says Phase 1 adds **"+7 route tests → ≥305"**. Correct is **6 net-new** (tests 2–7); test 1 is an
-   in-place update of `:83`. The ≥305 floor is right.
-2. It does not mention Phase 1 **§1b** (`pinExists`) or the `## Known risks` section.
-
-## Phase structure (unchanged, with the review's amendments folded in)
-
-| Phase | Delivers | Tests |
-| --- | --- | --- |
-| **1. Route contract** | `currentPin` on `POST /api/parent/pin/set` — optional at zod level, **required inside a single `if (isChange)` block** when a PIN exists. Plus fail-closed `pinExists` (§1b) and a `contract-surfaces.md` entry for the PIN routes. First-time set untouched. | 6 net-new route tests → ≥305 (from 299) |
-| **2. Island + strings + mount** | `src/components/parent/ChangePinSection.tsx`, `parentPin.change*` keys in `src/i18n/pl.ts`, mounted on `/app/report` above the danger zone, `aria-labelledby` → `h2`. | +7 jsdom tests → ≥312 |
-| **3. E2E** | One journey in `e2e/parent-surfaces.spec.ts`: change → clear marker → old PIN rejected at the gate → new PIN admits. | 15 → **16** Playwright runs |
-
-**No migration. No new endpoint. No nav change. No `PROTECTED_ROUTES` edit.**
-
-## Verification baselines (from the agent contract)
-
-`npm run lint` clean · `npm test` **299** baseline, may only go up · `npx playwright test` **15**
-runs baseline (16 after Phase 3; the new test is `desktop`-only — `touch`'s `testMatch` is scoped to
-`gameplay-restore.spec.ts`). Local Supabase must be up for both suites. Demo account
-`ui-polish-demo@example.test` / `test-password-123!`, PIN `2468`, profile "Ania".
-
-## Autonomous decisions (this step)
-
-Run: `context/runs/2026-08-22-autonomous-five` (feature F3). No human in the loop, so the
-`10x-plan-review` skill's interactive triage prompt was **decided, not asked**.
-
-- **Triaged every finding myself** under a fixed policy: CRITICAL → fix directly in `plan.md`;
-  WARNING → fix if clear and contained, else record under `## Known risks`; OBSERVATION → record only.
-  Rejected the alternative of saving the report with all decisions `PENDING`, which would have handed
-  `/10x-implement` a plan with a known bypass shape still in it.
-- **Fixed F2 rather than only recording it**, even though `hasPin`'s fail-open is pre-existing. The
-  deciding factor: this change is what makes that predicate the sole gate between open onboarding and
-  a locked-down change, and the fix is additive with zero behaviour change for the other caller.
-  *Would change the answer:* if `pinExists` had required touching `parent-pin.astro`'s mode selection,
-  it would have gone to `## Known risks` instead.
-- **Did not regenerate `plan-brief.md`.** It is a derived 2-minute read, and regenerating it risks
-  drift against a plan I had just amended in seven places. Recorded the two stale claims here instead.
-  *Would change the answer:* if the next step were a human review rather than `/10x-implement`.
-- **Did not rewrite D7.** F4 is a real risk but D7's *decision* (defer the RPC fix) survives scrutiny;
-  only its reversal trigger was unreachable unattended. So the decision stands and the risk moved to
-  `## Known risks` with the trigger problem stated. *Would change the answer:* if the sticky counter
-  were reachable without a wrong PIN.
+- The command sandbox blocks `127.0.0.1:54321` — run `npm test` / `npx playwright test` with it
+  disabled, or ~30 tests fail for the wrong reason.
+- A stray dev server on 4321/4322 makes four `gameplay-restore` runs fail spuriously. Check before
+  blaming a change.
+- The unit baseline on this branch is **299** (feature F2's +19 landed on its own branch, cut from the
+  same parent). Do not assume 318 here.

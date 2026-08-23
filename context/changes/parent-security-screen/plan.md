@@ -1019,21 +1019,21 @@ two labels never render on the same page.
 
 #### Manual
 
-- [x] 2.6 At 712px the report reads report → change PIN → rail → danger zone, nothing overflows
+- [x] 2.6 At 712px the report reads report → change PIN → rail → danger zone, nothing overflows — ae5fa42
 - [x] 2.7 Exactly one `h1` on `/app/report`; the new card's heading is an `h2` — f5417e8
 - [x] 2.8 The "Bezpieczne środowisko" card is byte-identical to before this change — f5417e8
-- [x] 2.9 A real-browser PIN change shows the success line and does not navigate away
+- [x] 2.9 A real-browser PIN change shows the success line and does not navigate away — ae5fa42
 
 ### Phase 3: E2E journey — the PIN actually changes
 
 #### Automated
 
-- [x] 3.1 `npx playwright test` green with 16 runs
-- [x] 3.2 The two existing tests in `e2e/parent-surfaces.spec.ts` pass unmodified
-- [x] 3.3 Lint clean: `npm run lint`
-- [x] 3.4 Unit suite unchanged and green: `npm test`
+- [x] 3.1 `npx playwright test` green with 16 runs — ae5fa42
+- [x] 3.2 The two existing tests in `e2e/parent-surfaces.spec.ts` pass unmodified — ae5fa42
+- [x] 3.3 Lint clean: `npm run lint` — ae5fa42
+- [x] 3.4 Unit suite unchanged and green: `npm test` — ae5fa42
 
 #### Manual
 
-- [x] 3.5 The new test is stable across three consecutive runs
-- [x] 3.6 No leaked `e2e-pinchange-*` users in the local stack after the run
+- [x] 3.5 The new test is stable across three consecutive runs — ae5fa42
+- [x] 3.6 No leaked `e2e-pinchange-*` users in the local stack after the run — ae5fa42

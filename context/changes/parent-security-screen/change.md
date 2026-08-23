@@ -1,7 +1,7 @@
 ---
 change_id: parent-security-screen
 title: Zabezpieczenia screen behind the parent gate — change PIN and protective options
-status: implementing
+status: implemented
 created: 2026-08-22
 updated: 2026-08-23
 archived_at: null
