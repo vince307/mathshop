@@ -53,10 +53,28 @@ async function currentUserId(client: SupabaseClient): Promise<string | null> {
   return user?.id ?? null;
 }
 
-/** Whether the authenticated parent has already set a PIN (RLS-scoped). */
+/**
+ * Whether the authenticated parent has a PIN row (RLS-scoped), FAIL-CLOSED: a
+ * query error returns `null` ("could not tell"), never `false`. Security-critical
+ * callers must use this, not `hasPin`: on `POST /api/parent/pin/set` a `false`
+ * means "first-time set", i.e. skip BOTH the marker guard and the `currentPin`
+ * requirement — so a transient DB error reading as "no PIN" would open the whole
+ * change path to any authenticated session.
+ */
+export async function pinExists(client: SupabaseClient): Promise<boolean | null> {
+  const { data, error } = await client.from("account_settings").select("account_id").limit(1);
+  if (error) return null;
+  return data.length > 0;
+}
+
+/**
+ * Whether the authenticated parent has already set a PIN (RLS-scoped). Contract
+ * unchanged: it fails OPEN (a query error reads as "no PIN"), which is fine for
+ * its one caller — `parent-pin.astro`'s set/enter mode selection, where the worst
+ * case is rendering the wrong form that the hardened route then rejects.
+ */
 export async function hasPin(client: SupabaseClient): Promise<boolean> {
-  const { data } = await client.from("account_settings").select("account_id").limit(1);
-  return (data?.length ?? 0) > 0;
+  return (await pinExists(client)) === true;
 }
 
 /**

@@ -421,12 +421,26 @@ export const pl = {
     setSubmit: "Ustaw PIN",
     enterSubmit: "Otwórz panel",
     pending: "Sprawdzam…",
+
+    // Change-PIN card on the report page (the parent zone). Changing the PIN
+    // needs the CURRENT one re-proved under the throttle — there is no
+    // forgot-PIN recovery, so a silent change would lock the parent out for
+    // good. The three labels must stay mutually non-substring: Playwright's
+    // getByLabel matches substrings. Draft Polish — pending native-speaker review.
+    changeHeading: "Zmiana PIN-u rodzica",
+    changeIntro: "Podaj obecny PIN, żeby ustawić nowy.",
+    currentPinLabel: "Obecny PIN",
+    newPinLabel: "Nowy PIN (4–6 cyfr)",
+    newPinConfirmLabel: "Powtórz nowy PIN",
+    changeSubmit: "Zmień PIN",
+    changeSuccess: "PIN został zmieniony.",
     errors: {
       invalid: "PIN musi mieć od 4 do 6 cyfr.",
       mismatch: "PIN-y nie są takie same.",
       wrong: "Nieprawidłowy PIN.",
       locked: "Za dużo prób. Spróbuj ponownie za chwilę.",
       generic: "Coś poszło nie tak. Spróbuj ponownie.",
+      sameAsCurrent: "Nowy PIN musi się różnić od obecnego.",
     },
   },
 

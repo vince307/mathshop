@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import AppShell from "@/components/app/AppShell.astro";
 import { ShieldCheck, Check } from "lucide-react";
 import WeeklyReport from "@/components/parent/WeeklyReport";
+import ChangePinSection from "@/components/parent/ChangePinSection";
 import DeleteAccountSection from "@/components/parent/DeleteAccountSection";
 import type { ChildReport } from "@/components/parent/WeeklyReport";
 import { buttonVariants } from "@/components/ui/button";
@@ -60,16 +61,25 @@ const reports: ChildReport[] = await Promise.all(
       </div>
 
       {
+        /* Account settings the gate already promises (t.parentPin.note): changing
+          the parent PIN. Above the danger zone, and behind the same marker gate as
+          the rest of this page — the route re-proves the current PIN itself. */
+      }
+      <div class="lg:col-span-2 lg:col-start-1 lg:row-start-2">
+        <ChangePinSection client:load />
+      </div>
+
+      {
         /* Danger zone (MAT-17): whole-account deletion — typed e-mail + fresh PIN in
           the dialog. Last on the page at every width; stacking it above the ordinary
           actions on a phone would put deletion in the reader's path. */
       }
-      <div class="order-last lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-2">
+      <div class="order-last lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-3">
         <DeleteAccountSection client:load email={user.email ?? ""} />
       </div>
 
       {/* ---------- Rail: actions + how the environment is kept safe ---------- */}
-      <aside class="flex flex-col gap-6 lg:col-start-3 lg:row-span-2 lg:row-start-1">
+      <aside class="flex flex-col gap-6 lg:col-start-3 lg:row-span-3 lg:row-start-1">
         <div class="flex flex-col gap-3">
           {
             /* Parent-side add-a-child entry (S-11) — hidden once the soft cap is reached. */
