@@ -137,7 +137,10 @@ export const pl = {
       // Deliberately NOT "Rozwój sklepu" (the page's own h1): `getByRole` name
       // matching is substring-based, so a label that contained the heading — or
       // vice versa — would make every locator on that screen ambiguous.
+      // "Światy" and "Rozwój świata" coexist safely: neither is a substring of
+      // the other, so both nav locators stay unambiguous.
       growth: "Rozwój świata",
+      worlds: "Światy",
       parent: "Panel rodzica",
     },
   },
@@ -185,6 +188,28 @@ export const pl = {
     },
     error: "Nie udało się utworzyć profilu. Spróbuj ponownie.",
     limitReached: "Masz już maksymalną liczbę profili dzieci.",
+  },
+
+  // World-selection screen (`/app/worlds`, F5) — built to the `01-world-selection`
+  // ui-v2 mockups. Makes `profileWizard.note`'s promise ("Świat możesz zmienić
+  // później") true. `sameSkills` + `carryOver` are the screen's whole message and
+  // are honest by construction: nothing in the upgrade loop reads `theme`, so a
+  // switch is provably a no-op for the wallet, the ladder and the owned upgrades.
+  // The competency trio is world-INDEPENDENT by design — that is the point — so it
+  // is deliberately not keyed by slug.
+  worlds: {
+    heading: "Wybierz swój świat",
+    subtitle: "Co chcesz dziś prowadzić?",
+    sameSkills: "Każdy świat uczy tych samych umiejętności",
+    carryOver: "Twój sklep i kupione ulepszenia przenoszą się do nowego świata.",
+    learnHeading: "W tym świecie nauczysz się:",
+    learn: {
+      math: { title: "Matematyka", body: "Dodawaj, odejmuj, licz resztę i pracuj z cenami." },
+      trade: { title: "Handel", body: "Zarządzaj produktami, cenami i zyskami." },
+      decisions: { title: "Decyzje", body: "Planuj inwestycje i rozwijaj swój biznes." },
+    },
+    confirm: "Start",
+    submitting: "Zmieniam…",
   },
 
   // Child start screen (S-01b). The tap opens the counting task (S-02). The

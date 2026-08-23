@@ -3,6 +3,7 @@ import type { ShopState, SkillState } from "@/types";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import { type BuyReason, canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
+import { worldForTheme } from "@/data/worlds";
 
 export { deriveStartingLevel } from "@/data/leveling";
 
@@ -112,6 +113,34 @@ export async function deleteChildProfile(client: SupabaseClient, profileId: stri
   // delete().select() returns the deleted rows, so 0 rows distinguishes
   // not-found/not-owned from success without a prior read.
   const { data, error } = await client.from("child_profiles").delete().eq("id", profileId).select("id");
+  if (error) return { error };
+  if (data.length === 0) return { failure: "not-found" };
+  return { ok: true };
+}
+
+export type UpdateThemeResult = { ok: true } | { failure: "not-found" } | { error: PostgrestError };
+
+/**
+ * Change one of the parent's own child profiles' world (F5, `/app/worlds`). The
+ * row is reached by `id` under the F-01 `child_profiles_update_own` RLS policy
+ * (`using` + `with check` on `auth.uid() = account_id`), so a non-owner's update
+ * matches 0 rows and reads as `not-found` — never touching another account's row.
+ * No manual `account_id` filter: RLS is the boundary (see the module doc).
+ *
+ * The theme flip is deliberately lossless — `wallet_balance`, `business_level`,
+ * `shop_state.purchased` and `skill_state` are untouched, and nothing in the
+ * upgrade loop reads `theme` — so the screen's promise that the shop and its
+ * upgrades come along is true by construction. The closed slug set is enforced
+ * in zod at the route (`WORLD_SLUGS`); there is no DB CHECK on the column.
+ */
+export async function updateChildProfileTheme(
+  client: SupabaseClient,
+  profileId: string,
+  theme: string,
+): Promise<UpdateThemeResult> {
+  // update().select() returns the updated rows, so 0 rows distinguishes
+  // not-found/not-owned from success without a prior read (deleteChildProfile's idiom).
+  const { data, error } = await client.from("child_profiles").update({ theme }).eq("id", profileId).select("id");
   if (error) return { error };
   if (data.length === 0) return { failure: "not-found" };
   return { ok: true };
@@ -254,7 +283,21 @@ export async function buyUpgrade(
     .from("child_profiles")
     .update({
       wallet_balance: walletBalance,
-      shop_state: { ...current.shop_state, purchased: nextPurchased },
+      shop_state: {
+        ...current.shop_state,
+        purchased: nextPurchased,
+        // Record the world this upgrade was bought in (F5, write-only in v1).
+        // The INNER spread is load-bearing: naming `purchasedMeta` as an explicit
+        // key SHADOWS the outer `...current.shop_state`, so without it every
+        // purchase would discard the prior entries. `?? {}` is required for the
+        // same reason `readPurchased` exists — `shop_state` is typed non-optional
+        // but `{}` rows are legal forever. `worldForTheme` normalizes the DB
+        // default 'default' to `kawiarnia`, so 'default' is never stored here.
+        purchasedMeta: {
+          ...(current.shop_state.purchasedMeta ?? {}),
+          [upgrade.id]: { world: worldForTheme(current.theme).slug, at: new Date().toISOString() },
+        },
+      },
       skill_state: nextSkillState,
     })
     .eq("id", profileId);

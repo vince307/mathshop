@@ -31,7 +31,41 @@ const DEFAULT_SLOTS: Partial<Record<string, CSSProperties>> = {
   storage: { left: "6%", bottom: "7%" },
   customers: { right: "6%", bottom: "7%" },
 };
-const WORLD_SLOTS: Partial<Record<string, Partial<Record<string, CSSProperties>>>> = {};
+export const WORLD_SLOTS: Partial<Record<string, Partial<Record<string, CSSProperties>>>> = {
+  // `kawiarnia` is deliberately ABSENT — DEFAULT_SLOTS was tuned against its
+  // plate, so it must keep falling through. Each table below is tuned against
+  // that world's own `world-<slug>.webp`: the badges sit in the plate's margins,
+  // never over a focal point, and every entry sets exactly one horizontal and
+  // one vertical percent so the placed/unplaced partition above keeps working.
+  piekarnia: {
+    // Narrow centred building (x ≈ 14–85%) — generous left/right margins.
+    sign: { left: "7%", top: "10%" },
+    shelf: { left: "4%", top: "36%" },
+    register: { right: "4%", top: "32%" },
+    slot: { left: "46%", bottom: "3%" },
+    storage: { left: "4%", bottom: "10%" },
+    customers: { right: "4%", bottom: "12%" },
+  },
+  "galaktyczna-baza": {
+    // Wide scene (x ≈ 8–92%); the sky above the base is the only real whitespace,
+    // and the dish, tower and rover push the mid-band badges to the very edges.
+    sign: { left: "4%", top: "5%" },
+    shelf: { left: "3%", top: "20%" },
+    register: { right: "3%", top: "38%" },
+    slot: { left: "44%", bottom: "3%" },
+    storage: { left: "3%", bottom: "13%" },
+    customers: { right: "4%", bottom: "5%" },
+  },
+  "sklep-ksiegarnia": {
+    // A very full frontal display — the margins are thin, so these hug the frame.
+    sign: { left: "6%", top: "4%" },
+    shelf: { right: "5%", top: "6%" },
+    register: { right: "3%", top: "40%" },
+    slot: { left: "46%", bottom: "2%" },
+    storage: { left: "3%", bottom: "16%" },
+    customers: { right: "3%", bottom: "14%" },
+  },
+};
 
 /**
  * The shop as it visibly stands (S-06): the base world art plus each owned

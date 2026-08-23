@@ -1,5 +1,5 @@
 ---
-import { Home, Target, Store, TrendingUp, ShoppingCart, ShieldCheck, LogOut } from "lucide-react";
+import { Home, Target, Store, TrendingUp, Globe, ShoppingCart, ShieldCheck, LogOut } from "lucide-react";
 import { AvatarCircle } from "@/components/child/AvatarCircle";
 import { WalletPill, LevelBadge } from "@/components/child/HudChip";
 import { t } from "@/i18n";
@@ -35,7 +35,7 @@ interface Props {
   /** Optional line under the heading. */
   subtitle?: string | null;
   /** Which primary nav item is current. */
-  active: "dashboard" | "missions" | "shop" | "growth" | "parent";
+  active: "dashboard" | "missions" | "shop" | "growth" | "worlds" | "parent";
   /** Active child profile; `null` renders the shell without the identity block/HUD. */
   profile?: ShellProfile | null;
   /** Show the child's avatar beside the heading (mockups do so on the dashboard). */
@@ -60,10 +60,13 @@ const items = [
   { key: "dashboard", href: "/app/start", label: t.nav.items.dashboard, icon: Home },
   { key: "missions", href: "/app/task", label: t.nav.items.missions, icon: Target },
   { key: "shop", href: "/app/upgrades", label: t.nav.items.shop, icon: Store },
-  // One object serves BOTH navs — `tabs` below spreads `items`. Ships now that
-  // /app/growth exists (no dead navigation). `TrendingUp` is a generic lucide
-  // glyph, so no crop and no slice-map row.
+  // One object serves BOTH navs — `tabs` below spreads `items`. Both entries ship
+  // now that /app/growth and /app/worlds exist (no dead navigation). `TrendingUp`
+  // and `Globe` are generic lucide glyphs, so no crop and no slice-map row.
+  // With the parent entry this is six tabs; measured at the 712px touch viewport
+  // they hold in one row at 116px each, with no truncation and no overflow.
   { key: "growth", href: "/app/growth", label: t.nav.items.growth, icon: TrendingUp },
+  { key: "worlds", href: "/app/worlds", label: t.nav.items.worlds, icon: Globe },
 ] as const;
 
 const tabs = [...items, { key: "parent", href: "/app/report", label: t.nav.items.parent, icon: ShieldCheck }] as const;
