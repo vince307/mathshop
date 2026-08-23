@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { BarChart3, Sparkles, Trash2 } from "lucide-react";
+import { BarChart3, CalendarDays, Sparkles, Trash2 } from "lucide-react";
 import { AvatarCircle } from "@/components/child/AvatarCircle";
 import { ConfirmDeleteDialog } from "@/components/parent/ConfirmDeleteDialog";
+import WeeklyActivityChart from "@/components/parent/WeeklyActivityChart";
 import { Button } from "@/components/ui/button";
 import type { Competency, WeeklyReport as WeeklyReportData, WeeklyReportUpgrade } from "@/types";
 import { COMPETENCIES } from "@/data/skills";
@@ -125,7 +126,7 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
     );
   }
 
-  const { practice, upgrades } = child.report;
+  const { practice, upgrades, daily } = child.report;
   // Only competencies actually practiced this week (completed > 0) — nothing to
   // shame for the rest. Order follows the canonical competency list.
   const practiced = COMPETENCIES.filter((competency) => practice[competency].completed > 0);
@@ -146,6 +147,18 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
           <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statUpgrades}</p>
         </li>
       </ul>
+
+      {/* The daily decomposition of the tile above: same rows, split by Warsaw
+          day. Deliberately a `div`, not a heading element — the sibling
+          sub-sections are too, and adding an `h3` would change the page's
+          heading tree under existing `getByRole("heading")` locators. */}
+      <div className="mt-5">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
+          <CalendarDays className="size-4" />
+          {copy.chartHeading}
+        </div>
+        <WeeklyActivityChart days={daily} />
+      </div>
 
       <div className="mt-5">
         <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">

@@ -1175,10 +1175,10 @@ would make it real and who owns it.
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npm run check`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Unit tests still pass: `npm test`
-- [x] 3.4 `chartDaysShort` and `chartDaysLong` both present with seven entries each
+- [x] 3.1 Type checking passes: `npm run check` — b32bba7
+- [x] 3.2 Linting passes: `npm run lint` — b32bba7
+- [x] 3.3 Unit tests still pass: `npm test` — b32bba7
+- [x] 3.4 `chartDaysShort` and `chartDaysLong` both present with seven entries each — b32bba7
 
 #### Manual
 
@@ -1188,11 +1188,11 @@ would make it real and who owns it.
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run check`
-- [ ] 4.2 Linting passes: `npm run lint`
-- [ ] 4.3 Build passes: `npm run build`
-- [ ] 4.4 Unit tests pass: `npm test` (new chart test file ≥ 6 tests)
-- [ ] 4.5 No `NaN` or `undefined` in rendered output for any fixture
+- [x] 4.1 Type checking passes: `npm run check`
+- [x] 4.2 Linting passes: `npm run lint`
+- [x] 4.3 Build passes: `npm run build`
+- [x] 4.4 Unit tests pass: `npm test` (new chart test file ≥ 6 tests)
+- [x] 4.5 No `NaN` or `undefined` in rendered output for any fixture
 
 #### Manual
 
