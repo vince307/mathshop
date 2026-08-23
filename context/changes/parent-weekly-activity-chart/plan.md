@@ -1166,19 +1166,19 @@ would make it real and who owns it.
 
 #### Automated
 
-- [x] 2.1 Unit tests pass: `npm test` (`tests/skills.test.ts` gains ≥ 5)
-- [x] 2.2 The creep test goes red when `decisions` is added to `ACCURACY_COMPETENCIES` (break, confirm, revert)
-- [x] 2.3 Type checking passes: `npm run check`
-- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 Unit tests pass: `npm test` (`tests/skills.test.ts` gains ≥ 5) — 4029383
+- [x] 2.2 The creep test goes red when `decisions` is added to `ACCURACY_COMPETENCIES` (break, confirm, revert) — 4029383
+- [x] 2.3 Type checking passes: `npm run check` — 4029383
+- [x] 2.4 Linting passes: `npm run lint` — 4029383
 
 ### Phase 3: Polish copy
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run check`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Unit tests still pass: `npm test`
-- [ ] 3.4 `chartDaysShort` and `chartDaysLong` both present with seven entries each
+- [x] 3.1 Type checking passes: `npm run check`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Unit tests still pass: `npm test`
+- [x] 3.4 `chartDaysShort` and `chartDaysLong` both present with seven entries each
 
 #### Manual
 

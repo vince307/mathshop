@@ -409,11 +409,34 @@ export const pl = {
     back: "Wróć do sklepu",
 
     // Per-child summary tiles (missing-screens-v3 `05-parent-weekly-report`).
-    // Both counts are read straight off the week's aggregated shift log — the
-    // mockup's correctness %, daily chart and earnings have no source yet, so
-    // they are not rendered rather than estimated.
+    // Every figure here is read straight off the week's aggregated shift log:
+    // the two counts, the daily activity chart below them, and the first-try
+    // share. The first-try share is deliberately computed over **math + money
+    // only** — a purchase is 100 % correct by construction, so including
+    // `decisions` would make it rise with shopping (see `ACCURACY_COMPETENCIES`
+    // in `src/data/skills.ts`). The mockup's earnings tile ("+84 zł") is the
+    // only one still deferred: `shift_log` has no earnings column to read.
     statTasks: "Ukończone zadania",
     statUpgrades: "Odblokowane ulepszenia",
+    statFirstTry: "Zadania bez pomyłki",
+    statFirstTryValue: "{percent}%",
+    // Shown instead of a percentage when nothing countable was practised — `0%`
+    // would read as "your child got nothing right", which is not what 0/0 means.
+    statFirstTryNone: "—",
+    statFirstTryNoData: "Brak danych z tego tygodnia",
+    // Weekly activity chart. `chartLegend`'s word order deliberately differs
+    // from `statTasks` so neither string contains the other (substring-matching
+    // locators on this page would otherwise become ambiguous).
+    chartHeading: "Aktywność w tym tygodniu",
+    chartLegend: "Zadania ukończone w danym dniu",
+    chartEmpty: "Brak aktywności w tym tygodniu.",
+    chartDayValue: "{day}: {count}",
+    // Both day arrays are **Monday-first and index-aligned with
+    // `WeeklyReport.daily`** — do not rotate one without the other. The short
+    // forms are the visible axis labels; the long forms are the screen-reader
+    // copy, because "Śr" read aloud is not a weekday.
+    chartDaysShort: ["Pon", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
+    chartDaysLong: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"],
     // Safety panel — statements of how the product is built, not measurements.
     safetyHeading: "Bezpieczne środowisko",
     safetyPoints: [
