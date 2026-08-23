@@ -54,6 +54,17 @@ Per-account parent settings (S-07) holding the scrypt-hashed parent PIN (FR-016 
 - **Env dependency:** `PARENT_SESSION_SECRET` (astro.config.mjs `env.schema`) — HMAC key for the signed `parent_verified` session marker. Set on Vercel Production scope (added 2026-07-11 with MAT-17; Preview fails closed — no marker minting, so the report + deletion actions are unreachable there).
 - **Isolation test:** `tests/account-settings-isolation.test.ts`.
 
+## Parent PIN routes (RLS surface)
+
+The two write/read paths over `public.account_settings.pin_hash` (S-07 / FR-016). Both take the PIN from a `multipart/form-data` body and the account from the session — no account id is ever accepted from the client (L-002). `verifyPin` (`src/lib/services/parent-pin.ts`) is the **only** exported reader of `pin_hash`; neither route compares a hash itself.
+
+- **`POST /api/parent/pin/verify`** (`src/pages/api/parent/pin/verify.ts`). Gate order: 503 (no RLS client) → 401 (no session user) → 400 (zod) → `verifyPin` under the atomic `register_pin_failure` throttle → mint the signed `parent_verified` marker → 200.
+- **`POST /api/parent/pin/set`** (`src/pages/api/parent/pin/set.ts`) — set **or** change. Gate order: 503 (no RLS client) → 401 (no session user) → 503 (`pinExists` could not tell) → **403** (existing PIN and no valid `parent_verified` marker) → 400 (zod) → **the change gate** → `setPin` → re-mint the marker → 200.
+  - **First set vs change.** With no `account_settings` row the route is **open** to any authenticated session (this is real onboarding — `parent-pin.astro` renders `set` mode there). With a row present it is a **change**, which requires the marker **and** `currentPin` re-proved through `verifyPin` — a possibly-15-minute-old marker alone is not enough, matching the bar `POST /api/account/delete` sets (see below). `hasPin` fails open by contract, so the route uses the fail-closed `pinExists` instead.
+  - **The change gate is one `if (isChange)` block**, in this order: (1) `currentPin` present, else 400 `invalid` — an early `return`, never a skipped verification; (2) `verifyPin`; (3) `currentPin === pin` → 400 `same-as-current`, deliberately *after* (2) so the cheap comparison cannot be a pre-flight that skips burning a throttle attempt. Do not split it into separate `isChange` tests and never gate (2) on `currentPin` being truthy — that shape is a full bypass. `setPin` unconditionally clears `failed_attempts`/`locked_until`, so any path reaching it while locked would be a free lockout reset; keeping `verifyPin` ahead of it is what prevents that.
+- **`STATUS_FOR` vocabulary** (duplicated verbatim in `verify.ts`, `set.ts` and `account/delete.ts` so islands share one copy map): `locked` → 429, `wrong` → 401, `no-pin` → 400, `error` → 500. A 401 means "wrong PIN" **only** when the body carries `reason: "wrong"`.
+- **Tests:** `tests/parent-pin-routes.test.ts` (both gate orders, the change contract, throttle participation and the live-lock rejection of a correct PIN), `tests/parent-pin.test.ts` (service layer), `tests/account-settings-isolation.test.ts` (table RLS).
+
 ## Account deletion (service-role surface)
 
 Whole-account erasure (MAT-17) — the project's **first and only production service-role surface**. The GDPR right-to-erasure path: deleting the parent's `auth.users` row cascades every owned table (see the three surfaces above, all `on delete cascade`) plus `auth.sessions`.
