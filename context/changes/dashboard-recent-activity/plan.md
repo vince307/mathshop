@@ -934,30 +934,30 @@ consequence, restated here so it is met at implementation time rather than redis
 
 #### Automated
 
-- [x] 1.1 Linting passes: `npm run lint`
-- [x] 1.2 Unit tests pass and the count has grown: `npm test` (baseline 299)
-- [x] 1.3 `tests/activity.test.ts` covers the DST fall-back case and passes
-- [x] 1.4 No i18n / React / Supabase import in `src/data/activity.ts`
+- [x] 1.1 Linting passes: `npm run lint` — e40d650
+- [x] 1.2 Unit tests pass and the count has grown: `npm test` (baseline 299) — e40d650
+- [x] 1.3 `tests/activity.test.ts` covers the DST fall-back case and passes — e40d650
+- [x] 1.4 No i18n / React / Supabase import in `src/data/activity.ts` — e40d650
 
 #### Manual
 
-- [x] 1.5 The eight new Polish strings read naturally and are age-appropriate
-- [x] 1.6 No new string contains `portfel` / `rozbuduj sklep` / `czas otworzyć sklep!` / `cześć,` / `ukończone zmiany`
+- [x] 1.5 The eight new Polish strings read naturally and are age-appropriate — e40d650
+- [x] 1.6 No new string contains `portfel` / `rozbuduj sklep` / `czas otworzyć sklep!` / `cześć,` / `ukończone zmiany` — e40d650
 
 ### Phase 2: The profile-scoped query
 
 #### Automated
 
-- [ ] 2.1 Linting passes: `npm run lint`
-- [ ] 2.2 Unit tests pass: `npm test`
-- [ ] 2.3 `tests/recent-activity-isolation.test.ts` passes against the local stack
-- [ ] 2.4 Deliberate-break: removing `.eq("profile_id", …)` fails the isolation suite
-- [ ] 2.5 Deliberate-break: replacing `throw error` with `return []` fails the unit suite
-- [ ] 2.6 `git diff src/lib/services/reports.ts` shows appended lines only
+- [x] 2.1 Linting passes: `npm run lint`
+- [x] 2.2 Unit tests pass: `npm test`
+- [x] 2.3 `tests/recent-activity-isolation.test.ts` passes against the local stack
+- [x] 2.4 Deliberate-break: removing `.eq("profile_id", …)` fails the isolation suite
+- [x] 2.5 Deliberate-break: replacing `throw error` with `return []` fails the unit suite
+- [x] 2.6 `git diff src/lib/services/reports.ts` shows appended lines only
 
 #### Manual
 
-- [ ] 2.7 `tests/reports.test.ts` and `src/types.ts` appear nowhere in the phase diff
+- [x] 2.7 `tests/reports.test.ts` and `src/types.ts` appear nowhere in the phase diff
 
 ### Phase 3: The section on the dashboard
 

@@ -113,3 +113,48 @@ export async function getWeeklyReport(
   if (error) throw error;
   return aggregateWeeklyReport(profileId, data);
 }
+
+/** One `shift_log` row as the activity feed consumes it (id + timestamp + payload). */
+export interface RecentActivityRow {
+  id: string;
+  created_at: string;
+  skills: unknown;
+  upgrade_purchased: string | null;
+}
+
+/**
+ * The newest `shift_log` events for ONE child, newest first (F2 — the dashboard
+ * activity feed). The only read of raw `shift_log` rows in the codebase.
+ *
+ * **`.eq("profile_id", …)` is load-bearing, not a convenience.** RLS on
+ * `shift_log` is *account*-scoped (`auth.uid() = account_id`), so a signed-in
+ * parent legitimately reads every child's rows on the account; without this
+ * filter a sibling's shifts and purchases appear in this child's feed. Treat its
+ * absence as a cross-profile data leak inside one account —
+ * `tests/recent-activity-isolation.test.ts` is the guard, and no RLS policy can
+ * be. Covered end-to-end by `shift_log_profile_created_idx` (`profile_id,
+ * created_at`), so no secondary sort and no new index.
+ *
+ * A query error THROWS rather than folding into an empty list, matching
+ * `getWeeklyReport`: a DB failure must never masquerade as "nothing happened
+ * yet" to the child. The caller catches and renders an honest error line.
+ *
+ * **Not a reconciliation.** The writer (`appendShiftLog`) is best-effort — it
+ * swallows its own error and shares no transaction with the profile UPDATE — so
+ * the feed can legitimately be missing an event that happened. Never present or
+ * read it as an audit of `wallet_balance` or `completed_shift_count`.
+ */
+export async function listRecentActivity(
+  client: SupabaseClient,
+  profileId: string,
+  limit = 3,
+): Promise<RecentActivityRow[]> {
+  const { data, error } = await client
+    .from("shift_log")
+    .select("id, created_at, skills, upgrade_purchased")
+    .eq("profile_id", profileId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data;
+}
