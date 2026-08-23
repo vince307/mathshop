@@ -520,6 +520,46 @@ edit** — it would either be lost or committed by accident, and the next agent 
 **Reverses if:** the project adopts a different e2e harness. Note for F5: this is a two-line change in
 a region neither F5 nor F1 touches.
 
+### D-12 — The bottom-bar fit is asserted on the **nav's own box**, not only the document ✅ *(added at the e2e step)*
+
+The plan's contract for `growth.spec.ts`'s second test was `document.documentElement.scrollWidth <=
+clientWidth`. That assertion is kept, but it is **not** the one that carries the risk: the bottom bar
+is `position: fixed`, and a deliberate break that made five tabs overflow the bar by 96 px left the
+*document* measurement untouched. The spec therefore also measures `scrollWidth - clientWidth` on the
+element `getByRole("navigation", { name: t.nav.primaryLabel })` resolves to — the one nav in the
+accessibility tree at the current viewport. That is a **measurement on a role-located element**, not a
+CSS-selected one (the precedent is `pageText()` in `parent-weekly-report.spec.ts`), so the "no CSS
+selectors" rule is intact. Rejected: keeping only the document assertion (it would have been
+decorative for this risk — it stayed green under the break) and asserting per-label truncation
+(reaching into a link's subtree *is* DOM-structure locating, and the six-tab fit was already settled
+empirically in Phase 4.6).
+**Reverses if:** the bottom bar stops being `fixed`, at which point the document measurement alone
+would catch the overflow.
+
+### D-13 — `growth.spec.ts` runs viewport-agnostic assertions in both projects ✅ *(added at the e2e step)*
+
+Widening `testMatch` makes the spec run at 1280 px **and** 712 px, so neither test may branch on
+`test.info().project.name`. Both were written so the same assertion is true — and meaningful — at both
+viewports: "every nav label resolves to exactly **one** link in the accessibility tree" is the desktop
+sidebar at `lg+` and the bottom bar below it, and it is precisely the doctrine the shell's
+`hidden`/`lg:hidden` toggle exists to uphold. Proved by breaking it: swapping the bottom bar's
+`lg:hidden` for `lg:opacity-0` turns **both** desktop tests red. Rejected: a touch-only second spec
+(duplicated setup for one assertion) and viewport branching inside a test (conditional logic that
+makes a green run mean two different things).
+**Reverses if:** a screen ever needs genuinely different nav semantics per viewport.
+
+### D-14 — Stage names come from `t.stages`, not from `src/data/stages.ts` ✅ *(added at the e2e step)*
+
+The spec derives the four expected names with `Object.values(t.stages).map(s => s.name)` through
+`helpers/i18n.ts`, rather than importing `STAGE_IDS` + `stageCopy`. Reason: `src/data/stages.ts`
+imports `@/data/upgrades` via the tsconfig path alias, and no existing spec exercises alias resolution
+inside a Playwright worker — the helper's relative `../../src/i18n` is the established, proven path.
+The catalogue↔dictionary agreement is already unit-tested (`tests/stages.test.ts`,
+`tests/i18n-helpers.test.ts`), so nothing is left unprotected. Rejected: importing the catalogue
+(untested resolution path for zero extra coverage) and hardcoding Polish (breaks the L-003 extension
+to tests).
+**Reverses if:** a spec genuinely needs catalogue-only data such as `order` or `minLevel`.
+
 ### D-9 — Migration RLS verdict: recorded, not re-opened
 
 **No new policy, no policy edit.** The four `shift_log` policies are column-agnostic, so a new column
@@ -1380,7 +1420,7 @@ blocks implementation; each is a thing to notice rather than a thing to do.
 
 - [x] 4.1 `npm run lint` clean (0 errors, 0 warnings); `npm run check` 0 errors / 0 warnings
 - [x] 4.2 `npm test` green — **382 / 45 files** (= `U₀ + 36`)
-- [ ] 4.3 `npx playwright test` green, total ≥ `E₀ + 5` — **NOT DONE (Phase 4b, handed to `/10x-e2e`).** The existing suite is green and undisturbed at **17 = `E₀`**; the +5 arrives with `e2e/growth.spec.ts`, the smoke redirect and the `playwright.config.ts` widening
+- [x] 4.3 `npx playwright test` green — **22 passed = `E₀ + 5`** exactly as specified (17 → 22). Phase 4b landed via `/10x-e2e`: `e2e/growth.spec.ts` (2 tests × desktop + touch) + the `/app/growth` smoke redirect (desktop only) + `playwright.config.ts` `testMatch: /(gameplay-restore|growth)\.spec\.ts/`. Five deliberate breaks confirm the specs protect their risks, not just render green: wrong nav `href` → both projects red; `lg:hidden`→`lg:opacity-0` on the bottom bar → both desktop tests red (duplicate accessible names); five oversized tabs → the nav-box overflow assertion red at 96 px (the *document* one stayed green — see D-12); the "Aktualnie" chip on every stage → count 1 vs 4; stage names replaced by descriptions → count 1 vs 0. All reverted before committing
 - [x] 4.4 `npx playwright test --project=touch` green — both `gameplay-restore` specs pass at 712px with the fifth tab present
 - [x] 4.5 `e2e/gameplay-restore.spec.ts` passes in **both** projects — the `t.start.upgradesLink` locator stayed unambiguous, which is what the deliberately-distinct `t.growth.upgradesLink` was for
 

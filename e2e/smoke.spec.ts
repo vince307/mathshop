@@ -19,6 +19,16 @@ test.describe("harness smoke", () => {
     await expect(page.getByRole("button", { name: t.auth.signin.submit })).toBeVisible();
   });
 
+  // `PROTECTED_ROUTES` gates on a `startsWith("/app")` prefix, so a new screen
+  // under /app is auth-gated by construction — this pins that "by construction"
+  // for the newest route, the one most likely to be moved out from under the
+  // prefix (F4, /app/growth).
+  test("anonymous /app/growth redirects to signin", async ({ page }) => {
+    await page.goto("/app/growth");
+    await page.waitForURL((url) => url.pathname.startsWith("/auth/signin"));
+    await expect(page.getByRole("button", { name: t.auth.signin.submit })).toBeVisible();
+  });
+
   test("provisioned account signs in via UI and reaches the app", async ({ page }) => {
     const account = await provisionAccount("e2e-smoke");
     try {
