@@ -1155,33 +1155,33 @@ every existing read already handles, and `purchasedMeta` is an ignorable extra j
 
 #### Automated
 
-- [x] 1.1 New suite passes: `npx vitest run tests/profiles-world.test.ts`
-- [x] 1.2 Full unit suite green, test count ≥ the count measured at phase start (do not pin an absolute number): `npm test`
-- [x] 1.3 Lint + type-check clean: `npm run lint`
-- [x] 1.4 `tests/profiles-world.test.ts` contains the foreign-profileId isolation test asserting durable state via the service-role `admin` client
-- [x] 1.5 `grep -q "export const prerender = false" src/pages/api/profiles/world.ts`
-- [x] 1.6 `grep -q "profiles/world" docs/reference/contract-surfaces.md`
+- [x] 1.1 New suite passes: `npx vitest run tests/profiles-world.test.ts` — ccb9c15
+- [x] 1.2 Full unit suite green, test count ≥ the count measured at phase start (do not pin an absolute number): `npm test` — ccb9c15
+- [x] 1.3 Lint + type-check clean: `npm run lint` — ccb9c15
+- [x] 1.4 `tests/profiles-world.test.ts` contains the foreign-profileId isolation test asserting durable state via the service-role `admin` client — ccb9c15
+- [x] 1.5 `grep -q "export const prerender = false" src/pages/api/profiles/world.ts` — ccb9c15
+- [x] 1.6 `grep -q "profiles/world" docs/reference/contract-surfaces.md` — ccb9c15
 
 #### Manual
 
-- [x] 1.7 No migration file was added
+- [x] 1.7 No migration file was added — ccb9c15
 
 ### Phase 2: The `/app/worlds` screen
 
 #### Automated
 
-- [ ] 2.1 New component suite passes: `npx vitest run tests/worlds-picker.test.tsx`
-- [ ] 2.2 Full unit suite green and above the Phase 1 count: `npm test`
-- [ ] 2.3 Lint + type-check clean: `npm run lint`
-- [ ] 2.4 `npx playwright test` green with no pre-existing spec newly failing (count measured at phase start, not pinned)
+- [x] 2.1 New component suite passes: `npx vitest run tests/worlds-picker.test.tsx`
+- [x] 2.2 Full unit suite green and above the Phase 1 count: `npm test`
+- [x] 2.3 Lint + type-check clean: `npm run lint`
+- [x] 2.4 `npx playwright test` green with no pre-existing spec newly failing (count measured at phase start, not pinned)
 
 #### Manual
 
-- [ ] 2.5 Screen matches the web and mobile mockups (grid, ring + badge, reassurance line, competency rail, CTA)
-- [ ] 2.6 The 2×2 grid reads as deliberate at 360px, 712px and 1440px
-- [ ] 2.7 Current world ringed on load; tapping another moves the ring and updates the rail
-- [ ] 2.8 Start lands on `/app/start` with the new world and unchanged wallet/level/upgrades
-- [ ] 2.9 No horizontal scroll at 360px
+- [x] 2.5 Screen matches the web and mobile mockups (grid, ring + badge, reassurance line, competency rail, CTA)
+- [x] 2.6 The 2×2 grid reads as deliberate at 360px, 712px and 1440px
+- [x] 2.7 Current world ringed on load; tapping another moves the ring and updates the rail
+- [x] 2.8 Start lands on `/app/start` with the new world and unchanged wallet/level/upgrades
+- [x] 2.9 No horizontal scroll at 360px
 
 ### Phase 3: Navigation entry
 
