@@ -1,7 +1,7 @@
 ---
 change_id: parent-weekly-activity-chart
 title: Weekly Mon–Sun activity chart and first-try-correct tile in the parent report
-status: implemented
+status: impl_reviewed
 created: 2026-08-22
 updated: 2026-08-23
 archived_at: null
@@ -104,3 +104,35 @@ exactly what was observed for each. The two rows that rest on inspection rather 
 - One e2e failure was a genuine markup finding, not a locator problem: the `sr-only` "no data" reason
   was nested inside the value `<p>`, so the visible value was not exactly the em-dash. The component
   was fixed; the assertion was not weakened.
+
+### Implementation-review step (2026-08-23)
+
+`/10x-impl-review` ends with an `AskUserQuestion` triage prompt; it was not asked (agent contract,
+hard rule 1). **Decided "Triage findings"** over "Save report only" — every finding in
+`reviews/impl-review.md` carries a decision, none left `PENDING`.
+
+- **Verdict NEEDS ATTENTION: 0 critical, 4 warnings, 4 observations.** Nothing blocks the merge. The
+  standing authorisation to fix a small, unambiguous CRITICAL directly in source was **not
+  exercised — this review step edited no source file.** Rejected: applying the four WARNING fixes
+  anyway; each touches a file F4 will edit, none is a correctness defect, and changing shipped source
+  unattended to satisfy a judgement call is the failure mode a review exists to catch. All eight are
+  recorded in `follow-ups/review-fixes.md` with file, symbol and required change.
+- **All five commissioned checks passed.** AD-9's decomposition invariant is genuinely tested and
+  would go red on divergence (and holds structurally — `addSkillDelta` and `readSkillState` apply the
+  identical `safeCount` to the identical field). AD-2's creep test bites, twice. AD-3's `—` is right
+  and the assertion was **not** weakened — the fix moved the `sr-only` span to a sibling, and the
+  committed Playwright `{ exact: true }` assertion is the only guard that catches it, since
+  testing-library reads only direct text children. AD-5 is the strongest part of the change: `grep`
+  over `src/` finds **no new offset arithmetic anywhere in the diff**. AD-1 ships behind the PIN gate
+  and no source comment repeats the false "no child-side link" argument.
+- **The earnings tile is absent in every form**, `package.json` is untouched (no charting library),
+  and the rewritten `pl.ts` comment is accurate about what remains deferred.
+- **The one substantive criticism is evidentiary, not technical (F1/F2):** the temporary spec that
+  proved AD-9 on a rendered page also *built the `shift_log` seeder* whose absence was Phase 6 §3's
+  stated reason for deferring Risk E2E-3 — and it was deleted rather than promoted to
+  `e2e/helpers/`. AD-12's honesty about what was and was not observed is exemplary; the disposal was
+  the mistake.
+- **Suites re-run by the reviewer, not accepted:** `npm run check` 0/0/9, `npm run lint` clean,
+  `npm run build` Complete, `npm test` **346 passed** (44 files), `npx playwright test` **17 passed**.
+  Every implementer claim reconciles; the 318 baseline was confirmed arithmetically (346 − 28 new).
+
