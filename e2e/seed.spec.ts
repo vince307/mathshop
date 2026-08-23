@@ -27,6 +27,12 @@ test("seed: a seeded child profile greets the child on the start screen", async 
     await page.waitForURL((url) => url.pathname.startsWith("/app/start"));
     await expect(page.getByRole("heading", { name: fill(t.start.greeting, { name: childName }) })).toBeVisible();
     await expect(page.getByText(t.start.walletLabel)).toBeVisible();
+    // The activity feed renders (and does not throw) with zero shift_log rows:
+    // heading present, empty line present. Deliberately NOT asserting
+    // t.start.activityToday — "Dzisiaj" is a substring of t.start.missionHeading,
+    // already on this page, so getByText would fail strict mode.
+    await expect(page.getByRole("heading", { name: t.start.activityHeading })).toBeVisible();
+    await expect(page.getByText(t.start.activityEmpty)).toBeVisible();
   } finally {
     await deleteUser(account.id);
   }

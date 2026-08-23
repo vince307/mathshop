@@ -5,15 +5,18 @@ import AppShell from "@/components/app/AppShell.astro";
 import StartShiftButton from "@/components/child/StartShiftButton";
 import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
 import SkillCards from "@/components/child/SkillCards.astro";
+import RecentActivity from "@/components/child/RecentActivity.astro";
 import { childCard } from "@/components/child/childCard";
 import { ShopArt } from "@/components/child/ShopArt";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { resolvePageProfile } from "@/lib/services/active-profile";
+import { listRecentActivity } from "@/lib/services/reports";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { nextUpgrade, readPurchased } from "@/data/upgrades";
 import { readSkillState } from "@/data/skills";
+import { toActivityEntry, type ActivityEntry } from "@/data/activity";
 import { t } from "@/i18n";
 
 // Child dashboard (S-01b). Gated under /app. Loads the ACTIVE profile (S-11
@@ -42,6 +45,22 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
 const purchased = profile ? readPurchased(profile.shop_state) : [];
 const next = profile ? nextUpgrade({ businessLevel: profile.business_level, purchased }) : null;
 const skillState = readSkillState(profile?.skill_state);
+
+// Recent-activity feed (F2). Resolved HERE, in the frontmatter — the only place
+// non-determinism is allowed on this page: one `now` for the whole list, so all
+// entries bucket against the same instant and the day words are SSR-fixed.
+// A failure yields `null` (the section says so honestly) and is swallowed here
+// rather than rethrown — the feed must never take the dashboard down (D7).
+let activityEntries: ActivityEntry[] | null = [];
+if (supabase && profile) {
+  try {
+    const now = new Date();
+    const rows = await listRecentActivity(supabase, profile.id);
+    activityEntries = rows.map((row) => toActivityEntry(row, now));
+  } catch {
+    activityEntries = null;
+  }
+}
 
 // Milestone path (S-13): a 5-node window around the current business_level
 // (levels are uncapped — 1 + shifts/3), read-only from profile data. Decorative;
@@ -151,6 +170,9 @@ const stats = profile
                 ))}
               </ul>
             </section>
+
+            {/* Recent activity — what the child actually did, from shift_log */}
+            <RecentActivity entries={activityEntries} />
           </div>
 
           {/* ---------- Right rail (stacks under the hero below lg) ---------- */}

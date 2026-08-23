@@ -26,6 +26,24 @@ export function charsNeeded(n: number): string {
   return `Jeszcze ${n} ${charForms[polishPlural.select(n)]}`;
 }
 
+// Polish pluralization for the dashboard activity feed's task count. Same
+// `polishPlural` instance as above (one Intl.PluralRules for the locale); the
+// genitive-after-numeral phrasing ("1 zadanie" / "2 zadania" / "5 zadań") stays
+// grammatical across every form.
+const taskForms: Record<Intl.LDMLPluralRule, string> = {
+  zero: "zadań",
+  one: "zadanie",
+  two: "zadania",
+  few: "zadania",
+  many: "zadań",
+  other: "zadania",
+};
+
+/** e.g. tasksDone(1) → "1 zadanie", tasksDone(5) → "5 zadań". */
+export function tasksDone(n: number): string {
+  return `${n} ${taskForms[polishPlural.select(n)]}`;
+}
+
 /**
  * Localized upgrade copy by catalog id (L-003: the catalog carries no literal
  * copy). Guarded: a catalog id missing from the dictionary falls back to the

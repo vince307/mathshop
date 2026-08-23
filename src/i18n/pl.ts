@@ -211,6 +211,23 @@ export const pl = {
     amountZl: "{amount} zł",
     safetyTitle: "Bezpieczna nauka",
     safetyBody: "Twoje postępy są zapisywane i chronione. Rodzic ma wgląd i kontrolę w panelu rodzica.",
+
+    // Recent-activity feed (ui-v2 `02-child-dashboard`). No `zł` amount on any
+    // row: `shift_log` stores no earnings column, and re-deriving one from the
+    // tunable earn rates — or showing the catalog's *current* upgrade cost as if
+    // it were the price paid — would re-price history. `activityShiftTasks`
+    // deliberately CONTAINS `activityShift` as a prefix so one e2e locator
+    // matches both the counted and the degenerate form; the empty line avoids
+    // the phrase "Ukończone zmiany" (`statShifts`, same page) so a substring
+    // locator cannot double-match.
+    activityHeading: "Ostatnia aktywność",
+    activityShift: "Zmiana ukończona",
+    activityShiftTasks: "Zmiana ukończona · {tasks}",
+    activityUpgrade: "Ulepszenie: {name}",
+    activityToday: "Dzisiaj",
+    activityYesterday: "Wczoraj",
+    activityEmpty: "Jeszcze nic tu nie ma. Twoje zmiany i ulepszenia pojawią się w tym miejscu.",
+    activityError: "Nie udało się wczytać ostatniej aktywności.",
   },
 
   // Counting task in shop narrative (S-02). Copy is keyed by scenario so the
