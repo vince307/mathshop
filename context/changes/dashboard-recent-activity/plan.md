@@ -428,6 +428,50 @@ control + non-owner probe; `admin` only provisions).
 **Rejected** relying on `tests/shift-log-isolation.test.ts` — it is table-level RLS and is
 blind to this bug by construction.
 
+### D10 — R3 resolved at implementation time: `sm:grid-cols-3`, not `lg:grid-cols-3`
+
+**Decided:** the entry `<ul>` is `grid gap-3 **sm**:grid-cols-3`. D2 and `## Known risks` R3
+deferred this class explicitly ("do not decide it before you can see it"), so it was decided
+against a real render rather than on paper.
+
+**What was seen.** With `lg:grid-cols-3`, at the `touch` project's 712px viewport the feed was
+the only 1-across row on the dashboard, directly beneath `SkillCards` (3-across at `sm`) and
+the results tiles (4-across at `sm`). Each feed card ran the full ~680px column width to carry
+a ~200px label — the visually heaviest block on the page for the least information, reading as
+an inconsistency rather than as emphasis. Switching to `sm:` puts the feed on the page's own
+breakpoint and lines it up with its two siblings.
+
+**Verified after the change**, on the demo profile with three real rows (a purchase and two
+shifts, one backdated to yesterday and one to 19.08):
+- **390px** — still one card per row (`sm` is 640px, so the phone layout is untouched), and the
+  longest catalogue name, `Ulepszenie: Miejsce na produkt`, fits on one line with no horizontal
+  overflow;
+- **712px** — three across, labels wrapping to two lines, equal card heights, no overflow;
+- **1280px** — three across under "Twój sklep — wyniki", unchanged from the `lg:` behaviour.
+
+The wrap at 712px (~215px per card) is *wider* than the 1280px case (~200px per card) that was
+already judged acceptable, so the change cannot make wrapping worse anywhere it did not
+already occur.
+
+**Rejected — keeping `lg:grid-cols-3`.** Its only argument was that entry labels are longer
+than a stat tile's; the render shows two-line wrapping is fine and full-width cards are not.
+
+**Reversed by:** a mobile/tablet mockup that draws the section differently — the section is not
+drawn in the mobile mockup at all, which is why this stayed a judgement call.
+
+### D11 — Manual verification was performed by this agent, not a human
+
+The run's hard rule 1 puts no human in the loop, so `/10x-implement`'s manual-confirmation
+gate was **executed, not asked**. Every Phase 3 manual row was verified in a real browser
+against the local stack: signed in as the demo parent, drove a **real** 6-task shift through
+the actual tap loop and a real `Szyld` purchase (the `solveShift` e2e helper, run once from a
+throwaway spec that was deleted immediately), then read the rendered page at 390 / 712 /
+1280px. The `Wczoraj` and `19.08` labels were produced by back-dating rows with the
+service-role client — the database genuinely holds those timestamps, so no rendered value is
+invented. One unplanned confirmation fell out of it: an `upgrade_purchased` id absent from the
+catalogue renders as the raw id via `upgradeCopy`'s guarded fallback instead of throwing
+mid-render.
+
 ---
 
 ## Phase 1: Pure core + Polish copy
@@ -948,35 +992,35 @@ consequence, restated here so it is met at implementation time rather than redis
 
 #### Automated
 
-- [x] 2.1 Linting passes: `npm run lint`
-- [x] 2.2 Unit tests pass: `npm test`
-- [x] 2.3 `tests/recent-activity-isolation.test.ts` passes against the local stack
-- [x] 2.4 Deliberate-break: removing `.eq("profile_id", …)` fails the isolation suite
-- [x] 2.5 Deliberate-break: replacing `throw error` with `return []` fails the unit suite
-- [x] 2.6 `git diff src/lib/services/reports.ts` shows appended lines only
+- [x] 2.1 Linting passes: `npm run lint` — 909e4b9
+- [x] 2.2 Unit tests pass: `npm test` — 909e4b9
+- [x] 2.3 `tests/recent-activity-isolation.test.ts` passes against the local stack — 909e4b9
+- [x] 2.4 Deliberate-break: removing `.eq("profile_id", …)` fails the isolation suite — 909e4b9
+- [x] 2.5 Deliberate-break: replacing `throw error` with `return []` fails the unit suite — 909e4b9
+- [x] 2.6 `git diff src/lib/services/reports.ts` shows appended lines only — 909e4b9
 
 #### Manual
 
-- [x] 2.7 `tests/reports.test.ts` and `src/types.ts` appear nowhere in the phase diff
+- [x] 2.7 `tests/reports.test.ts` and `src/types.ts` appear nowhere in the phase diff — 909e4b9
 
 ### Phase 3: The section on the dashboard
 
 #### Automated
 
-- [ ] 3.1 Linting passes: `npm run lint`
-- [ ] 3.2 Unit tests still pass: `npm test`
-- [ ] 3.3 Existing Playwright suite still passes: `npx playwright test`
-- [ ] 3.4 `RecentActivity.astro` contains no `client:` directive
-- [ ] 3.5 `RecentActivity.astro` contains no hard-coded Polish literal
-- [ ] 3.11 Type check passes: `npm run check` (`astro check` — the only `.astro` type gate)
+- [x] 3.1 Linting passes: `npm run lint`
+- [x] 3.2 Unit tests still pass: `npm test`
+- [x] 3.3 Existing Playwright suite still passes: `npx playwright test`
+- [x] 3.4 `RecentActivity.astro` contains no `client:` directive
+- [x] 3.5 `RecentActivity.astro` contains no hard-coded Polish literal
+- [x] 3.11 Type check passes: `npm run check` (`astro check` — the only `.astro` type gate)
 
 #### Manual
 
-- [ ] 3.6 `/app/start` at 390px: cards stacked, no horizontal overflow, long names wrap
-- [ ] 3.7 `/app/start` at 1280px: three across, under the results tiles, matches the web mockup
-- [ ] 3.8 A fresh profile shows the heading plus the empty line
-- [ ] 3.9 Purchase above shift after a real shift + purchase, both reading `Dzisiaj`
-- [ ] 3.10 No hydration warning in the browser console
+- [x] 3.6 `/app/start` at 390px: cards stacked, no horizontal overflow, long names wrap
+- [x] 3.7 `/app/start` at 1280px: three across, under the results tiles, matches the web mockup
+- [x] 3.8 A fresh profile shows the heading plus the empty line
+- [x] 3.9 Purchase above shift after a real shift + purchase, both reading `Dzisiaj`
+- [x] 3.10 No hydration warning in the browser console
 
 ### Phase 4: E2E coverage
 
