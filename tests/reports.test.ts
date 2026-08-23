@@ -31,6 +31,16 @@ function row(skills: unknown, upgrade?: string, createdAt: string = IN_FRAME_CRE
   return { created_at: createdAt, skills, upgrade_purchased: upgrade ?? null };
 }
 
+/** A SHIFT row with a recorded payout (F4). `earned: null` here means unknown. */
+function shiftRow(skills: unknown, earned: number | null, createdAt: string = IN_FRAME_CREATED_AT): ShiftLogRow {
+  return { created_at: createdAt, skills, upgrade_purchased: null, earned };
+}
+
+/** A PURCHASE row. `earned` is null forever by design — never "unknown". */
+function purchaseRow(upgrade: string, createdAt: string = IN_FRAME_CREATED_AT): ShiftLogRow {
+  return { created_at: createdAt, skills: {}, upgrade_purchased: upgrade, earned: null };
+}
+
 /** One chained query-builder call, as `stubClient` records it. */
 interface ChainCall {
   method: string;
@@ -90,11 +100,14 @@ describe("getWeeklyReport error contract", () => {
     expect(calls).toContainEqual({ method: "eq", args: ["profile_id", "p-requested"] });
   });
 
-  it("projects created_at so the chart has a day dimension", async () => {
+  it("projects created_at and earned so the chart has a day dimension and the tile a figure", async () => {
+    // The select list is EXPLICIT, so a column is invisible to the aggregator
+    // until it is named here — `earned` silently reading `undefined` would make
+    // every week look like an unknown one.
     const calls: ChainCall[] = [];
     const ok = stubClient({ data: [], error: null }, calls);
     await getWeeklyReport(ok, "p1", NOW);
-    expect(calls[0]).toEqual({ method: "select", args: ["created_at, skills, upgrade_purchased"] });
+    expect(calls[0]).toEqual({ method: "select", args: ["created_at, skills, upgrade_purchased, earned"] });
   });
 });
 
@@ -269,5 +282,56 @@ describe("aggregateWeeklyReport daily buckets", () => {
   it("contributes 0 rather than throwing for a malformed skills payload", () => {
     const report = aggregateWeeklyReport("p1", [row("not-an-object"), row(null)], NOW);
     expect(report.daily.reduce((sum, day) => sum + day.completed, 0)).toBe(0);
+  });
+});
+
+/**
+ * The weekly earnings aggregate (F4). The load-bearing distinction these tests
+ * exist to pin: `earned == null` on a **shift** row means "we don't know" and
+ * suppresses the figure, while `earned == null` on a **purchase** row is the
+ * permanent, designed value and must NOT suppress anything. An earlier draft of
+ * this feature used an unscoped `rows.some(r => r.earned == null)` predicate,
+ * which hid the tile in every week the child bought a single upgrade — forever,
+ * not transitionally. The purchases-only case below is what tells the two apart:
+ * under the unscoped predicate it returns `earningsKnown: false`.
+ */
+describe("aggregateWeeklyReport — earnings (F4)", () => {
+  const SKILLS = { math: { firstTryCorrect: 1, completed: 2, misses: 0 } };
+
+  it("sums the recorded payouts across shift rows", () => {
+    const report = aggregateWeeklyReport("p1", [shiftRow(SKILLS, 29), shiftRow(SKILLS, 13)], NOW);
+    expect(report.earned).toBe(42);
+    expect(report.earningsKnown).toBe(true);
+  });
+
+  it("a shift row with no recorded payout makes the earnings UNKNOWN", () => {
+    const report = aggregateWeeklyReport("p1", [shiftRow(SKILLS, 29), shiftRow(SKILLS, null)], NOW);
+    expect(report.earningsKnown).toBe(false);
+    // The partial sum is still computed (null counts as 0) — the consumer
+    // suppresses it rather than the aggregator lying about it.
+    expect(report.earned).toBe(29);
+  });
+
+  it("a window of ONLY purchase rows is KNOWN and zero — a purchase is not an unknown shift", () => {
+    const report = aggregateWeeklyReport("p1", [purchaseRow("sign"), purchaseRow("register")], NOW);
+    expect(report.earningsKnown).toBe(true);
+    expect(report.earned).toBe(0);
+  });
+
+  it("a purchase row alongside real shift rows does not suppress the figure", () => {
+    const report = aggregateWeeklyReport("p1", [shiftRow(SKILLS, 29), purchaseRow("sign")], NOW);
+    expect(report.earningsKnown).toBe(true);
+    expect(report.earned).toBe(29);
+  });
+
+  it("an empty window is KNOWN and zero — zero is a fact, only unknown is a reason to hide", () => {
+    const report = aggregateWeeklyReport("p1", [], NOW);
+    expect(report.earningsKnown).toBe(true);
+    expect(report.earned).toBe(0);
+  });
+
+  it("a fixture predating the column (earned undefined) reads as an unknown shift, not as zero", () => {
+    const report = aggregateWeeklyReport("p1", [row(SKILLS)], NOW);
+    expect(report.earningsKnown).toBe(false);
   });
 });

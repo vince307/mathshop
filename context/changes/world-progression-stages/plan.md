@@ -479,6 +479,47 @@ Every panel in the binding mockups, with an explicit ships / reduced / omitted v
 **Reverses if:** any of these systems is built. Each omission is a filter on data availability, not a
 design objection.
 
+### D-10 — F4 ships the earnings tile itself, because F1 already landed ✅ *(added at implementation time)*
+
+D-7 handed the parent weekly earnings tile to F1 to avoid two concurrent features editing one grid.
+By the time F4 was implemented that premise was gone: **F1 is implemented, reviewed and merged**, and
+`feat/world-progression-stages` is cut from `feat/parent-weekly-activity-chart`. The recipe therefore
+had no remaining owner, and leaving it unimplemented would have shipped a migration whose only reader
+does not exist — the column would be written and never read.
+
+**Decision: F4 implements the recipe, in its post-F1 form.** The conflict D-7 was avoiding is
+structurally impossible now (the grid is in F4's own base), and the three post-F1 corrections the plan
+review identified are applied exactly: the tile is the **fourth**, the grid is conditional
+(`grid-cols-2 lg:grid-cols-4` with the tile, F1's `grid-cols-2 sm:grid-cols-3` without it, so neither
+state leaves an orphan), and the `pl.ts` comment — which F1 rewrote to claim "`shift_log` has no
+earnings column" — is rewritten a **second** time, because F4's migration makes that claim false.
+
+Rejected: **leaving it for a follow-up change** — it would ship a write-only column and leave the
+plan's own end state ("what makes 'ile zarobiłem w tym tygodniu' a real number") undelivered, while
+the recipe is ~20 lines that F4's own migration is the prerequisite for. Rejected: **re-opening F1's
+change folder** — F1 is closed and reviewed; a new tile belongs to the change that created the column.
+
+**Reverses if:** the maintainer wants the tile reviewed under F1's change id instead. The code is
+identical either way; only the commit's change-id prefix would move.
+
+### D-11 — `E2E_PORT`: the e2e suite no longer silently tests another checkout ✅ *(added at implementation time)*
+
+`playwright.config.ts` hardcoded `http://localhost:4321` and sets `reuseExistingServer: !CI`. A dev
+server was running on 4321 from **another agent's git worktree**, so `npx playwright test` in this
+checkout was about to exercise *that tree's* code and report it as this branch's baseline — a green
+that means nothing. `e2e/global-setup.ts` hardcoded the same URL.
+
+**Decision: make the port overridable** — `const PORT = process.env.E2E_PORT ?? "4321"` in both files,
+and `command: \`npm run dev -- --port ${PORT}\``. Default behaviour is byte-for-byte unchanged; the
+baseline and every subsequent run in this step used `E2E_PORT=4327`.
+
+Rejected: **killing the other agent's dev server** — it is not this step's to kill. Rejected:
+**running against 4321 anyway** — the numbers would have been fiction. Rejected: **an uncommitted local
+edit** — it would either be lost or committed by accident, and the next agent would rediscover the trap.
+
+**Reverses if:** the project adopts a different e2e harness. Note for F5: this is a two-line change in
+a region neither F5 nor F1 touches.
+
 ### D-9 — Migration RLS verdict: recorded, not re-opened
 
 **No new policy, no policy edit.** The four `shift_log` policies are column-agnostic, so a new column
@@ -1288,6 +1329,24 @@ blocks implementation; each is a thing to notice rather than a thing to do.
 - [x] 1.7 Verified against the live DB instead of Studio (equivalent, and scriptable): `information_schema.columns` shows `earned integer` nullable, and the 3 pre-existing `shift_log` rows all read `null` (`count(earned) = 0`)
 - [x] 1.8 Migration header names all four covering policies and states why none was added (column-agnostic, no column-level grants in the project, two in-repo precedents)
 - [x] 1.9 Pointer appended to `context/changes/parent-weekly-activity-chart/handoff.md` — noting that F1 had already landed, so **F4 ships the tile itself** (Phase 1b)
+
+### Phase 1b: The parent weekly earnings tile (was **Handed to F1**)
+
+> **Scope addition, decided autonomously — see `## Autonomous decisions` D-10.** The plan handed this
+> work to F1 on the premise that F1 had not started. By implementation time F1 was **implemented,
+> reviewed and merged into F4's base**, so the recipe had no remaining owner. F4 ships it, applying
+> the **post-F1** corrections in the recipe (fourth tile, conditional grid, second rewrite of the
+> `pl.ts` comment) rather than the pre-F1 originals.
+
+#### Automated
+
+- [x] 1b.1 `ShiftLogRow.earned` is **optional**; `getWeeklyReport`'s explicit select names `earned`
+- [x] 1b.2 `aggregateWeeklyReport` returns `earned` + `earningsKnown`, the predicate scoped to shift rows
+- [x] 1b.3 `WeeklyReport.tsx` renders `statEarned` **fourth**, grid `cn("mt-5 grid gap-3", earningsKnown ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-3")`
+- [x] 1b.4 The stale `pl.ts` comment rewritten a second time — the column now exists; the lower-bound + wording rules recorded there
+- [x] 1b.5 `npm run lint` clean, `npm run check` 0 errors
+- [x] 1b.6 `npm test` green — **357 / 44 files** (= `U₀ + 11`)
+- [x] 1b.7 **Defect-distinguishing check performed**: replacing the predicate with the naive unscoped `rows.some(r => r.earned == null)` turns exactly **2** tests red (purchases-only, and purchase-alongside-shift). No test asserts `wallet == sum(earned)`
 
 ### Phase 2: The stage catalogue and its copy
 

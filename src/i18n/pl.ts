@@ -414,10 +414,20 @@ export const pl = {
     // share. The first-try share is deliberately computed over **math + money
     // only** — a purchase is 100 % correct by construction, so including
     // `decisions` would make it rise with shopping (see `ACCURACY_COMPETENCIES`
-    // in `src/data/skills.ts`). The mockup's earnings tile ("+84 zł") is the
-    // only one still deferred: `shift_log` has no earnings column to read.
+    // in `src/data/skills.ts`). Nothing on this page is deferred any more: the
+    // mockup's earnings tile now reads `shift_log.earned` (F4).
+    //
+    // `statEarned` is worded as a description of LOGGED ACTIVITY, never a total.
+    // `appendShiftLog` is best effort and swallows its insert error, so the sum is
+    // permanently a lower bound on what the child actually earned. It must not be
+    // called `suma`, `bilans`, `łącznie` or `wszystkie zarobki`, and it must not be
+    // placed next to, or reconciled against, the wallet balance. The tile is hidden
+    // outright — never zeroed — while a shift row in the week has no recorded
+    // payout; see `earningsKnown` in `src/types.ts`.
     statTasks: "Ukończone zadania",
     statUpgrades: "Odblokowane ulepszenia",
+    statEarned: "Zarobione w tym tygodniu",
+    statEarnedValue: "{amount} zł",
     statFirstTry: "Zadania bez pomyłki",
     statFirstTryValue: "{percent}%",
     // Shown instead of a percentage when nothing countable was practised — `0%`

@@ -20,6 +20,13 @@ export interface ShiftLogRow {
   created_at: string;
   skills: unknown;
   upgrade_purchased: string | null;
+  /**
+   * The shift's server-computed payout (F4). **Optional**, unlike `created_at`:
+   * `null` is a legitimate stored value (a purchase row, or a pre-migration row),
+   * and `undefined` is what a fixture that predates the column looks like — both
+   * mean "no payout recorded", and both must be tolerated rather than fabricated.
+   */
+  earned?: number | null;
 }
 
 /**
@@ -46,6 +53,12 @@ function upgradeSkillTie(upgradeId: string, practiced: Competency[]): WeeklyRepo
  * shape — but it is what fixes the seven-day frame, so a test asserting on
  * `daily` must pass the same instant its fixture timestamps were built against.
  *
+ * `earned` sums the rows' recorded payouts and `earningsKnown` is false only when
+ * a **shift** row carries no payout — see the comment on the predicate below. The
+ * sum is a **lower bound**, permanently: `appendShiftLog` is best-effort and
+ * swallows its insert error, so a paid shift can lose its log row silently. Never
+ * present it as an exact total and never reconcile it against `wallet_balance`.
+ *
  * **`Σ daily[].completed === Σ practice[*].completed`** for rows inside the
  * frame: both sides coerce through the same `safeCount` on the same field
  * (`addSkillDelta` / `readSkillState`), so a parent adding the seven bars gets
@@ -58,9 +71,18 @@ export function aggregateWeeklyReport(profileId: string, rows: ShiftLogRow[], no
   const purchasedIds: string[] = [];
   const frame = weekDayKeys(now);
   const perDay = new Map(frame.map((key) => [key, 0]));
+  let earned = 0;
+  let earningsKnown = true;
   for (const row of rows) {
     practice = addSkillDelta(practice, row.skills ?? {});
     if (row.upgrade_purchased) purchasedIds.push(row.upgrade_purchased);
+    earned += row.earned ?? 0;
+    // An "unknown" payout is a SHIFT row with nothing recorded — i.e. a row
+    // written before the `earned` column existed. The `upgrade_purchased === null`
+    // half is load-bearing, not defensive: a purchase row is `earned: null`
+    // FOREVER by design, so a predicate that ignored it would suppress the tile in
+    // every week the child buys a single upgrade — permanently, not transitionally.
+    if (row.upgrade_purchased === null && row.earned == null) earningsKnown = false;
     const dayKey = warsawDayKey(new Date(row.created_at));
     const bucket = perDay.get(dayKey);
     if (bucket === undefined) continue; // outside the seven-day frame — practice only
@@ -75,7 +97,7 @@ export function aggregateWeeklyReport(profileId: string, rows: ShiftLogRow[], no
   }));
   const practiced = COMPETENCIES.filter((competency) => practice[competency].completed > 0);
   const upgrades = purchasedIds.map((id) => upgradeSkillTie(id, practiced));
-  return { profileId, practice, upgrades, daily };
+  return { profileId, practice, upgrades, daily, earned, earningsKnown };
 }
 
 /** The report's calendar anchor: the audience's civil time (S-09, FR-016). */
@@ -166,7 +188,7 @@ export async function getWeeklyReport(
 ): Promise<WeeklyReport> {
   const { data, error } = await client
     .from("shift_log")
-    .select("created_at, skills, upgrade_purchased")
+    .select("created_at, skills, upgrade_purchased, earned")
     .eq("profile_id", profileId)
     .gte("created_at", startOfWeek(now))
     .order("created_at", { ascending: true });

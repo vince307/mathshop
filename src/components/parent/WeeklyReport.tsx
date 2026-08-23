@@ -6,6 +6,7 @@ import WeeklyActivityChart from "@/components/parent/WeeklyActivityChart";
 import { Button } from "@/components/ui/button";
 import type { Competency, WeeklyReport as WeeklyReportData, WeeklyReportUpgrade } from "@/types";
 import { COMPETENCIES, firstTryPercent } from "@/data/skills";
+import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
 /**
@@ -126,7 +127,7 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
     );
   }
 
-  const { practice, upgrades, daily } = child.report;
+  const { practice, upgrades, daily, earned, earningsKnown } = child.report;
   // Only competencies actually practiced this week (completed > 0) — nothing to
   // shame for the rest. Order follows the canonical competency list.
   const practiced = COMPETENCIES.filter((competency) => practice[competency].completed > 0);
@@ -143,8 +144,16 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
       {/* Two-up on a phone, three-up from `sm`: at 390 px a three-column row
           leaves ~63 px of text per tile, which these multi-word Polish labels
           do not fit. A responsive grid class, not a duplicated element — the
-          accessibility tree is identical at every width. */}
-      <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          accessibility tree is identical at every width.
+
+          The earnings tile makes it FOUR, and four tiles in a three-column grid
+          leave a lone orphan on a second row at every width >= `sm` — so the
+          column count follows the tile count. `sm:grid-cols-4` was rejected: at
+          exactly 640 px it gives ~98 px of text per tile, the same legibility
+          failure the three-column row already has at 390 px. */}
+      <ul
+        className={cn("mt-5 grid gap-3", earningsKnown ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-3")}
+      >
         <li className="bg-primary/5 rounded-2xl p-4">
           <p className="text-foreground text-2xl font-extrabold">{tasksThisWeek}</p>
           <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statTasks}</p>
@@ -167,6 +176,20 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
           <p className="text-foreground text-2xl font-extrabold">{upgrades.length}</p>
           <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statUpgrades}</p>
         </li>
+        {/* Suppressed, never faked, while a shift row in this week has no recorded
+            payout — those rows predate the `earned` column, and rendering their
+            absence as `0` would undercount silently. A week that simply had no
+            shifts is NOT that case: it renders `0`, exactly as the tasks tile
+            already does. The label says what was *logged*, never a balance — the
+            sum is a lower bound and is deliberately not placed near a wallet. */}
+        {earningsKnown && (
+          <li className="bg-accent/10 rounded-2xl p-4">
+            <p className="text-foreground text-2xl font-extrabold">
+              {copy.statEarnedValue.replace("{amount}", String(earned))}
+            </p>
+            <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statEarned}</p>
+          </li>
+        )}
       </ul>
 
       {/* The daily decomposition of the tile above: same rows, split by Warsaw
