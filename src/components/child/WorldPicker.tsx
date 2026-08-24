@@ -87,7 +87,12 @@ export default function WorldPicker({ profileId, currentTheme }: WorldPickerProp
 
         <div className="max-lg:bg-card max-lg:border-border max-lg:rounded-2xl max-lg:border max-lg:p-3 max-lg:shadow-sm">
           <p className="text-foreground hidden text-sm font-extrabold lg:block">{t.worlds.learnHeading}</p>
-          <ul className="flex flex-col gap-3 max-lg:flex-row max-lg:gap-0 lg:mt-3">
+          {/* The heading above is `hidden … lg:block`, so below `lg` the list has no
+              accessible name at all — three items and no idea what they are. The
+              list names ITSELF rather than pointing at the <p>: `aria-labelledby`
+              would work but needs an id and couples the name to that element's
+              position. Same shape as WeeklyActivityChart's sr-only <ul>. */}
+          <ul className="flex flex-col gap-3 max-lg:flex-row max-lg:gap-0 lg:mt-3" aria-label={t.worlds.learnHeading}>
             {competencies.map(({ key, icon: Icon, tone, copy }, i) => (
               <li
                 key={key}

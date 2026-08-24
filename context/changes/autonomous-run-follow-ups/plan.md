@@ -945,12 +945,12 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [x] 1.1 `npm run lint` clean
-- [x] 1.2 `npm run check` — 0 errors, 0 warnings
-- [x] 1.3 `npm test` — branch baseline + 0
-- [x] 1.4 `E2E_PORT=<yours> npx playwright test e2e/growth.spec.ts` — branch e2e baseline + 1 test per project
-- [x] 1.5 Deliberate break A: remove `role="img"` from `StageRail`'s three markers → `getByRole("img", …)` red in both projects → restore
-- [x] 1.6 Deliberate break B: revert to `{next && (…)}` → empty-state test red on the missing sentence, CTA assertion still green → restore
+- [x] 1.1 `npm run lint` clean — 915bd85
+- [x] 1.2 `npm run check` — 0 errors, 0 warnings — 915bd85
+- [x] 1.3 `npm test` — branch baseline + 0 — 915bd85
+- [x] 1.4 `E2E_PORT=<yours> npx playwright test e2e/growth.spec.ts` — branch e2e baseline + 1 test per project — 915bd85
+- [x] 1.5 Deliberate break A: remove `role="img"` from `StageRail`'s three markers → `getByRole("img", …)` red in both projects → restore — 915bd85
+- [x] 1.6 Deliberate break B: revert to `{next && (…)}` → empty-state test red on the missing sentence, CTA assertion still green → restore — 915bd85
 
 #### Manual
 
@@ -961,10 +961,10 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [ ] 2.2 `npm test` — branch baseline + 2
-- [ ] 2.3 Deliberate break A: delete the `<form>` element keeping its children → rooted helper throws, `action` assertion red → restore
-- [ ] 2.4 Deliberate break B: remove the `<ul>`'s `aria-label` → `getByRole("list", { name })` red → restore
+- [x] 2.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
+- [x] 2.2 `npm test` — branch baseline + 2
+- [x] 2.3 Deliberate break A: delete the `<form>` element keeping its children → rooted helper throws, `action` assertion red → restore
+- [x] 2.4 Deliberate break B: remove the `<ul>`'s `aria-label` → `getByRole("list", { name })` red → restore
 
 #### Manual
 

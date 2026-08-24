@@ -31,9 +31,19 @@ function tile(name: string): HTMLElement {
   return screen.getByRole("button", { name });
 }
 
-/** A hidden input that actually travels in the POST body. */
+/** The <form> that carries the POST. Everything else in this file is only a
+ *  commit if it lives INSIDE this element — a picker whose wrapper is gone still
+ *  renders every tile and every hidden input, and switches nothing. */
+function pickerForm(container: HTMLElement): HTMLFormElement {
+  const form = container.querySelector("form");
+  if (!form) throw new Error("missing <form> wrapper: WorldPicker cannot POST without it");
+  return form;
+}
+
+/** A hidden input that actually travels in the POST body — rooted at the <form>,
+ *  not at the container, so an input that escapes the form is not counted. */
 function hiddenInput(container: HTMLElement, name: string): HTMLInputElement {
-  const el = container.querySelector<HTMLInputElement>(`input[name="${name}"]`);
+  const el = pickerForm(container).querySelector<HTMLInputElement>(`input[name="${name}"]`);
   if (!el) throw new Error(`missing hidden input: ${name}`);
   return el;
 }
@@ -83,6 +93,25 @@ describe("WorldPicker", () => {
     expect(hiddenInput(container, "theme").value).toBe("sklep-ksiegarnia");
     // The id must survive the selection change — it is what the endpoint resolves.
     expect(profileInput.value).toBe(PROFILE_ID);
+  });
+
+  it("wraps the picker in a form bound to the world endpoint, with the submit inside it", () => {
+    const { container } = render(<WorldPicker profileId={PROFILE_ID} currentTheme="kawiarnia" />);
+    const form = pickerForm(container);
+    // Where the commit goes and how it travels. Without both, the hidden inputs
+    // asserted above are inert.
+    expect(form).toHaveAttribute("action", "/api/profiles/world");
+    expect(form.getAttribute("method")?.toLowerCase()).toBe("post");
+    // …and the control that fires it is inside that form, so a native submit works.
+    expect(form).toContainElement(screen.getByRole("button", { name: t.worlds.confirm }));
+  });
+
+  it("names the competency list, which loses its visible heading below lg", () => {
+    render(<WorldPicker profileId={PROFILE_ID} currentTheme="kawiarnia" />);
+    // getByText(learnHeading) resolves to the `hidden lg:block` <p> whatever the
+    // viewport, so only a role+name query can see the loss — which is exactly what
+    // a screen reader at 712 px sees.
+    expect(screen.getByRole("list", { name: t.worlds.learnHeading })).toBeInTheDocument();
   });
 
   it("renders the same-skills and carry-over promises (the honest-copy guarantee)", () => {
