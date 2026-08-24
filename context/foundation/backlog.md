@@ -37,55 +37,38 @@ invent it. `Parked` means a deliberate non-goal.
 
 ## Ready
 
-### H1 — `autonomous-run-follow-ups`
-**Value/cost:** high / low. Ten concrete items, each naming file + symbol, already
-triaged as non-blocking by five implementation reviews. **No migration.**
-**Source:** `context/changes/*/follow-ups/review-fixes.md` (five files).
-**Status:** ready. This is the cheapest entry in the backlog and closes the
-verification debt of the last run.
+*Empty.* Both entries that were here — **H1 `autonomous-run-follow-ups`** and
+**A3 `remember-me-on-login`** — shipped on 2026-08-24; see `## Shipped` below.
 
-The three worth doing first, all **[V]** (each names a file and a symbol in its
-source document):
-- `src/pages/app/growth.astro` — the `<h2>` holding `t.start.nextUpgradeHeading`
-  sits **outside** the `{next && …}` guard, so a child who owns every
-  level-eligible upgrade sees a heading over an empty box.
-- `src/components/child/StageRail.astro` — the stage-ordinal `aria-label` hangs on
-  a `role=generic` span and is therefore **never announced**, while the file's own
-  comment and a ticked Progress row both claim it is. Needs `role="img"`.
-- `tests/weekly-report-tiles.test.tsx` — no committed test renders a non-zero chart
-  beside a non-zero tile (every fixture passes seven zeros), so the invariant the
-  chart exists to satisfy is unproven at render level. ~12 lines.
-
-Also in scope: rebuild the `shift_log` e2e seeder that was written and then deleted
-(`e2e/helpers/accounts.ts`), bind the form target in `tests/worlds-picker.test.tsx`,
-make `tests/shop-art-slots.test.ts` exercise the per-world lookup, make
-`tests/nav-labels.test.ts` guard the real nav rather than the dictionary, log the
-DB-error branch in `src/pages/api/profiles/world.ts`, keep `learnHeading` in the
-a11y tree below `lg`, and record K1 (the non-decaying `failed_attempts` counter) in
-`docs/reference/contract-surfaces.md`.
-
-**Open decision for the planner:** whether this ships as one change or as
-per-feature follow-up commits. One change is cheaper; per-feature keeps the audit
-trail attached to the feature. Decide and record.
+**Nothing in this file can go to `/10x-autonomous-run` today.** Everything under
+`## Needs shaping` needs `/10x-shape` → `/10x-prd` first, and the run skill refuses
+those by design: planning them would invent the product content that is
+deliberately missing. Refill this section before the next run.
 
 ---
 
-### A3 — `remember-me-on-login`
-**Value/cost:** medium / low. **Migration:** no.
-**Mockup:** `assets/matmaverse-auth-v2-{web,mobile}/01-parent-login-*` **[I]**.
-**Status:** ready, but it is a **session-policy decision before it is UI**.
+## Shipped
 
-**[I]** The login form has no "remember me" control; the missing piece is a
-decision about Supabase session length, not markup. Without that decision this is a
-decorative checkbox — which the project's own rules forbid (the four protective
-toggles in the parent-PIN mockup were dropped from the last run for exactly this
-reason).
+### H1 — `autonomous-run-follow-ups` — 2026-08-24
+Ten triaged follow-ups from the 2026-08-22 run. Branch `feat/autonomous-run-follow-ups`,
+10 commits, no migration, `MERGE: CLEAR`. Landed on `matmaverse-v2` via
+`run/2026-08-24-followups-and-remember-me`. Archive:
+`context/archive/2026-08-24-autonomous-run-follow-ups/`.
+**Left open:** 4 `#### Manual` Progress rows needing a screen reader and human eyes
+(1.7, 1.8, 2.5, 6.6) — deferred by design, not failures.
 
-**Open decision the planner must make and record:** what "remember me" changes
-concretely (refresh-token lifetime? cookie `maxAge`? both?), what the unchecked
-default is, and what the security posture is on a shared family device. If the
-answer is "nothing we can honestly implement", the entry closes as a documented
-non-goal rather than shipping a placebo.
+### A3 — `remember-me-on-login` — 2026-08-24
+Closed as a **real feature, not a placebo**: the checkbox sets the auth cookie's
+`maxAge` (browser-session when unchecked, 30 days when checked), and the policy is
+registered in `docs/reference/contract-surfaces.md`. Branch
+`feat/remember-me-on-login`, 5 commits, no migration, `MERGE: CLEAR`. Archive:
+`context/archive/2026-08-24-remember-me-on-login/`.
+**Left open (RF-1, needs a human decision):** `signup`, `confirm` and
+`update-password` now each end in a browser-session cookie, so a parent is signed
+out after email verification or a password reset. Deliberate and documented, but
+nothing pins it with a test. If unacceptable, the fix is one
+`setRememberChoice(cookies, true)` in the route concerned — **never** a special case
+inside `setAll`, which cannot tell which route it serves.
 
 ---
 
