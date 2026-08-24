@@ -251,28 +251,28 @@ None. No schema, no data, no config. The change is confined to the dev-tooling p
 
 #### Automated
 
-- [x] 1.1 Package type-checks: `npx tsc --noEmit -p packages/code-reviewer`
-- [x] 1.2 Root type-check stays clean: `npm run check`
-- [x] 1.3 Root lint stays clean: `npm run lint`
-- [x] 1.4 Root suite stays green at its current count: `npm test`
+- [x] 1.1 Package type-checks: `npx tsc --noEmit -p packages/code-reviewer` — aedf9ef
+- [x] 1.2 Root type-check stays clean: `npm run check` — aedf9ef
+- [x] 1.3 Root lint stays clean: `npm run lint` — aedf9ef
+- [x] 1.4 Root suite stays green at its current count: `npm test` — aedf9ef
 
 #### Manual
 
-- [x] 1.5 Replay of `5dee0cb` prints the unchanged `12 file(s), 5 stripped, 1762 lines`
+- [x] 1.5 Replay of `5dee0cb` prints the unchanged `12 file(s), 5 stripped, 1762 lines` — aedf9ef
 
 ### Phase 2: Strip embedded diffs and prove it
 
 #### Automated
 
-- [ ] 2.1 New test passes and the suite count rises: `npm test`
-- [ ] 2.2 Package type-checks: `npx tsc --noEmit -p packages/code-reviewer`
-- [ ] 2.3 Root type-check and lint stay clean: `npm run check && npm run lint`
+- [x] 2.1 New test passes and the suite count rises: `npm test`
+- [x] 2.2 Package type-checks: `npx tsc --noEmit -p packages/code-reviewer`
+- [x] 2.3 Root type-check and lint stay clean: `npm run check && npm run lint`
 
 #### Manual
 
-- [ ] 2.4 Replay of `5dee0cb` prints `12 file(s), 11 stripped, 106 lines`; before/after recorded
-- [ ] 2.5 Deliberate-break check: reverting the condition turns `npm test` red
-- [ ] 2.6 Test-location variant (`tests/` or package-local fallback) recorded with its reason
+- [x] 2.4 Replay of `5dee0cb` prints `12 file(s), 11 stripped, 106 lines`; before/after recorded
+- [x] 2.5 Deliberate-break check: reverting the condition turns `npm test` red
+- [x] 2.6 Test-location variant (`tests/` or package-local fallback) recorded with its reason
 
 ### Phase 3: Record the class as a lesson
 

@@ -61,8 +61,9 @@ function buildSystemPrompt(rubric: string): string {
     "  polish of the change dilute a concrete defect.",
     "- Report findings only for defects visible in the diff; every finding names the",
     "  file, the line in the new version, the criterion (1-6), a severity, and a concrete fix.",
-    "- The diff has been pre-filtered: lockfiles and context/ docs were removed deliberately;",
-    "  do not penalize the change for their absence.",
+    "- The diff has been pre-filtered: lockfiles, context/ docs, public binaries and",
+    "  committed .diff/.patch files were removed deliberately; do not penalize the",
+    "  change for their absence.",
     "- You only see the diff — do not invent problems about code you cannot see;",
     "  when the diff gives no signal for a criterion, score it 7 and move on.",
     "- Absence IS evidence for criterion 6: the rubric requires env-var changes to be",
@@ -126,7 +127,9 @@ async function main(): Promise<void> {
   );
 
   if (kept.length === 0 || lines === 0) {
-    process.stderr.write("Nothing to review after stripping noise paths (lockfiles, context/, public binaries).\n");
+    process.stderr.write(
+      "Nothing to review after stripping noise paths (lockfiles, context/, public binaries, committed diffs).\n",
+    );
     process.exit(EXIT_PASS);
   }
 
