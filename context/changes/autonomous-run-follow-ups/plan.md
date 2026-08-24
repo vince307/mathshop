@@ -1004,11 +1004,11 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [x] 6.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [x] 6.2 `npm test` — branch baseline + 1
-- [x] 6.3 `E2E_PORT=<yours> npx playwright test` — full suite, branch e2e baseline + 1 run TOTAL (`desktop` only — `touch` matches only `gameplay-restore|growth`), all green
-- [x] 6.4 Deliberate break: repoint `tasksThisWeek` at `upgrades.length` → tile-vs-bars sum diverges → red → restore
-- [x] 6.5 Seeder break: `created_at` by UTC day arithmetic instead of `weekDayKeys` → record whether it can be made to fail on the run's own date, honestly
+- [x] 6.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings — aebac59
+- [x] 6.2 `npm test` — branch baseline + 1 — aebac59
+- [x] 6.3 `E2E_PORT=<yours> npx playwright test` — full suite, branch e2e baseline + 1 run TOTAL (`desktop` only — `touch` matches only `gameplay-restore|growth`), all green — aebac59
+- [x] 6.4 Deliberate break: repoint `tasksThisWeek` at `upgrades.length` → tile-vs-bars sum diverges → red → restore — aebac59
+- [x] 6.5 Seeder break: `created_at` by UTC day arithmetic instead of `weekDayKeys` → record whether it can be made to fail on the run's own date, honestly — aebac59
 
 #### Manual
 
@@ -1018,8 +1018,8 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [ ] 7.1 `npm run lint` clean; `npm test` — branch baseline + 0; `npm run check` unchanged
-- [ ] 7.2 Full `E2E_PORT=<yours> npx playwright test` green — final phase, whole stack re-run
+- [x] 7.1 `npm run lint` clean; `npm test` — branch baseline + 0; `npm run check` unchanged
+- [x] 7.2 Full `E2E_PORT=<yours> npx playwright test` green — final phase, whole stack re-run
 
 #### Manual
 
