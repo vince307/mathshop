@@ -766,12 +766,12 @@ sight and overrides this paragraph.
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` — clean
-- [ ] 3.2 `npm run check` — clean
-- [ ] 3.3 `npm test` — baseline + 10 total
-- [ ] 3.4 `E2E_PORT=<yours> npx playwright test` — e2e baseline + 0
-- [ ] 3.5 `git status --porcelain` clean apart from intended files
+- [x] 3.1 `npm run lint` — clean
+- [x] 3.2 `npm run check` — clean
+- [x] 3.3 `npm test` — baseline + 10 total (429 → **439**, 51 → 53 files)
+- [x] 3.4 `E2E_PORT=4333 npx playwright test` — e2e baseline + 0 (**23 passed**, baseline 23 measured on this branch; `signInViaUI` still signs in after the form moved)
+- [x] 3.5 `git status --porcelain` clean apart from intended files
 
 #### Manual
 
-- [ ] 3.6 `git diff docs/reference/contract-surfaces.md` is a pure append; no existing section altered
+- [x] 3.6 `git diff docs/reference/contract-surfaces.md` is a pure append; no existing section altered — **verified**: 0 deleted lines, F1's `## Parent PIN routes (RLS surface)` untouched
