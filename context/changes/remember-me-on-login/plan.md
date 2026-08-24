@@ -750,17 +750,17 @@ sight and overrides this paragraph.
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` — clean
-- [ ] 2.2 `npm run check` — clean
-- [ ] 2.3 `npm test` — baseline + 3 on top of Phase 1
-- [ ] 2.4 Deliberate break E (drop `name="remember"`) — component test 1 red, all route tests green, restored
-- [ ] 2.5 `signinLinkLabel` occurs 0× in `signin.astro`, 1× in `SignInForm.tsx`
+- [x] 2.1 `npm run lint` — clean
+- [x] 2.2 `npm run check` — clean
+- [x] 2.3 `npm test` — baseline + 3 on top of Phase 1 (436 → **439**, 52 → 53 files)
+- [x] 2.4 Deliberate break E (drop `name="remember"`) — component test 1 red, all route tests green, restored
+- [x] 2.5 `signinLinkLabel` occurs 0× in `signin.astro`, 1× in `SignInForm.tsx`
 
 #### Manual
 
-- [ ] 2.6 Row matches the mockup at desktop and at 712px, no wrap or overflow
-- [ ] 2.7 Keyboard: Tab to checkbox, Space toggles, Tab to link, Tab to submit
-- [ ] 2.8 Clicking the label toggles the checkbox
+- [x] 2.6 Row matches the mockup at desktop and at 712px, no wrap or overflow — **performed** in a real browser at 1440/712/375px via `getBoundingClientRect` geometry (single-line row, link right-aligned, no sideways scroll at any width)
+- [x] 2.7 Keyboard: Tab to checkbox, Space toggles, Tab to link, Tab to submit — **performed**; order is password → show-password toggle → checkbox → link → submit, and Space toggles without submitting the form
+- [x] 2.8 Clicking the label toggles the checkbox — **performed**; checked → unchecked and the `remember` field leaves the FormData
 
 ### Phase 3: Register the contract surface and regress
 

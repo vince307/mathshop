@@ -18,6 +18,7 @@ export const pl = {
       pending: "Logowanie…",
       noAccount: "Nie masz konta?",
       signupLink: "Utwórz konto",
+      rememberLabel: "Zapamiętaj mnie",
     },
     signup: {
       title: "Rejestracja",
