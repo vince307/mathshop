@@ -1,8 +1,11 @@
-import { describe, expect, it } from "vitest";
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
 import type { CSSProperties } from "react";
-import { DEFAULT_THEME, WORLD_SLUGS } from "@/data/worlds";
+import { DEFAULT_THEME, WORLD_SLUGS, worldForTheme } from "@/data/worlds";
 import { UPGRADE_IDS } from "@/data/upgrades";
-import { WORLD_SLOTS } from "@/components/child/ShopArt";
+import { ShopArt, WORLD_SLOTS } from "@/components/child/ShopArt";
 
 /**
  * Per-world overlay coordinates (F5, option D) — the repo's first `ShopArt` test.
@@ -12,6 +15,14 @@ import { WORLD_SLOTS } from "@/components/child/ShopArt";
  * fallback is SILENT: a missing entry does not crash, it just places the badge at
  * a coordinate tuned for a different plate. So the risk here is not a broken
  * render, it is a quietly wrong one — which is exactly what these assertions pin.
+ *
+ * The four data assertions below pin the TABLE. They cannot see whether `ShopArt`
+ * still reads it: dropping the `WORLD_SLOTS[world.slug]?.` prefix leaves all four
+ * green. Nor can the placed/unplaced partition — `DEFAULT_SLOTS` covers all six
+ * ids, so `unplaced` is ALWAYS empty and the badge count never moves either. The
+ * only observable the lookup controls is the badge's inline `style`, which is what
+ * the render case at the bottom asserts (jsdom pragma above; vitest's global
+ * environment is `node`).
  */
 
 const slots = (slug: string) => WORLD_SLOTS[slug];
@@ -59,5 +70,23 @@ describe("ShopArt WORLD_SLOTS", () => {
         assertPercentInBox(style[vertical[0]], `${slug}.${id}.${vertical[0]}`);
       }
     }
+  });
+});
+
+describe("ShopArt render", () => {
+  afterEach(cleanup);
+
+  it("places an owned badge at the world's own coordinates, not the default table's", () => {
+    // `piekarnia`'s sign sits at 7%/10%; DEFAULT_SLOTS.sign is 10%/6% — the two
+    // differ on BOTH axes, so neither assertion can pass by coincidence.
+    const world = worldForTheme("piekarnia");
+    const { container } = render(<ShopArt world={world} purchased={["sign"]} />);
+
+    expect(screen.getByAltText(world.name)).toBeInTheDocument();
+
+    const badges = container.querySelectorAll<HTMLElement>("span[style]");
+    expect(badges, "exactly one owned upgrade was seeded").toHaveLength(1);
+    expect(badges[0].style.left).toBe("7%");
+    expect(badges[0].style.top).toBe("10%");
   });
 });

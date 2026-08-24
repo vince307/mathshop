@@ -120,7 +120,13 @@ const savingPercent =
           {/* ---------- Next upgrade + CTA ---------- */}
           <section class:list={[childCard("3xl", "p-5 sm:p-6")]}>
             <h2 class="text-foreground text-lg font-extrabold">{t.start.nextUpgradeHeading}</h2>
-            {next && (
+            {/* Same shape as the unlocks section above: the heading is unconditional,
+                so the else-branch must be an honest sentence rather than nothing.
+                `nextUpgrade` returns null as soon as every *level-eligible* upgrade
+                is owned — 90 zl of ordinary early play, not a terminal edge case.
+                The CTA below stays OUTSIDE the ternary on purpose: /app/growth is
+                the screen's only entrance to the shop. */}
+            {next ? (
               <div class="mt-4 flex items-center gap-4">
                 <img src={next.art} alt="" aria-hidden="true" class="size-12 shrink-0" />
                 <div class="min-w-0 flex-1">
@@ -129,13 +135,15 @@ const savingPercent =
                     {t.start.amountZl.replace("{amount}", String(next.cost))}
                   </p>
                   {savingPercent !== null && (
-                    <div class="bg-muted mt-2 h-2 w-full overflow-hidden rounded-full">
+                    <div aria-hidden="true" class="bg-muted mt-2 h-2 w-full overflow-hidden rounded-full">
                       <div class="bg-primary h-full rounded-full" style={`width: ${savingPercent}%`} />
                     </div>
                   )}
                   {showNext && <p class="text-muted-foreground mt-2 text-xs font-semibold">{nextText}</p>}
                 </div>
               </div>
+            ) : (
+              <p class="text-muted-foreground mt-4 text-sm font-semibold">{t.growth.noNextUpgrade}</p>
             )}
             <a
               href="/app/upgrades"

@@ -19,9 +19,26 @@ import { t } from "./helpers/i18n";
  *   toggled with `display` (`hidden` / `lg:hidden`). If that toggle ever regresses
  *   to `opacity`, or a third nav appears, every accessible name doubles and
  *   `getByRole` locators across the whole suite go ambiguous — a failure only a
- *   real browser at a real viewport can see. The touch run is also the fifth
- *   tab's fit check: five entries must sit in one row without pushing the
- *   document sideways.
+ *   real browser at a real viewport can see. The touch run is also the bottom
+ *   bar's fit check: SIX tabs must sit in one row without pushing the document
+ *   sideways. (`t.nav.items` has six keys — dashboard, missions, shop, growth,
+ *   worlds, parent. `AppShell`'s `items` array holds five: the sidebar renders
+ *   the sixth, `parent`, as its own pinned link below them, while `tabs` spreads
+ *   all six into the bottom bar. That is why the count reads as five in the
+ *   component and six in the accessibility tree.)
+ *
+ * - **Where each nav entry POINTS.** This file owns the wiring half of the nav
+ *   contract; `tests/nav-labels.test.ts` owns the dictionary half (uniqueness and
+ *   substring hygiene) and can see nothing about `AppShell`, whose `items` /
+ *   `tabs` are `.astro` frontmatter consts with no value export. The href map
+ *   below is therefore hardcoded ON PURPOSE: the spec states the expected wiring
+ *   independently of the component it is checking.
+ *
+ * - **An honest empty state.** The next-upgrade `<h2>` is unconditional, so when
+ *   `nextUpgrade` returns null the card must still say something and must still
+ *   offer the shop CTA. Only a rendered page can show that the heading, the
+ *   sentence and the CTA co-exist; the `.astro` template has no unit-level guard
+ *   (Risk E2E-F4-3).
  *
  * The stage ladder's arithmetic (`stageForLevel`, saturation, totality) is
  * covered in tests/stages.test.ts and is deliberately NOT re-asserted here.
@@ -34,8 +51,20 @@ import { t } from "./helpers/i18n";
 /** The four catalogue stages, as the dictionary spells them (L-003 extended to tests). */
 const stageNames = Object.values(t.stages).map((stage) => stage.name);
 
-/** Every entry the shell's navigation offers — sidebar at `lg+`, bottom bar below. */
-const navLabels = Object.values(t.nav.items);
+/**
+ * Where every nav entry must point. Hardcoded rather than imported: `AppShell`'s
+ * `items` / `tabs` are `.astro` frontmatter consts with no value export, and even
+ * if they were importable, a guard that reads its expectations from the thing it
+ * is guarding proves nothing. Keys match `t.nav.items`.
+ */
+const NAV_HREFS = {
+  dashboard: "/app/start",
+  missions: "/app/task",
+  shop: "/app/upgrades",
+  growth: "/app/growth",
+  worlds: "/app/worlds",
+  parent: "/app/report",
+} as const;
 
 /** A measurement of the whole document, not an element locator. */
 const horizontalOverflow = (page: import("@playwright/test").Page) =>
@@ -75,6 +104,45 @@ test("the nav entry reaches the growth screen and the rail shows every stage (Ri
       "aria-current",
       "page",
     );
+
+    // The stage-marker ordinals are actually ANNOUNCED, not merely labelled.
+    // StageRail's markers carry `aria-label` on a <span>; without `role="img"`
+    // that label is on role=generic and no browser exposes it. This assertion
+    // resolves through the accessibility tree, which is exactly the surface the
+    // missing role removed — a `getByText` assertion would stay green because the
+    // `current` marker also renders the bare digit.
+    await expect(page.getByRole("img", { name: t.growth.stageOrdinal.replace("{n}", "1"), exact: true })).toHaveCount(
+      1,
+    );
+  } finally {
+    await deleteUser(account.id);
+  }
+});
+
+test("the next-upgrade card stays a finished thought when nothing is left to buy (Risk E2E-F4-3)", async ({ page }) => {
+  const account = await provisionAccount("e2e-growth-empty");
+  try {
+    // `sign` and `shelf` are the only two upgrades with requiredWorldLevel 1, so
+    // owning both at business_level 1 drives `nextUpgrade` to null. That is 90 zl
+    // of ordinary early play, not a terminal edge case — it recurs at every level
+    // boundary.
+    await seedChildProfile(account.id, {
+      name: "Nela",
+      businessLevel: 1,
+      shopState: { purchased: ["sign", "shelf"] },
+    });
+    await signInViaUI(page, account.email);
+    await page.goto("/app/growth");
+    await expect(page.getByRole("heading", { name: t.growth.title, level: 1 })).toBeVisible();
+
+    // The heading is unconditional, so with no next upgrade the card must say
+    // something rather than sit empty under its own title.
+    await expect(page.getByText(t.growth.noNextUpgrade, { exact: true })).toBeVisible();
+
+    // …and the shop CTA survives the empty state. It sits OUTSIDE the ternary
+    // because /app/growth is this screen's only entrance to the shop; guarding
+    // the whole section would delete it exactly when the child has money to spend.
+    await expect(page.getByRole("link", { name: t.growth.upgradesLink, exact: true })).toBeVisible();
   } finally {
     await deleteUser(account.id);
   }
@@ -90,18 +158,21 @@ test("every nav entry stays uniquely reachable and the shell never scrolls sidew
     await page.goto("/app/growth");
     await expect(page.getByRole("heading", { name: t.growth.title, level: 1 })).toBeVisible();
 
-    // Five entries, each resolvable by its FULL accessible name and present in
-    // the accessibility tree exactly once — at 712 px that is the bottom bar
-    // carrying the growth tab, at 1280 px the sidebar plus the pinned parent link.
-    for (const label of navLabels) {
+    // Six entries, each resolvable by its FULL accessible name, present in the
+    // accessibility tree exactly once, and pointing at the route it names — at
+    // 712 px that is the bottom bar carrying all six tabs, at 1280 px the sidebar
+    // plus the pinned parent link. Presence alone was the whole assertion before;
+    // an entry silently repointed at another route stayed green.
+    for (const [key, label] of Object.entries(t.nav.items)) {
       const entry = page.getByRole("link", { name: label, exact: true });
       await expect(entry).toHaveCount(1);
       await expect(entry).toBeVisible();
+      await expect(entry).toHaveAttribute("href", NAV_HREFS[key as keyof typeof NAV_HREFS]);
     }
 
-    // The five entries fit the primary nav's own box — measured on the element
+    // The six entries fit the primary nav's own box — measured on the element
     // `getByRole` found, not on a CSS-selected one. At 712 px this is the bottom
-    // bar: five tabs in ONE row, no sideways scroll to reach the fifth.
+    // bar: six tabs in ONE row, no sideways scroll to reach the last.
     const primaryNav = page.getByRole("navigation", { name: t.nav.primaryLabel });
     await expect(primaryNav).toHaveCount(1);
     expect(await primaryNav.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);

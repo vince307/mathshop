@@ -15,6 +15,20 @@ import { t } from "@/i18n";
  * `items` array and are toggled with `hidden` / `lg:hidden` — display, never
  * opacity — so exactly one copy of each name is in the a11y tree at any viewport.
  * These assertions are what keeps that array's labels unambiguous.
+ *
+ * **This suite owns half a contract, and only half.** It guards the DICTIONARY:
+ * uniqueness, mutual substring collisions in both directions, and collisions with
+ * the strings live e2e locators already depend on. It CANNOT guard the WIRING —
+ * `AppShell`'s `items` / `tabs` are `.astro` frontmatter consts with no value
+ * export, so nothing here can import them, and dropping an entry from `items` or
+ * pointing one at the wrong route is invisible from this file.
+ *
+ * The wiring half lives in `e2e/growth.spec.ts`, Risk E2E-F4-2: it loops these
+ * same `Object.values(t.nav.items)` in a real browser, asserting each label
+ * resolves to exactly one visible link AND that the link's `href` is the route
+ * that entry is supposed to reach — in both Playwright projects, so the 712px
+ * bottom bar is covered as well as the sidebar. Do not add wiring assertions
+ * here; add them there.
  */
 
 const labels = Object.values(t.nav.items);

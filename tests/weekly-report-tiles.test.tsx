@@ -27,10 +27,18 @@ const EMPTY_WEEK: WeeklyReportDay[] = Array.from({ length: 7 }, (_, weekday) => 
   completed: 0,
 }));
 
+/**
+ * `daily` defaults to `EMPTY_WEEK`, which takes `WeeklyActivityChart`'s
+ * `maxCount === 0` early return — so before it was a parameter, `WeeklyReport`
+ * had NEVER been rendered with a live chart and the tile-vs-bars invariant was
+ * asserted only at the aggregator (tests/reports.test.ts). Additive: every
+ * existing call site keeps the empty week.
+ */
 function child(
   practiceDelta: SkillDelta,
   upgradeIds: string[] = [],
   earnings: { earned?: number; earningsKnown?: boolean } = {},
+  daily: WeeklyReportDay[] = EMPTY_WEEK,
 ): ChildReport {
   return {
     profileId: "p1",
@@ -41,7 +49,7 @@ function child(
       profileId: "p1",
       practice: addSkillDelta(readSkillState(null), practiceDelta),
       upgrades: upgradeIds.map((upgradeId) => ({ upgradeId, competencies: [], generalPractice: true })),
-      daily: EMPTY_WEEK,
+      daily,
       earned: earnings.earned ?? 0,
       // Default `true`: the tile is the normal state, suppression the exception.
       earningsKnown: earnings.earningsKnown ?? true,
@@ -122,6 +130,48 @@ describe("WeeklyReport summary tiles", () => {
     // `statUpgrades` is byte-identical to `upgradesHeading`, so it legitimately
     // appears twice on the card — assert the count, not uniqueness.
     expect(screen.getAllByText(copy.statUpgrades, { exact: true })).toHaveLength(2);
+    expectNoNaN(container);
+  });
+
+  it("decomposes the tasks tile into the chart's seven bars (the invariant reports.ts states)", () => {
+    // `reports.ts`: "Sum daily[].completed === Sum practice[*].completed … so a
+    // parent adding the seven bars gets the number printed above them." Both
+    // sides of that equation are chosen to agree here: 3 + 2 + 4 = 9 tasks in
+    // `practice`, and 9 spread across Monday, Wednesday and Saturday.
+    const week: WeeklyReportDay[] = EMPTY_WEEK.map((day) => ({ ...day }));
+    week[0].completed = 4;
+    week[2].completed = 3;
+    week[5].completed = 2;
+
+    const { container } = render(
+      <WeeklyReport
+        reports={[
+          child({ math: { completed: 3 }, money: { completed: 2 }, decisions: { completed: 4 } }, [], {}, week),
+        ]}
+      />,
+    );
+
+    // The chart is live, not the maxCount === 0 early return every other fixture
+    // in this file takes.
+    expect(screen.queryByText(copy.chartEmpty, { exact: true })).toBeNull();
+
+    // Read BOTH sides out of the DOM and compare them to each other. Asserting
+    // each against the literal 9 would go red on the same break, but it would not
+    // be a decomposition assertion — it would be two independent value checks that
+    // happen to agree. The tile's figure is the <p> immediately before its label.
+    const tileValue = Number.parseInt(
+      screen.getByText(copy.statTasks, { exact: true }).previousElementSibling?.textContent ?? "",
+      10,
+    );
+    const bars = screen.getByRole("list", { name: copy.chartHeading });
+    const counts = Array.from(bars.querySelectorAll("li"), (li) =>
+      Number.parseInt(li.textContent.split(":")[1]?.trim() ?? "", 10),
+    );
+    expect(counts).toHaveLength(7);
+    expect(tileValue).toBe(counts.reduce((sum, n) => sum + n, 0));
+    // …and the pair is anchored, so a week where both sides collapsed to 0 cannot
+    // satisfy the equality above.
+    expect(tileValue).toBe(9);
     expectNoNaN(container);
   });
 
