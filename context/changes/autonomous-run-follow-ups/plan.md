@@ -974,18 +974,18 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [x] 3.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [x] 3.2 `npm test` — branch baseline + 1
-- [x] 3.3 Deliberate break: drop the `WORLD_SLOTS[world.slug]?.` prefix from the badge `style` → render case red on `left`/`top` → restore
+- [x] 3.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings — 0cf5fb5
+- [x] 3.2 `npm test` — branch baseline + 1 — 0cf5fb5
+- [x] 3.3 Deliberate break: drop the `WORLD_SLOTS[world.slug]?.` prefix from the badge `style` → render case red on `left`/`top` → restore — 0cf5fb5
 
 ### Phase 4: Nav — document the two-layer split and assert every entry's href
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` clean; `npm test` — branch baseline + 0
-- [ ] 4.2 `E2E_PORT=<yours> npx playwright test e2e/growth.spec.ts` — count unchanged from Phase 1's post-state, all green
-- [ ] 4.3 Deliberate break: change one entry's `href` in `AppShell.astro`'s `items` → Risk E2E-F4-2 red in both projects → restore
-- [ ] 4.4 Meta-check recorded: removing an entry from `items` was already red before this phase (count 0) — the reason Fix A is not bought
+- [x] 4.1 `npm run lint` clean; `npm test` — branch baseline + 0
+- [x] 4.2 `E2E_PORT=<yours> npx playwright test e2e/growth.spec.ts` — count unchanged from Phase 1's post-state, all green
+- [x] 4.3 Deliberate break: change one entry's `href` in `AppShell.astro`'s `items` → Risk E2E-F4-2 red in both projects → restore
+- [x] 4.4 Meta-check recorded: removing an entry from `items` was already red before this phase (count 0) — the reason Fix A is not bought
 
 ### Phase 5: `POST /api/profiles/world` — log the DB-error branch
 
