@@ -1,7 +1,7 @@
 ---
 change_id: review-fixture-noise-strip
 title: Strip committed eval fixture diffs from review input (fixtures-as-code false positive)
-status: implementing
+status: implemented
 created: 2026-08-10
 updated: 2026-08-24
 archived_at: null

@@ -278,9 +278,9 @@ None. No schema, no data, no config. The change is confined to the dev-tooling p
 
 #### Automated
 
-- [x] 3.1 `git diff --stat` names only `context/foundation/lessons.md` — amended: also `noise.ts`, `CLAUDE.md`, `tests/review-noise.test.ts`, one word each, fixing the `L-004` references written in Phase 2 to `L-008` after the predicted numbering collision was confirmed
+- [x] 3.1 `git diff --stat` names only `context/foundation/lessons.md` — amended: also `noise.ts`, `CLAUDE.md`, `tests/review-noise.test.ts`, one word each, fixing the `L-004` references written in Phase 2 to `L-008` after the predicted numbering collision was confirmed — 23f8014
 
 #### Manual
 
-- [x] 3.2 L-004 reads as an applicable rule, not a retelling of PR #24
-- [x] 3.3 Numbering does not collide with the autonomous-run skill's `lessons-addendum.md`
+- [x] 3.2 L-004 reads as an applicable rule, not a retelling of PR #24 — 23f8014
+- [x] 3.3 Numbering does not collide with the autonomous-run skill's `lessons-addendum.md` — 23f8014
