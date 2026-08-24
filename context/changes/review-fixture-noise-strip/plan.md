@@ -264,23 +264,23 @@ None. No schema, no data, no config. The change is confined to the dev-tooling p
 
 #### Automated
 
-- [x] 2.1 New test passes and the suite count rises: `npm test`
-- [x] 2.2 Package type-checks: `npx tsc --noEmit -p packages/code-reviewer`
-- [x] 2.3 Root type-check and lint stay clean: `npm run check && npm run lint`
+- [x] 2.1 New test passes and the suite count rises: `npm test` — 5605dc3
+- [x] 2.2 Package type-checks: `npx tsc --noEmit -p packages/code-reviewer` — 5605dc3
+- [x] 2.3 Root type-check and lint stay clean: `npm run check && npm run lint` — 5605dc3
 
 #### Manual
 
-- [x] 2.4 Replay of `5dee0cb` prints `12 file(s), 11 stripped, 106 lines`; before/after recorded
-- [x] 2.5 Deliberate-break check: reverting the condition turns `npm test` red
-- [x] 2.6 Test-location variant (`tests/` or package-local fallback) recorded with its reason
+- [x] 2.4 Replay of `5dee0cb` prints `12 file(s), 11 stripped, 106 lines`; before/after recorded — 5605dc3
+- [x] 2.5 Deliberate-break check: reverting the condition turns `npm test` red — 5605dc3
+- [x] 2.6 Test-location variant (`tests/` or package-local fallback) recorded with its reason — 5605dc3
 
 ### Phase 3: Record the class as a lesson
 
 #### Automated
 
-- [ ] 3.1 `git diff --stat` names only `context/foundation/lessons.md`
+- [x] 3.1 `git diff --stat` names only `context/foundation/lessons.md` — amended: also `noise.ts`, `CLAUDE.md`, `tests/review-noise.test.ts`, one word each, fixing the `L-004` references written in Phase 2 to `L-008` after the predicted numbering collision was confirmed
 
 #### Manual
 
-- [ ] 3.2 L-004 reads as an applicable rule, not a retelling of PR #24
-- [ ] 3.3 Numbering does not collide with the autonomous-run skill's `lessons-addendum.md`
+- [x] 3.2 L-004 reads as an applicable rule, not a retelling of PR #24
+- [x] 3.3 Numbering does not collide with the autonomous-run skill's `lessons-addendum.md`

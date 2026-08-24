@@ -49,7 +49,7 @@ export function parseDiff(diff: string): DiffSegment[] {
  * is itself a diff, and a reviewer that only ever sees a diff cannot tell that
  * inner one from the change under review. It reviews the fixture as if it
  * shipped. That has blocked merges twice on this repo, once per model, each
- * time through the model's strongest lens: see L-004 in
+ * time through the model's strongest lens: see L-008 in
  * `context/foundation/lessons.md`.
  */
 export function isNoise(segment: DiffSegment): boolean {

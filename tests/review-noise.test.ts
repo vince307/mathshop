@@ -8,7 +8,7 @@ import { isNoise, parseDiff } from "../packages/code-reviewer/noise";
  *
  * 1. **strip too little** and a committed `.diff` reaches the model, which
  *    reviews the fixture's *content* as if it shipped. That blocked PR #24
- *    twice, once per model, and forced an admin bypass (L-004);
+ *    twice, once per model, and forced an admin bypass (L-008);
  * 2. **strip too much** and real code skips review entirely — a gate that
  *    passes everything looks exactly like a gate that works.
  *
