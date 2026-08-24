@@ -1,6 +1,7 @@
 import { createServerClient, parseCookieHeader } from "@supabase/ssr";
 import type { AstroCookies } from "astro";
 import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
+import { authCookieMaxAge } from "@/lib/services/remember-me";
 
 /**
  * Hardened cookie options for the Supabase auth cookies. `httpOnly` keeps the
@@ -8,6 +9,12 @@ import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
  * cross-site send, and `secure` is on in production so the cookie never travels
  * over plain HTTP (kept off in dev/test where there is no TLS). Spread *after*
  * the library's own options so these win.
+ *
+ * `maxAge` must NEVER be added here: `clearAuthCookies` spreads this object
+ * *after* its own `maxAge: 0`, so a lifetime living in here would override the
+ * deliberate expiry and turn the env-missing sign-out into a silent no-op.
+ * Auth-cookie lifetime is set in `setAll` instead — see the contract surface
+ * "Auth cookie lifetime (session-policy surface)".
  */
 const AUTH_COOKIE_OPTIONS = {
   httpOnly: true,
@@ -16,7 +23,7 @@ const AUTH_COOKIE_OPTIONS = {
 };
 
 /** Supabase auth cookies are named `sb-<project-ref>-auth-token`, optionally chunked (`.0`, `.1`). */
-const AUTH_COOKIE_RE = /^sb-.+-auth-token(\.\d+)?$/;
+export const AUTH_COOKIE_RE = /^sb-.+-auth-token(\.\d+)?$/;
 
 export function createClient(requestHeaders: Headers, cookies: AstroCookies) {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -32,7 +39,20 @@ export function createClient(requestHeaders: Headers, cookies: AstroCookies) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          cookies.set(name, value, { ...options, ...AUTH_COOKIE_OPTIONS });
+          // Removals (sign-out, chunk cleanup) arrive here as value:"" + maxAge:0,
+          // built by the library's `removeCookieOptions`. Overriding their lifetime
+          // would blank the cookie instead of expiring it — the browser would keep
+          // an empty-valued cookie for the whole session and sign-out would look
+          // like it worked. Let removals through exactly as the caller built them.
+          const isRemoval = options.maxAge === 0;
+          // Writes: the library hard-codes 400 days nobody chose. Last spread wins,
+          // and an explicit `undefined` REMOVES the attribute (a spread cannot
+          // delete a key, so "just don't set maxAge" would do nothing here).
+          cookies.set(name, value, {
+            ...options,
+            ...AUTH_COOKIE_OPTIONS,
+            ...(isRemoval ? {} : { maxAge: authCookieMaxAge(cookies) }),
+          });
         });
       },
     },
