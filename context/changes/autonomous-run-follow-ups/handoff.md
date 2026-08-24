@@ -1,7 +1,7 @@
 # Handoff — `autonomous-run-follow-ups` (feature F1)
 
 The `/10x-implement` step wrote this. All seven phases are **implemented, verified and
-committed on green** on `feat/autonomous-run-follow-ups`, seven commits, nothing pushed. The
+committed on green** on `feat/autonomous-run-follow-ups`, one commit each, nothing pushed. The
 one thing the next agent must not get wrong: **this worktree's `node_modules` had to be
 replaced with a real directory** — the bootstrap script symlinks it, and Vite refuses to serve
 files outside its allow-list through a symlink, so **every island silently fails to hydrate and
@@ -16,7 +16,7 @@ The bootstrap canary does not catch this (it only collects unit tests). No merge
 | Branch | `feat/autonomous-run-follow-ups` |
 | Cut from | `matmaverse-v2` @ `282d264` (**not** stacked — `ownership.md` §2 gives F1 and F2 separate one-branch stacks) |
 | Position in stack | F1 of 2, independent; merges any time |
-| Commits / range | **7**, `282d264..c187b17` (`915bd85`, `589c638`, `0cf5fb5`, `256bd10`, `ee0a886`, `aebac59`, `c187b17`) — one per plan phase, each on green |
+| Commits / range | **Seven phase commits**, `915bd85` → `c187b17` (`915bd85` p1, `589c638` p2, `0cf5fb5` p3, `256bd10` p4, `ee0a886` p5, `aebac59` p6, `c187b17` p7) — one per plan phase, each landed only on green — **plus the closing epilogue commit(s)** carrying this handoff, the final SHA write-back and `change.md → implemented`. Branch range is `282d264..HEAD`. |
 | Pushed? | **no** |
 | `change.md` status | `plan_reviewed` → **`implemented`** |
 | `## Progress` rows remaining | **4** (`grep -c '^- \[ \]' plan.md`) — all `#### Manual`, all device-dependent; see §5 |
