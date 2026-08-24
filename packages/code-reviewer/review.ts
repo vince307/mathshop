@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText, Output } from "ai";
+import { changedLineCount, isNoise, parseDiff } from "./noise.ts";
 import { ReviewSchema, deriveVerdict } from "./schema.ts";
 
 const EXIT_PASS = 0;
@@ -33,50 +34,6 @@ const PRICES: Record<string, { input: number; output: number }> = {
 const REPO_ROOT = new URL("../../", import.meta.url);
 const RUBRIC_PATH = fileURLToPath(new URL("context/team/code-review-dod.md", REPO_ROOT));
 const ENV_PATH = fileURLToPath(new URL(".env", REPO_ROOT));
-
-interface DiffSegment {
-  path: string;
-  text: string;
-  binary: boolean;
-}
-
-function pathFromHeader(line: string): string {
-  const quoted = /"b\/(.+)"$/.exec(line);
-  if (quoted) return quoted[1];
-  const body = line.slice("diff --git ".length);
-  // Non-rename headers repeat the same path ("a/X b/X"): find the split where the
-  // two sides match — correct even when X itself contains " b/", so a crafted
-  // filename cannot smuggle itself into a stripped prefix like context/.
-  for (let i = body.indexOf(" b/"); i !== -1; i = body.indexOf(" b/", i + 1)) {
-    if (body.slice(2, i) === body.slice(i + 3)) return body.slice(i + 3);
-  }
-  // Rename (a and b sides differ): right-anchor on the last separator.
-  const last = body.lastIndexOf(" b/");
-  return last === -1 ? "unknown" : body.slice(last + 3);
-}
-
-function parseDiff(diff: string): DiffSegment[] {
-  const chunks = diff.split(/^(?=diff --git )/m).filter((c) => c.startsWith("diff --git "));
-  return chunks.map((text) => {
-    const newline = text.indexOf("\n");
-    const path = pathFromHeader(newline === -1 ? text : text.slice(0, newline));
-    const binary = text.includes("\nBinary files ") || text.includes("\nGIT binary patch");
-    return { path, text, binary };
-  });
-}
-
-/** Noise paths the model never sees: lockfiles, context/** churn, public binaries. */
-function isNoise(segment: DiffSegment): boolean {
-  const { path, binary } = segment;
-  if (path.split("/").pop() === "package-lock.json") return true;
-  if (path.startsWith("context/")) return true;
-  if (path.startsWith("public/") && binary) return true;
-  return false;
-}
-
-function changedLineCount(text: string): number {
-  return text.split("\n").filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l)).length;
-}
 
 async function readStdin(): Promise<string> {
   const parts: Buffer[] = [];
@@ -100,8 +57,9 @@ function buildSystemPrompt(rubric: string): string {
     "  polish of the change dilute a concrete defect.",
     "- Report findings only for defects visible in the diff; every finding names the",
     "  file, the line in the new version, the criterion (1-6), a severity, and a concrete fix.",
-    "- The diff has been pre-filtered: lockfiles and context/ docs were removed deliberately;",
-    "  do not penalize the change for their absence.",
+    "- The diff has been pre-filtered: lockfiles, context/ docs, public binaries and",
+    "  committed .diff/.patch files were removed deliberately; do not penalize the",
+    "  change for their absence.",
     "- You only see the diff — do not invent problems about code you cannot see;",
     "  when the diff gives no signal for a criterion, score it 7 and move on.",
     "- Absence IS evidence for criterion 6: the rubric requires env-var changes to be",
@@ -164,8 +122,17 @@ async function main(): Promise<void> {
       `${String(lines)} changed line(s) to review.\n`,
   );
 
+  // Name the stripped files, don't just count them: stripping is by path — and
+  // for .diff/.patch by name alone — so a count cannot tell an operator whether
+  // the right things left review. Stripped means reviewed by nobody.
+  for (const segment of segments.filter(isNoise)) {
+    process.stderr.write(`  stripped: ${segment.path}\n`);
+  }
+
   if (kept.length === 0 || lines === 0) {
-    process.stderr.write("Nothing to review after stripping noise paths (lockfiles, context/, public binaries).\n");
+    process.stderr.write(
+      "Nothing to review after stripping noise paths (lockfiles, context/, public binaries, committed diffs).\n",
+    );
     process.exit(EXIT_PASS);
   }
 
