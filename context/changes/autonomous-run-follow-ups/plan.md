@@ -991,24 +991,24 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [x] 5.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [x] 5.2 `npm test` — branch baseline + 0 (no new test, by D3; the existing suite's green is the KR-1 guard)
-- [x] 5.3 Deliberate break: invert the discriminant to `if (!("error" in result))` → `tests/profiles-world.test.ts`'s own-profile test red on `Location` + read-back → restore
-- [x] 5.4 Record the rejected break (moving the unreachable `"error"` branch's redirect stays green — a decorative break, L-004)
+- [x] 5.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings — ee0a886
+- [x] 5.2 `npm test` — branch baseline + 0 (no new test, by D3; the existing suite's green is the KR-1 guard) — ee0a886
+- [x] 5.3 Deliberate break: invert the discriminant to `if (!("error" in result))` → `tests/profiles-world.test.ts`'s own-profile test red on `Location` + read-back → restore — ee0a886
+- [x] 5.4 Record the rejected break (moving the unreachable `"error"` branch's redirect stays green — a decorative break, L-004) — ee0a886
 
 #### Manual
 
-- [x] 5.5 Forced service failure logs `[profiles/world] …` while the browser still lands on `/app/worlds` unchanged
+- [x] 5.5 Forced service failure logs `[profiles/world] …` while the browser still lands on `/app/worlds` unchanged — ee0a886
 
 ### Phase 6: Weekly report — decomposition at render level, and a `shift_log` seeder
 
 #### Automated
 
-- [ ] 6.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [ ] 6.2 `npm test` — branch baseline + 1
-- [ ] 6.3 `E2E_PORT=<yours> npx playwright test` — full suite, branch e2e baseline + 1 run TOTAL (`desktop` only — `touch` matches only `gameplay-restore|growth`), all green
-- [ ] 6.4 Deliberate break: repoint `tasksThisWeek` at `upgrades.length` → tile-vs-bars sum diverges → red → restore
-- [ ] 6.5 Seeder break: `created_at` by UTC day arithmetic instead of `weekDayKeys` → record whether it can be made to fail on the run's own date, honestly
+- [x] 6.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
+- [x] 6.2 `npm test` — branch baseline + 1
+- [x] 6.3 `E2E_PORT=<yours> npx playwright test` — full suite, branch e2e baseline + 1 run TOTAL (`desktop` only — `touch` matches only `gameplay-restore|growth`), all green
+- [x] 6.4 Deliberate break: repoint `tasksThisWeek` at `upgrades.length` → tile-vs-bars sum diverges → red → restore
+- [x] 6.5 Seeder break: `created_at` by UTC day arithmetic instead of `weekDayKeys` → record whether it can be made to fail on the run's own date, honestly
 
 #### Manual
 

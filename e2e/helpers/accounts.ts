@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { admin, deleteUser, findUserIdByEmail, PASSWORD } from "../../tests/helpers/supabase";
+import { weekDayKeys } from "../../src/lib/services/reports";
 import { waitForIslands } from "./hydration";
 import { t } from "./i18n";
 
@@ -77,4 +78,61 @@ export async function signInViaUI(page: Page, email: string, password: string = 
   await page.getByLabel(t.auth.fields.passwordLabel, { exact: true }).fill(password);
   await page.getByRole("button", { name: t.auth.signin.submit }).click();
   await page.waitForURL((url) => url.pathname.startsWith("/app"));
+}
+
+/**
+ * Seed a whole report week of `shift_log` rows for one profile — the gap
+ * `e2e/parent-weekly-report.spec.ts` recorded in its own header. Mirrors
+ * `appendShiftLog` (`src/lib/services/child-profiles.ts`) column for column,
+ * through the same service-role `admin` client the other seeders use.
+ *
+ * **`created_at` is set explicitly and derived from `weekDayKeys`.** The report
+ * week is Europe/Warsaw (`startOfWeek` / `weekDayKeys` in
+ * `src/lib/services/reports.ts`); "today minus N days" in UTC drifts a bar across
+ * a day boundary near midnight and across a DST weekend. `weekDayKeys` returns
+ * seven Warsaw civil-date STRINGS, not instants, and the module-private
+ * `zoneOffsetMinutes` is deliberately not exported — so rather than re-deriving an
+ * offset, pin each row at 12:00Z. Noon UTC is 13:00 (CET) or 14:00 (CEST) in
+ * Warsaw, so it lands on the intended civil day under both offsets, and it is
+ * comfortably after `startOfWeek`'s Monday boundary (22:00Z/23:00Z the previous
+ * Sunday), which the report query filters on with `.gte("created_at", …)`.
+ *
+ * **`earned` is set explicitly, never omitted** — `null` on a shift row flips
+ * `earningsKnown` to `false` and silently suppresses the parent's earnings tile.
+ *
+ * No teardown: `shift_log.account_id` is `on delete cascade` from `auth.users`,
+ * so every spec's existing `deleteUser` already removes these rows.
+ */
+export async function seedShiftWeek(
+  accountId: string,
+  profileId: string,
+  /** Completed tasks per weekday, Monday first. Shorter arrays leave later days empty. */
+  completedPerWeekday: number[],
+  earnedPerShift = 5,
+): Promise<void> {
+  const keys = weekDayKeys(new Date());
+  const rows = completedPerWeekday.flatMap((completed, weekday) =>
+    completed > 0
+      ? [
+          {
+            account_id: accountId,
+            profile_id: profileId,
+            skills: {
+              math: { firstTryCorrect: completed, completed, misses: 0 },
+              money: { firstTryCorrect: 0, completed: 0, misses: 0 },
+              decisions: { firstTryCorrect: 0, completed: 0, misses: 0 },
+            },
+            upgrade_purchased: null,
+            earned: earnedPerShift,
+            created_at: `${keys[weekday]}T12:00:00Z`,
+          },
+        ]
+      : [],
+  );
+  if (rows.length === 0) return;
+  // A chained read-back is fine here: this provisions through an RLS-BYPASSING
+  // client exactly as `seedChildProfile` does. L-002's prohibition is about
+  // asserting a write was BLOCKED, which this never does.
+  const { error } = await admin.from("shift_log").insert(rows).select("id");
+  if (error) throw error;
 }

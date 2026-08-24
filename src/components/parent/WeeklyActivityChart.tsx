@@ -1,4 +1,3 @@
-import React from "react";
 import type { WeeklyReportDay } from "@/types";
 import { t } from "@/i18n";
 
