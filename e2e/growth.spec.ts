@@ -23,6 +23,12 @@ import { t } from "./helpers/i18n";
  *   tab's fit check: five entries must sit in one row without pushing the
  *   document sideways.
  *
+ * - **An honest empty state.** The next-upgrade `<h2>` is unconditional, so when
+ *   `nextUpgrade` returns null the card must still say something and must still
+ *   offer the shop CTA. Only a rendered page can show that the heading, the
+ *   sentence and the CTA co-exist; the `.astro` template has no unit-level guard
+ *   (Risk E2E-F4-3).
+ *
  * The stage ladder's arithmetic (`stageForLevel`, saturation, totality) is
  * covered in tests/stages.test.ts and is deliberately NOT re-asserted here.
  *
@@ -75,6 +81,45 @@ test("the nav entry reaches the growth screen and the rail shows every stage (Ri
       "aria-current",
       "page",
     );
+
+    // The stage-marker ordinals are actually ANNOUNCED, not merely labelled.
+    // StageRail's markers carry `aria-label` on a <span>; without `role="img"`
+    // that label is on role=generic and no browser exposes it. This assertion
+    // resolves through the accessibility tree, which is exactly the surface the
+    // missing role removed — a `getByText` assertion would stay green because the
+    // `current` marker also renders the bare digit.
+    await expect(page.getByRole("img", { name: t.growth.stageOrdinal.replace("{n}", "1"), exact: true })).toHaveCount(
+      1,
+    );
+  } finally {
+    await deleteUser(account.id);
+  }
+});
+
+test("the next-upgrade card stays a finished thought when nothing is left to buy (Risk E2E-F4-3)", async ({ page }) => {
+  const account = await provisionAccount("e2e-growth-empty");
+  try {
+    // `sign` and `shelf` are the only two upgrades with requiredWorldLevel 1, so
+    // owning both at business_level 1 drives `nextUpgrade` to null. That is 90 zl
+    // of ordinary early play, not a terminal edge case — it recurs at every level
+    // boundary.
+    await seedChildProfile(account.id, {
+      name: "Nela",
+      businessLevel: 1,
+      shopState: { purchased: ["sign", "shelf"] },
+    });
+    await signInViaUI(page, account.email);
+    await page.goto("/app/growth");
+    await expect(page.getByRole("heading", { name: t.growth.title, level: 1 })).toBeVisible();
+
+    // The heading is unconditional, so with no next upgrade the card must say
+    // something rather than sit empty under its own title.
+    await expect(page.getByText(t.growth.noNextUpgrade, { exact: true })).toBeVisible();
+
+    // …and the shop CTA survives the empty state. It sits OUTSIDE the ternary
+    // because /app/growth is this screen's only entrance to the shop; guarding
+    // the whole section would delete it exactly when the child has money to spend.
+    await expect(page.getByRole("link", { name: t.growth.upgradesLink, exact: true })).toBeVisible();
   } finally {
     await deleteUser(account.id);
   }

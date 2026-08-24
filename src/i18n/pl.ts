@@ -342,6 +342,7 @@ export const pl = {
     maxStage: "To najwyższy etap — Twój sklep działa pełną parą.",
     unlocksHeading: "Co odblokowuje ten etap",
     noUnlocks: "Ten etap nie odblokowuje nowych ulepszeń.",
+    noNextUpgrade: "Masz już wszystkie ulepszenia dostępne na tym etapie.",
     upgradesLink: "Zobacz ulepszenia",
     tipHeading: "Wskazówka",
     tip: "Każda ukończona zmiana przybliża Twój sklep do kolejnego etapu.",

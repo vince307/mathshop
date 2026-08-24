@@ -69,9 +69,14 @@ const stateLabel = { done: t.growth.stateDone, current: t.growth.stateCurrent, l
             >
               {/* State marker. `t.growth.stageOrdinal` is the accessible label, so a
                   screen reader hears the stage's ordinal spelled out rather than a
-                  bare digit or an icon name. */}
+                  bare digit or an icon name. `role="img"` is what makes that true:
+                  `aria-label` on a bare <span> (role=generic) is NOT exposed, so
+                  without the role the label was inert. Same shape as ShiftResults'
+                  star row. Under `role="img"` the `current` branch's bare digit
+                  becomes presentational — intended: "Etap 2", not "2". */}
               {state === "done" ? (
                 <span
+                  role="img"
                   class="bg-success text-success-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
                   aria-label={t.growth.stageOrdinal.replace("{n}", String(stage.order))}
                 >
@@ -79,6 +84,7 @@ const stateLabel = { done: t.growth.stateDone, current: t.growth.stateCurrent, l
                 </span>
               ) : state === "current" ? (
                 <span
+                  role="img"
                   class="bg-primary text-primary-foreground ring-primary/25 flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4"
                   aria-label={t.growth.stageOrdinal.replace("{n}", String(stage.order))}
                 >
@@ -86,6 +92,7 @@ const stateLabel = { done: t.growth.stateDone, current: t.growth.stateCurrent, l
                 </span>
               ) : (
                 <span
+                  role="img"
                   class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
                   aria-label={t.growth.stageOrdinal.replace("{n}", String(stage.order))}
                 >
