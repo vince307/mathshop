@@ -36,7 +36,7 @@ Per-profile, per-shift history log (S-07) backing the parent weekly report (FR-0
   - `shift_log_insert_own` — `for insert with check (auth.uid() = account_id)`
   - `shift_log_update_own` — `for update using (...) with check (...)`
   - `shift_log_delete_own` — `for delete using (auth.uid() = account_id)`
-- **Consumed by:** `src/lib/services/reports.ts` (`getWeeklyReport` / `aggregateWeeklyReport`, `listRecentActivity` — the child dashboard activity feed), `src/lib/services/child-profiles.ts` (writers).
+- **Consumed by:** `src/lib/services/reports.ts` (`getWeeklyReport` / `aggregateWeeklyReport`, `listRecentActivity` — the child dashboard activity feed), `src/lib/services/child-profiles.ts` (writers), `e2e/helpers/accounts.ts` (`seedShiftWeek` — the first **test-side** writer, and the only writer anywhere that sets `created_at` explicitly: it pins each row at `12:00Z` on a `weekDayKeys` civil date so a bar cannot drift across the Europe/Warsaw day boundary or a DST weekend, and it sets `earned` explicitly because a `null` there flips `earningsKnown` to `false` and silently suppresses the parent's earnings tile).
 - **Isolation test:** `tests/shift-log-isolation.test.ts` (table-level RLS), `tests/report-isolation.test.ts` (S-09 — the weekly-report read path itself: `getWeeklyReport` + profile listing, two signed-in accounts), `tests/recent-activity-isolation.test.ts` (F2 — **intra-account**: RLS here is account-scoped, so `listRecentActivity`'s app-side `.eq("profile_id", …)` is the only thing separating two children of the same parent; two profiles on one account, one row each).
 
 ## public.account_settings
