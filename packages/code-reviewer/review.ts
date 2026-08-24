@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText, Output } from "ai";
-import { isNoise, parseDiff } from "./noise.ts";
+import { changedLineCount, isNoise, parseDiff } from "./noise.ts";
 import { ReviewSchema, deriveVerdict } from "./schema.ts";
 
 const EXIT_PASS = 0;
@@ -34,10 +34,6 @@ const PRICES: Record<string, { input: number; output: number }> = {
 const REPO_ROOT = new URL("../../", import.meta.url);
 const RUBRIC_PATH = fileURLToPath(new URL("context/team/code-review-dod.md", REPO_ROOT));
 const ENV_PATH = fileURLToPath(new URL(".env", REPO_ROOT));
-
-function changedLineCount(text: string): number {
-  return text.split("\n").filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l)).length;
-}
 
 async function readStdin(): Promise<string> {
   const parts: Buffer[] = [];
@@ -125,6 +121,13 @@ async function main(): Promise<void> {
     `Diff: ${String(segments.length)} file(s), ${String(strippedCount)} stripped as noise, ` +
       `${String(lines)} changed line(s) to review.\n`,
   );
+
+  // Name the stripped files, don't just count them: stripping is by path — and
+  // for .diff/.patch by name alone — so a count cannot tell an operator whether
+  // the right things left review. Stripped means reviewed by nobody.
+  for (const segment of segments.filter(isNoise)) {
+    process.stderr.write(`  stripped: ${segment.path}\n`);
+  }
 
   if (kept.length === 0 || lines === 0) {
     process.stderr.write(

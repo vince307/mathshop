@@ -60,3 +60,13 @@ export function isNoise(segment: DiffSegment): boolean {
   if (/\.(diff|patch)$/i.test(path)) return true;
   return false;
 }
+
+/**
+ * Lines the model is actually charged for: added and removed lines only, with
+ * the `+++`/`---` file headers excluded. Lives here rather than in the CLI
+ * because it measures the *output* of the strip — the number that says whether
+ * the pre-filter did its job.
+ */
+export function changedLineCount(text: string): number {
+  return text.split("\n").filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l)).length;
+}

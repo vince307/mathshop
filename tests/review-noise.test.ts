@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNoise, parseDiff } from "../packages/code-reviewer/noise";
+import { changedLineCount, isNoise, parseDiff } from "../packages/code-reviewer/noise";
 
 /**
  * The review gate's pre-filter — the only thing standing between committed test
@@ -38,6 +38,20 @@ function binaryDiff(path: string): string {
     "new file mode 100644",
     "index 0000000..1111111",
     `Binary files /dev/null and b/${path} differ`,
+    "",
+  ].join("\n");
+}
+
+/** A text segment carrying `added` changed lines — for line-count assertions. */
+function bulkyDiff(path: string, added: number): string {
+  return [
+    `diff --git a/${path} b/${path}`,
+    "new file mode 100644",
+    "index 0000000..1111111",
+    "--- /dev/null",
+    `+++ b/${path}`,
+    `@@ -0,0 +1,${String(added)} @@`,
+    ...Array.from({ length: added }, (_, i) => `+line ${String(i)}`),
     "",
   ].join("\n");
 }
@@ -116,5 +130,19 @@ describe("isNoise — a whole diff filters down to its reviewable part", () => {
 
     expect(segments).toHaveLength(4);
     expect(kept.map((s) => s.path)).toEqual(["packages/code-reviewer/evals/generate-fixtures.mjs"]);
+  });
+
+  it("charges the model only for the surviving lines", () => {
+    // The number the whole change is measured by. A fat fixture beside a small
+    // source file: if the strip regressed, this count would carry the fixture's
+    // bulk. Deterministic stand-in for the manual replay's 1762 -> 106.
+    const diff = [
+      bulkyDiff("packages/code-reviewer/evals/fixtures/07da072-parent-pin-config.diff", 800),
+      bulkyDiff("src/pages/api/shifts/complete.ts", 12),
+    ].join("");
+
+    const kept = parseDiff(diff).filter((s) => !isNoise(s));
+
+    expect(changedLineCount(kept.map((s) => s.text).join(""))).toBe(12);
   });
 });
