@@ -1018,9 +1018,9 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [x] 7.1 `npm run lint` clean; `npm test` — branch baseline + 0; `npm run check` unchanged
-- [x] 7.2 Full `E2E_PORT=<yours> npx playwright test` green — final phase, whole stack re-run
+- [x] 7.1 `npm run lint` clean; `npm test` — branch baseline + 0; `npm run check` unchanged — c187b17
+- [x] 7.2 Full `E2E_PORT=<yours> npx playwright test` green — final phase, whole stack re-run — c187b17
 
 #### Manual
 
-- [ ] 7.3 `## Parent PIN routes` answers "does waiting out the lock reset my attempt budget?" from the document alone
+- [x] 7.3 `## Parent PIN routes` answers "does waiting out the lock reset my attempt budget?" from the document alone — c187b17

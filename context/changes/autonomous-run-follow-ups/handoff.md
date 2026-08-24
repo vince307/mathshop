@@ -1,158 +1,235 @@
 # Handoff — `autonomous-run-follow-ups` (feature F1)
 
-The `/10x-plan-review` step wrote this. The feature is **planned, reviewed and revised — not
-implemented**: no branch, no worktree, no source file touched. Five CRITICAL and four WARNING
-findings were fixed **directly in `plan.md`** (no human triage loop in this run). The one
-thing the next agent must not get wrong: **Phase 5's and Phase 6's contracts changed
-materially** — Phase 5's deliberate break was a decorative one that could never go red and has
-been replaced, and Phase 6's seeder recipe, its e2e delta and its PIN-gated setup were all
-wrong. Do not implement from memory of the pre-review plan. No merge order binds yet;
-`ownership.md` still does not exist.
+The `/10x-implement` step wrote this. All seven phases are **implemented, verified and
+committed on green** on `feat/autonomous-run-follow-ups`, seven commits, nothing pushed. The
+one thing the next agent must not get wrong: **this worktree's `node_modules` had to be
+replaced with a real directory** — the bootstrap script symlinks it, and Vite refuses to serve
+files outside its allow-list through a symlink, so **every island silently fails to hydrate and
+every authenticated Playwright spec times out in a way that looks exactly like a product bug**.
+The bootstrap canary does not catch this (it only collects unit tests). No merge order binds:
+`ownership.md` puts F1 and F2 in separate concurrent stacks, both cut from `matmaverse-v2`.
 
 ## 1. State
 
 | | |
 |---|---|
-| Branch | `matmaverse-v2` (the run's base). **No feature branch cut** — docs-lane step. |
-| Cut from | n/a |
-| Position in stack | F1 of 2; orchestrator's prior is F1 before F2 `remember-me-on-login`, **not binding** until the contention sweep writes `ownership.md` |
-| Commits / range | **0** — nothing committed by this step |
+| Branch | `feat/autonomous-run-follow-ups` |
+| Cut from | `matmaverse-v2` @ `282d264` (**not** stacked — `ownership.md` §2 gives F1 and F2 separate one-branch stacks) |
+| Position in stack | F1 of 2, independent; merges any time |
+| Commits / range | **7**, `282d264..c187b17` (`915bd85`, `589c638`, `0cf5fb5`, `256bd10`, `ee0a886`, `aebac59`, `c187b17`) — one per plan phase, each on green |
 | Pushed? | **no** |
-| `change.md` status | `planned` → **`plan_reviewed`** (advanced by this step); `updated:` already `2026-08-24` |
-| `## Progress` rows remaining | **36** (`grep -c '^- \[ \]' plan.md`) — was 35; Phase 5 gained row `5.4` (record the rejected break) and its manual row renumbered `5.4` → `5.5` |
-| Working tree | clean apart from the three untracked run/change folders that are this run's own output |
+| `change.md` status | `plan_reviewed` → **`implemented`** |
+| `## Progress` rows remaining | **4** (`grep -c '^- \[ \]' plan.md`) — all `#### Manual`, all device-dependent; see §5 |
+| Working tree | clean apart from untracked `.e2e-port` (bootstrap output, not gitignored — deliberately never staged) and `test-results/` |
+
+Phase 0 is a no-commit phase; its rows `0.1`/`0.2` are ticked without a SHA, which is the
+plan's own contract for an empty-diff phase.
 
 ## 2. Artifacts
 
 | path | what it is |
 |---|---|
-| `/Users/kamilp/Dev/10xDevs/context/changes/autonomous-run-follow-ups/reviews/plan-review.md` | **new.** The full deep review: 5 critical, 4 warnings, 2 observations, per-dimension verdicts, grounding evidence, and the applied fix for each finding. Carries the `<!-- PLAN-REVIEW-REPORT -->` marker. |
-| `/Users/kamilp/Dev/10xDevs/context/changes/autonomous-run-follow-ups/plan.md` | **edited — nine targeted revisions.** New `## Phase 0: Branch baseline` body block; Implementation Approach reworded; Phase 1 §4(a) gains `exact: true` + `toHaveCount(1)`; Phase 2 §2 now requires two new `it()` blocks; Phase 4 §2 corrects **three** stale nav comments, not two; Phase 5's deliberate break replaced (plus the rejected break recorded); Phase 6 §3 gains the concrete `created_at` recipe and import path; Phase 6 §4 gains the parent-PIN setup chain and the risk-naming rule; Phase 6's e2e delta corrected to desktop-only. Progress rows `5.3`–`5.5` and `6.3` updated to match. |
-| `/Users/kamilp/Dev/10xDevs/context/changes/autonomous-run-follow-ups/change.md` | **edited, one line:** `status: planned` → `status: plan_reviewed`. |
-| `/Users/kamilp/Dev/10xDevs/context/changes/autonomous-run-follow-ups/handoff.md` | this file (rewritten) |
+| `src/i18n/pl.ts` | **edited, one append.** `growth.noNextUpgrade` added immediately after `noUnlocks`. Append-only; no key moved. |
+| `src/pages/app/growth.astro` | **edited.** The `<section>` opening with `<h2>{t.start.nextUpgradeHeading}</h2>` now ternaries `{next ? …card… : <p>{t.growth.noNextUpgrade}</p>}`; the `<a href="/app/upgrades">` CTA stays outside the guard. The savings-bar `<div>` inside the `{savingPercent !== null && (` guard gains `aria-hidden="true"`. |
+| `src/components/child/StageRail.astro` | **edited.** `role="img"` added to all three state-marker `<span>`s (the `done`, `current`, `locked` branches) that already carried `aria-label={t.growth.stageOrdinal…}`; the marker comment now describes what the code does. |
+| `src/components/child/WorldPicker.tsx` | **edited, one attribute.** `aria-label={t.worlds.learnHeading}` on the competency `<ul>` (the one following the `hidden … lg:block` `<p>`). |
+| `src/components/child/ShopArt.tsx` | **not modified** — only broken and restored during Phase 3's deliberate break. `git diff` against the base is empty for this file. |
+| `src/components/app/AppShell.astro` | **not modified** — broken twice and restored in Phase 4. Confirmed empty diff before the Phase 4 commit, per `ownership.md`'s explicit requirement. |
+| `src/pages/api/profiles/world.ts` | **edited.** New `if ("error" in result)` branch logging `console.error("[profiles/world] updateChildProfileTheme failed", { code, message })` before the unchanged `applyNoStore(context.redirect(WORLDS))`. `export const prerender = false` untouched. |
+| `src/components/parent/WeeklyActivityChart.tsx` | **edited, one deletion.** The dead `import React from "react";` removed (`tsconfig.json` sets `"jsx": "react-jsx"`). |
+| `tests/worlds-picker.test.tsx` | **edited.** New `pickerForm()` helper; `hiddenInput()` re-rooted at the `<form>`; **+2 `it()` blocks** (form action/method/submit-containment; competency-list accessible name). |
+| `tests/shop-art-slots.test.ts` → `tests/shop-art-slots.test.tsx` | **renamed + edited.** `// @vitest-environment jsdom` pragma, four data blocks unchanged, **+1 render case** asserting `piekarnia`'s `sign` badge at `left: 7%` / `top: 10%`. |
+| `tests/nav-labels.test.ts` | **edited, header comment only.** States that this suite owns the *dictionary* half and points at `e2e/growth.spec.ts` Risk E2E-F4-2 for the wiring half. No assertion changed. |
+| `tests/weekly-report-tiles.test.tsx` | **edited.** `child()` gains an optional `daily` parameter defaulting to `EMPTY_WEEK` (additive); **+1 `it()`** reading the `statTasks` tile figure *and* the sr-only bar list out of the DOM and comparing them to each other. |
+| `e2e/helpers/accounts.ts` | **edited, append-only.** `seedShiftWeek` appended after `signInViaUI` at EOF; one new import (`weekDayKeys` from `../../src/lib/services/reports`). **No existing export touched** — `signInViaUI`'s locators are unmoved, which is what F2's read dependency needs. |
+| `e2e/growth.spec.ts` | **edited.** New `NAV_HREFS` map (replaces `navLabels`); per-entry `toHaveAttribute("href", …)` folded into Risk E2E-F4-2's existing loop; `getByRole("img", …)` folded into Risk E2E-F4-1; **+1 test** (Risk E2E-F4-3, the empty state); all **three** stale "five entries" mentions corrected to six with the reason the component counts five. |
+| `e2e/parent-weekly-report.spec.ts` | **edited.** **+1 desktop test** (Risk E2E-3, seeded non-zero week); the header paragraph that said a seeded-week variant is "deliberately NOT here" replaced with the risk it now covers. |
+| `docs/reference/contract-surfaces.md` | **edited, one bullet appended** inside `## Parent PIN routes (RLS surface)`, after its `**Tests:**` line. F2's section untouched. |
+| `context/changes/autonomous-run-follow-ups/plan.md` | **edited.** 32 of 36 `## Progress` rows flipped, each carrying its phase's commit SHA. Phase bodies untouched. |
+| `context/changes/autonomous-run-follow-ups/change.md` | **edited, two lines.** `status: implemented`, `updated: 2026-08-24`. |
+| `context/changes/autonomous-run-follow-ups/handoff.md` | this file (rewritten) |
 
-No source file, test, migration or doc outside this change folder was created or modified. No
-neighbouring change folder was edited (cross-plan findings are reported, not applied).
+The whole change folder (`change.md`, `research.md`, `plan.md`, `plan-brief.md`,
+`reviews/plan-review.md`) was copied into the worktree and committed in Phase 1 — it existed
+only as untracked files in the main checkout. No neighbouring change folder was touched. No
+migration was written (`supabase/migrations/` unchanged, as `ownership.md` §4 requires).
 
 ## 3. Verification
 
-This is a static review step. **Per the step's own instruction, no suite was run here** —
-another agent may hold the tree, and a run would measure their in-flight state, not this
-branch's. Nothing executable changed, so there is no green to claim.
+**Baseline measured on this branch at `282d264` before Phase 1**, with the sandbox disabled and
+`npx supabase status` reporting the API up on `127.0.0.1:54321`: **429 unit tests / 51 files**,
+**23 Playwright runs / 8 files** (`desktop` 19, `touch` 4), `npm run lint` clean,
+`npm run check` 0 errors / 0 warnings / 9 hints. It coincides with the run contract's figure,
+but it was re-measured, not inherited.
 
 | command | result |
 |---|---|
-| `npm test` | **not run** (deliberate — see above). The predecessor step observed 429/51 on `matmaverse-v2` @ `282d264`; that figure is **inherited and unverified here** and must not enter any criterion. Phase 0 measures the real branch baseline. |
-| `npx playwright test` / `--list` | **not run.** Predecessor observed 23 runs / 8 files on the base; inherited, unverified. |
-| `npm run lint` / `npm run check` | **not run.** |
-| Deliberate break | **none executed** — a docs-lane step may not touch `src/`, and this step produced nothing executable. Every break in `plan.md` is *designed and reasoned*; one of them was found to be undesignable-as-written and replaced (see § 5). |
+| `npm test` (final, Phase 7) | **433 passed / 51 files** (baseline 429, **+4**) — Phase 2 +2, Phase 3 +1, Phase 6 +1; Phases 1, 4, 5, 7 +0 as planned |
+| `E2E_PORT=4330 npx playwright test` (final, Phase 7) | **26 passed / 8 files** (baseline 23, **+3**) — `growth.spec.ts` +1 test × 2 projects, `parent-weekly-report.spec.ts` +1 desktop-only. The desktop-only asymmetry is `playwright.config.ts`'s `touch` `testMatch: /(gameplay-restore\|growth)\.spec\.ts/`, unchanged. |
+| `npm run lint` (final) | clean |
+| `npm run check` (final) | 0 errors, 0 warnings, **8 hints** (was 9 — the dropped dead `React` import in `WeeklyActivityChart.tsx`) |
 
-**Verified statically on disk during this review** (not inherited from `research.md` or the
-prior handoff): `vitest.config.ts`'s `include` is `tests/**/*.test.{ts,tsx}` (so Phase 3's
-`.ts → .tsx` rename cannot silently drop the file); `playwright.config.ts`'s `touch` project
-is `testMatch: /(gameplay-restore|growth)\.spec\.ts/`; `zoneOffsetMinutes` in
-`src/lib/services/reports.ts` has **no `export`** and `weekDayKeys` returns date **strings**;
-`e2e/parent-weekly-report.spec.ts` gates on `setPinAndLandOnReport` + `waitForIslands`;
-`tests/profiles-world.test.ts` has no assertion that reaches `updateChildProfileTheme`'s
-`{ error }` branch; `AppShell.astro`'s `items` holds five entries and `tabs` six;
-`e2e/growth.spec.ts` carries **three** stale "five entries" mentions; `WORLD_SLOTS.piekarnia.sign`
-differs from `DEFAULT_SLOTS.sign` on both axes; `seedChildProfile` accepts `businessLevel` and
-`shopState`; `LOCKOUT_MS = 60_000` with resets only in `setPin` and `verifyPin`'s success path.
+**Worktree infrastructure defect found and fixed — this is the most transferable finding.**
+`worktree-bootstrap.sh` symlinks `node_modules` to the main checkout. Vite then refuses every
+request under that path (`"The request id … is outside of Vite serving allow list"`), including
+`@astrojs/react/dist/client.js`, so **no island hydrates**. Effect: `signInViaUI` fills the
+sign-in form, clicks submit, and nothing happens — every authenticated spec dies on a 30 s
+timeout that reads as a product bug. All 6 `growth.spec.ts` runs failed this way, *including the
+two that predate this change*, which is what identified it as infrastructure. Fixed by
+`rm node_modules && cp -Rc <main>/node_modules ./node_modules` (APFS clonefile, ~6 s, 552 MB).
+Confirmed by `e2e/smoke.spec.ts`: 3/4 → 4/4, the one failure being exactly the sign-in test.
+The bootstrap canary cannot catch this — it only counts collected unit tests, which the symlink
+does not affect. **A separate lint gotcha:** `npm run lint` reports 55 false errors in a fresh
+worktree until `npm run check` (i.e. `astro sync`) has generated `.astro/types.d.ts`. Run
+`check` before `lint` on a new worktree.
 
-**L-007 re-run independently, not inherited:** the plan's one new string
-`"Masz już wszystkie ulepszenia dostępne na tym etapie."` was checked in both directions
-against every ≥4-char literal in `src/i18n/pl.ts` — **zero collisions**, and the key does not
-already exist. The plan's claim holds.
+### Deliberate breaks — each run, meta-checked, restored
 
-**Progress contract re-checked mechanically after the edits:** one `## Progress`; 8 body
-`## Phase N` ↔ 8 `### Phase N`; zero `- [ ]` outside Progress; step indices unique per phase.
+| phase | break | went red | why that redness is evidence (L-004) |
+|---|---|---|---|
+| 1A | removed `role="img"` from `StageRail`'s three markers | Risk E2E-F4-1, **both** projects | The assertion resolves through the a11y tree, the exact surface the missing role removed. The `aria-label` text is still in the DOM, so no text- or attribute-based assertion could see it. Nothing renders the literal "Etap 1" — only the label — so `getByText` would be red in *both* states and certify nothing. |
+| 1B | reverted to `{next && (…)}` | Risk E2E-F4-3, both projects | Failed on the `noNextUpgrade` sentence. **Meta-checked against the failure snapshot:** `Zobacz ulepszenia` was still present on the page, so the redness isolates the missing sentence rather than a collapsed section. |
+| 2A | deleted the `<form>` element, keeping every child | 3 tests | **Meta-checked by running the pre-phase test file against the broken component: 7/7 green.** That is the defect FU-1 reported, reproduced — the picker was completely inert and the suite said nothing. |
+| 2B | removed the `<ul>`'s `aria-label` | 1 test | The existing `getByText(t.worlds.learnHeading)` assertion stayed **green** (8 passed), proving only a role+name query can observe the loss — the same thing a screen reader below `lg` sees. |
+| 3 | dropped `WORLD_SLOTS[world.slug]?.` from `ShopArt`'s badge `style` | the new render case only | The four pre-existing data assertions stayed **green**, and the badge-count assertion also passed — confirming the plan's warning that `unplaced` is invariant and that any partition- or count-based assertion would certify nothing. Only the inline `style` moves. |
+| 4 | repointed `worlds` at `/app/start` in `AppShell`'s `items` | Risk E2E-F4-2, both projects | **Meta-checked: the pre-phase spec passed 6/6 against the same break.** Destination was genuinely uncovered before this phase. |
+| 4 (meta) | removed the `worlds` entry from `items` entirely | pre-phase spec **already red**, both projects | Confirms FU-3's premise was false at the suite level, which is why `src/data/nav.ts` was not extracted (D6). |
+| 5 | inverted the discriminant to `if (!("error" in result))` | `tests/profiles-world.test.ts` own-profile test | **The first attempt was a weaker break than the plan predicted** — it threw a `TypeError` inside the log call before reaching the redirect, proving only that the branch was entered. Re-run with the log body neutralised so the break isolates the contract: then it failed on `expected '/app/worlds' to be '/app/start'`, exactly as planned — the ok path misclassified as the error path. |
+| 5 (rejected break, per plan row 5.4) | repointed the `"error"` branch's redirect away from `WORLDS` | **stayed green, 6/6** | Verified empirically rather than asserted. The branch is unreachable in that suite, so this is the textbook decorative break — recorded so nobody re-derives it. |
+| 6 | repointed `tasksThisWeek` at `upgrades.length` | the new decomposition test | **Meta-checked: the pre-phase test file passed 8/8 against the same break** — every fixture used `EMPTY_WEEK` and no upgrades, so the tile read 0 either way. **The assertion was also restructured mid-phase:** as first written it failed on a hardcoded `9`, which is two independent value checks that happen to agree; it now reads both the tile figure and the bar list out of the DOM and compares them to each other, plus a `toBe(9)` anchor so a both-sides-collapse cannot satisfy the equality. |
+| 6 (seeder) | `created_at` at `22:30Z` instead of `12:00Z` — the time-of-day a naive "today minus N days" UTC recipe carries | Risk E2E-3's per-weekday assertions | **Demonstrable on the run's own date after all** (2026-08-24, machine `Europe/Warsaw`, 14:24 UTC — the two civil dates agree, so the clock alone would not have shown it). Every row drifted one day forward. **The important second-order finding: the week TOTAL stayed 9, so the tile-vs-bars sum assertion stayed green** — a total-only test would have been blind to the exact hazard the plan named, which is why the per-weekday label assertions are in the test. |
+
+**Progress contract re-checked after all edits:** one `## Progress`; zero `- [ ]` outside it;
+4 remaining rows all under `#### Manual`.
+
+**L-007 re-run on this branch, not inherited:** `growth.noNextUpgrade` =
+`"Masz już wszystkie ulepszenia dostępne na tym etapie."` checked in **both** directions against
+all 320 distinct ≥4-char string values in `src/i18n/pl.ts` — **zero collisions**, and the value
+appears exactly once. (F2's `rememberLabel` is not on this branch; `ownership.md` §5 already ran
+the check with both keys present.)
 
 ## 4. Next command
 
-`/10x-implement autonomous-run-follow-ups`
+`/10x-impl-review autonomous-run-follow-ups`
 
 ## 5. Open
 
-- **The five CRITICAL findings are fixed in `plan.md`, but two of them changed what the
-  implementer must *do*, not just what the plan says.** (a) **Phase 5** — the old break
-  ("move the `"error" in result` branch's redirect") is unreachable in
-  `tests/profiles-world.test.ts` and stays green; the new break inverts the discriminant so
-  the file's own-profile test goes red. (b) **Phase 6 §3** — `weekDayKeys`
-  (`src/lib/services/reports.ts`) returns Warsaw civil-date **strings** and `zoneOffsetMinutes`
-  is not exported, so the seeder builds `created_at` as `` `${dayKey}T12:00:00Z` `` and imports
-  via `../../src/lib/services/reports` (no `@/` alias in `e2e/`).
-- **`context/runs/2026-08-24-followups-and-remember-me/ownership.md` still does not exist.**
-  If the sweep writes it, it is binding and overrides plan decision **D7**. **Lower risk than
-  D7 assumes:** F2's plan (`context/changes/remember-me-on-login/plan.md` → *What We're NOT
-  Doing*) explicitly states "No changes to `e2e/helpers/accounts.ts` — F1 owns edits to that
-  file this run." Still contended, but only nominally. `docs/reference/contract-surfaces.md`
-  is contended safely — F1 appends to `## Parent PIN routes`, F2 appends a **new** H2
-  (`## Auth cookie lifetime`); **on conflict keep both sides, never `--ours`/`--theirs`**.
-- **If the sweep stacks F1 on `feat/remember-me-on-login`, Phase 0's baseline is that
-  branch's, not `matmaverse-v2`'s** (L-005 stacked-branch clause). Phase 0's body block now
-  says so.
-- **Phase 1's `next === null` layout remains an explicit extrapolation** — the
-  `/app/growth` mockup depicts no empty state and `assets/` is gitignored.
-- **Item 8 (`src/pages/api/profiles/world.ts`, the `"error" in result` branch) still ships
-  with no automated proof its log line fires** (D3, unchanged). Progress row `5.5` is the
-  manual forced-failure check.
-- **Phase 6's seeder break is date-dependent** and may not be demonstrable on the run's own
-  date; row `6.5` requires recording that honestly.
-- **Not applied, recorded (O1):** `docs/reference/contract-surfaces.md` → `## public.shift_log`
-  gains a first test-side writer (`seedShiftWeek`, the only writer that sets `created_at`
-  explicitly) and its *Consumed by* line does not mention it. Left alone — that line tracks
-  `src/` consumers and the file is contended this run.
-- **Cross-plan, F2 `remember-me-on-login` — reported, not edited.** Its Phase 1 criterion
-  pins the unit baseline inline as "it was 429 / 51 files on `matmaverse-v2` @ `282d264`". If
-  the sweep stacks F2 on F1, that number is wrong by F1's whole unit delta — the exact trap
-  L-005's stacked-branch clause names. Its Phase 3 e2e criterion is sounder (it tells the
-  implementer to measure with `--list` first). Its "presumably the per-project multiplier"
-  guess about 19 vs 23 is **correct and checkable**: `touch` matches only
-  `gameplay-restore|growth`, 2 tests each → +4.
+- **Four `#### Manual` Progress rows are genuinely unperformable by an agent and are left
+  unticked. Human checklist:**
+  1. `1.7` — `/app/growth` with a profile owning `sign` + `shelf` at `business_level` 1: the
+     next-upgrade card reads as a finished thought and the shop CTA is still reachable.
+     (Automated cover exists: Risk E2E-F4-3 asserts both the sentence and the CTA; what is
+     unverified is whether it *looks* finished.)
+  2. `1.8` — VoiceOver/NVDA on the stage rail announces "Etap 1".."Etap 4", not bare digits.
+     Playwright's `getByRole("img", …)` proves the name is in the a11y tree; only a real screen
+     reader proves what is spoken.
+  3. `2.5` — at 712 px a screen reader announces the competency list with its heading text.
+  4. `6.6` — `/app/report` for a seeded account: the **drawn bar heights** match the seeded
+     counts. The e2e test asserts the sr-only list values and the earnings tile's presence; the
+     `<svg>` geometry itself is unasserted.
+- **Row `7.3` was ticked** — it is a document-comprehension check ("can a reader answer *does
+  waiting out the lock reset my attempt budget?* from the document alone"), which is verifiable
+  by reading. The appended bullet states it in those words.
+- **`src/pages/api/profiles/world.ts`, the `"error" in result` branch, still ships with no
+  automated proof its log line fires** (plan D3, unchanged). It was proven **once, by hand**
+  during this step: `updateChildProfileTheme` in `src/lib/services/child-profiles.ts` was
+  temporarily forced to return `{ error }`, and the real route emitted
+  `[profiles/world] updateChildProfileTheme failed { code: 'FORCED', … }` while `Location`
+  stayed `/app/worlds` — both halves of the manual step, at the route layer rather than the
+  browser. The forcing edit was reverted; nothing guards it going forward.
+- **`e2e/helpers/accounts.ts` now imports from `src/lib/services/reports`** (`weekDayKeys`), the
+  first `e2e/` → `src/lib/services/` import in the repo. It uses the relative form
+  (`../../src/lib/services/reports`) because `e2e/` has no `@/` alias, matching
+  `e2e/helpers/i18n.ts`. If `reports.ts` grows a server-only import this breaks the Playwright
+  workers; today it is pure `Intl` arithmetic.
+- **`seedShiftWeek` is the first test-side writer that sets `shift_log.created_at` explicitly.**
+  `docs/reference/contract-surfaces.md` → `## public.shift_log`'s *Consumed by* line does not
+  mention it (plan observation O1, left alone deliberately — that line tracks `src/` consumers
+  and the file is contended this run). Worth a one-line append after F2 integrates.
+- **Phase 1's `next === null` layout remains an explicit extrapolation.** The `/app/growth`
+  mockup depicts no empty state and `assets/` is gitignored, so nobody on a fresh clone or in CI
+  can re-check it.
+- **Not adopted, still open:** the `world.name`-rendered-three-times a11y duplication in
+  `growth.astro` (plan D8 refused it — it needs a product call about which copy is canonical and
+  it moves text `e2e/growth.spec.ts` locates), and the ~18 other non-blocking items in the five
+  archived `follow-ups/review-fixes.md` files.
+- **Carried from the plan-review step, still true — F2 `remember-me-on-login`'s Phase 1
+  criterion pins the unit baseline inline as "429 / 51 files on `matmaverse-v2` @ `282d264`".**
+  That is correct *for F2's own branch*, since `ownership.md` puts it in an independent stack
+  cut from the same commit. It becomes wrong the moment F2 rebases onto F1 — this branch's unit
+  delta is **+4** and its e2e delta is **+3**. Reported, not edited (F1 may not write F2's
+  change folder).
 
 ## 6. Autonomous decisions
 
-`/10x-plan-review` ends by asking the user how to proceed (triage / save / save-only) and then
-asks a question **per finding**. This run has no human, so both were decided here.
+`/10x-implement` calls `AskUserQuestion` four times per phase — the manual-confirmation gate,
+the dirty-path question, commit-message approval, and the between-phase prompt. All were decided
+here. The three that were purely procedural (approve every drafted Conventional Commit message
+as proposed; continue straight to the next phase without clearing context; stage only the
+touched-file set) are recorded once rather than 21 times.
 
-- **AD-R1 — Ran the triage loop myself instead of saving the report and stopping.**
-  *Chosen:* apply every CRITICAL and every obvious WARNING directly to `plan.md`, and record
-  the two OBSERVATIONs without touching anything. *Rejected:* "save report only", which is
-  what a human-in-the-loop run would allow — it would hand `/10x-implement` a plan with a
-  break that cannot go red and a seeder recipe that cannot compile, and the implementer would
-  either fake the green or stall. **What would change the answer:** if the maintainer wants
-  review findings kept separate from the plan for audit, `reviews/plan-review.md` records
-  every fix verbatim, so `git diff` on `plan.md` reverses them one by one.
-- **AD-R2 — Verdict REVISE, not RETHINK.** *Chosen:* REVISE. The plan's shape — seven
-  commit-sized phases, one per source feature, guards shipping with their behaviour — is
-  right, and every finding was a local factual error inside a phase, not a wrong approach.
-  Nothing in D1–D10 was overturned. *Rejected:* RETHINK, which under this run's rules would
-  eject F1 to a fresh planning step and cost the whole plan. **What would change the answer:**
-  if a sixth critical had landed in the *approach* (e.g. the ten items genuinely needing a
-  migration, which would break `change.md` AD-1's no-schema premise), RETHINK would be right.
-- **AD-R3 — Fixed the Phase 5 break rather than deleting it or accepting `baseline + 0` with
-  no break at all.** *Chosen:* find the break that *is* red — inverting the discriminant.
-  *Rejected:* dropping the break (D3 already concedes zero new tests; a phase with neither a
-  test nor a break is unverified), and mocking `@/lib/supabase` to reach the real branch
-  (explicitly rejected by D3 and still right — it forks a deliberately real-Supabase suite).
-  **What would change the answer:** if `src/pages/api/` grows an established service-failure
-  stubbing pattern, D3 reverses and the phase buys a real test instead of a break.
-- **AD-R4 — Corrected Phase 6's e2e delta downward rather than adding the spec to the `touch`
-  project.** *Chosen:* state the truth (+1, desktop only). *Rejected:* extending
-  `playwright.config.ts`'s `touch` `testMatch` to make "+1 per project" true — that changes
-  shared run configuration to satisfy a sentence, doubles a slow PIN-gated test's cost, and
-  the report's phone-width risk is already covered by the file's existing Risk E2E-2.
-  **What would change the answer:** a product decision that the seeded report needs
-  touch-viewport coverage — then it is a new risk with its own justification, not a fix to a
-  wrong number.
-- **AD-R5 — Reported F2's baseline defect in this handoff instead of editing F2's plan.**
-  *Chosen:* report only. The agent contract forbids a non-sweep step from writing another
-  feature's change folder. *Rejected:* fixing it in place, however small. **What would change
-  the answer:** being dispatched as the contention-sweep step, which owns cross-feature edits.
-- **AD-R6 — Did not run any suite, despite agent-contract rule 5 ("verify, do not inherit").**
-  *Chosen:* honour this step's explicit instruction not to run `npm test` or Playwright while
-  another agent may hold the tree, and mark every inherited figure as unverified rather than
-  restating it as observed. *Rejected:* running the suites anyway to satisfy rule 5 — a
-  measurement of someone else's in-flight worktree is worse than an honest gap, and this step
-  changed nothing executable. **What would change the answer:** running as the only live agent
-  on the tree; then measure and replace § 3's inherited rows.
+- **AD-I1 — Replaced the worktree's symlinked `node_modules` with a real clone instead of
+  editing `astro.config.mjs`.** *Chosen:* `cp -Rc` the main checkout's `node_modules` into the
+  worktree (APFS clonefile: 6 s, no extra disk). *Rejected:* adding the main checkout's path to
+  `vite.server.fs.allow` in `astro.config.mjs` — that is a tracked, shared config file, the edit
+  would have hard-coded one machine's absolute path, and it would have shipped in a commit as a
+  permanent change to satisfy a temporary environment problem. *Also rejected:* `npm ci` in the
+  worktree (minutes instead of seconds, and it can resolve differently from the main tree).
+  **What would change the answer:** if the maintainer wants worktrees to work out of the box,
+  the fix belongs in `worktree-bootstrap.sh` (clone rather than symlink, or clone just the paths
+  Vite serves) — not in the repo's Astro config.
+- **AD-I2 — Ran the whole plan without stopping at the manual-verification gate.** *Chosen:*
+  treat automated green as sufficient to commit each phase, and surface the four unperformable
+  manual rows as a checklist in §5. *Rejected:* stopping after Phase 1 to wait for a human,
+  which is what the skill literally instructs — in a no-human run that stalls the feature
+  indefinitely. *Also rejected:* ticking the manual rows anyway, which would have made the plan
+  claim screen-reader verification that never happened. **What would change the answer:**
+  nothing within this run; a human reviewing the branch should walk §5's four items before merge.
+- **AD-I3 — Set `change.md` to `implemented` with four Manual rows still pending.** *Chosen:*
+  advance the status, because every phase's code is written, verified and committed on green,
+  and the remaining rows need a screen reader or human eyes that no agent has. *Rejected:*
+  leaving it at `implementing` — the straggler gate's "Pause" option — which would block
+  `/10x-archive` forever on checks the pipeline structurally cannot perform. **What would change
+  the answer:** if the maintainer treats `implemented` as asserting *all* Progress rows are
+  done, the honest alternative is a separate status (`implemented_pending_manual`); the four
+  rows are listed in §5 either way.
+- **AD-I4 — Strengthened Phase 6's contracted assertion mid-phase instead of accepting it.**
+  The plan contracted "assert (a) the number printed in the `statTasks` tile and (b) that the
+  sr-only items sum to the same number". Written literally against the constant `9`, the
+  deliberate break did go red — but as two independent value checks that happened to agree, not
+  as a decomposition. *Chosen:* read both sides out of the DOM and assert
+  `tileValue === barSum`, keeping `toBe(9)` as an anchor. *Rejected:* accepting the literal form
+  because the break was red — precisely the trap L-004 names, and the same shape the plan-review
+  step caught in Phase 5. **What would change the answer:** nothing; this is strictly stronger
+  and the plan's own words ask for "the same number", which the comparison expresses directly.
+- **AD-I5 — Replaced Phase 5's break with a sharper variant after meta-checking the first.**
+  Inverting the discriminant as written reddens via a `TypeError` inside the new
+  `console.error`, which proves the branch is entered but never exercises the redirect.
+  *Chosen:* re-run with the log body neutralised so the failure lands on
+  `Location: /app/worlds` vs `/app/start` — the contract the plan predicted. *Rejected:*
+  reporting the `TypeError` as the contracted redness. Both variants are recorded in §3.
+  **What would change the answer:** nothing; the production behaviour under that mistake really
+  would be a crash, so both readings are true and the sharper one is the more informative.
+- **AD-I6 — Verified Phase 6's date-dependent seeder break by changing the time-of-day rather
+  than waiting for a hazardous date.** Plan row `6.5` allowed recording honestly that the break
+  may not be demonstrable on the run's own date, and it was not: the machine is `Europe/Warsaw`
+  and at 14:24 UTC the UTC and Warsaw civil dates agree. *Chosen:* seed at `22:30Z` — the
+  time-of-day a naive "today minus N days" recipe carries when a child plays at 00:30 Warsaw —
+  which reproduces the exact drift on today's date. *Rejected:* recording "not demonstrable
+  today", which was permitted but weaker, and mocking the clock, which the e2e layer cannot do
+  for the database's `created_at`. **What would change the answer:** if the seeder is ever
+  changed to derive the time-of-day from `now`, this break becomes clock-dependent again and the
+  honest-record fallback applies.
+- **AD-I7 — Committed the change folder onto the branch in Phase 1.** It existed only as
+  untracked files in the main checkout, so the branch would otherwise carry code with no plan.
+  *Rejected:* leaving it untracked (the plan's SHA write-backs would have nowhere to live and
+  `/10x-archive`'s uncommitted-paths gate would refuse). `context/runs/` was **not** copied — it
+  is the orchestrator's, not this feature's. **What would change the answer:** if the run
+  intends change folders to live only in the main checkout, drop that path from the Phase 1
+  commit; nothing else in the branch depends on it.
+- **AD-I8 — Left `.e2e-port` untracked and unstaged in every commit.** It is bootstrap output
+  and is not covered by `.gitignore`. *Chosen:* the dirty-path prompt's "stage only the planned
+  set". *Rejected:* committing it (machine-specific) and adding it to `.gitignore` (a tracked
+  shared file this feature does not own). **What would change the answer:** if the maintainer
+  wants it ignored, `.gitignore` is the right home and it belongs to whoever owns the bootstrap
+  script, not to F1.

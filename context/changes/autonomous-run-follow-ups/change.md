@@ -1,7 +1,7 @@
 ---
 change_id: autonomous-run-follow-ups
 title: Close the ten triaged follow-ups from the 2026-08-22 autonomous run
-status: implementing
+status: implemented
 created: 2026-08-24
 updated: 2026-08-24
 archived_at: null
