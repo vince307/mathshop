@@ -1,10 +1,10 @@
 ---
 change_id: parent-weekly-activity-chart
 title: Weekly Mon–Sun activity chart and first-try-correct tile in the parent report
-status: impl_reviewed
+status: archived
 created: 2026-08-22
-updated: 2026-08-23
-archived_at: null
+updated: 2026-08-24
+archived_at: 2026-08-24T12:50:45Z
 ---
 
 ## Notes

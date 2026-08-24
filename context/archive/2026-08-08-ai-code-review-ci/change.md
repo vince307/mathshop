@@ -1,10 +1,10 @@
 ---
 change_id: ai-code-review-ci
 title: Wire the stage-1 review agent into GitHub Actions as a merge gate
-status: impl_reviewed
+status: archived
 created: 2026-08-08
-updated: 2026-08-09
-archived_at: null
+updated: 2026-08-24
+archived_at: 2026-08-24T12:50:45Z
 ---
 
 ## Notes
