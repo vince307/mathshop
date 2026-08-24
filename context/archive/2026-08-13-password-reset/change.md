@@ -1,10 +1,10 @@
 ---
 change_id: password-reset
 title: Parent password reset — request page, Polish recovery email, marker-gated update
-status: implemented
+status: archived
 created: 2026-08-13
-updated: 2026-08-14
-archived_at: null
+updated: 2026-08-24
+archived_at: 2026-08-24T12:52:58Z
 ---
 
 ## Notes
@@ -87,3 +87,19 @@ container.
 1. Does `signOut({ scope: "others" })` behave correctly through the `@supabase/ssr` cookie client — specifically, does the current session survive it?
 2. Does `[auth.email.template.recovery]` need its own `subject` key in `config.toml`, or is it inherited?
 3. How does `otp_expiry` (currently 3600) interact with the 15-minute marker TTL for a slow parent — where exactly does the flow break, and is the resulting Polish message the right one?
+
+## Open at archive time (2026-08-24)
+
+Archived with **three manual Progress rows unchecked**, recorded here because the
+plan folder is the only place the fact survives:
+
+- **3.6** — Mailpit walkthrough of the marker-expiry path. The expiry *logic* is
+  covered by an automated backdated-marker test; what is unread is the Polish
+  expiry message on screen. Cosmetic.
+- **4.5** — the old production password is rejected after a reset.
+- **4.6** — a second signed-in browser is signed out.
+
+4.5 and 4.6 are **not cosmetic**: they are the two guarantees a password reset
+exists to provide, and neither has been confirmed against production. The feature
+shipped on 2026-08-14. Treat them as an open verification loop, not as done. There
+is also no impl-review for this change.

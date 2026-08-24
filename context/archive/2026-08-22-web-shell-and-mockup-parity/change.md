@@ -1,9 +1,10 @@
 ---
 change_id: web-shell-and-mockup-parity
 title: Web app shell + responsive parity with the matmaverse mockups
-status: in-progress
+status: archived
 created: 2026-08-22
-updated: 2026-08-22
+updated: 2026-08-24
+archived_at: 2026-08-24T12:52:58Z
 ---
 
 ## Notes
@@ -65,3 +66,14 @@ behind it — start there next session.
 
 `npm run lint`, `npm test` (299), `npx playwright test` (15, desktop + touch)
 all green; screens walked at 390 / 768 / 1440 with no horizontal overflow.
+
+## Note at archive time (2026-08-24)
+
+Archived while still marked `in-progress`: the shell work shipped, but the folder
+never got a `plan.md` or an impl-review because the change was driven from a
+walkthrough rather than the usual chain.
+
+**Its §4–§5 backlog is no longer buried here.** It was migrated to the tracked
+`context/foundation/backlog.md` before archiving — the entries are the same, with
+[V]/[I] verification tags added and the `Ready` / `Needs shaping` / `Parked`
+split that `/10x-autonomous-run` consumes.
