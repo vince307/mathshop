@@ -2,7 +2,7 @@
 
 These rules govern every spec in `e2e/`. They exist so generated tests are
 stable by default — model new specs on `seed.spec.ts` (the exemplar) and follow
-the plan/research in `context/changes/testing-e2e-playwright/`.
+the plan/research in `context/archive/2026-07-12-testing-e2e-playwright/`.
 
 - Use `getByRole`, `getByLabel`, `getByText` as primary locators. Fall back to
   `getByTestId` only when accessibility attributes are ambiguous (none exist in
