@@ -1,175 +1,181 @@
 # Handoff — `remember-me-on-login` (feature F2)
 
-`/10x-implement` wrote this. **All three phases are implemented, verified and committed** on
-`feat/remember-me-on-login`; all 22 `## Progress` rows are ticked, including every Manual row
-(none were deferred — each was genuinely performed against a real server or a real browser).
-**The one thing the next agent must not get wrong:** `.claude/skills/10x-autonomous-run/scripts/worktree-bootstrap.sh`
-symlinks `node_modules` to the main checkout, and **Vite refuses to serve through that symlink**,
-so nothing hydrates and *every* Playwright spec fails on a 30s timeout that looks exactly like a
-product bug. This branch fixed it with a real `npm ci` inside the worktree. **F1's worktree has
-the same defect and its e2e phase will fail until it does the same.** No merge order binds —
-`ownership.md` puts F1 and F2 in independent stacks, either may land first.
+`/10x-impl-review` wrote this. The feature is **implemented, independently re-verified and
+reviewed**: 0 critical findings, 3 warnings (one in the product code, deliberately accepted and
+documented; two fixed by this step), 4 observations. **The branch is mergeable as it stands.**
+The one thing the next agent must not get wrong: **do not re-measure against the numbers in any
+document — measure on your own branch.** This step re-ran every suite from scratch and reconciled
+them arithmetically (unit `429 → 439`, e2e `23 → 23`), and re-executed two of the implementer's
+deliberate breaks plus one of its own; nothing was inherited. No merge order binds — `ownership.md`
+§2 puts F1 and F2 in independent stacks, and a read-only `git merge-tree` dry run of the two
+branches produced **zero conflict markers**, so either may land first.
 
 ## 1. State
 
 | Field | Value |
 |---|---|
-| Branch | `feat/remember-me-on-login` (in worktree `.claude/worktrees/remember-me-on-login`) |
-| Cut from | `matmaverse-v2` @ `282d264` — **not stacked**; `ownership.md` §2 puts F1 and F2 in two independent stacks of one |
-| Position in stack | independent; merges any time, in either order relative to F1 |
-| Commits | **4** — one per plan phase (each on green), plus this docs commit |
-| Commit range | `282d264..HEAD` — `f10d56e` Phase 1, `330951d` Phase 2, `918ca17` Phase 3, then one docs commit on top (its SHA is the branch tip; not pinned here because this file is inside it) |
+| Branch | `feat/remember-me-on-login` (worktree `.claude/worktrees/remember-me-on-login`, `E2E_PORT=4333`) |
+| Cut from | `matmaverse-v2` @ `282d264` — **not stacked** |
+| Position in stack | independent; merges any time, in either order relative to F1 (`autonomous-run-follow-ups`) |
+| Commits | **5** — four from `/10x-implement`, plus this review's docs commit |
+| Commit range | `282d264..HEAD` — `f10d56e` Phase 1, `330951d` Phase 2, `918ca17` Phase 3, `06c0ab8` implementation handoff, then this review commit at the tip |
 | Pushed? | **no** — and no PR opened |
-| `change.md` status | `implemented` (advanced from `plan_reviewed` by this step) |
+| `change.md` status | `impl_reviewed` (advanced from `implemented` by this step) |
 | `## Progress` rows remaining | **0** (`grep -c '^- \[ \]' plan.md` → 0). 22 of 22 ticked, Manual rows included |
-| Working tree | **clean** (`git status --porcelain` empty). `node_modules/` is a real directory now and correctly gitignored |
+| Working tree | **clean** — `git status --porcelain` empty in the worktree, and re-checked clean after each deliberate break was restored |
+| Main checkout | untouched, still on `matmaverse-v2` @ `282d264`; its only untracked paths are the three expected `context/` folders (this step removed a stray 219 KB `signin-desktop.png` — see W2) |
 
 ## 2. Artifacts
 
 | path | what it is |
 |---|---|
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/src/lib/services/remember-me.ts` | **new** — owns `REMEMBER_ME_COOKIE`, `REMEMBER_ME_MAX_AGE_SECONDS` (30d), `setRememberChoice`, `authCookieMaxAge`. Module doc states why it is deliberately **unsigned**, unlike its two marker siblings |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/src/lib/supabase.ts` | **edited** — `setAll` gains the `isRemoval` guard and the explicit `maxAge`; `AUTH_COOKIE_RE` gains `export`; `AUTH_COOKIE_OPTIONS`' doc gains the "never put `maxAge` here" warning |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/src/pages/api/auth/signin.ts` | **edited** — `POST` calls `setRememberChoice(context.cookies, form.has("remember"))` after the `!supabase` guard, before `signInWithPassword` |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/src/pages/api/auth/signout.ts` | **edited** — `POST` deletes `REMEMBER_ME_COOKIE` alongside `ACTIVE_PROFILE_COOKIE` / `PARENT_VERIFIED_COOKIE` |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/src/components/auth/SignInForm.tsx` | **edited** — the checkbox + reset-link row between the password `FormField` and `ServerError` |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/src/pages/auth/signin.astro` | **edited** — the standalone reset link deleted (it moved into the form) |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/src/i18n/pl.ts` | **edited, append-only** — one key, `rememberLabel: "Zapamiętaj mnie"`, inside `auth.signin` |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/tests/remember-me-cookie.test.ts` | **new** — 7 route-level tests, real routes + real local Supabase |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/tests/signin-form.test.tsx` | **new** — 3 jsdom component tests; carries a file-local `ResizeObserver` stub |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/docs/reference/contract-surfaces.md` | **edited, pure append** — new H2 `## Auth cookie lifetime (session-policy surface)` after `## set_updated_at()`. 0 deleted lines |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/context/changes/remember-me-on-login/plan.md` | **edited** — 22 `## Progress` rows ticked, each annotated with what was actually measured |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/context/changes/remember-me-on-login/change.md` | **edited** — `status: plan_reviewed` → `implemented` |
-| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/context/changes/remember-me-on-login/handoff.md` | this file (also copied to the main checkout) |
+| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/context/changes/remember-me-on-login/reviews/impl-review.md` | **new, written by this step** — the full review: verdicts, the independently re-measured verification table, the three deliberate breaks, and the "applied findings checked for reality" table |
+| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/context/changes/remember-me-on-login/follow-ups/review-fixes.md` | **new, written by this step** — RF-1 and RF-2 plus the four recorded observations |
+| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/context/changes/remember-me-on-login/handoff.md` | this file (rewritten; also mirrored into the main checkout) |
+| `/Users/kamilp/Dev/10xDevs/.claude/worktrees/remember-me-on-login/context/changes/remember-me-on-login/change.md` | **edited by this step** — `status: implemented` → `impl_reviewed` |
+| `/Users/kamilp/Dev/10xDevs/signin-desktop.png` | **deleted by this step** — untracked, un-gitignored manual-verification debris in the main checkout (W2) |
 
-The whole change folder was copied from the main checkout into the worktree and committed in
-Phase 1 — `context/changes/` is tracked, and the docs must travel with the branch.
+**No source file was changed by this step.** There were no CRITICAL findings, so nothing needed a
+code fix; the two deliberate breaks and this review's own third break were applied and restored,
+and `git status --porcelain` confirms the source tree is byte-identical to `06c0ab8`.
+
+Source files under review (written by `/10x-implement`, unchanged here): `src/lib/services/remember-me.ts`
+(new — `REMEMBER_ME_COOKIE`, `REMEMBER_ME_MAX_AGE_SECONDS`, `setRememberChoice`, `authCookieMaxAge`),
+`src/lib/supabase.ts` (`setAll`'s `isRemoval` guard and explicit `maxAge`; `AUTH_COOKIE_RE` exported),
+`src/pages/api/auth/signin.ts` (`POST`), `src/pages/api/auth/signout.ts` (`POST`),
+`src/components/auth/SignInForm.tsx`, `src/pages/auth/signin.astro`, `src/i18n/pl.ts`
+(`auth.signin.rememberLabel`), `tests/remember-me-cookie.test.ts`, `tests/signin-form.test.tsx`,
+`docs/reference/contract-surfaces.md` (`## Auth cookie lifetime (session-policy surface)`).
 
 ## 3. Verification
 
-Baseline measured **on this branch before Phase 1**, per L-005: **429 unit tests / 51 files**,
-**23 Playwright runs / 8 spec files**. Not inherited — re-measured after the worktree bootstrap.
+**Everything below was observed in this step**, sandbox disabled, local Supabase up
+(`npx supabase status` → API on `127.0.0.1:54321`). The unit baseline was measured by actually
+running the suite on `matmaverse-v2` @ `282d264` in the main checkout — not taken from a document
+(L-005).
 
 | command | result |
 |---|---|
-| `npm run lint` | **clean** (observed after every phase; 6 self-inflicted errors were fixed, never suppressed) |
-| `npm run check` | **clean** — 0 errors, 0 warnings, 9 pre-existing hints (191 files) |
-| `npm test` | **439 passed / 53 files** (baseline 429 / 51, **+10**: 7 route + 3 component) |
-| `E2E_PORT=4333 npx playwright test` | **23 passed** (baseline 23, **+0** — this change adds no spec). Includes `smoke.spec.ts` "provisioned account signs in via UI", i.e. `signInViaUI` still works after the form was restructured |
-| `git status --porcelain` | empty |
-| `git diff docs/reference/contract-surfaces.md` | pure append — **0 deleted lines**; F1's `## Parent PIN routes (RLS surface)` byte-identical |
-| L-007 substring check, re-run on this branch | `"Zapamiętaj mnie"` vs all **351** distinct dictionary values: 0 superstrings, 0 substrings, not already present |
-| `grep -c "reset.signinLinkLabel"` | `signin.astro` → **0**, `SignInForm.tsx` → **1** (criterion 2.5) |
+| `npm test` on `matmaverse-v2` @ `282d264` (baseline, re-measured) | **429 passed / 51 files** |
+| `npm test` on this branch | **439 passed / 53 files** — baseline 429, **+10**, +2 files |
+| arithmetic | `tests/remember-me-cookie.test.ts` 7 tests + `tests/signin-form.test.tsx` 3 tests = 10 = 439 − 429. **Reconciles exactly.** |
+| `npm run lint` | **clean** (no eslint output) |
+| `npm run check` | **0 errors, 0 warnings, 9 hints** / 191 files; the 9 hints are pre-existing in `src/pages/app.astro` and unrelated |
+| `npx playwright test --list` on base and on branch | **23 tests in 8 files** on both — e2e baseline **23**, delta **+0** |
+| `E2E_PORT=4333 npx playwright test` | **23 passed** (27.8s), `smoke.spec.ts` "provisioned account signs in via UI" included — `signInViaUI` still works after the form was restructured |
+| `git status --porcelain` (worktree) | empty, before and after every break |
+| `git diff --numstat matmaverse-v2..HEAD -- docs/reference/contract-surfaces.md` | **16 added / 0 deleted** — pure append; F1's `## Parent PIN routes (RLS surface)` untouched |
+| L-007 both-directions check, re-run here | `"Zapamiętaj mnie"` vs **342** distinct dictionary values: **0** substrings-of, **0** superstrings, exactly **1** occurrence |
+| `grep -c "reset.signinLinkLabel"` | `src/pages/auth/signin.astro` → **0**, `src/components/auth/SignInForm.tsx` → **1** (criterion 2.5 holds literally) |
+| `git merge-tree` F1 ↔ F2 (read-only) | `src/i18n/pl.ts` and `docs/reference/contract-surfaces.md` "changed in both", **0 conflict markers** — `ownership.md` §2's "no edges" is confirmed empirically, not just argued |
 
-### Deliberate breaks — all four run, all restored, each meta-checked (L-004)
+### Deliberate breaks re-executed in this step, each restored (L-004)
 
 | break | what was broken | what went red | why that redness is evidence |
 |---|---|---|---|
-| **B** | deleted `setAll`'s `isRemoval` guard | **test 7 only**; tests 1–6 green **and all of `tests/auth-session-gating.test.ts` green** | The meta-check is the *second* half: the pre-existing sign-out test stays green because the jar's `toCookieHeader()` filters empty values, so a blanked cookie and an expired one are indistinguishable to it. Test 7 going red **alone** is what proves the guard is load-bearing rather than defensive decoration. |
-| **C** | `setRememberChoice`'s `false` branch made a no-op | **test 6 only** | Test 6 is the only test exercising the previously-remembered path. Nothing else reddened, so it isolates exactly what it claims. |
-| **D** | threaded `remember` through `createClient` as an argument instead of persisting the marker | **test 4 only**; tests 1, 2, 3, **5**, 6, 7 green | The realistic wrong implementation, and it **confirmed AD-6 against research §C.3**: research predicted the *unticked* refresh case (test 5) would redden. It did not — absence-of-marker is the default branch, so the unticked case is refresh-stable by construction. Only the *remembered* session silently downgrades. Had the plan inherited research's design, this break would have proved nothing. |
-| **E** | dropped `name="remember"` from `<Checkbox>` | **component test 1 only**; **all 7 route tests green** | The asymmetry is the whole point: the feature becomes a silent browser no-op that the entire server-side suite passes. This is the justification for adding a component test to a server-side feature. A plausible edit, too — the shadcn example carries no `name`. |
+| **B** (implementer's, re-run) | deleted the `isRemoval` guard in `setAll` (`src/lib/supabase.ts`) | `tests/remember-me-cookie.test.ts` **test 7 alone** (`expected 2592000 to be +0`); tests 1–6 green **and all 6 of `tests/auth-session-gating.test.ts` green** | Reproduces the claim exactly. Test 7 reddening *in isolation*, while the repo's pre-existing sign-out test stays green, is what proves the guard is load-bearing: the jar's `toCookieHeader()` filters empty values, so a blanked cookie and an expired one look identical to every other test. |
+| **E** (implementer's, re-run) | dropped `name="remember"` from `<Checkbox>` in `SignInForm` | `tests/signin-form.test.tsx` **test 1 alone**; **all 7 route tests green** | Reproduces exactly. The asymmetry is the justification for a component test on a server-side feature. Mechanism verified at source: `isFormControl = control ? !!form || !!control.closest("form") : …` in `node_modules/@radix-ui/react-checkbox/dist/index.mjs` — the bubble input is always rendered inside a form, so `name` is the only thing that keeps `FormData` from dropping it. |
+| **F** (**this review's own**) | removed the lifetime override entirely — `setAll` reverted to `{ ...options, ...AUTH_COOKIE_OPTIONS }`, i.e. pre-change behaviour | **5 of 7 red** (tests 1, 2, 4, 5, 6); tests 3 and 7 green | The plan's three breaks each isolate one branch; none asks whether the suite bites on the seam *at all*. It does — reverting the feature reddens every lifetime assertion, and the only two survivors are the tests that assert something else (the marker's own write; the removal path). The suite is not certifying a no-op. |
 
-### Manual rows — performed, not deferred
+### Predecessor claims checked rather than inherited
 
-- **1.7 / 1.8** — against a real `npm run dev` server + curl, reading actual `Set-Cookie` headers.
-  Without `remember`: `sb-127-auth-token=…; Path=/; HttpOnly; SameSite=Lax` — **no `Max-Age`**.
-  With it: `…; Max-Age=2592000` plus `remember_me=1; Max-Age=2592000`. Sign-out:
-  `sb-127-auth-token=; Max-Age=0` and `remember_me=deleted; Expires=Thu, 01 Jan 1970`.
-  **This also closes the gap AD-5 accepted** — the header-level `serialize()` step is now
-  *observed*, not merely read out of `node_modules`.
-- **2.6 / 2.7 / 2.8** — in a real browser. Geometry via `getBoundingClientRect` at **1440, 712
-  and 375 px**: one single-line row (h=20), checkbox+label left, link right-aligned to the row,
-  above the submit button, no sideways scroll at any width, exactly **one** reset link on the
-  page. Tab order: password → show-password toggle → checkbox → link → submit; **Space** toggles
-  and does **not** submit; clicking the label toggles and removes `remember` from the `FormData`.
-- The mockup `assets/matmaverse-auth-v2-web/01-parent-login-web.png` was **opened first-hand this
-  step** from the main checkout and matches the built row. Not an inherited description.
+`isFormControl` (plan-review F2), the exported `AUTH_COOKIE_RE` with no second copy of the regex
+(F3), the reworded comment behind criterion 2.5, and F1's now-present `## Phase 0` (cross-plan X1)
+are all **real**. `AstroCookies.get()` really does return `undefined` for a key deleted earlier in
+the same request (`node_modules/astro/dist/core/cookies/cookies.js`, the `isSetValue` branch),
+which is what makes the delete branch correct in production. **One claim was stale:** the previous
+handoff's lead "BLOCKING FOR F1" — see `## 5. Open`.
 
 ## 4. Next command
 
-`/10x-impl-review remember-me-on-login`
+`none — ready to merge` (integrate `feat/remember-me-on-login` into `matmaverse-v2`; F1 may land before or after)
 
 ## 5. Open
 
-- **BLOCKING FOR F1 — the worktree bootstrap breaks every browser spec.**
-  `.claude/skills/10x-autonomous-run/scripts/worktree-bootstrap.sh` symlinks `node_modules` to the
-  main checkout. Vite's `server.fs.allow` resolves the realpath and refuses
-  (`"The request id … is outside of Vite serving allow list"`), so `@astrojs/react/dist/client.js`
-  404s, **no island hydrates**, and every Playwright spec dies on a 30s timeout that is
-  indistinguishable from a product bug. Measured here: `password-reset.spec.ts` went
-  2 failed (30.1s each) → **2 passed (1.6s / 2.2s)** after `rm node_modules && npm ci` in the
-  worktree. The script's canary does not catch this because it only counts vitest collection,
-  which resolves through the symlink fine. **Fix for the script:** install rather than symlink, or
-  add the main checkout to `server.fs.allow`. Also note `.gitignore` has `node_modules/` with a
-  trailing slash, which does **not** match a symlink — so `git add -A` stages the symlink as a
-  file (it did here; caught and amended out before the Phase 1 commit landed).
-- **For a human to decide: three routes lose their 400-day cookie with no checkbox.**
-  `POST /api/auth/signup`, `GET /api/auth/confirm` (`verifyOtp` — email verification **and**
-  password recovery) and `POST /api/auth/update-password` all establish sessions through `setAll`
-  and write no marker, so each now yields a browser-session cookie. Concretely: a parent who
-  completes a password reset is signed out when the browser closes. Deliberate and documented in
-  `plan.md` *Blast radius beyond sign-in* and in the new contract-surface section. Reversal is one
-  call to `setRememberChoice(cookies, true)` in the route concerned — **never** a special case
-  inside `setAll`, which cannot tell which route it is serving.
-- **New, unplanned: `tests/signin-form.test.tsx` carries a file-local `ResizeObserver` stub.**
-  jsdom implements none and Radix's `useSize` constructs one on mount, so the component threw
-  before any assertion ran. Stubbed in-file because `ownership.md` forbids editing
-  `vitest.config.ts` this run. **Follow-up for whoever owns test infra:** this is the repo's first
-  Radix component under test, and the next one will hit the same wall — the stub belongs in a
-  shared vitest setup file, not copied per test file.
-- **Carried, unchanged: `src/pages/api/auth/signin.ts` `POST` still validates nothing**, against
-  `CLAUDE.md`'s zod rule. Declined again here — `tests/auth-routes.test.ts`'s
-  `it("no server-side validation: empty fields produce an error redirect, not a crash")` pins the
-  absence *in its name*, so fixing it means rewriting that test. Not a drive-by.
-- **Carried: the marker does not slide** (AD-4). A parent using the app continuously for more than
-  30 days will, once, be signed out after closing the browser. Cheapest fix if judged
-  unacceptable: give `REMEMBER_ME_MAX_AGE_SECONDS`' marker a longer `maxAge` than the auth cookie.
-- **Still open from plan review, now partly closed:** finding F4 said the marker's *wire* behaviour
-  was unasserted. The real-server `Set-Cookie` inspection above observed it, but **no automated
-  test asserts it** — the jar still does not model expiry. `tests/remember-me-cookie.test.ts` test 3
-  remains an options assertion by design (AD-5).
+- **RF-1 (WARNING, non-blocking, `follow-ups/review-fixes.md`) — three routes lose their cookie
+  lifetime with nothing pinning it.** `POST` in `src/pages/api/auth/signup.ts`, `GET` in
+  `src/pages/api/auth/confirm.ts` and `POST` in `src/pages/api/auth/update-password.ts` all
+  establish sessions through `createClient`'s `setAll` and none calls `setRememberChoice`, so
+  each now yields a browser-session cookie. Verified by grep in this step. The behaviour is
+  deliberate and documented; **the gap is that no test asserts it**, on a surface whose whole
+  registered hazard is that failures are silent. Cheapest pin: one assertion on the auth-cookie
+  write from `GET /api/auth/confirm`, in `tests/remember-me-cookie.test.ts`, located via the
+  exported `AUTH_COOKIE_RE`.
+- **For a human to decide:** whether the post-verification / post-password-reset sign-out is
+  acceptable. If not, the reversal is one call to `setRememberChoice(cookies, true)` in the route
+  concerned — **never** a special case inside `setAll`, which cannot tell which route it serves.
+- **RF-2 (WARNING, fixed here).** `signin-desktop.png`, a 219 KB screenshot from Manual row 2.6,
+  was left untracked *and un-gitignored* at the main checkout's root, where the agent contract
+  requires a clean tree. Deleted. Future manual-verification rows should write scratch output to
+  `$TMPDIR`.
+- **CLOSED, and it was stale in the previous handoff.** That handoff's lead paragraph and first
+  open item declared "**BLOCKING FOR F1** — its worktree has the same `node_modules` symlink
+  defect and its e2e phase will fail". Checked here: `.claude/worktrees/autonomous-run-follow-ups/node_modules`
+  is a real 665-entry directory and F1 has since landed its own impl-review (`8fc70f0`). **Nothing
+  blocks F1.** The durable half survives: `.claude/skills/10x-autonomous-run/scripts/worktree-bootstrap.sh`
+  still symlinks rather than installs, Vite's `server.fs.allow` refuses to serve through the
+  symlink, and the script's vitest-only canary cannot see it — so the *next* run's first worktree
+  will hit this again. Fix the script (install, don't symlink); also note `.gitignore` has
+  `node_modules/` with a trailing slash, which does not match a symlink.
+- **O1 — layering.** `src/lib/supabase.ts` imports `authCookieMaxAge` from
+  `src/lib/services/remember-me.ts`, inverting the usual direction. No cycle today (verified:
+  nothing in `src/lib/services/` imports `@/lib/supabase`); it becomes one the moment a service
+  needs `createClient`.
+- **O2 — the remembered window does not slide** (AD-4). `REMEMBER_ME_MAX_AGE_SECONDS` is fixed at
+  sign-in by `setRememberChoice`, so a parent active for more than 30 days is downgraded once,
+  silently. Cheapest fix if unacceptable: a longer `maxAge` on the marker than on the auth cookie.
+- **O4 / plan-review F4 still open.** `createCookieJar` in `tests/helpers/astro.ts` does not model
+  expiry or serialization, so no automated test asserts what the *browser* is told — only what the
+  options object says. The implementer's real-server `curl` observed it once; nothing pins it.
+- **Carried, declined again:** `POST` in `src/pages/api/auth/signin.ts` still validates nothing,
+  against `CLAUDE.md`'s zod rule. `tests/auth-routes.test.ts` pins the absence *in a test name*,
+  so fixing it means rewriting that test — not a drive-by, and a named non-goal of this plan.
 - **`src/lib/supabase.ts` `setAll` is the sensitive shared file.** Every route builds its client
-  through it. F2 owns it this run per `ownership.md`; nothing else should touch it.
+  through it; F2 owns it this run per `ownership.md`.
 
 ## 6. Autonomous decisions
 
-`AskUserQuestion` was never called. `/10x-implement`'s manual-confirmation gate, its dirty-path
-question, its commit-message approval and its between-phase prompts all collapsed to
-decide-then-proceed.
+`AskUserQuestion` was never called. `/10x-impl-review`'s post-report prompt ("triage / save & triage
+later / save only") and its per-finding triage questions all collapsed to decide-then-record.
 
-- **Replaced the bootstrap's `node_modules` symlink with a real `npm ci`.** *Chosen:* fix the
-  worktree so the e2e gate measures the product. *Rejected:* (a) adding `server.fs.allow` to
-  `astro.config.mjs` — that is a source change that would ship to production to work around a
-  local harness defect; (b) running the suite against the main checkout's dev server —
-  `playwright.config.ts`'s own comment warns that a reused foreign server silently tests the wrong
-  tree; (c) reporting the 23 timeouts as failures — they were harness artifacts and reporting them
-  as product bugs would have been the worst outcome. *What would change the answer:* if the
-  bootstrap script is fixed to install rather than symlink, this step disappears.
-- **Performed every Manual row instead of leaving it as a human checklist.** The step brief allows
-  leaving Manual rows unticked, but all six were mechanically performable — curl against a real dev
-  server for the `Set-Cookie` rows, a real browser for the layout/keyboard rows. *Rejected:*
-  ticking them unverified (forbidden), and leaving them for a human (they were the only checks on
-  the header-level and keyboard behaviour, and both found real confirmation). *What would change
-  the answer:* a row needing human judgement — "does this *look* right" — which 2.6 was rewritten
-  into geometry to avoid.
-- **Stubbed `ResizeObserver` file-locally rather than in a shared vitest setup.** *Chosen:* the
-  in-file stub. *Rejected:* editing `vitest.config.ts`, which `ownership.md` puts off-limits to
-  both features this run. *What would change the answer:* a second Radix component under test —
-  then the duplication outweighs the ownership rule and it should move to a setup file, as a
-  change of its own.
-- **Reworded a source comment so criterion 2.5's `grep -c` holds literally.** The comment in
-  `SignInForm.tsx` originally named `t.auth.reset.signinLinkLabel`, making the count 2, not 1.
-  *Chosen:* reword the comment to `the signinLinkLabel and heading keys under t.auth.reset`.
-  *Rejected:* re-interpreting the criterion as "1 render plus prose" — a mechanical criterion that
-  needs a footnote to pass is no longer mechanical. *What would change the answer:* nothing; the
-  comment says the same thing.
-- **Kept the plan's `options?.maxAge` snippet as `options.maxAge`.** ESLint's
-  `no-unnecessary-condition` rejects the optional chain because `options` is non-nullish in
-  `@supabase/ssr`'s callback type. *Chosen:* follow the type. *Rejected:* an eslint-disable to
-  preserve the plan's literal text. *What would change the answer:* the library widening that
-  parameter to optional.
-- **Did not fix the pre-existing `signin.ts` zod gap, and did not touch F1's files.** The first is
-  a named non-goal in the plan; the second is the contract's neighbour rule. The cross-plan defect
-  X1 (F1's orphan `### Phase 0`) is **still unfixed** and still belongs to the sweep — I re-read
-  F1's plan only to confirm it, and edited nothing.
+- **Verdict recorded as APPROVED although three warnings exceed the skill's "≤2" rubric.**
+  *Chosen:* APPROVED, with the arithmetic shown and the deviation stated in the report itself.
+  *Rejected:* NEEDS ATTENTION by mechanical count — only **one** of the three warnings (RF-1) is in
+  the product code, and it is a documented, deliberately accepted decision with a follow-up; W2 was
+  debris in a *different* working tree and W3 was a stale sentence in the handoff this step
+  rewrites. In the source run two branches were labelled NEEDS ATTENTION on exactly this rubric
+  while both reviews said in prose the branch was mergeable. *What would change the answer:* any
+  finding that changes shipped behaviour, or a warning the branch itself must carry into merge.
+- **Triaged every finding myself rather than saving the report for a human.** *Chosen:* fix W2 and
+  W3 in place, file W1 as RF-1, record O1–O4. *Rejected:* "save report only" — it would have left a
+  219 KB untracked file blocking a clean-tree gate and a stale blocker in the handoff's first
+  sentence. *What would change the answer:* a finding needing product judgement — RF-1 carries
+  exactly one, and it is escalated rather than decided.
+- **Deleted `signin-desktop.png` from the main checkout instead of only reporting it.** *Chosen:*
+  remove it. *Rejected:* leaving it for the maintainer — it is untracked, un-gitignored, referenced
+  by nothing in `context/`, and sits in the tree the agent contract requires to stay clean.
+  *What would change the answer:* any document citing it as evidence; none does (grepped).
+- **Ran my own third deliberate break (F) rather than only re-running the plan's three.** *Chosen:*
+  revert the seam entirely and watch 5 of 7 redden. *Rejected:* accepting three isolation breaks as
+  sufficient — each proves one branch bites, none proves the suite bites on the feature as a whole,
+  which is the L-004 meta-question. *What would change the answer:* nothing; it cost one test run
+  and is the cheapest available check that the suite is not decorative.
+- **Did not add the RF-1 test in this step.** *Chosen:* file it as a follow-up. *Rejected:* writing
+  it here — it is a WARNING, not a CRITICAL, and the triage rule for this run sends warnings to
+  `follow-ups/review-fixes.md`; more importantly the *behaviour* it would pin is a human decision
+  that has not been made, and pinning the wrong side is worse than not pinning. *What would change
+  the answer:* the maintainer settling the post-reset sign-out question either way — the test then
+  becomes mechanical.
+- **Wrote review artifacts into the branch's own worktree and committed them there**, then mirrored
+  the change folder into the main checkout where it already sits untracked. *Chosen:* branch-local,
+  committed. *Rejected:* writing only into the main checkout — that is precisely how a previous run
+  left untracked review artifacts blocking the return to its own branch. *What would change the
+  answer:* nothing; the change folder is tracked and must travel with the branch.
+- **`needsE2E` reported as false.** *Chosen:* no browser phase. *Rejected:* an e2e spec for the
+  cookie lifetime — a session cookie is distinguished only by surviving a browser restart, which
+  Playwright cannot do; `storageState` serialises session cookies and is banned project-wide; and
+  reading `sb-…-auth-token` by name would need the **closed** cookie-poking exception list in
+  `e2e/CLAUDE.md` reopened. The plan's own reasoning, independently agreed with here. The single
+  open risk (RF-1) is a `Set-Cookie` header concern, not a browser-behaviour one. *What would
+  change the answer:* a way to restart a browser inside one Playwright run, or a decision to widen
+  the cookie-poking exception list.

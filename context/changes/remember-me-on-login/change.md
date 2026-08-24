@@ -1,7 +1,7 @@
 ---
 change_id: remember-me-on-login
 title: Honest "remember me" on parent login — cookie persistence, not token lifetime
-status: implemented
+status: impl_reviewed
 created: 2026-08-24
 updated: 2026-08-24
 archived_at: null
