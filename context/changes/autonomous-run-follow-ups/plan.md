@@ -961,10 +961,10 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [x] 2.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [x] 2.2 `npm test` — branch baseline + 2
-- [x] 2.3 Deliberate break A: delete the `<form>` element keeping its children → rooted helper throws, `action` assertion red → restore
-- [x] 2.4 Deliberate break B: remove the `<ul>`'s `aria-label` → `getByRole("list", { name })` red → restore
+- [x] 2.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings — 589c638
+- [x] 2.2 `npm test` — branch baseline + 2 — 589c638
+- [x] 2.3 Deliberate break A: delete the `<form>` element keeping its children → rooted helper throws, `action` assertion red → restore — 589c638
+- [x] 2.4 Deliberate break B: remove the `<ul>`'s `aria-label` → `getByRole("list", { name })` red → restore — 589c638
 
 #### Manual
 
@@ -974,9 +974,9 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [ ] 3.2 `npm test` — branch baseline + 1
-- [ ] 3.3 Deliberate break: drop the `WORLD_SLOTS[world.slug]?.` prefix from the badge `style` → render case red on `left`/`top` → restore
+- [x] 3.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
+- [x] 3.2 `npm test` — branch baseline + 1
+- [x] 3.3 Deliberate break: drop the `WORLD_SLOTS[world.slug]?.` prefix from the badge `style` → render case red on `left`/`top` → restore
 
 ### Phase 4: Nav — document the two-layer split and assert every entry's href
 
