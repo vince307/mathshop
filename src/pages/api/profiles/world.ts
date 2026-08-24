@@ -58,6 +58,21 @@ export const POST: APIRoute = async (context) => {
   }
 
   const result = await updateChildProfileTheme(supabase, profile.id, parsed.data.theme);
+  if ("error" in result) {
+    // A database failure and a routine ownership bounce produced the SAME silent
+    // redirect, so a real outage left no trace anywhere. `updateChildProfileTheme`
+    // returns `{ error } | { failure: "not-found" } | { ok: true }`, so this
+    // discriminates exactly. The response is unchanged on purpose (KR-1): the
+    // route must not become an existence oracle, so the signal lives in the log.
+    // Operation-scoped context only — `profileId` identifies a child row and the
+    // theme is the caller's input; neither belongs in an operator log.
+    // eslint-disable-next-line no-console
+    console.error("[profiles/world] updateChildProfileTheme failed", {
+      code: result.error.code,
+      message: result.error.message,
+    });
+    return applyNoStore(context.redirect(WORLDS));
+  }
   if (!("ok" in result)) {
     return applyNoStore(context.redirect(WORLDS));
   }

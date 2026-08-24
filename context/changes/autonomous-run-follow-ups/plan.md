@@ -982,23 +982,23 @@ own phase and its own commit scope.
 
 #### Automated
 
-- [x] 4.1 `npm run lint` clean; `npm test` — branch baseline + 0
-- [x] 4.2 `E2E_PORT=<yours> npx playwright test e2e/growth.spec.ts` — count unchanged from Phase 1's post-state, all green
-- [x] 4.3 Deliberate break: change one entry's `href` in `AppShell.astro`'s `items` → Risk E2E-F4-2 red in both projects → restore
-- [x] 4.4 Meta-check recorded: removing an entry from `items` was already red before this phase (count 0) — the reason Fix A is not bought
+- [x] 4.1 `npm run lint` clean; `npm test` — branch baseline + 0 — 256bd10
+- [x] 4.2 `E2E_PORT=<yours> npx playwright test e2e/growth.spec.ts` — count unchanged from Phase 1's post-state, all green — 256bd10
+- [x] 4.3 Deliberate break: change one entry's `href` in `AppShell.astro`'s `items` → Risk E2E-F4-2 red in both projects → restore — 256bd10
+- [x] 4.4 Meta-check recorded: removing an entry from `items` was already red before this phase (count 0) — the reason Fix A is not bought — 256bd10
 
 ### Phase 5: `POST /api/profiles/world` — log the DB-error branch
 
 #### Automated
 
-- [ ] 5.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
-- [ ] 5.2 `npm test` — branch baseline + 0 (no new test, by D3; the existing suite's green is the KR-1 guard)
-- [ ] 5.3 Deliberate break: invert the discriminant to `if (!("error" in result))` → `tests/profiles-world.test.ts`'s own-profile test red on `Location` + read-back → restore
-- [ ] 5.4 Record the rejected break (moving the unreachable `"error"` branch's redirect stays green — a decorative break, L-004)
+- [x] 5.1 `npm run lint` clean; `npm run check` 0 errors / 0 warnings
+- [x] 5.2 `npm test` — branch baseline + 0 (no new test, by D3; the existing suite's green is the KR-1 guard)
+- [x] 5.3 Deliberate break: invert the discriminant to `if (!("error" in result))` → `tests/profiles-world.test.ts`'s own-profile test red on `Location` + read-back → restore
+- [x] 5.4 Record the rejected break (moving the unreachable `"error"` branch's redirect stays green — a decorative break, L-004)
 
 #### Manual
 
-- [ ] 5.5 Forced service failure logs `[profiles/world] …` while the browser still lands on `/app/worlds` unchanged
+- [x] 5.5 Forced service failure logs `[profiles/world] …` while the browser still lands on `/app/worlds` unchanged
 
 ### Phase 6: Weekly report — decomposition at render level, and a `shift_log` seeder
 
