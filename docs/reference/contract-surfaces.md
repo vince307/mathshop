@@ -39,6 +39,23 @@ Per-profile, per-shift history log (S-07) backing the parent weekly report (FR-0
 - **Consumed by:** `src/lib/services/reports.ts` (`getWeeklyReport` / `aggregateWeeklyReport`, `listRecentActivity` — the child dashboard activity feed), `src/lib/services/child-profiles.ts` (writers), `e2e/helpers/accounts.ts` (`seedShiftWeek` — the first **test-side** writer, and the only writer anywhere that sets `created_at` explicitly: it pins each row at `12:00Z` on a `weekDayKeys` civil date so a bar cannot drift across the Europe/Warsaw day boundary or a DST weekend, and it sets `earned` explicitly because a `null` there flips `earningsKnown` to `false` and silently suppresses the parent's earnings tile).
 - **Isolation test:** `tests/shift-log-isolation.test.ts` (table-level RLS), `tests/report-isolation.test.ts` (S-09 — the weekly-report read path itself: `getWeeklyReport` + profile listing, two signed-in accounts), `tests/recent-activity-isolation.test.ts` (F2 — **intra-account**: RLS here is account-scoped, so `listRecentActivity`'s app-side `.eq("profile_id", …)` is the only thing separating two children of the same parent; two profiles on one account, one row each).
 
+## public.task_attempt
+
+Per-task telemetry (adaptive-task-engine P1) backing the adaptive difficulty engine. Where `shift_log` records one aggregate row per completed shift, this records **one row per task**: which scenario ran, at what parameters, whether it was answered first try, how many misses it took, and how long it lasted. Written server-side, batched at shift end in the same call as `recordShiftResult`, `account_id` taken from the RLS-verified profile row (never client input, L-002). S-07 listed "no per-task-attempt history rows" as an explicit non-goal; this table lifts that.
+
+- **Defined in:** `supabase/migrations/20260825120000_create_task_attempt.sql` (adaptive-task-engine P1).
+- **Owner column:** `account_id uuid not null references auth.users(id) on delete cascade` — RLS predicate `auth.uid() = account_id`.
+- **Columns:** `id`, `account_id`, `profile_id` (`references child_profiles(id) on delete cascade`), `created_at`, `shift_index` integer (0-based **positional** index within its shift, check `>= 0` — the adaptation guards are positional, so warm-up and closing-task behaviour are only analysable against it), `task_type` text (`counting` | `change_making`), `scenario` text (`count_till` | `give_change` | `stock_and_change` — free text, **no DB CHECK**), `competency` text (`math` | `money`), `difficulty` real null (the continuous `d` the task was generated at; check `0..1` when present. **Null means not measured**: rows written before P3 introduces the continuous scale, because writing a normalised tier there would put two incomparable quantities in one column of the table whose whole purpose is tuning), `params` jsonb (the generated numbers — `{ targetCount }` for counting, `{ paid, price, change, availableCount, stockCount? }` for change-making), `first_try` boolean, `misses` integer (check `>= 0`), `duration_ms` integer null (time on task, measured to the moment the answer was accepted — it **excludes** the fixed 1400 ms celebration beat in `useCoinTask`). No `updated_at` (append-only; rows are never mutated).
+- **Indexes:** `task_attempt_account_id_idx` (`account_id`), `task_attempt_profile_created_idx` (`profile_id, created_at` — the analysis query path).
+- **RLS:** enabled; four per-operation policies, all `to authenticated`:
+  - `task_attempt_select_own` — `for select using (auth.uid() = account_id)`
+  - `task_attempt_insert_own` — `for insert with check (auth.uid() = account_id)`
+  - `task_attempt_update_own` — `for update using (...) with check (...)`
+  - `task_attempt_delete_own` — `for delete using (auth.uid() = account_id)`
+- **Deliberately no `shift_log_id` FK:** `appendShiftLog` (`src/lib/services/child-profiles.ts`) returns void and swallows its insert error by design; depending on the log row's id would force that best-effort contract to become mandatory and add an ordering dependency. Attempts correlate to their shift by (`profile_id`, `created_at`) plus `shift_index`.
+- **Consumed by:** nothing yet — the table is additive in P1. The writer lands in P2 (`recordShiftResult` / `POST /api/shifts/complete`); the reader is the difficulty recompute in P5.
+- **Isolation test:** `tests/task-attempt-isolation.test.ts` (run by CI as a merge gate).
+
 ## public.account_settings
 
 Per-account parent settings (S-07) holding the scrypt-hashed parent PIN (FR-016 gate) and a verify throttle. One row per account (`account_id` is the PK). Written server-side (`src/lib/services/parent-pin.ts`); the PIN is **never stored in plaintext** and never logged.

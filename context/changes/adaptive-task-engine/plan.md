@@ -739,16 +739,16 @@ dropping the table and the column respectively.
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly
-- [ ] 1.2 Isolation test passes
-- [ ] 1.3 Full suite still green
-- [ ] 1.4 Type checking passes
-- [ ] 1.5 Linting passes
+- [x] 1.1 Migration applies cleanly
+- [x] 1.2 Isolation test passes
+- [x] 1.3 Full suite still green
+- [x] 1.4 Type checking passes
+- [x] 1.5 Linting passes
 
 #### Manual
 
-- [ ] 1.6 Policy meta-check: weakened policy turns the test red, restore turns it green
-- [ ] 1.7 contract-surfaces.md entry reviewed against the migration
+- [x] 1.6 Policy meta-check: weakened policy turns the test red, restore turns it green
+- [x] 1.7 contract-surfaces.md entry reviewed against the migration
 
 ### Phase 2: Telemetry write path
 
