@@ -41,6 +41,10 @@ duration. A shift still ends on a win.
 | Lost-update window | Left as-is, documented | Predates this change; closing it means rewriting the authoritative write path in SQL | Plan |
 | `duration_ms` | Ships in P1 | Most informative signal after `firstTry`; deferring leaves a permanent gap in exactly the early data we need for tuning | Plan |
 | Existing profiles' starting `d` | From `starting_level` only, history ignored | One deterministic rule; no child experiences a difficulty jump on ship day | Plan |
+| Two-stage admission | Explicit `TWO_STAGE_THRESHOLD` with the invariant `ceilingForLevel(2) < threshold` | Today's `difficultyTier === 3` makes multi-step tasks structurally unreachable for young children; a continuous scale turns that into a crossable threshold | Plan review |
+| `difficultyTier` | Removed; `Task` carries `difficulty: number` | Phase 3 removes its only producer, and it is a required field in `src/types.ts` | Plan review |
+| `MAX_SHIFT_TASKS` | Explicit constant 17 + a reachability test | `SHIFT_LENGTH[3]` ceases to exist; if the ceiling ever falls below a generated shift, the child loses the entire shift-end write | Plan review |
+| Phase-2 `difficulty` | Left null until Phase 3 | Two incomparable quantities in one column would poison the table whose whole purpose is tuning | Plan review |
 | Task generation | Lazy on client from a server seed; task 1 server-rendered | Hydration mismatch only affects the first render; zero round-trips preserves S-12's offline behaviour | Design spec |
 | Adaptation rule | `d += ADAPT_RATE * (observed − TARGET_SUCCESS)`, target ~0.8 | Self-stabilises at ~80% success and is asymmetric by construction — a miss costs 4× what a hit gains | Design spec |
 | `misses` in the rule | Excluded; telemetry only | Weighting it would be a guess; P1 exists precisely to settle it on data | Design spec |
@@ -77,7 +81,7 @@ solve loop need the total from task 1.
 | --- | --- | --- |
 | 1. `task_attempt` + RLS | Telemetry table, isolation test, registry entry | A wrong policy is a silent data leak, not a crash |
 | 2. Telemetry write path | Timing + `attempts` on the existing POST, recording today's tasks | Reconciliation rules must tighten without breaking the existing looser refines |
-| 3. Continuous difficulty | `adaptive.ts`, `difficulty_state`, generators as functions of `d` | Calibration drift moves the e2e envelope and flips earnings/star assertions |
+| 3. Continuous difficulty | `adaptive.ts`, `difficulty_state`, generators as functions of `d` | Calibration drift moves the e2e envelope and flips earnings/star assertions; the two-stage threshold must sit above the level-2 ceiling |
 | 4. Lazy client generation | Generation moves client-side, `d` constant | Hydration mismatch returning; the positional competency join breaking |
 | 5. Adaptation on | In-shift adaptation + server recompute | A child adapted past their pedagogical band |
 
@@ -97,6 +101,11 @@ solve loop need the total from task 1.
 - **Three non-atomic writes.** A failed telemetry insert leaves a shift without
   attempts — accepted, following `appendShiftLog`'s best-effort posture, because
   telemetry must never fail a child's shift.
+- **Plan-review findings are folded in.** A deep review found that nothing in the
+  original plan governed which *kind* of task a child may receive — only how big
+  the numbers get — so a level-1 child on a streak could have crossed into the
+  two-stage scenario, breaking the pedagogy, the unit tests (flakily) and every
+  gameplay e2e. That is now an explicit invariant with its own test.
 - **Every constant is a first guess.** `TARGET_SUCCESS`, `ADAPT_RATE`,
   `MAX_SHIFT_DRIFT`, `FINAL_TASK_RELIEF` and the interpolation curves all need
   kid-testing.

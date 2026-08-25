@@ -138,7 +138,7 @@ animation.
 
 ---
 
-## Phase 1: `task_attempt` table and RLS contract
+## Phase 1: task_attempt table and RLS contract
 
 ### Overview
 
@@ -160,7 +160,8 @@ auth.users(id) on delete cascade`, `profile_id uuid not null references
 public.child_profiles(id) on delete cascade`, `created_at timestamptz not null
 default now()`, `shift_index int not null` (0-based position within its shift),
 `task_type text not null`, `scenario text not null`, `competency text not null`,
-`difficulty real not null`, `params jsonb not null`, `first_try boolean not null`,
+`difficulty real null` (populated from Phase 3 on — see Phase 2), `params jsonb
+not null`, `first_try boolean not null`,
 `misses int not null`, `duration_ms int null`.
 
 No `shift_log_id` FK and no `updated_at` — the table is append-only, so it follows
@@ -254,8 +255,10 @@ performed for the competency delta, and send it with the single shift-end POST.
 (`targetCount` for counting; `paid`/`price`/`change`/`availableCount`, plus
 `stockCount` when present, for change-making). Sent as a JSON string in the
 existing `FormData`, alongside — not instead of — the current `skills` payload.
-`difficulty` in this phase is the task's existing `difficultyTier`, normalised onto
-the `[0,1]` scale, so the column is populated meaningfully from day one.
+`difficulty` is left **null** in this phase. The continuous scale does not exist
+until Phase 3, and writing a normalised tier here would put two incomparable
+quantities in one column of the very table whose purpose is tuning. Difficulty is
+constant per profile in this phase anyway, so nothing is lost.
 
 #### 3. Route validation
 
@@ -301,7 +304,8 @@ write; see Open Risks.
 
 - Complete a shift in the running app; confirm in Supabase Studio that
   `task_attempt` holds exactly one row per task, with `params` matching what was
-  rendered and `duration_ms` in a plausible range (not ~1400 ms per task).
+  rendered, `duration_ms` in a plausible range (not ~1400 ms per task), and
+  `difficulty` null.
 - Confirm the child-facing experience is byte-for-byte unchanged.
 
 **Implementation Note**: Pause for manual confirmation before Phase 3.
@@ -327,11 +331,17 @@ Supabase, no i18n — mirroring `src/data/skills.ts`.
 
 **Contract**: Exports the `[0,1]` scale; `seedDifficultyFor(startingLevel)` giving
 a fresh profile's starting `d` per competency; `ceilingForLevel(startingLevel)`
-giving the age-derived upper bound; the interpolators mapping `d` to each
+giving the `starting_level`-derived upper bound; the interpolators mapping `d` to each
 generator's parameters; `nextDifficulty(d, outcome, context)` implementing
 `d += ADAPT_RATE * (observed − TARGET_SUCCESS)` with the warm-up, post-miss
 cooldown and drift-clamp guards; and a mulberry32 PRNG exposed as a
 `pick(min, max)` matching the generators' existing injectable picker signature.
+It also owns `TWO_STAGE_THRESHOLD` — the `d` at or above which the
+`stock_and_change` scenario becomes admissible — carrying the invariant
+`ceilingForLevel(2) < TWO_STAGE_THRESHOLD`. This is the **scenario-admission**
+bound, and it is separate from every other guard here: warm-up, cooldown, the
+drift clamp and `ceilingForLevel` all bound the *magnitude* of the numbers, and
+none of them can keep a multi-step task away from a six-year-old.
 All tunables are named constants documented as first-guess. `TARGET_SUCCESS`,
 `ADAPT_RATE`, `MAX_SHIFT_DRIFT` and `FINAL_TASK_RELIEF` live here.
 
@@ -343,7 +353,7 @@ All tunables are named constants documented as first-guess. `TARGET_SUCCESS`,
 
 **Contract**: `difficulty_state jsonb not null default '{}'` on
 `child_profiles`. No RLS work — the existing four policies are column-agnostic.
-Existing rows default to `{}` and normalise to their age-derived seed on read, so
+Existing rows default to `{}` and normalise to their `starting_level`-derived seed on read, so
 there is **no data migration**. Rollback: `alter table ... drop column difficulty_state`.
 
 #### 3. Difficulty state normalizer
@@ -355,7 +365,7 @@ does for skills.
 
 **Contract**: `readDifficultyState(state: unknown, startingLevel: number)` returns
 a fully-populated per-competency shape, coercing missing, malformed or
-out-of-range values to the age-derived seed and clamping into
+out-of-range values to the `starting_level`-derived seed and clamping into
 `[0, ceilingForLevel(startingLevel)]`. It takes `startingLevel` explicitly —
 unlike `readSkillState`, it is never used as a zeroed accumulator, so the extra
 parameter costs nothing.
@@ -375,8 +385,32 @@ around the `d` point so a fixed `d` still varies. `generateTask` gains forwarded
 `src/data/tasks.ts:24`, which today calls the leaf generators with no picker.
 `tierForLevel` survives, used only by `seedDifficultyFor`. Absolute safe bounds
 (`TRAY_CAP`, `SCATTER_MAX`) remain enforced independently of `d`.
-`MAX_SHIFT_TASKS` must retain its current value, since
-`src/pages/api/shifts/complete.ts` imports it as a validation ceiling.
+
+The two-stage gate at `src/data/change-making-tasks.ts:64` changes from
+`difficultyTier === 3 && pickTwoStage()` to `d >= TWO_STAGE_THRESHOLD &&
+pickTwoStage()`. Today's `=== 3` makes the scenario *structurally* unreachable
+below level 3; a threshold makes it reachable by drift, so the
+`ceilingForLevel(2) < TWO_STAGE_THRESHOLD` invariant is what restores the
+guarantee. The two existing tests that assert this by relying on a tier veto —
+`tests/change-making-tasks.test.ts:178-185` and `tests/shift.test.ts:93-101` —
+lose their premise and must be replaced by a test over `d` (see Success Criteria).
+`tests/shift.test.ts:72-91`, which reasons statistically from `0.7^60` about
+tier-3 two-stage frequency, needs its arithmetic restated in terms of `d`.
+
+`MAX_SHIFT_TASKS` (`src/data/shift.ts:30`) is currently
+`SHIFT_LENGTH[3].max + MAX_BONUS_TASKS` = 17. `SHIFT_LENGTH[3]` ceases to exist,
+so it becomes an explicit `17` with a comment binding it to the maximum of the
+length function plus `MAX_BONUS_TASKS` (`src/data/upgrades.ts:44`). It **must not
+fall** below the longest reachable shift: `src/pages/api/shifts/complete.ts:82`
+returns 400 on any parse failure, and because mid-shift state is never persisted
+(FR-016) the child would play a full shift and lose the entire write — wallet,
+`completed_shift_count`, `business_level`, `skill_state`, the `shift_log` row and
+the whole telemetry array — seeing only the gentle error path. Note
+`MAX_SHIFT_MISSES` (`complete.ts:20`) is derived from it at 10×, and gates
+`misses`, which feeds `skill_state`, which gates upgrades.
+
+`tests/tasks.test.ts` covers the `generateTask` dispatcher whose signature changes
+here, and must be updated with it.
 
 #### 5. Wire the seed through
 
@@ -385,7 +419,47 @@ around the `d` point so a fixed `d` still varies. `generateTask` gains forwarded
 **Intent**: Generate from the profile's stored `d` rather than its `starting_level`.
 
 **Contract**: Reads `difficulty_state`, normalises it, and passes the resulting
-per-competency `d` into shift generation. Shift length is computed once here.
+per-competency `d` into shift generation. **Shift length is derived from
+`max(d.math, d.money)`** and computed once here — it is fixed for the whole shift.
+The profile arrives via `resolvePageProfile` (`src/lib/services/active-profile.ts`),
+so the `ChildProfile` interface (`src/lib/services/child-profiles.ts:27-33`) must
+declare the new field.
+
+No change is needed in `e2e/helpers/accounts.ts`: `seedChildProfile` never writes
+`starting_level` and relies on the column default of 1, so a seeded profile gets
+`difficulty_state = '{}'` and normalises to the level-1 seed — which is exactly the
+tier-1 envelope the e2e assertions require. Stated here so it is a verified
+property rather than an accident.
+
+#### 6. Task type: `difficulty` replaces `difficultyTier`
+
+**File**: `src/types.ts`
+
+**Intent**: Retire the discrete tier field, whose only producer this phase removes.
+
+**Contract**: `CountingTask` and `ChangeMakingTask` (`src/types.ts:36`, `:75`)
+carry `difficulty: number` in place of the required `difficultyTier: 1 | 2 | 3`.
+The field is transient — never persisted, never in an API payload — but it **is**
+JSON-serialized into the `ShiftScreen` island props by Astro
+(`src/pages/app/task.astro:51-53`), so this is a hydration-payload change.
+Nine assertion sites and three fixture literals move with it:
+`tests/counting-tasks.test.ts:36,43,49,57,96`,
+`tests/change-making-tasks.test.ts:23,112,198`,
+`tests/shift.test.ts:65,68,87`, `tests/task-guardrail.test.tsx:159`.
+
+#### 7. Register the new column
+
+**File**: `docs/reference/contract-surfaces.md`
+
+**Intent**: Record `difficulty_state` on the existing `## public.child_profiles`
+surface. Four of four prior column-adding migrations did this in the same commit;
+there is no automated check, so an omission fails silently and permanently.
+
+**Contract**: Append the migration to the **Defined in** bullet's
+semicolon-separated chain, and insert `difficulty_state` into the **Columns**
+list in physical order before `created_at`, followed by a sentence naming its
+shape, its normalizer, its writers, and the fact that the existing four policies
+cover it (column-agnostic) — following the `skill_state` entry verbatim in form.
 
 ### Success Criteria
 
@@ -394,6 +468,12 @@ per-competency `d` into shift generation. Shift length is computed once here.
 - Calibration test: `seedDifficultyFor(1)` reproduces today's tier-1 bands
   (`SHIFT_LENGTH {5,7}`, `COUNT_RANGE {3,10}`, `CHANGE_CAP 5`, `PAID_MAX 10`)
 - Ceiling test: for any outcome stream, `d` never exceeds `ceilingForLevel`
+- **Two-stage admission test**: for every `d ≤ ceilingForLevel(2)` and every seed,
+  the generated scenario is never `stock_and_change` — replacing
+  `tests/change-making-tasks.test.ts:178-185` and `tests/shift.test.ts:93-101`,
+  whose tier-veto premise this phase removes
+- **Shift-length ceiling test**: no reachable `d` generates a shift longer than
+  `MAX_SHIFT_TASKS`
 - Convergence test: synthetic streams drive `d` toward `TARGET_SUCCESS`
 - Guard tests: warm-up does not move `d`; `d` never rises on a post-miss task;
   the drift clamp holds
@@ -411,6 +491,8 @@ per-competency `d` into shift generation. Shift length is computed once here.
 - Start shifts on a fresh level-1 profile several times; confirm task counts and
   number ranges feel identical to before the change.
 - Confirm an existing profile with history is unaffected on first load.
+- `contract-surfaces.md`'s `## public.child_profiles` entry reviewed against the
+  migration for drift.
 
 **Implementation Note**: Pause for manual confirmation before Phase 4.
 
@@ -608,7 +690,7 @@ shift, at shift end only. `task_attempt` grows at roughly one row per task; the
 ## Migration Notes
 
 Two additive migrations, neither requiring a data migration. Existing profiles
-receive `difficulty_state = '{}'` and normalise on read to their age-derived seed
+receive `difficulty_state = '{}'` and normalise on read to their `starting_level`-derived seed
 — **history in `skill_state` is deliberately ignored**, so no existing child
 experiences a difficulty jump on the day this ships, and the engine re-converges
 within two or three shifts. Both migrations are independently reversible by
@@ -680,7 +762,7 @@ dropping the table and the column respectively.
 
 #### Manual
 
-- [ ] 2.6 task_attempt holds one correct row per task, duration_ms plausible
+- [ ] 2.6 task_attempt holds one correct row per task, duration_ms plausible, difficulty null
 - [ ] 2.7 Child-facing experience unchanged
 
 ### Phase 3: Continuous difficulty model
@@ -689,18 +771,21 @@ dropping the table and the column respectively.
 
 - [ ] 3.1 Calibration test: seed reproduces today's tier-1 bands
 - [ ] 3.2 Ceiling test: d never exceeds ceilingForLevel
-- [ ] 3.3 Convergence test toward TARGET_SUCCESS
-- [ ] 3.4 Guard tests: warm-up, post-miss cooldown, drift clamp
-- [ ] 3.5 Determinism test
-- [ ] 3.6 Range invariant sweep via shared invariant helper
-- [ ] 3.7 Existing generator suites updated and green
-- [ ] 3.8 E2E green — envelope unmoved
-- [ ] 3.9 Type checking and linting pass
+- [ ] 3.3 Two-stage admission test: never below ceilingForLevel(2)
+- [ ] 3.4 Shift-length ceiling test: no reachable d exceeds MAX_SHIFT_TASKS
+- [ ] 3.5 Convergence test toward TARGET_SUCCESS
+- [ ] 3.6 Guard tests: warm-up, post-miss cooldown, drift clamp
+- [ ] 3.7 Determinism test
+- [ ] 3.8 Range invariant sweep via shared invariant helper
+- [ ] 3.9 Existing generator suites updated and green
+- [ ] 3.10 E2E green — envelope unmoved
+- [ ] 3.11 Type checking and linting pass
 
 #### Manual
 
-- [ ] 3.10 Fresh level-1 shifts feel identical to before
-- [ ] 3.11 Existing profile with history unaffected on first load
+- [ ] 3.12 Fresh level-1 shifts feel identical to before
+- [ ] 3.13 Existing profile with history unaffected on first load
+- [ ] 3.14 contract-surfaces.md child_profiles entry reviewed against the migration
 
 ### Phase 4: Lazy client generation, difficulty held constant
 
