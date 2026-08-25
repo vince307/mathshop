@@ -33,7 +33,13 @@ export interface CountingTask {
   targetCount: number;
   /** Layout hint: ≤ 5 scattered; larger counts grouped into rows of 5 to aid subitizing. */
   arrangement: "scatter" | "rows_of_5";
-  difficultyTier: 1 | 2 | 3;
+  /**
+   * The continuous difficulty `d ∈ [0,1]` this task was generated at
+   * (`src/data/adaptive.ts`), replacing the three frozen tiers. **Transient** —
+   * never persisted and never in an API payload, but it IS JSON-serialized into
+   * the `ShiftScreen` island props, so it is part of the hydration payload.
+   */
+  difficulty: number;
 }
 
 /**
@@ -72,7 +78,8 @@ export interface ChangeMakingTask {
   stockArrangement?: "scatter" | "rows_of_5";
   /** Layout hint for the coin tray: ≤ 5 scattered; larger groups into rows of 5. */
   arrangement: "scatter" | "rows_of_5";
-  difficultyTier: 1 | 2 | 3;
+  /** The continuous difficulty `d ∈ [0,1]` this task was generated at — see `CountingTask.difficulty`. */
+  difficulty: number;
 }
 
 /**
@@ -114,6 +121,16 @@ export interface ShopState {
  * re-exports it alongside the pure progress logic (mirrors `tasks.ts` → `Task`).
  */
 export type Competency = "math" | "money" | "decisions";
+
+/**
+ * The competencies a shift TASK can exercise. `decisions` is absent because it
+ * accrues at purchase, not from a task — which makes this the key set for
+ * anything derived from task play, notably the per-competency difficulty state
+ * (`src/data/adaptive.ts`). Narrowing `competencyForTaskType`'s return type to
+ * this is what makes "it never returns `decisions`" a fact the compiler checks
+ * rather than a comment.
+ */
+export type PlayCompetency = Extract<Competency, "math" | "money">;
 
 /**
  * Per-competency skill counters. `firstTryCorrect` (tasks nailed with zero misses)

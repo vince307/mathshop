@@ -36,9 +36,11 @@ const skillsSchema = z.object({
   money: competencyDeltaSchema,
 });
 
-// One task's telemetry record (P1). `difficulty` is nullable — the continuous
-// scale arrives in P3; until then the client sends null and the column stays
-// empty rather than holding a second, incomparable quantity.
+// One task's telemetry record (P1). `difficulty` is the continuous `d` the task
+// was generated at (P3), and stays nullable because P1/P2 rows predate the scale:
+// null means "not measured", not "zero". Telemetry only — from P5 the persisted
+// difficulty is recomputed server-side from the reported outcomes, never taken
+// from this field, so the only lie available to a client is about its own history.
 const attemptSchema = z.object({
   shift_index: z
     .number()

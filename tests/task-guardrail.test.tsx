@@ -179,7 +179,7 @@ describe("Risk #6 — two-stage stock_and_change keeps the guarantees per stage"
     type: "change_making",
     scenario: "stock_and_change",
     objectType: "coin",
-    difficultyTier: 3,
+    difficulty: 1,
     paid: 5,
     price: 2,
     change: 3,

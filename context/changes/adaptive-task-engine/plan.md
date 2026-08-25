@@ -754,38 +754,38 @@ dropping the table and the column respectively.
 
 #### Automated
 
-- [x] 2.1 Route tests cover each new refine including rejection cases
-- [x] 2.2 useCoinTask timing tested, 1400 ms beat excluded
-- [x] 2.3 Full suite green
-- [x] 2.4 E2E unchanged and green
-- [x] 2.5 Type checking and linting pass
+- [x] 2.1 Route tests cover each new refine including rejection cases — eab14ed
+- [x] 2.2 useCoinTask timing tested, 1400 ms beat excluded — eab14ed
+- [x] 2.3 Full suite green — eab14ed
+- [x] 2.4 E2E unchanged and green — eab14ed
+- [x] 2.5 Type checking and linting pass — eab14ed
 
 #### Manual
 
-- [x] 2.6 task_attempt holds one correct row per task, duration_ms plausible, difficulty null
-- [x] 2.7 Child-facing experience unchanged
+- [x] 2.6 task_attempt holds one correct row per task, duration_ms plausible, difficulty null — eab14ed
+- [x] 2.7 Child-facing experience unchanged — eab14ed
 
 ### Phase 3: Continuous difficulty model
 
 #### Automated
 
-- [ ] 3.1 Calibration test: seed reproduces today's tier-1 bands
-- [ ] 3.2 Ceiling test: d never exceeds ceilingForLevel
-- [ ] 3.3 Two-stage admission test: never below ceilingForLevel(2)
-- [ ] 3.4 Shift-length ceiling test: no reachable d exceeds MAX_SHIFT_TASKS
-- [ ] 3.5 Convergence test toward TARGET_SUCCESS
-- [ ] 3.6 Guard tests: warm-up, post-miss cooldown, drift clamp
-- [ ] 3.7 Determinism test
-- [ ] 3.8 Range invariant sweep via shared invariant helper
-- [ ] 3.9 Existing generator suites updated and green
-- [ ] 3.10 E2E green — envelope unmoved
-- [ ] 3.11 Type checking and linting pass
+- [x] 3.1 Calibration test: seed reproduces today's tier-1 bands
+- [x] 3.2 Ceiling test: d never exceeds ceilingForLevel
+- [x] 3.3 Two-stage admission test: never below ceilingForLevel(2)
+- [x] 3.4 Shift-length ceiling test: no reachable d exceeds MAX_SHIFT_TASKS
+- [x] 3.5 Convergence test toward TARGET_SUCCESS
+- [x] 3.6 Guard tests: warm-up, post-miss cooldown, drift clamp
+- [x] 3.7 Determinism test
+- [x] 3.8 Range invariant sweep via shared invariant helper
+- [x] 3.9 Existing generator suites updated and green
+- [x] 3.10 E2E green — envelope unmoved
+- [x] 3.11 Type checking and linting pass
 
 #### Manual
 
-- [ ] 3.12 Fresh level-1 shifts feel identical to before
-- [ ] 3.13 Existing profile with history unaffected on first load
-- [ ] 3.14 contract-surfaces.md child_profiles entry reviewed against the migration
+- [x] 3.12 Fresh level-1 shifts feel identical to before
+- [x] 3.13 Existing profile with history unaffected on first load
+- [x] 3.14 contract-surfaces.md child_profiles entry reviewed against the migration
 
 ### Phase 4: Lazy client generation, difficulty held constant
 

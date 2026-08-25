@@ -8,6 +8,7 @@ import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { readPurchased, shiftBonusTasks } from "@/data/upgrades";
 import { generateShift } from "@/data/shift";
+import { readDifficultyState } from "@/data/adaptive";
 import { t } from "@/i18n";
 
 // Shift surface (S-04). Gated under /app. Loads the ACTIVE profile (S-11 fallback
@@ -33,7 +34,16 @@ const avatar = getAvatar(profile.avatar);
 // again at hydration — React discards the server tree on the mismatch and the
 // child watches one task flip into another. Owned upgrades lengthen the shift
 // (capacity effect, S-06): a busier shop means more practice + more earning.
-const tasks = generateShift(profile.starting_level, shiftBonusTasks(purchased));
+//
+// Difficulty comes from the profile's persisted per-competency `d`, NOT from
+// `starting_level` — age only seeds a fresh profile now. `readDifficultyState`
+// normalises the jsonb defensively (`{}`, missing keys, garbage, off-scale) and
+// clamps into the age band, so a row that predates the column needs no data
+// migration: it reads as its `starting_level`-derived seed, which reproduces
+// exactly what that child was getting yesterday. Shift LENGTH is derived from
+// `max(d.math, d.money)` inside `generateShift` and is fixed for the whole shift.
+const difficulty = readDifficultyState(profile.difficulty_state, profile.starting_level);
+const tasks = generateShift(difficulty, shiftBonusTasks(purchased));
 ---
 
 <Layout title={t.brand}>

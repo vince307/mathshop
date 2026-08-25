@@ -7,10 +7,10 @@
  * sides agree by construction. Thresholds are first-guess named constants —
  * tune after kid-testing.
  */
-import type { Competency, CompetencyProgress, SkillState } from "@/types";
+import type { Competency, CompetencyProgress, PlayCompetency, SkillState } from "@/types";
 import type { TaskType } from "@/data/tasks";
 
-export type { Competency, CompetencyProgress, SkillState } from "@/types";
+export type { Competency, CompetencyProgress, PlayCompetency, SkillState } from "@/types";
 
 /** The competencies in canonical order — the closed set `readSkillState` fills. */
 export const COMPETENCIES: readonly Competency[] = ["math", "money", "decisions"] as const;
@@ -18,9 +18,11 @@ export const COMPETENCIES: readonly Competency[] = ["math", "money", "decisions"
 /**
  * Which competency a shift task exercises: counting → math, change-making → money.
  * (The `decisions` competency accrues at purchase, not from a task — see the buy
- * path.) Total over `TaskType`, so it never returns `decisions`.
+ * path.) Total over `TaskType`, and the `PlayCompetency` return type makes "never
+ * `decisions`" a fact the compiler checks — which is what lets callers index the
+ * per-competency difficulty state (`src/data/adaptive.ts`) with it directly.
  */
-export function competencyForTaskType(type: TaskType): Competency {
+export function competencyForTaskType(type: TaskType): PlayCompetency {
   return type === "counting" ? "math" : "money";
 }
 

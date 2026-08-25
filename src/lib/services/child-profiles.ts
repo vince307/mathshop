@@ -1,5 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState, SkillState } from "@/types";
+import type { DifficultyState } from "@/data/adaptive";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import type { TaskAttempt } from "@/data/attempts";
@@ -43,6 +44,10 @@ export interface ChildProfile {
   // Per-competency skill progress (S-07). Pre-S-07 rows may be `{}`; always read
   // through `readSkillState` before use so missing keys normalize to zero.
   skill_state: SkillState;
+  // Continuous per-competency difficulty `d` (P3), held OUTSIDE skill_state so
+  // that column stays monotonic. Pre-P3 rows may be `{}`; always read through
+  // `readDifficultyState`, which needs `starting_level` for the seed + ceiling.
+  difficulty_state: DifficultyState;
   created_at: string;
   updated_at: string;
 }

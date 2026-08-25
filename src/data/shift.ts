@@ -6,28 +6,29 @@
  * first-guess defaults, adjust after kid-testing.
  */
 import type { Task } from "@/types";
-import { tierForLevel } from "@/data/counting-tasks";
+import { type DifficultyState, shiftLengthRangeFor } from "@/data/adaptive";
 import { generateTask, type TaskType } from "@/data/tasks";
-import { MAX_BONUS_TASKS } from "@/data/upgrades";
-
-/**
- * Inclusive task-count band per difficulty tier (FR-006). Tiers 1–2 are the
- * grades 1–2 shift lengths; tier 3 (S-08) gives the upper cohort a longer shift.
- * First-guess, tunable.
- */
-export const SHIFT_LENGTH: Record<1 | 2 | 3, { min: number; max: number }> = {
-  1: { min: 5, max: 7 },
-  2: { min: 8, max: 10 },
-  3: { min: 9, max: 12 },
-};
 
 /**
  * Absolute ceiling on tasks in one shift (S-06): the longest base shift plus the
- * most bonus tasks owned upgrades can add. The shift-completion route caps
- * `taskCount`/`cleanCount` here so a fully-upgraded shop's shift isn't rejected,
- * and `shiftLength` clamps to it defensively.
+ * most bonus tasks owned upgrades can add — `max(shiftLengthRangeFor(d).max)` over
+ * `d ∈ [0,1]`, which is 12 at `d = 1`, plus `MAX_BONUS_TASKS` (5, `src/data/upgrades.ts`).
+ *
+ * Written out rather than derived on purpose. A derived cap would track a change
+ * to the length curve SILENTLY, and the dangerous direction here is the cap
+ * getting smaller — see below. A literal plus the sweep in `tests/adaptive.test.ts`
+ * (which fails if the curve outgrows this, and also if this drifts above the
+ * longest reachable shift) turns that into a loud failure instead.
+ *
+ * **It must never fall below the longest reachable shift.**
+ * `src/pages/api/shifts/complete.ts` returns 400 on any parse failure, and mid-shift
+ * state is never persisted (FR-016) — so a child would play a whole shift and lose
+ * the entire write (wallet, `completed_shift_count`, `business_level`,
+ * `skill_state`, the `shift_log` row and the whole telemetry array), seeing only
+ * the gentle error path. `MAX_SHIFT_MISSES` is derived from it at 10×, and gates
+ * `misses`, which feeds `skill_state`, which gates upgrades.
  */
-export const MAX_SHIFT_TASKS = SHIFT_LENGTH[3].max + MAX_BONUS_TASKS;
+export const MAX_SHIFT_TASKS = 17;
 
 /** Wallet earnings per completed task (length term — every task always completes, FR-009). */
 export const EARN_PER_TASK = 5;
@@ -42,33 +43,50 @@ function defaultPick(min: number, max: number): number {
 }
 
 /**
- * Number of tasks in a shift for a child at `startingLevel` (FR-006 adaptivity).
- * `bonus` (capacity effect from owned upgrades, S-06) lengthens the shift — more
- * practice + more earning via `earningsForShift` — clamped to `MAX_SHIFT_TASKS`.
+ * The single `d` that governs shift LENGTH. Length is one number for a shift that
+ * mixes both competencies, so it takes the harder of the two: a child who is
+ * ready for longer at either kind of task is ready for a longer shift.
+ */
+export function lengthDifficulty(difficulty: DifficultyState): number {
+  return Math.max(difficulty.math, difficulty.money);
+}
+
+/**
+ * Number of tasks in a shift at difficulty `d` (FR-006 adaptivity). `bonus`
+ * (capacity effect from owned upgrades, S-06) lengthens the shift — more practice
+ * + more earning via `earningsForShift` — clamped to `MAX_SHIFT_TASKS`.
+ *
+ * Computed ONCE per shift and then fixed. Five `ShiftScreen` sites and
+ * `e2e/helpers/solve-shift.ts` need the total to be known from task 1, so this
+ * must never be re-derived mid-shift.
  */
 export function shiftLength(
-  startingLevel: number,
+  difficulty: number,
   bonus = 0,
   pick: (min: number, max: number) => number = defaultPick,
 ): number {
-  const { min, max } = SHIFT_LENGTH[tierForLevel(startingLevel)];
+  const { min, max } = shiftLengthRangeFor(difficulty);
   const base = Math.min(max, Math.max(min, Math.round(pick(min, max))));
   return Math.min(base + bonus, MAX_SHIFT_TASKS);
 }
 
 /**
- * Build a shift: `shiftLength` tasks mixing counting + change-making. Guarantees
- * at least one of each type (when length ≥ 2) so the child never gets an
- * all-one-type shift, then fills + shuffles the rest. `bonus` adds capacity-effect
- * tasks (S-06). `pick`/`pickType` are injectable for deterministic tests.
+ * Build a shift: `shiftLength` tasks mixing counting + change-making, each drawn
+ * at ITS OWN competency's difficulty. Guarantees at least one of each type (when
+ * length ≥ 2) so the child never gets an all-one-type shift, then fills +
+ * shuffles the rest. `bonus` adds capacity-effect tasks (S-06).
+ * `pick`/`pickType`/`pickTwoStage` are injectable for deterministic tests, and
+ * `pick` is now genuinely forwarded to the leaf generators — it previously
+ * stopped at the dispatcher.
  */
 export function generateShift(
-  startingLevel: number,
+  difficulty: DifficultyState,
   bonus = 0,
   pick: (min: number, max: number) => number = defaultPick,
   pickType: () => TaskType = () => (Math.random() < 0.5 ? "counting" : "change_making"),
+  pickTwoStage?: () => boolean,
 ): Task[] {
-  const n = shiftLength(startingLevel, bonus, pick);
+  const n = shiftLength(lengthDifficulty(difficulty), bonus, pick);
   const types: TaskType[] = [];
   if (n >= 2) types.push("counting", "change_making"); // guarantee both appear
   while (types.length < n) types.push(pickType());
@@ -77,7 +95,7 @@ export function generateShift(
     const j = pick(0, i);
     [types[i], types[j]] = [types[j], types[i]];
   }
-  return types.map((type) => generateTask(startingLevel, () => type));
+  return types.map((type) => generateTask(difficulty, () => type, pick, pickTwoStage));
 }
 
 /** Wallet earnings paid once at shift end (FR-007): base per task + perfect-task bonus. Floor is never zero. */

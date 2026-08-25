@@ -21,8 +21,10 @@ export interface TaskAttempt {
   scenario: string;
   competency: Competency;
   /**
-   * The continuous difficulty the task was generated at. Null until P3
-   * introduces the scale — see `attemptDifficulty` below.
+   * The continuous difficulty `d ∈ [0,1]` the task was generated at. Nullable for
+   * the P1/P2 rows written before the scale existed — see `attemptDifficulty`.
+   * **Telemetry only**: from P5 the server recomputes the persisted `d` from the
+   * reported outcomes and never trusts this number.
    */
   difficulty: number | null;
   /** The generated numbers, keyed as the generator names them. */
@@ -51,14 +53,17 @@ export function attemptParams(task: Task): Record<string, number> {
 }
 
 /**
- * Difficulty to record for a task. **Null in P1/P2 by design**: the continuous
- * `d` scale does not exist until P3, and recording a normalised tier here would
- * put two incomparable quantities in one column of the very table whose purpose
- * is tuning the model. Difficulty is constant per profile in this phase, so
- * nothing is lost. P3 replaces this with the real `d`.
+ * Difficulty to record for a task: the continuous `d` it was generated at (P3).
+ *
+ * It was deliberately `null` in P1/P2, because recording a normalised tier before
+ * the continuous scale existed would have put two incomparable quantities in one
+ * column of the very table whose purpose is tuning the model. Rows from those
+ * phases keep their `null`, which is why the column and this return type stay
+ * nullable: **null means "not measured", not "zero"** — and zero is a real,
+ * meaningful difficulty.
  */
-export function attemptDifficulty(): number | null {
-  return null;
+export function attemptDifficulty(task: Task): number | null {
+  return task.difficulty;
 }
 
 /**
@@ -72,7 +77,7 @@ export function buildAttempt(task: Task, outcome: TaskOutcome, shiftIndex: numbe
     task_type: task.type,
     scenario: task.scenario,
     competency: competencyForTaskType(task.type),
-    difficulty: attemptDifficulty(),
+    difficulty: attemptDifficulty(task),
     params: attemptParams(task),
     first_try: outcome.firstTry,
     misses: outcome.misses,
