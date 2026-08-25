@@ -461,6 +461,27 @@ list in physical order before `created_at`, followed by a sentence naming its
 shape, its normalizer, its writers, and the fact that the existing four policies
 cover it (column-agnostic) — following the `skill_state` entry verbatim in form.
 
+#### 8. Absorbed during implementation (addendum)
+
+Three files outside the list above changed in the Phase 3 commit. Recorded here
+so the plan keeps matching what shipped:
+
+**File**: `src/data/attempts.ts` — `attemptDifficulty()` becomes
+`attemptDifficulty(task)`, recording the real `d` instead of `null`. The only
+behaviour change of the three. The P1 migration comment and the P2 code both named
+P3 as the moment, and no later phase claimed the work, so it was unassigned rather
+than pulled forward. Rows written in P1/P2 keep their `null`, which is why the
+column and the return type stay nullable: **null means "not measured", not "zero"**,
+and zero is a real difficulty.
+
+**File**: `src/data/skills.ts` — `competencyForTaskType`'s return type narrows from
+`Competency` to `PlayCompetency`. Load-bearing, not cosmetic: it is what lets
+callers index `DifficultyState` with the result directly, making "never returns
+`decisions`" a fact the compiler checks rather than a comment.
+
+**File**: `src/pages/api/shifts/complete.ts` — comment-only, describing the now-real
+meaning of the nullable `difficulty` field. No behaviour change.
+
 ### Success Criteria
 
 #### Automated Verification
@@ -673,7 +694,8 @@ reads then writes, it inherits the pre-existing lost-update window; see Open Ris
 ### Manual Testing Steps
 
 1. Fresh level-1 profile → shift feels identical to today (phases 3–4)
-2. Perfect streak → numbers grow, never past the band ceiling
+2. Perfect streak **on a level-1 profile** → numbers grow, never past the band
+   ceiling. Level must be 1: levels 2–3 seed at their ceiling and cannot rise.
 3. Deliberate misses → numbers shrink, no rise immediately after a miss
 4. Two consecutive shifts → difficulty carries over
 5. Network killed mid-shift → play continues, offline halt only at save
@@ -722,6 +744,15 @@ dropping the table and the column respectively.
   band bounded by age and `starting_level` frozen by an S-04 guardrail, a child who
   genuinely outgrows their band cannot be promoted. Acceptable for P1+P3; band
   promotion is a product decision, not an engine detail.
+- **Levels 2 and 3 seed AT their ceiling, so adaptation there is one-way.**
+  `seedDifficultyFor(2) = ceilingForLevel(2) = 0.5` and
+  `seedDifficultyFor(3) = ceilingForLevel(3) = 1`, because the grades 1–2 band
+  ("never above ~20", FR-007) is exactly tier 2's parameter set. Those cohorts can
+  therefore only move DOWN; upward adaptation is observable on level-1 profiles
+  only. This follows from the pedagogical bound, not from a tuning choice, and is
+  accepted — but it means **any manual check of "difficulty rises" must be run on a
+  level-1 profile**, or it will correctly observe nothing and read as a broken
+  engine. Surfaced by the Phase 3 implementation review.
 - **P3's ceiling is low, by design.** S-08 already concluded that "bigger numbers
   alone make tasks longer, not harder"
   (`context/archive/2026-07-02-upper-band-task-difficulty/research.md:30`). Adaptation
@@ -769,23 +800,23 @@ dropping the table and the column respectively.
 
 #### Automated
 
-- [x] 3.1 Calibration test: seed reproduces today's tier-1 bands
-- [x] 3.2 Ceiling test: d never exceeds ceilingForLevel
-- [x] 3.3 Two-stage admission test: never below ceilingForLevel(2)
-- [x] 3.4 Shift-length ceiling test: no reachable d exceeds MAX_SHIFT_TASKS
-- [x] 3.5 Convergence test toward TARGET_SUCCESS
-- [x] 3.6 Guard tests: warm-up, post-miss cooldown, drift clamp
-- [x] 3.7 Determinism test
-- [x] 3.8 Range invariant sweep via shared invariant helper
-- [x] 3.9 Existing generator suites updated and green
-- [x] 3.10 E2E green — envelope unmoved
-- [x] 3.11 Type checking and linting pass
+- [x] 3.1 Calibration test: seed reproduces today's tier-1 bands — d04d17a
+- [x] 3.2 Ceiling test: d never exceeds ceilingForLevel — d04d17a
+- [x] 3.3 Two-stage admission test: never below ceilingForLevel(2) — d04d17a
+- [x] 3.4 Shift-length ceiling test: no reachable d exceeds MAX_SHIFT_TASKS — d04d17a
+- [x] 3.5 Convergence test toward TARGET_SUCCESS — d04d17a
+- [x] 3.6 Guard tests: warm-up, post-miss cooldown, drift clamp — d04d17a
+- [x] 3.7 Determinism test — d04d17a
+- [x] 3.8 Range invariant sweep via shared invariant helper — d04d17a
+- [x] 3.9 Existing generator suites updated and green — d04d17a
+- [x] 3.10 E2E green — envelope unmoved — d04d17a
+- [x] 3.11 Type checking and linting pass — d04d17a
 
 #### Manual
 
-- [x] 3.12 Fresh level-1 shifts feel identical to before
-- [x] 3.13 Existing profile with history unaffected on first load
-- [x] 3.14 contract-surfaces.md child_profiles entry reviewed against the migration
+- [x] 3.12 Fresh level-1 shifts feel identical to before — d04d17a
+- [x] 3.13 Existing profile with history unaffected on first load — d04d17a
+- [x] 3.14 contract-surfaces.md child_profiles entry reviewed against the migration — d04d17a
 
 ### Phase 4: Lazy client generation, difficulty held constant
 
@@ -816,7 +847,7 @@ dropping the table and the column respectively.
 
 #### Manual
 
-- [ ] 5.8 Perfect streak: numbers grow, closing task visibly easier
+- [ ] 5.8 Perfect streak on a LEVEL-1 profile: numbers grow, closing task visibly easier
 - [ ] 5.9 Deliberate misses: numbers shrink, no rise immediately after a miss
 - [ ] 5.10 Level-1 profile never exceeds its band ceiling on a perfect streak
 - [ ] 5.11 Difficulty carries across two consecutive shifts

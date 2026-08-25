@@ -6,7 +6,7 @@
  * first-guess defaults, adjust after kid-testing.
  */
 import type { Task } from "@/types";
-import { type DifficultyState, shiftLengthRangeFor } from "@/data/adaptive";
+import { type DifficultyState, clampToBand, shiftLengthRangeFor } from "@/data/adaptive";
 import { generateTask, type TaskType } from "@/data/tasks";
 
 /**
@@ -66,7 +66,11 @@ export function shiftLength(
   pick: (min: number, max: number) => number = defaultPick,
 ): number {
   const { min, max } = shiftLengthRangeFor(difficulty);
-  const base = Math.min(max, Math.max(min, Math.round(pick(min, max))));
+  // Same absolute-safe-bound clamp the leaf generators use: a non-finite pick
+  // floors to `min` instead of poisoning the length. The naive
+  // `Math.min(max, Math.max(min, NaN))` yields NaN, and a NaN length makes
+  // `generateShift` emit a ZERO-task shift — a child handed nothing to do.
+  const base = clampToBand(pick(min, max), min, max);
   return Math.min(base + bonus, MAX_SHIFT_TASKS);
 }
 
@@ -90,9 +94,12 @@ export function generateShift(
   const types: TaskType[] = [];
   if (n >= 2) types.push("counting", "change_making"); // guarantee both appear
   while (types.length < n) types.push(pickType());
-  // Fisher–Yates shuffle so the guaranteed pair isn't always first.
+  // Fisher–Yates shuffle so the guaranteed pair isn't always first. The index is
+  // clamped because it INDEXES the array: an out-of-range pick would assign past
+  // the end, extending `types` with holes and routing around the MAX_SHIFT_TASKS
+  // clamp `shiftLength` just applied — the one overrun this module must not have.
   for (let i = types.length - 1; i > 0; i--) {
-    const j = pick(0, i);
+    const j = clampToBand(pick(0, i), 0, i);
     [types[i], types[j]] = [types[j], types[i]];
   }
   return types.map((type) => generateTask(difficulty, () => type, pick, pickTwoStage));

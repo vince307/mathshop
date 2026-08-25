@@ -455,6 +455,17 @@ describe("range invariants across the whole scale", () => {
           d,
         );
       }
+      // Shift LENGTH is the third generator driven by the same picker, and its
+      // failure mode is the worst of the three: a NaN length makes `generateShift`
+      // emit a zero-task shift, so the child is handed nothing to do and the shift
+      // can never be completed. The two loops above would not have caught it.
+      for (const rogue of [() => -999, () => 999, () => NaN] as const) {
+        const { min, max } = shiftLengthRangeFor(d);
+        const n = shiftLength(d, 0, rogue);
+        expect(n).toBeGreaterThanOrEqual(min);
+        expect(n).toBeLessThanOrEqual(max);
+        expect(generateShift(uniform(d), 0, rogue)).toHaveLength(n);
+      }
     }
   });
 
