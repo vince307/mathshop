@@ -13,9 +13,18 @@ export type { Task };
 
 export type TaskType = Task["type"];
 
+/**
+ * Probability that a drawn task is `counting` — an even split between the two v1
+ * types. Named because the seeded shift source has to roll the SAME split from
+ * its own PRNG, and two hand-kept 0.5s would drift apart silently: the sequence
+ * would still look plausible, it would just stop matching the server's.
+ * P5 biases this toward the weaker competency; it is the unbiased baseline.
+ */
+export const TYPE_SPLIT = 0.5;
+
 /** Default ~50/50 split between the two v1 task types. Injectable for tests. */
 function defaultPickType(): TaskType {
-  return Math.random() < 0.5 ? "counting" : "change_making";
+  return Math.random() < TYPE_SPLIT ? "counting" : "change_making";
 }
 
 /**

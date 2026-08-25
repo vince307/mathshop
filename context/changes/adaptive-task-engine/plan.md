@@ -822,16 +822,16 @@ dropping the table and the column respectively.
 
 #### Automated
 
-- [ ] 4.1 Sequence-equivalence test vs Phase 3 eager generation
-- [ ] 4.2 No hydration warnings in the component suite
-- [ ] 4.3 Full suite green
-- [ ] 4.4 E2E green in both projects
-- [ ] 4.5 Type checking and linting pass
+- [x] 4.1 Sequence-equivalence test vs Phase 3 eager generation
+- [x] 4.2 No hydration warnings in the component suite
+- [x] 4.3 Full suite green
+- [x] 4.4 E2E green in both projects
+- [x] 4.5 Type checking and linting pass
 
 #### Manual
 
-- [ ] 4.6 No hydration-mismatch error in the browser console; no task flash
-- [ ] 4.7 Network killed mid-shift: play continues, offline halt only at save
+- [x] 4.6 No hydration-mismatch error in the browser console; no task flash
+- [x] 4.7 Network killed mid-shift: play continues, offline halt only at save
 
 ### Phase 5: Turn on adaptation
 

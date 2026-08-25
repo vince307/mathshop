@@ -305,6 +305,20 @@ export interface SeededRandom {
  * a nicety). Not cryptographic, and it does not need to be: the worst a child can
  * do by predicting it is know their next task.
  */
+/**
+ * A fresh seed for `createSeededRandom`, drawn once per shift on the server and
+ * handed to the client in the shift plan. 32 bits, because that is exactly what
+ * mulberry32's state holds — a wider draw would be silently truncated by the
+ * `>>> 0` in the generator and only look like more entropy.
+ *
+ * Unseeded on purpose: this is the ONE place real randomness enters the
+ * generation chain, which is what makes everything downstream reproducible from
+ * a single number. Not cryptographic — see `createSeededRandom`.
+ */
+export function randomSeed(): number {
+  return Math.floor(Math.random() * 0x1_0000_0000);
+}
+
 export function createSeededRandom(seed: number): SeededRandom {
   let state = Math.floor(seed) >>> 0;
   const next = () => {

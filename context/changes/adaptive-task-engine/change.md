@@ -3,7 +3,7 @@ change_id: adaptive-task-engine
 title: Adaptive task engine — per-task telemetry and continuous difficulty
 status: implementing
 created: 2026-08-25
-updated: 2026-08-25
+updated: 2026-08-26
 archived_at: null
 ---
 
@@ -50,12 +50,14 @@ already out of date when the plan was written.
 
 Measured on `matmaverse-v2` at P1/P2 implementation time:
 
-| | Before this change | After P1 | After P2 |
-| --- | --- | --- | --- |
-| `npm run test` | 443 / 53 files | 448 / 54 | **454 / 54** |
-| `npx playwright test` | 26 / 8 files | 26 / 8 | **26 / 8** |
+| | Before this change | After P1 | After P2 | After P4 |
+| --- | --- | --- | --- | --- |
+| `npm run test` | 443 / 53 files | 448 / 54 | 454 / 54 | **506 / 57** |
+| `npx playwright test` | 26 / 8 files | 26 / 8 | 26 / 8 | **26 / 8** |
 
 P1 added exactly one test file (5 isolation assertions); P2 added 6 tests to
-existing files and no e2e. Phases 3–5 should compare against **454 / 54** and
-**26 / 8**, not the numbers written in the plan. The plan's phase blocks are
-left untouched deliberately — implementation treats them as read-only.
+existing files and no e2e. P4 added two files — `tests/shift-source.test.ts` (12)
+and `tests/shift-screen.test.tsx` (5) — and no e2e, so P3 alone left the suite at
+489 / 55. Phase 5 should compare against **506 / 57** and **26 / 8**, not the
+numbers written in the plan. The plan's phase blocks are left untouched
+deliberately — implementation treats them as read-only.

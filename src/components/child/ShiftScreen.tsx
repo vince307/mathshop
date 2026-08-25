@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Task } from "@/types";
 import type { World } from "@/data/worlds";
 import CountingTask from "@/components/child/CountingTask";
@@ -7,24 +7,32 @@ import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
-import { earningsForShift, starsForShift } from "@/data/shift";
+import { earningsForShift, starsForShift, type ShiftPlan } from "@/data/shift";
+import { useShiftEngine } from "@/components/hooks/useShiftEngine";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
 import { nextUpgrade } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import { buildAttempt } from "@/data/attempts";
-import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
 interface ShiftScreenProps {
   /**
-   * The shift's tasks, generated ONCE on the server. Generating them here would
-   * draw different random tasks during SSR and again at hydration — React would
-   * discard the server tree (a hydration mismatch) and the child would see one
-   * task flash into another. Server-generated, prop-passed tasks make both
-   * renders identical. Nothing is persisted: this is render data, not state.
+   * The shift's plan — its fixed length, the seed tasks 2…N are drawn from, and
+   * the difficulty it opened at. Tasks after the first are generated HERE, on
+   * the client, from that seed (`useShiftEngine`), because a task drawn after
+   * the previous one is scored is what P5's adaptation needs.
+   *
+   * The rule that replaced "never generate in the island": **task 1 must stay
+   * server-rendered, everything after it must not be**. Task 1's markup is in
+   * the SSR payload, so redrawing it at hydration would mismatch the server tree
+   * and flash one task into another; tasks 2…N have no server markup to
+   * contradict, and the shared seed makes them reproducible anyway. Nothing is
+   * persisted mid-shift (FR-016): this is render data, not state.
    */
-  tasks: Task[];
+  plan: ShiftPlan;
+  /** Task 1, drawn server-side by `openShift` and rendered verbatim — see `plan`. */
+  firstTask: Task;
   world: World;
   profileId: string;
   /** Pre-shift wallet balance — the shift's earnings add to it (S-06 results nudge). */
@@ -47,16 +55,24 @@ interface Outcome {
 }
 
 /**
- * Shift orchestrator (S-04). Runs a generated sequence of tasks, auto-advancing
+ * Shift orchestrator (S-04). Plays the shift its plan describes, auto-advancing
  * on each task's success beat (a fresh per-task `key` resets the hook state), and
  * accumulates per-task accuracy. When the shift ends it POSTs the result ONCE
  * (wallet earnings recomputed server-side from accuracy) and shows the celebration, or a
  * gentle fallback on persist failure. Mid-shift state is never persisted (FR-016);
  * the only server write is the single shift-end POST.
+ *
+ * The sequence itself is `useShiftEngine`'s: task 1 arrives server-rendered, the
+ * rest are drawn here from the plan's seed. Everything that needs to know how
+ * long the shift is — the progress counter, the segmented bar, shift-end
+ * detection — reads the plan's fixed `total`, never the number of tasks drawn so
+ * far, and the competency/telemetry join stays positional against the engine's
+ * retained `tasks`.
  */
-export default function ShiftScreen({ tasks, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
-  const [index, setIndex] = useState(0);
-  const [results, setResults] = useState<TaskOutcome[]>([]);
+export default function ShiftScreen({ plan, firstTask, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
+  // The engine owns the cursor and draws tasks 2…N on demand; `total` is the
+  // plan's fixed length, which is what every site below counts against.
+  const { index, total, task: currentTask, tasks, results, advance } = useShiftEngine(plan, firstTask);
   const [phase, setPhase] = useState<Phase>("playing");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const savedRef = useRef(false);
@@ -64,15 +80,10 @@ export default function ShiftScreen({ tasks, world, profileId, walletBalance, pu
   // it — discard happens only when the child taps through to /app/start.
   const { offline, markOffline } = useConnectivity();
 
-  const advance = useCallback((o: TaskOutcome) => {
-    setResults((prev) => [...prev, o]);
-    setIndex((i) => i + 1);
-  }, []);
-
   // When the last task completes, persist the shift exactly once (savedRef guards
   // against React strict-mode double-invoke / re-renders).
   useEffect(() => {
-    if (results.length < tasks.length || savedRef.current) return;
+    if (results.length < total || savedRef.current) return;
     savedRef.current = true;
     setPhase("saving");
 
@@ -131,7 +142,7 @@ export default function ShiftScreen({ tasks, world, profileId, walletBalance, pu
           setPhase("error");
         }
       });
-  }, [results, tasks, profileId, walletBalance, purchased, markOffline]);
+  }, [results, tasks, total, profileId, walletBalance, purchased, markOffline]);
 
   if (phase === "results" && outcome) {
     return (
@@ -161,7 +172,7 @@ export default function ShiftScreen({ tasks, world, profileId, walletBalance, pu
     );
   }
 
-  const task = phase === "playing" ? tasks[index] : undefined;
+  const task = phase === "playing" ? currentTask : undefined;
 
   // "saving", or the transient render after the last advance (index out of range,
   // before the effect flips the phase).
@@ -185,14 +196,17 @@ export default function ShiftScreen({ tasks, world, profileId, walletBalance, pu
       {offline && <OfflineOverlay />}
 
       {/* Progress strip (S-13): segmented fill driven by index/total — the
-          mockup's mission progress bar, in its own card (ui-v2 `03`). */}
+          mockup's mission progress bar, in its own card (ui-v2 `03`). Counts
+          against the PLAN's length, not the tasks generated so far: with lazy
+          generation those are the same only at the end of the shift, and a bar
+          that grew a segment per task would tell the child "1 z 1". */}
       <div className="bg-card border-border rounded-2xl border px-5 py-4 shadow-sm">
         <div className="flex items-center gap-4">
           <p className="text-muted-foreground shrink-0 text-sm font-bold">
-            {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(tasks.length))}
+            {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(total))}
           </p>
           <div className="flex flex-1 items-center gap-1.5" aria-hidden="true">
-            {tasks.map((_, i) => (
+            {Array.from({ length: total }, (_, i) => (
               <span
                 key={i}
                 className={cn(

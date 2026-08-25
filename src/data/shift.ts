@@ -6,8 +6,16 @@
  * first-guess defaults, adjust after kid-testing.
  */
 import type { Task } from "@/types";
-import { type DifficultyState, clampToBand, shiftLengthRangeFor } from "@/data/adaptive";
-import { generateTask, type TaskType } from "@/data/tasks";
+import {
+  type DifficultyState,
+  type SeededRandom,
+  clampToBand,
+  createSeededRandom,
+  randomSeed,
+  shiftLengthRangeFor,
+} from "@/data/adaptive";
+import { STOCK_AND_CHANGE_RATE } from "@/data/change-making-tasks";
+import { TYPE_SPLIT, generateTask, type TaskType } from "@/data/tasks";
 
 /**
  * Absolute ceiling on tasks in one shift (S-06): the longest base shift plus the
@@ -75,22 +83,17 @@ export function shiftLength(
 }
 
 /**
- * Build a shift: `shiftLength` tasks mixing counting + change-making, each drawn
- * at ITS OWN competency's difficulty. Guarantees at least one of each type (when
- * length ≥ 2) so the child never gets an all-one-type shift, then fills +
- * shuffles the rest. `bonus` adds capacity-effect tasks (S-06).
- * `pick`/`pickType`/`pickTwoStage` are injectable for deterministic tests, and
- * `pick` is now genuinely forwarded to the leaf generators — it previously
- * stopped at the dispatcher.
+ * Draw the shift's ordered task types. Guarantees at least one of each type
+ * (when length ≥ 2) so the child never gets an all-one-type shift, then fills +
+ * shuffles the rest.
+ *
+ * Split out of `generateShift` in P4 so the eager path and the seeded lazy
+ * source (`createShiftSource`) share ONE implementation. Two copies would draw
+ * from the picker in subtly different orders and the client's shift would
+ * silently stop matching the server's first task — which reads as a flaky
+ * generator, not as a bug.
  */
-export function generateShift(
-  difficulty: DifficultyState,
-  bonus = 0,
-  pick: (min: number, max: number) => number = defaultPick,
-  pickType: () => TaskType = () => (Math.random() < 0.5 ? "counting" : "change_making"),
-  pickTwoStage?: () => boolean,
-): Task[] {
-  const n = shiftLength(lengthDifficulty(difficulty), bonus, pick);
+function drawTypes(n: number, pick: (min: number, max: number) => number, pickType: () => TaskType): TaskType[] {
   const types: TaskType[] = [];
   if (n >= 2) types.push("counting", "change_making"); // guarantee both appear
   while (types.length < n) types.push(pickType());
@@ -102,7 +105,131 @@ export function generateShift(
     const j = clampToBand(pick(0, i), 0, i);
     [types[i], types[j]] = [types[j], types[i]];
   }
-  return types.map((type) => generateTask(difficulty, () => type, pick, pickTwoStage));
+  return types;
+}
+
+/**
+ * Build a whole shift eagerly: `shiftLength` tasks mixing counting +
+ * change-making, each drawn at ITS OWN competency's difficulty. `bonus` adds
+ * capacity-effect tasks (S-06). `pick`/`pickType`/`pickTwoStage` are injectable
+ * for deterministic tests, and `pick` is genuinely forwarded to the leaf
+ * generators — it used to stop at the dispatcher.
+ *
+ * **`/app/task` no longer calls this.** From P4 the page fixes a plan and the
+ * client draws tasks 2…N lazily (`createShiftSource`), because a task generated
+ * *after* the previous one is scored is the precondition for in-shift adaptation
+ * (P5). This stays as the eager reference the lazy path is pinned against
+ * (`tests/shift-source.test.ts`): given the same seeded picker the two must
+ * produce the identical sequence, and that equality is the whole safety argument
+ * for moving generation across the wire.
+ */
+export function generateShift(
+  difficulty: DifficultyState,
+  bonus = 0,
+  pick: (min: number, max: number) => number = defaultPick,
+  pickType: () => TaskType = () => (Math.random() < TYPE_SPLIT ? "counting" : "change_making"),
+  pickTwoStage?: () => boolean,
+): Task[] {
+  const n = shiftLength(lengthDifficulty(difficulty), bonus, pick);
+  return drawTypes(n, pick, pickType).map((type) => generateTask(difficulty, () => type, pick, pickTwoStage));
+}
+
+/**
+ * Everything the client needs to reproduce the rest of a shift, and the only
+ * shift state that crosses the wire. Serialized into the `ShiftScreen` island
+ * props, so it is part of the hydration payload.
+ *
+ * `length` is decided ONCE, server-side, and is never recomputed mid-shift: five
+ * `ShiftScreen` sites and `e2e/helpers/solve-shift.ts` need the total to be known
+ * from task 1. `seed` is the single point where real randomness enters —
+ * everything downstream of it is a pure function of this object.
+ */
+export interface ShiftPlan {
+  /** Fixed total task count, capacity bonus already folded in and clamped. */
+  length: number;
+  /** Seed for `createSeededRandom` — the client replays the server's draw order from it. */
+  seed: number;
+  /** Per-competency `d` the shift opened at. Held constant through P4; P5 moves it in-shift. */
+  difficulty: DifficultyState;
+}
+
+/**
+ * Fix a shift's plan. The length draw happens HERE and nowhere else; the client
+ * receives the number rather than re-deriving it, so a capacity bonus it does not
+ * know about can never make the two disagree.
+ */
+export function planShift(difficulty: DifficultyState, bonus = 0, seed: number = randomSeed()): ShiftPlan {
+  const rng = createSeededRandom(seed);
+  return { length: shiftLength(lengthDifficulty(difficulty), bonus, rng.pick), seed, difficulty };
+}
+
+/** A cursor over a planned shift's tasks: yields them in order, one at a time. */
+export interface ShiftSource {
+  /** The shift's ordered task types — fixed at plan time, unlike the tasks themselves. */
+  types: readonly TaskType[];
+  /**
+   * The next task, drawn at the difficulty passed in. Taking `difficulty` per
+   * call rather than reading it off the plan is what P5 needs: the task after a
+   * scored one is generated at the `d` that scoring produced.
+   */
+  next(difficulty: DifficultyState): Task;
+}
+
+/**
+ * Open a cursor over a plan. Deterministic: the server and the client both call
+ * this and, from task 1 on, walk the identical stream.
+ *
+ * The stream is replayed rather than resumed because a PRNG position is not
+ * something you can put in a prop — mulberry32's state is internal, and
+ * exporting it would tie the wire format to the generator's implementation.
+ * Replay costs a handful of arithmetic ops and keeps the payload at one number.
+ */
+export function createShiftSource(plan: ShiftPlan): ShiftSource {
+  const rng: SeededRandom = createSeededRandom(plan.seed);
+  // Replay `planShift`'s length draw. The RESULT is deliberately discarded —
+  // `plan.length` is authoritative and already carries the capacity bonus — but
+  // the draw itself MUST happen, or every later draw lands one step off the
+  // server's stream and the client's task 1 stops matching the rendered one.
+  // Called through `shiftLength` rather than a bare `rng.pick` so the two stay in
+  // step even if the length draw ever grows a second roll.
+  shiftLength(lengthDifficulty(plan.difficulty), 0, rng.pick);
+  const types = drawTypes(plan.length, rng.pick, () => (rng.chance(TYPE_SPLIT) ? "counting" : "change_making"));
+  let cursor = 0;
+  return {
+    types,
+    next(difficulty: DifficultyState): Task {
+      // Past the end, repeat the last type rather than throwing: an over-long
+      // shift is a caller bug, and a throw mid-play would strand a child in a
+      // shift whose result is not persisted until the end (FR-016).
+      const type = types[Math.min(cursor, types.length - 1)];
+      cursor += 1;
+      return generateTask(
+        difficulty,
+        () => type,
+        rng.pick,
+        () => rng.chance(STOCK_AND_CHANGE_RATE),
+      );
+    },
+  };
+}
+
+/**
+ * Open a shift on the server: fix the plan and draw the first task from it.
+ *
+ * Task 1 is drawn HERE, through the very same source the client will use, so
+ * "the server's task 1" and "the client's task 1" are one expression rather than
+ * two implementations that happen to agree. It is server-rendered because
+ * generating it in the island would draw one task during SSR and a different one
+ * at hydration — React discards the server tree on the mismatch and the child
+ * watches one task flip into another.
+ */
+export function openShift(
+  difficulty: DifficultyState,
+  bonus = 0,
+  seed: number = randomSeed(),
+): { plan: ShiftPlan; firstTask: Task } {
+  const plan = planShift(difficulty, bonus, seed);
+  return { plan, firstTask: createShiftSource(plan).next(difficulty) };
 }
 
 /** Wallet earnings paid once at shift end (FR-007): base per task + perfect-task bonus. Floor is never zero. */

@@ -7,15 +7,15 @@ import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { readPurchased, shiftBonusTasks } from "@/data/upgrades";
-import { generateShift } from "@/data/shift";
+import { openShift } from "@/data/shift";
 import { readDifficultyState } from "@/data/adaptive";
 import { t } from "@/i18n";
 
 // Shift surface (S-04). Gated under /app. Loads the ACTIVE profile (S-11 fallback
-// ladder: valid selection → sole profile → back to the /app router), draws the
-// shift (mixing S-02 counting + S-03 change-making) from starting_level, and
-// mounts the orchestrator island, which plays it client-side and persists the
-// result once at shift end. Mid-shift state is never persisted (FR-016). Defensive
+// ladder: valid selection → sole profile → back to the /app router), plans the
+// shift (mixing S-02 counting + S-03 change-making) from the profile's persisted
+// difficulty, and mounts the orchestrator island, which draws the remaining
+// tasks, plays them client-side and persists the result once at shift end. Mid-shift state is never persisted (FR-016). Defensive
 // fallbacks: no SSR client → sign-in; no resolvable profile → the /app router.
 // Chrome comes from the shared AppShell (ui-v2 `03-change-mission`); the mission
 // itself stays a single island so its state survives every re-render.
@@ -29,11 +29,19 @@ const world = worldForTheme(profile.theme);
 const purchased = readPurchased(profile.shop_state);
 const avatar = getAvatar(profile.avatar);
 
-// The shift is drawn HERE, once per request, and handed to the island as data.
-// Drawing it inside the island would roll different random tasks during SSR and
-// again at hydration — React discards the server tree on the mismatch and the
-// child watches one task flip into another. Owned upgrades lengthen the shift
-// (capacity effect, S-06): a busier shop means more practice + more earning.
+// The shift's PLAN is fixed HERE, once per request — its length, its seed, and
+// the difficulty it opens at — together with task 1, which is drawn server-side
+// and rendered into the SSR payload. Tasks 2…N are drawn in the island from that
+// same seed (`useShiftEngine`), which is what lets a task be generated AFTER the
+// previous one is scored — the precondition for in-shift adaptation (P5).
+//
+// The rule this replaced was "never generate in the island". That was too broad:
+// what actually breaks is redrawing task 1, whose markup the server already
+// rendered — a second draw at hydration mismatches the server tree and the child
+// watches one task flip into another. Tasks 2…N have no server markup to
+// contradict, and the shared seed makes them reproducible regardless. Owned
+// upgrades lengthen the shift (capacity effect, S-06): a busier shop means more
+// practice + more earning.
 //
 // Difficulty comes from the profile's persisted per-competency `d`, NOT from
 // `starting_level` — age only seeds a fresh profile now. `readDifficultyState`
@@ -41,9 +49,9 @@ const avatar = getAvatar(profile.avatar);
 // clamps into the age band, so a row that predates the column needs no data
 // migration: it reads as its `starting_level`-derived seed, which reproduces
 // exactly what that child was getting yesterday. Shift LENGTH is derived from
-// `max(d.math, d.money)` inside `generateShift` and is fixed for the whole shift.
+// `max(d.math, d.money)` inside `planShift` and is fixed for the whole shift.
 const difficulty = readDifficultyState(profile.difficulty_state, profile.starting_level);
-const tasks = generateShift(difficulty, shiftBonusTasks(purchased));
+const { plan, firstTask } = openShift(difficulty, shiftBonusTasks(purchased));
 ---
 
 <Layout title={t.brand}>
@@ -60,7 +68,8 @@ const tasks = generateShift(difficulty, shiftBonusTasks(purchased));
   >
     <ShiftScreen
       client:load
-      tasks={tasks}
+      plan={plan}
+      firstTask={firstTask}
       world={world}
       profileId={profile.id}
       walletBalance={profile.wallet_balance}

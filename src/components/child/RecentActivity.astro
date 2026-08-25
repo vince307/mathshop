@@ -11,7 +11,15 @@ import { t, tasksDone, upgradeCopy } from "@/i18n";
  * Presentation only — it fetches nothing, calls no `new Date()`, derives
  * nothing. Every value arrives already resolved from `start.astro`'s
  * frontmatter, so the day words are fixed at render time and cannot drift
- * between server and client (the /app/task hydration lesson).
+ * between server and client.
+ *
+ * That is the /app/task hydration lesson, in its accurate form: anything the
+ * SERVER has already rendered must not be re-derived from a nondeterministic
+ * source on the client, because React discards the server tree on a mismatch.
+ * It is not a ban on client-side derivation as such — /app/task now draws tasks
+ * 2…N in the island from a server-supplied seed, precisely because those have no
+ * server markup to contradict. Here there is no equivalent: every row IS
+ * server-rendered, so every value stays resolved in the frontmatter.
  *
  * `entries === null` means the query FAILED; `[]` means the child has no
  * history yet. Those are different facts and are shown differently — a DB error
