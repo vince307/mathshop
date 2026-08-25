@@ -739,31 +739,31 @@ dropping the table and the column respectively.
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly
-- [x] 1.2 Isolation test passes
-- [x] 1.3 Full suite still green
-- [x] 1.4 Type checking passes
-- [x] 1.5 Linting passes
+- [x] 1.1 Migration applies cleanly — ef631d2
+- [x] 1.2 Isolation test passes — ef631d2
+- [x] 1.3 Full suite still green — ef631d2
+- [x] 1.4 Type checking passes — ef631d2
+- [x] 1.5 Linting passes — ef631d2
 
 #### Manual
 
-- [x] 1.6 Policy meta-check: weakened policy turns the test red, restore turns it green
-- [x] 1.7 contract-surfaces.md entry reviewed against the migration
+- [x] 1.6 Policy meta-check: weakened policy turns the test red, restore turns it green — ef631d2
+- [x] 1.7 contract-surfaces.md entry reviewed against the migration — ef631d2
 
 ### Phase 2: Telemetry write path
 
 #### Automated
 
-- [ ] 2.1 Route tests cover each new refine including rejection cases
-- [ ] 2.2 useCoinTask timing tested, 1400 ms beat excluded
-- [ ] 2.3 Full suite green
-- [ ] 2.4 E2E unchanged and green
-- [ ] 2.5 Type checking and linting pass
+- [x] 2.1 Route tests cover each new refine including rejection cases
+- [x] 2.2 useCoinTask timing tested, 1400 ms beat excluded
+- [x] 2.3 Full suite green
+- [x] 2.4 E2E unchanged and green
+- [x] 2.5 Type checking and linting pass
 
 #### Manual
 
-- [ ] 2.6 task_attempt holds one correct row per task, duration_ms plausible, difficulty null
-- [ ] 2.7 Child-facing experience unchanged
+- [x] 2.6 task_attempt holds one correct row per task, duration_ms plausible, difficulty null
+- [x] 2.7 Child-facing experience unchanged
 
 ### Phase 3: Continuous difficulty model
 

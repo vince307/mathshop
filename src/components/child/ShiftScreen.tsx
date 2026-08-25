@@ -12,6 +12,7 @@ import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
 import { nextUpgrade } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
+import { buildAttempt } from "@/data/attempts";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 import { t } from "@/i18n";
 
@@ -91,11 +92,18 @@ export default function ShiftScreen({ tasks, world, profileId, walletBalance, pu
       bucket.misses += r.misses;
     });
 
+    // Per-task telemetry (P1): the SAME positional join as the delta above, kept
+    // as a complete per-task record rather than an aggregate. Rides the single
+    // shift-end POST — no per-task write is added, so S-12's offline halt and
+    // FR-016's no-mid-shift-persistence both stand unchanged.
+    const attempts = results.map((r, i) => buildAttempt(tasks[i], r, i));
+
     const body = new FormData();
     body.set("profileId", profileId);
     body.set("taskCount", String(taskCount));
     body.set("cleanCount", String(cleanCount));
     body.set("skills", JSON.stringify({ math: delta.math, money: delta.money }));
+    body.set("attempts", JSON.stringify(attempts));
 
     // Time-bounded (S-12): a hung network fails fast into the gentle error path
     // instead of stranding the child on "saving" forever.

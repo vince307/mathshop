@@ -40,3 +40,22 @@ child-safety, RODO, testability). AI is confined to P4, offline.
 Known accepted cost: P3 on the two existing task types has a low difficulty
 ceiling. That is deliberate — we want to hit it with telemetry in hand rather
 than design P2's taxonomy and the S-07 gate migration on instinct.
+
+## Correction — the baseline figures in plan.md are stale
+
+`plan.md` cites **429 tests / 51 files** (Phase 1 Success Criteria) and
+**23 e2e / 8 files** (plan-brief Prerequisites). Both were inherited from
+`context/archive/2026-08-24-autonomous-run-follow-ups/change.md:138` and were
+already out of date when the plan was written.
+
+Measured on `matmaverse-v2` at P1/P2 implementation time:
+
+| | Before this change | After P1 | After P2 |
+| --- | --- | --- | --- |
+| `npm run test` | 443 / 53 files | 448 / 54 | **454 / 54** |
+| `npx playwright test` | 26 / 8 files | 26 / 8 | **26 / 8** |
+
+P1 added exactly one test file (5 isolation assertions); P2 added 6 tests to
+existing files and no e2e. Phases 3–5 should compare against **454 / 54** and
+**26 / 8**, not the numbers written in the plan. The plan's phase blocks are
+left untouched deliberately — implementation treats them as read-only.

@@ -40,12 +40,37 @@ function skillsFor(taskCount: number, cleanCount: number): string {
   });
 }
 
+/**
+ * A valid per-task `attempts` array (P1) that reconciles with the reported
+ * aggregates: `taskCount` counting tasks (so `competency` matches `task_type`),
+ * the first `cleanCount` of them first-try, and `shift_index` running 0..n-1.
+ * `difficulty` is null — the continuous scale arrives in P3.
+ */
+function attemptsFor(taskCount: number, cleanCount: number): string {
+  return JSON.stringify(
+    Array.from({ length: taskCount }, (_unused, i) => ({
+      shift_index: i,
+      task_type: "counting",
+      scenario: "count_till",
+      competency: "math",
+      difficulty: null,
+      params: { targetCount: 5 },
+      first_try: i < cleanCount,
+      misses: i < cleanCount ? 0 : 1,
+      duration_ms: 3000,
+    })),
+  );
+}
+
 function completeContext(jar: CookieJar, formData: Record<string, string>) {
-  // The client always posts `skills`; auto-attach a reconciling delta unless the
-  // test provides its own (e.g. to exercise inflation rejection).
+  // The client always posts `skills` + `attempts`; auto-attach reconciling values
+  // unless the test provides its own (e.g. to exercise a rejection path).
   const fd = { ...formData };
   if ("taskCount" in fd && !("skills" in fd)) {
     fd.skills = skillsFor(Number(fd.taskCount), Number("cleanCount" in fd ? fd.cleanCount : 0));
+  }
+  if ("taskCount" in fd && !("attempts" in fd)) {
+    fd.attempts = attemptsFor(Number(fd.taskCount), Number("cleanCount" in fd ? fd.cleanCount : 0));
   }
   return buildContext({ url: "https://test.local/api/shifts/complete", method: "POST", formData: fd, cookies: jar });
 }
@@ -73,6 +98,20 @@ async function readState(profileId: string) {
       { merge: false }
     >();
   return data;
+}
+
+/**
+ * How many task_attempt rows exist for a profile (admin client, RLS-bypassing).
+ * A rejected shift must leave this at zero — a 400 that still wrote telemetry
+ * would be worse than no validation at all.
+ */
+async function countAttempts(profileId: string): Promise<number> {
+  const { data } = await admin
+    .from("task_attempt")
+    .select("id")
+    .eq("profile_id", profileId)
+    .overrideTypes<{ id: string }[], { merge: false }>();
+  return data?.length ?? 0;
 }
 
 /** Read the profile's normalized skill_state via the RLS-bypassing admin client. */
@@ -218,6 +257,107 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const state = await readState(profileId);
     expect(state?.completed_shift_count).toBe(0); // nothing persisted
     expect(await readSkill(profileId)).toEqual(readSkillState(null)); // skill untouched
+  });
+
+  /**
+   * The four P1 reconciliation refines. Unlike the `skills` refines above, which
+   * use `<=` because a delta is an aggregate, these are exact: `attempts` is a
+   * COMPLETE per-task record, so any deviation means a broken or tampered client.
+   * Each case asserts the shift is rejected AND that nothing was persisted — a
+   * 400 that still wrote telemetry would be worse than no validation at all.
+   */
+  it("rejects an attempts array whose length disagrees with taskCount", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const res = await completePOST(
+      completeContext(jar, { profileId, taskCount: "4", cleanCount: "4", attempts: attemptsFor(3, 3) }),
+    );
+    expect(res.status).toBe(400);
+    expect((await readState(profileId))?.completed_shift_count).toBe(0);
+    expect(await countAttempts(profileId)).toBe(0);
+  });
+
+  it("rejects an attempts array whose first-try count disagrees with cleanCount", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    // 4 tasks, all first-try, but the shift claims only 2 were clean.
+    const res = await completePOST(
+      completeContext(jar, { profileId, taskCount: "4", cleanCount: "2", attempts: attemptsFor(4, 4) }),
+    );
+    expect(res.status).toBe(400);
+    expect(await countAttempts(profileId)).toBe(0);
+  });
+
+  it("rejects an attempt whose competency contradicts its task_type", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    // counting implies math; claiming money is only possible from a broken client.
+    const mismatched = JSON.stringify([
+      {
+        shift_index: 0,
+        task_type: "counting",
+        scenario: "count_till",
+        competency: "money",
+        difficulty: null,
+        params: { targetCount: 5 },
+        first_try: true,
+        misses: 0,
+        duration_ms: 3000,
+      },
+    ]);
+    const res = await completePOST(
+      completeContext(jar, { profileId, taskCount: "1", cleanCount: "1", attempts: mismatched }),
+    );
+    expect(res.status).toBe(400);
+    expect(await countAttempts(profileId)).toBe(0);
+  });
+
+  it("rejects duplicate shift_index values (a replayed task)", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const duplicated = JSON.parse(attemptsFor(2, 2)) as { shift_index: number }[];
+    duplicated[1].shift_index = 0; // 0,0 instead of 0,1
+    const res = await completePOST(
+      completeContext(jar, {
+        profileId,
+        taskCount: "2",
+        cleanCount: "2",
+        attempts: JSON.stringify(duplicated),
+      }),
+    );
+    expect(res.status).toBe(400);
+    expect(await countAttempts(profileId)).toBe(0);
+  });
+
+  it("writes one task_attempt row per task, with difficulty still null in this phase", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "4", cleanCount: "3" }));
+    expect(res.status).toBe(200);
+
+    const { data: rows } = await admin
+      .from("task_attempt")
+      .select("shift_index, task_type, competency, difficulty, first_try, duration_ms")
+      .eq("profile_id", profileId)
+      .order("shift_index")
+      .overrideTypes<
+        {
+          shift_index: number;
+          task_type: string;
+          competency: string;
+          difficulty: number | null;
+          first_try: boolean;
+          duration_ms: number;
+        }[],
+        { merge: false }
+      >();
+    expect(rows).toHaveLength(4);
+    expect(rows?.map((r) => r.shift_index)).toEqual([0, 1, 2, 3]);
+    expect(rows?.filter((r) => r.first_try)).toHaveLength(3);
+    // P3 introduces the continuous scale; until then the column stays empty
+    // rather than holding a normalised tier that later rows would not match.
+    expect(rows?.every((r) => r.difficulty === null)).toBe(true);
+    expect(rows?.every((r) => r.duration_ms === 3000)).toBe(true);
   });
 
   it("writes exactly one shift_log row per completed shift with the right deltas", async () => {

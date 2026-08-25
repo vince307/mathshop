@@ -111,7 +111,7 @@ describe("Risk #6 — wrong answers stay soft (TaskScreen)", () => {
         vi.advanceTimersByTime(1400);
       });
       expect(onComplete).toHaveBeenCalledTimes(1);
-      expect(onComplete).toHaveBeenCalledWith({ firstTry: false, misses: 2 });
+      expect(onComplete).toHaveBeenCalledWith({ firstTry: false, misses: 2, durationMs: 0 });
     } finally {
       vi.useRealTimers();
     }
@@ -127,7 +127,30 @@ describe("Risk #6 — wrong answers stay soft (TaskScreen)", () => {
       act(() => {
         vi.advanceTimersByTime(1400);
       });
-      expect(onComplete).toHaveBeenCalledWith({ firstTry: true, misses: 0 });
+      expect(onComplete).toHaveBeenCalledWith({ firstTry: true, misses: 0, durationMs: 0 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("measures time-on-task to the accepted answer, excluding the 1.4s celebration beat (P1)", () => {
+    vi.useFakeTimers();
+    try {
+      const onComplete = vi.fn();
+      renderTask({ onComplete });
+      // The child thinks for 2.5s before answering.
+      act(() => {
+        vi.advanceTimersByTime(2500);
+      });
+      tapCoins(3);
+      check();
+      act(() => {
+        vi.advanceTimersByTime(1400); // the celebration beat
+      });
+      // 2500, NOT 3900: the clock stops when the answer is accepted, not when
+      // the completion callback fires. Recording the beat would inflate every
+      // single attempt by a constant and make the signal useless for tuning.
+      expect(onComplete).toHaveBeenCalledWith({ firstTry: true, misses: 0, durationMs: 2500 });
     } finally {
       vi.useRealTimers();
     }
@@ -196,7 +219,7 @@ describe("Risk #6 — two-stage stock_and_change keeps the guarantees per stage"
 
       // One aggregate outcome: firstTry poisoned by the stage-1 miss, misses summed.
       expect(onComplete).toHaveBeenCalledTimes(1);
-      expect(onComplete).toHaveBeenCalledWith({ firstTry: false, misses: 1 });
+      expect(onComplete).toHaveBeenCalledWith({ firstTry: false, misses: 1, durationMs: 0 });
     } finally {
       vi.useRealTimers();
     }

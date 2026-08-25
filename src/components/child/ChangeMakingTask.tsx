@@ -33,6 +33,10 @@ function StockAndChangeTask({ task, world, onComplete }: ChangeMakingTaskProps) 
       const outcome = {
         firstTry: stageOne.firstTry && stageTwo.firstTry,
         misses: stageOne.misses + stageTwo.misses,
+        // Each stage is its own keyed mount with its own clock, so the task's
+        // time-on-task is their sum. The gap between stages (stage 1's 1400 ms
+        // beat) is excluded, since neither stage's clock is running then.
+        durationMs: stageOne.durationMs + stageTwo.durationMs,
       };
       // Mirror useCoinTask's default completion for the standalone case.
       if (onComplete) onComplete(outcome);

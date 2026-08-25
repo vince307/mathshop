@@ -2,6 +2,7 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState, SkillState } from "@/types";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
+import type { TaskAttempt } from "@/data/attempts";
 import { type BuyReason, canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
 import { worldForTheme } from "@/data/worlds";
 
@@ -172,6 +173,32 @@ async function appendShiftLog(
   });
 }
 
+/**
+ * Append one `task_attempt` row per task of a completed shift (P1 telemetry) in a
+ * single batched insert. Same best-effort posture as `appendShiftLog`, and for the
+ * same reason: the authoritative profile UPDATE has already committed by the time
+ * this runs, so losing telemetry must never fail a child's shift. That makes this
+ * the third non-atomic write in the path — recorded in the plan's Open Risks.
+ *
+ * `account_id` and `profile_id` come from the RLS-verified profile row, never from
+ * the payload (L-002); the INSERT `with check` policy is the backstop. The array
+ * itself has already been reconciled against taskCount/cleanCount by the route.
+ * A shift with no attempts (nothing to record) skips the round trip entirely.
+ */
+async function appendTaskAttempts(
+  client: SupabaseClient,
+  entry: { accountId: string; profileId: string; attempts: TaskAttempt[] },
+): Promise<void> {
+  if (entry.attempts.length === 0) return;
+  await client.from("task_attempt").insert(
+    entry.attempts.map((attempt) => ({
+      ...attempt,
+      account_id: entry.accountId,
+      profile_id: entry.profileId,
+    })),
+  );
+}
+
 export interface ShiftResult {
   earned: number;
   businessLevel: number;
@@ -193,7 +220,7 @@ export interface ShiftResult {
 export async function recordShiftResult(
   client: SupabaseClient,
   profileId: string,
-  shift: { taskCount: number; cleanCount: number; skills: SkillDelta },
+  shift: { taskCount: number; cleanCount: number; skills: SkillDelta; attempts: TaskAttempt[] },
 ): Promise<ShiftResult | { error: PostgrestError | Error }> {
   // Read the row AS the parent (RLS-scoped): a non-owner sees no row. Use limit(1)
   // + data?.[0] rather than .single() so the result stays typed for the
@@ -221,6 +248,8 @@ export async function recordShiftResult(
 
   // History row for the weekly report — account_id from the RLS-verified row (L-002).
   await appendShiftLog(client, { accountId: current.account_id, profileId, skills: shift.skills, earned });
+  // Per-task telemetry (P1) — same owner source, same best-effort posture.
+  await appendTaskAttempts(client, { accountId: current.account_id, profileId, attempts: shift.attempts });
 
   return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
 }
