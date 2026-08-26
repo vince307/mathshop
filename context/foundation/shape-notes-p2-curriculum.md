@@ -102,11 +102,19 @@ over constants (23 counting bands, 31 amount pairs, ceiling = count to 25 / spen
 hold **0 rows**. Designing a competency taxonomy and a gate migration on that basis
 is exactly what the P1+P3 spec argued against in its `## Ordering rationale`.
 
-### What "collect data first" turned out to require — the blocking finding
+### Where the data would have to come from
 
-**[V] 2026-08-26.** Investigating why the telemetry was empty produced a bigger
-answer than expected. It is not a bug in the write path. It is that **none of the
-code that writes telemetry is in production.**
+**[V] 2026-08-26.** The telemetry is empty everywhere, and not because of a bug in
+the write path.
+
+**Locally** — the designated data source, since development is local-only by
+decision — the database is simply empty: `auth.users`, `child_profiles`, `shift_log`
+and `task_attempt` all hold **0 rows**. (`npm run test` is plain `vitest run` and
+does not touch the database, so locally-accumulated play would survive the unit
+suite; `supabase db reset` runs only in CI, on a fresh container.)
+
+**In production** there is no telemetry-writing code at all — which is the intended
+state, not a defect:
 
 - `matmaverse-v2` is **103 commits ahead of `main`** and has **never been pushed**
   — there is no `origin/matmaverse-v2`.
@@ -120,11 +128,24 @@ code that writes telemetry is in production.**
   `20260822120000_shift_log_add_earned`, `20260825120000_create_task_attempt`,
   `20260825130000_child_profiles_add_difficulty_state`.
 
-**Nothing in production is broken.** Old code against old schema is self-consistent:
-`main` never writes `earned`, never inserts a `task_attempt`, never reads
-`difficulty_state`. The mismatch is entirely between prod and this branch.
+**Nothing in production is broken, and nothing is meant to be there yet.** Old code
+against old schema is self-consistent: `main` never writes `earned`, never inserts a
+`task_attempt`, never reads `difficulty_state`. Deployment is a future decision; the
+operational detail that matters when it is taken is recorded under
+`## Deployment readiness` in `context/foundation/backlog.md`.
 
-### The trap that would have hidden it
+### The open question this parking creates
+
+**Unresolved, and it should be resolved before P2 resumes.** Telemetry only
+accumulates where children actually play. Local-only development plus an empty local
+database means there is no data today, and an adult clicking through shifts — or an
+e2e fixture — produces rows but **not evidence about six-to-nine-year-olds**, which
+is the only thing P2's tuning question is about. "Wait for telemetry" therefore
+currently resolves to "wait for real children", which resolves to "wait for a
+deploy". Either name a data source (supervised kid-testing sessions on the local
+build would count) or accept that P2 waits on the release.
+
+### The trap to remember when the deploy does happen
 
 Both telemetry writers are **best-effort and swallow their error by design**:
 
@@ -133,20 +154,10 @@ Both telemetry writers are **best-effort and swallow their error by design**:
   value never inspected (`src/lib/services/child-profiles.ts:198`)
 
 That posture is correct for its stated purpose (losing telemetry must never fail a
-child's shift). But it means that **if this branch had been deployed without its
-migrations, every telemetry write would have failed in total silence** — and the
-"wait a few weeks and collect data" plan would have produced zero rows with zero
-signal. Applying the migrations *before* the deploy is not a nicety here; it is the
-difference between collecting data and believing you are collecting data.
-
-### Structural gap worth fixing separately
-
-`.github/workflows/ci.yml` applies migrations only to a **fresh local database**
-for the test gate (`npx supabase db reset`, lines 47–48 and 89–90). **No workflow
-step pushes migrations to the hosted project.** Production schema changes are
-therefore a manual `supabase db push` that nothing verifies and nothing reminds
-anyone about — the same gap that produced this three-migration drift will produce
-the next one.
+child's shift). But it means that **deploying this branch without applying its
+migrations first would make every telemetry write fail in total silence** — zero
+rows, zero signal, and a "we are collecting data now" belief that is false. Details
+and the ordering rule are in `context/foundation/backlog.md` §Deployment readiness.
 
 ### Resume condition
 
