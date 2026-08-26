@@ -6,6 +6,7 @@ import {
   DIFFICULTY_MIN,
   MAX_SHIFT_DRIFT,
   TARGET_SUCCESS,
+  LEVEL_SEED,
   TIER_ANCHOR,
   TWO_STAGE_THRESHOLD,
   FINAL_TASK_RELIEF,
@@ -92,13 +93,41 @@ describe("calibration — the tier anchors reproduce today's parameters exactly"
     expect(paidMaxFor(TIER_ANCHOR[3])).toBe(30);
   });
 
-  it("a fresh profile seeds to its old tier, so no existing child sees a jump", () => {
-    expect(seedDifficultyFor(1)).toEqual({ math: TIER_ANCHOR[1], money: TIER_ANCHOR[1] });
-    expect(seedDifficultyFor(2)).toEqual({ math: TIER_ANCHOR[2], money: TIER_ANCHOR[2] });
-    expect(seedDifficultyFor(3)).toEqual({ math: TIER_ANCHOR[3], money: TIER_ANCHOR[3] });
+  it("a fresh profile seeds from LEVEL_SEED, both competencies alike", () => {
+    for (const level of [1, 2, 3] as const) {
+      expect(seedDifficultyFor(level)).toEqual({ math: LEVEL_SEED[level], money: LEVEL_SEED[level] });
+    }
     // Out-of-range levels clamp into the band, as tierForLevel always has.
     expect(seedDifficultyFor(0)).toEqual(seedDifficultyFor(1));
     expect(seedDifficultyFor(9)).toEqual(seedDifficultyFor(3));
+  });
+
+  it("THE INVARIANT: every level opens STRICTLY below its own ceiling", () => {
+    // The whole point of LEVEL_SEED existing apart from TIER_ANCHOR. When the two
+    // were one constant, levels 2 and 3 seeded AT their ceiling, so the engine
+    // could only ever lower `d` for them — `nextDifficulty` was, for two of the
+    // three cohorts, a one-way relief valve rather than an adaptation rule.
+    for (const level of [1, 2, 3] as const) {
+      expect(seedDifficultyFor(level).math).toBeLessThan(ceilingForLevel(level));
+      expect(seedDifficultyFor(level).math).toBeGreaterThanOrEqual(DIFFICULTY_MIN);
+    }
+  });
+
+  it("seeds are ordered by age, and interleave with the ceilings", () => {
+    // A younger child must never open harder than an older one, and no cohort may
+    // open above the band the cohort below tops out at — otherwise `starting_level`
+    // stops meaning anything about the numbers on screen.
+    expect(seedDifficultyFor(1).math).toBeLessThan(seedDifficultyFor(2).math);
+    expect(seedDifficultyFor(2).math).toBeLessThan(seedDifficultyFor(3).math);
+    expect(seedDifficultyFor(2).math).toBeLessThan(ceilingForLevel(2));
+    expect(seedDifficultyFor(3).math).toBeGreaterThan(ceilingForLevel(2));
+  });
+
+  it("level 1 still seeds at the floor — the tier-1 e2e envelope is load-bearing", () => {
+    // e2e/helpers/accounts.ts seeds age 6-7, so every browser-level assertion on
+    // earnings, stars and shift length runs at THIS number. It must stay 0.
+    expect(seedDifficultyFor(1)).toEqual({ math: DIFFICULTY_MIN, money: DIFFICULTY_MIN });
+    expect(LEVEL_SEED[1]).toBe(TIER_ANCHOR[1]);
   });
 
   it("a level-1 seed generates inside the tier-1 envelope the e2e suite asserts on", () => {
@@ -313,16 +342,53 @@ describe("scenario admission — the two-stage guarantee", () => {
     }
   });
 
-  it("a level-3 profile still reaches it — the scenario is not stranded", () => {
-    const d = seedDifficultyFor(3).math;
-    expect(d).toBeGreaterThanOrEqual(TWO_STAGE_THRESHOLD);
+  it("a level-3 profile EARNS it rather than being handed it on shift 1", () => {
+    // It used to be enough that `seedDifficultyFor(3) >= TWO_STAGE_THRESHOLD` — a
+    // nine-year-old met the two-stage scenario in ~31% of money tasks in their
+    // very first shift, with nothing asked of them first. Now the seed opens below
+    // the threshold and the ceiling stays above it, so the scenario is a thing the
+    // child climbs to. Both halves matter: seeded below (there is a ramp) AND
+    // reachable (the scenario is not stranded).
+    const seed = seedDifficultyFor(3).math;
+    expect(seed).toBeLessThan(TWO_STAGE_THRESHOLD);
+    expect(ceilingForLevel(3)).toBeGreaterThanOrEqual(TWO_STAGE_THRESHOLD);
+
     expect(
       generateChangeMakingTask(
-        d,
+        seed,
+        (min) => min,
+        () => true,
+      ).scenario,
+    ).toBe("give_change");
+    expect(
+      generateChangeMakingTask(
+        ceilingForLevel(3),
         (min) => min,
         () => true,
       ).scenario,
     ).toBe("stock_and_change");
+  });
+
+  it("and the climb is short enough to be a ramp, not a wall", () => {
+    // A ramp nobody walks up is the same as no scenario at all. Perfect play must
+    // cross the threshold within a handful of shifts — folded through the real
+    // rule, warm-up and all, not asserted against a hand-computed number.
+    const ceiling = ceilingForLevel(3);
+    let d = seedDifficultyFor(3);
+    // Local, not the `alternating` helper below — that one is scoped to the fold's
+    // own describe. Ten tasks, types alternating from the warm-up, all first-try.
+    const perfect: ScoredTask[] = Array.from({ length: 10 }, (_, index) => ({
+      index,
+      competency: index % 2 === 0 ? ("math" as const) : ("money" as const),
+      firstTry: true,
+    }));
+    let shifts = 0;
+    while (d.money < TWO_STAGE_THRESHOLD && shifts < 50) {
+      d = foldShiftOutcomes(d, perfect, ceiling);
+      shifts++;
+    }
+    expect(d.money).toBeGreaterThanOrEqual(TWO_STAGE_THRESHOLD);
+    expect(shifts).toBeLessThanOrEqual(8);
   });
 });
 

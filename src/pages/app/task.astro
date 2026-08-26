@@ -47,8 +47,10 @@ const avatar = getAvatar(profile.avatar);
 // `starting_level` — age only seeds a fresh profile now. `readDifficultyState`
 // normalises the jsonb defensively (`{}`, missing keys, garbage, off-scale) and
 // clamps into the age band, so a row that predates the column needs no data
-// migration: it reads as its `starting_level`-derived seed, which reproduces
-// exactly what that child was getting yesterday. Shift LENGTH is derived from
+// migration: it reads as its `starting_level`-derived seed (`LEVEL_SEED`, which
+// opens strictly below the age band so the engine has room to adapt UPWARD — a
+// stored `d` is clamped to the band, never to the seed, so a profile already
+// mid-play keeps its number). Shift LENGTH is derived from
 // `max(d.math, d.money)` inside `planShift` and is fixed for the whole shift.
 //
 // The age-band ceiling travels in the plan so the island's in-shift adaptation

@@ -63,11 +63,62 @@ export function tierForLevel(startingLevel: number): 1 | 2 | 3 {
 }
 
 /**
- * Where each legacy tier sits on the continuous scale. These three points are the
- * calibration: `acrossTiers` reproduces a tier's parameters EXACTLY at its anchor,
- * so `seedDifficultyFor(1)` is indistinguishable from today's tier-1 generation.
+ * Where each legacy tier's PARAMETER SET sits on the continuous scale. These three
+ * points are the calibration: `acrossTiers` reproduces a tier's parameters EXACTLY
+ * at its anchor, which is what lets `d = 0` be indistinguishable from today's
+ * tier-1 generation.
+ *
+ * Calibration only — **not** where a child starts and **not** how far they may go.
+ * Those are `LEVEL_SEED` and `ceilingForLevel`; this constant used to serve as all
+ * three at once, and see `LEVEL_SEED` for what that cost.
  */
 export const TIER_ANCHOR: Record<1 | 2 | 3, number> = { 1: 0, 2: 0.5, 3: 1 };
+
+/**
+ * Where a fresh profile OPENS on the scale, per starting level.
+ *
+ * **Deliberately not `TIER_ANCHOR`, and deliberately strictly below
+ * `ceilingForLevel`.** Those were one constant until now, and the conflation had
+ * a consequence nobody had looked at: `TIER_ANCHOR[2] === ceilingForLevel(2)` and
+ * `TIER_ANCHOR[3] === ceilingForLevel(3)`, so a level-2 or level-3 profile seeded
+ * EXACTLY at its own ceiling. For two of the three cohorts `nextDifficulty` could
+ * therefore only ever lower `d` — a one-way relief valve, not an adaptation rule.
+ * A simulation over the real generators put numbers on it: those profiles spent
+ * 60 of 60 shifts pinned, and a competent child's first-try rate ran at 91–98%
+ * against a `TARGET_SUCCESS` of 0.8, because the engine had nothing left to
+ * tighten with.
+ *
+ * The three concepts are now separate, and only the middle one is a policy:
+ *  - `TIER_ANCHOR` — where the legacy tier PARAMETER SETS live on the scale. This
+ *    is calibration; `acrossTiers` interpolates through it and it must not move.
+ *  - `LEVEL_SEED` — where a child STARTS. This one.
+ *  - `ceilingForLevel` — how far a child MAY GO. The pedagogical guardrail.
+ *
+ * The ceilings are not free to move in either direction — `ceilingForLevel(1|2)`
+ * is exactly the FR-007 boundary ("grades 1–2 never above 20": `countRangeFor`
+ * maxes at 20 and `paidMaxFor` is 20 at `d = 0.5`) and `ceilingForLevel(3)` is
+ * already `DIFFICULTY_MAX` — so the headroom has to come from the seed.
+ *
+ * Level 1 stays at the floor: `e2e/helpers/accounts.ts` seeds ages 6–7, so every
+ * browser-level assertion on earnings, stars and shift length runs at this exact
+ * number, and one task of drift in shift length flips which upgrade is
+ * affordable. Levels 2 and 3 open ~0.3–0.4 below their ceiling, which is 9 shifts
+ * of perfect play — a visible climb rather than a wall on arrival. The ordering
+ * `LEVEL_SEED[2] < ceilingForLevel(2) < LEVEL_SEED[3]` keeps the age bands from
+ * overlapping on screen, and `LEVEL_SEED[3] < TWO_STAGE_THRESHOLD` is what turns
+ * `stock_and_change` into something a nine-year-old earns around shift 4 instead
+ * of meeting in ~31% of their very first shift's money tasks.
+ *
+ * First-guess numbers, like every tunable here. What is NOT a guess, and is
+ * pinned in `tests/adaptive.test.ts`, is the invariant: every level must open
+ * strictly below its own ceiling.
+ *
+ * **Not a migration.** `readDifficultyState` clamps a stored `d` to
+ * `[0, ceilingForLevel]`, not to the seed, so an existing level-2 profile sitting
+ * at 0.5 still reads as 0.5. This changes fresh profiles and rows whose
+ * `difficulty_state` is empty or malformed — nothing that is mid-play.
+ */
+export const LEVEL_SEED: Record<1 | 2 | 3, number> = { 1: 0, 2: 0.2, 3: 0.6 };
 
 /**
  * A fresh (or never-adapted) profile's difficulty, per competency. Both start at
@@ -75,7 +126,7 @@ export const TIER_ANCHOR: Record<1 | 2 | 3, number> = { 1: 0, 2: 0.5, 3: 1 };
  * change-making; play is what separates them.
  */
 export function seedDifficultyFor(startingLevel: number): DifficultyState {
-  const seed = TIER_ANCHOR[tierForLevel(startingLevel)];
+  const seed = LEVEL_SEED[tierForLevel(startingLevel)];
   return { math: seed, money: seed };
 }
 
@@ -86,11 +137,19 @@ export function seedDifficultyFor(startingLevel: number): DifficultyState {
  *
  * Levels 1–2 share a ceiling on purpose. The grades 1–2 band is "never exceed
  * ~20" (FR-007) and that is precisely tier 2's parameter set, so `d = 0.5` is the
- * band ceiling for both — a level-1 child can grow into the tier-2 envelope, a
- * level-2 child is already at the top of theirs and can only move down. Tier 3
- * (age 9) is the only cohort the ≤ 25 widening applies to. Consequence, accepted
- * and recorded in the plan's Open Risks: a child who genuinely outgrows their band
- * cannot be promoted, because `starting_level` is frozen by an S-04 guardrail.
+ * band ceiling for both. They no longer share a STARTING point: a level-2 child
+ * used to seed at this very number and could therefore only ever move down, which
+ * is the defect `LEVEL_SEED` exists to fix. Both cohorts now climb into the tier-2
+ * envelope, a level-1 child from further back. Tier 3 (age 9) is the only cohort
+ * the ≤ 25 widening applies to.
+ *
+ * These numbers are the FR-007 boundary itself, not a tunable: `countRangeFor(0.5)`
+ * maxes at 20 and `paidMaxFor(0.5)` is 20. Raising either ceiling puts a
+ * seven-year-old above the band the PRD fixes. Headroom comes from `LEVEL_SEED`.
+ *
+ * Consequence, accepted and recorded in the plan's Open Risks: a child who
+ * genuinely outgrows their band cannot be promoted, because `starting_level` is
+ * frozen by an S-04 guardrail.
  */
 export function ceilingForLevel(startingLevel: number): number {
   return tierForLevel(startingLevel) >= 3 ? TIER_ANCHOR[3] : TIER_ANCHOR[2];
