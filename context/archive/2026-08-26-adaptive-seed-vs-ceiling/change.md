@@ -1,10 +1,10 @@
 ---
 change_id: adaptive-seed-vs-ceiling
 title: Separate a profile's opening difficulty from its age-band ceiling (LEVEL_SEED)
-status: implemented
+status: archived
 created: 2026-08-26
 updated: 2026-08-26
-archived_at: null
+archived_at: 2026-08-26T19:31:58Z
 ---
 
 ## Notes
