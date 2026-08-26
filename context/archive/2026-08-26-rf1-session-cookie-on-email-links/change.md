@@ -1,10 +1,10 @@
 ---
 change_id: rf1-session-cookie-on-email-links
 title: RF-1 — pin browser-session auth-cookie lifetime on the email-link paths
-status: implemented
+status: archived
 created: 2026-08-26
 updated: 2026-08-26
-archived_at: null
+archived_at: 2026-08-26T19:32:15Z
 ---
 
 ## Notes
