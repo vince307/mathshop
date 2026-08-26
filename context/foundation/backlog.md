@@ -132,10 +132,13 @@ reader knows they were considered.
 
 ## Maintainer notes
 
-- **The `## Backlog Handoff` table in `roadmap.md` is stale.** It still marks S-05,
-  S-08, S-11 and S-12 as "ready for `/10x-plan`", while the roadmap's own *At a
-  glance* table marks all of S-01…S-13 **done** and every one of them has an
-  archive folder. Reconcile or delete that table — agents read it.
+- ~~**The `## Backlog Handoff` table in `roadmap.md` is stale.**~~ **Fixed
+  2026-08-26.** All 14 roadmap items (F-01, S-01…S-13) were verified `done` with an
+  archive folder each, and the table was deleted rather than reconciled — it
+  duplicated `## At a glance` row for row and its only unique column was the stale
+  one. `roadmap.md` now points here as the single input to `/10x-plan` and
+  `/10x-autonomous-run`. The present-tense "ready now" notes in `## Streams` were
+  marked historical at the same time.
 - **`assets/` is gitignored**, so every `[I]` mockup reference above is unverifiable
   in CI or a fresh clone. An entry whose mockup cannot be opened must be planned as
   an explicit extrapolation, or deferred.
