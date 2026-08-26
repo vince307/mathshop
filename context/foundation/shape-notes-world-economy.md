@@ -104,6 +104,48 @@ reward *for* fluency with money, not a way around it.
 Rejected: option A (every effect must add practice), because the new *kinds* of
 practice it needs are exactly P2, which is parked.
 
+### D-2 (2026-08-26) — the 10x chain, targeting an autonomous run
+
+Process decision. This work is developed with the **10x skills**, not
+`superpowers:brainstorming`, and it is aimed at `/10x-autonomous-run`:
+
+```
+/10x-shape  (scoped to THIS file, not the canonical shape-notes.md)
+   → tranche spec in docs/superpowers/specs/
+   → ## Ready entries in context/foundation/backlog.md
+   → /10x-autonomous-run
+```
+
+**Why a tranche spec and not a `prd-v4`.** This is the path the adaptive task
+engine took — a feature with a new table, an RLS contract and a new difficulty
+model shipped as `docs/superpowers/specs/2026-08-24-adaptive-task-engine-design.md`
+→ `/10x-new` → `/10x-plan`, with no new PRD. `prd-v3.md` stays the governing
+document and takes no churn. A full `/10x-prd` → `prd-v4` re-baseline was
+considered and rejected as heavier than this tranche needs; revisit only if the
+earnings-rule change turns out to invalidate v3's economy FRs outright.
+
+**Why scoped and not canonical.** `/10x-shape` gates on
+`context/foundation/shape-notes.md`, which holds the completed v3 re-baseline
+session (phase 8, accepted) and is the source of `prd-v3.md`. Writing here keeps
+it untouched. The cost is that `/10x-prd` will not auto-route to this file — which
+is fine, because D-2 does not route to `/10x-prd` at all.
+
+### What `/10x-autonomous-run` requires — [V] read from the skill, 2026-08-26
+
+The run's intake is `context/foundation/backlog.md` § `## Ready`, and it
+**refuses anything under `## Needs shaping` or `## Parked`** — "a run would invent
+the product content that is deliberately missing". So the whole job of this
+brainstorm, mechanically, is to turn its output into entries that clear the
+backlog's own bar: *"an outsider could take this entry to `/10x-new` today"*,
+each carrying an id, a value/cost line, a migration answer, `[V]`/`[I]`-tagged
+claims, and the open decision a planner would otherwise invent.
+
+Preflight the run also demands (Step 0–1): a clean tree, no stale worktrees, a
+green baseline (`lint`, `check`, `test`, `playwright`) measured on the base
+branch, Supabase up, no stray dev server, and
+`.claude/skills/10x-autonomous-run/scripts/validate-rule-files.sh` green — last
+run 2026-08-26: **PASS, 77 paths, 0 missing**.
+
 ## Open — next in the brainstorm
 
 Nothing below has been decided. These are the questions the next session should
