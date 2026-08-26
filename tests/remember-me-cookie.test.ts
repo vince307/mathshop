@@ -1,10 +1,13 @@
 import type { AstroCookies } from "astro";
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AUTH_COOKIE_RE, createClient as createAppClient } from "@/lib/supabase";
 import { REMEMBER_ME_COOKIE, REMEMBER_ME_MAX_AGE_SECONDS } from "@/lib/services/remember-me";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { POST as signoutPOST } from "@/pages/api/auth/signout";
-import { createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
+import { GET as confirmGET } from "@/pages/api/auth/confirm";
+import { POST as updatePasswordPOST } from "@/pages/api/auth/update-password";
+import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, type StoredCookie, createCookieJar } from "./helpers/astro";
 
 /**
@@ -150,5 +153,161 @@ describe("remember-me — auth cookie lifetime (real routes, real Supabase)", ()
     expect(write.value).toBe("");
     expect(write.options?.maxAge).toBe(0);
     expect(jar.get(REMEMBER_ME_COOKIE)).toBeUndefined();
+  });
+});
+
+/**
+ * RF-1 — the auth-cookie lifetime on the paths a parent reaches by clicking a
+ * link in an email, rather than by submitting the sign-in form.
+ *
+ * `setAll` is *every* auth-cookie write path, but only `POST /api/auth/signin`
+ * carries the checkbox. `GET /api/auth/confirm` (`verifyOtp`, for both signup
+ * verification and recovery) and `POST /api/auth/update-password` therefore mint
+ * their session with whatever marker the browser already has — and a fresh
+ * browser has none, so the session dies when the browser closes.
+ *
+ * THAT IS THE DECISION, NOT AN OVERSIGHT (see
+ * `context/changes/rf1-session-cookie-on-email-links/change.md`): 30 days is
+ * something a parent opts into on a device they consider theirs, and clicking a
+ * link in an email is not that act. These tests exist so the behaviour cannot
+ * drift in either direction unnoticed — neither into an unchosen 30 days, nor
+ * into the library's unchosen 400.
+ *
+ * `POST /api/auth/signup` is deliberately NOT covered. Under production config
+ * (`enable_confirmations = true`) `signUp` returns `session: null` and the route
+ * writes no auth cookie at all; it only writes one because the local stack has
+ * confirmations off (`supabase/config.toml`). A test here would assert a config
+ * toggle, so the route is documented in `docs/reference/contract-surfaces.md`
+ * instead.
+ */
+
+const RF1_NEW_PASSWORD = "rf1-brand-new-password-789!";
+
+/** Mint a real signup `token_hash` (and the new user's id) — no email round-trip. */
+async function generateSignupToken(email: string): Promise<{ tokenHash: string; userId: string }> {
+  const { data, error } = await admin.auth.admin.generateLink({ type: "signup", email, password: PASSWORD });
+  if (error) throw error;
+  return { tokenHash: data.properties.hashed_token, userId: data.user.id };
+}
+
+/** Run the real confirm route into `jar` and assert it landed where expected. */
+async function confirm(jar: CookieJar, tokenHash: string, type: "signup" | "recovery", next?: string) {
+  const query = `token_hash=${tokenHash}&type=${type}${next ? `&next=${encodeURIComponent(next)}` : ""}`;
+  const response = await confirmGET(
+    buildContext({ url: `https://test.local/api/auth/confirm?${query}`, cookies: jar }),
+  );
+  expect(response.headers.get("Location"), "confirm did not succeed").toBe(next ?? "/app");
+}
+
+/** Walk the real recovery hop into `jar`: session cookie + reset marker. */
+async function recoveryHop(jar: CookieJar, email: string) {
+  const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email });
+  if (error) throw error;
+  await confirm(jar, data.properties.hashed_token, "recovery", "/auth/update-password");
+}
+
+/**
+ * Carry a jar's cookies into a FRESH jar, dropping the captured `options`.
+ *
+ * Why this matters for the update-password cases: the recovery hop has already
+ * written an auth cookie into the jar, and the jar is keyed by name, so asserting
+ * on the same jar after `POST /api/auth/update-password` cannot tell that route's
+ * write apart from `confirm`'s. Replaying into a fresh jar makes any surviving
+ * `options` object proof that update-password wrote the cookie itself.
+ */
+function carryOver(jar: CookieJar): CookieJar {
+  const carried: Record<string, string> = {};
+  for (const cookie of jar.getAll()) {
+    if (cookie.value !== "") carried[cookie.name] = cookie.value;
+  }
+  return createCookieJar(carried);
+}
+
+/** Like `authCookieWrite`, but refuses to pass on a merely *carried* cookie. */
+function freshAuthCookieWrite(jar: CookieJar): StoredCookie {
+  const write = authCookieWrite(jar);
+  expect(write.options, "the route wrote no auth cookie — a carried-over value was matched").toBeDefined();
+  return write;
+}
+
+describe("remember-me — RF-1: lifetime on the email-link paths (real routes, real Supabase)", () => {
+  const createdIds: string[] = [];
+
+  afterAll(async () => {
+    for (const id of createdIds) await deleteUser(id);
+  });
+
+  it("8 — confirm in a fresh browser writes a browser-session cookie and mints no marker", async () => {
+    const email = `rf1-confirm-${randomUUID()}@example.test`;
+    const { tokenHash, userId } = await generateSignupToken(email);
+    createdIds.push(userId);
+
+    const jar = createCookieJar();
+    await confirm(jar, tokenHash, "signup");
+
+    expect(freshAuthCookieWrite(jar).options?.maxAge).toBeUndefined();
+    // The route must not decide "remember me" on the parent's behalf. If a later
+    // maintainer adds `setRememberChoice(cookies, true)` here, this is what fails.
+    expect(jar.get(REMEMBER_ME_COOKIE)).toBeUndefined();
+  });
+
+  it("9 — confirm in an ALREADY-remembered browser keeps the 30 days", async () => {
+    const email = `rf1-confirm-remembered-${randomUUID()}@example.test`;
+    const { tokenHash, userId } = await generateSignupToken(email);
+    createdIds.push(userId);
+
+    // The parent ticked the box on this device at some earlier sign-in.
+    const jar = createCookieJar({ [REMEMBER_ME_COOKIE]: "1" });
+    await confirm(jar, tokenHash, "signup");
+
+    // The choice is a property of the browser, not of the request — so a session
+    // minted by a link click inherits it instead of silently downgrading.
+    expect(freshAuthCookieWrite(jar).options?.maxAge).toBe(REMEMBER_ME_MAX_AGE_SECONDS);
+  });
+
+  it("10 — update-password in a fresh browser writes a browser-session cookie", async () => {
+    const account = await createSignedInUser("rf1-update");
+    createdIds.push(account.id);
+
+    const recovered = createCookieJar();
+    await recoveryHop(recovered, account.email);
+
+    const jar = carryOver(recovered);
+    const response = await updatePasswordPOST(
+      buildContext({
+        url: "https://test.local/api/auth/update-password",
+        method: "POST",
+        formData: { password: RF1_NEW_PASSWORD, confirm: RF1_NEW_PASSWORD },
+        cookies: jar,
+      }),
+    );
+    expect(response.headers.get("Location"), "password update did not succeed").toBe("/app");
+
+    expect(freshAuthCookieWrite(jar).options?.maxAge).toBeUndefined();
+    expect(jar.get(REMEMBER_ME_COOKIE)).toBeUndefined();
+  });
+
+  it("11 — update-password in an ALREADY-remembered browser keeps the 30 days", async () => {
+    const account = await createSignedInUser("rf1-update-remembered");
+    createdIds.push(account.id);
+
+    const recovered = createCookieJar({ [REMEMBER_ME_COOKIE]: "1" });
+    await recoveryHop(recovered, account.email);
+
+    const jar = carryOver(recovered);
+    const response = await updatePasswordPOST(
+      buildContext({
+        url: "https://test.local/api/auth/update-password",
+        method: "POST",
+        formData: { password: RF1_NEW_PASSWORD, confirm: RF1_NEW_PASSWORD },
+        cookies: jar,
+      }),
+    );
+    expect(response.headers.get("Location"), "password update did not succeed").toBe("/app");
+
+    expect(freshAuthCookieWrite(jar).options?.maxAge).toBe(REMEMBER_ME_MAX_AGE_SECONDS);
+    // A password reset revokes the OTHER devices (`scope: "others"`); it must not
+    // also revoke this device's remembered status.
+    expect(jar.get(REMEMBER_ME_COOKIE)?.value).toBe("1");
   });
 });

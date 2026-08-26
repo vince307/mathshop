@@ -63,12 +63,13 @@ Closed as a **real feature, not a placebo**: the checkbox sets the auth cookie's
 registered in `docs/reference/contract-surfaces.md`. Branch
 `feat/remember-me-on-login`, 5 commits, no migration, `MERGE: CLEAR`. Archive:
 `context/archive/2026-08-24-remember-me-on-login/`.
-**Left open (RF-1, needs a human decision):** `signup`, `confirm` and
-`update-password` now each end in a browser-session cookie, so a parent is signed
-out after email verification or a password reset. Deliberate and documented, but
-nothing pins it with a test. If unacceptable, the fix is one
-`setRememberChoice(cookies, true)` in the route concerned — **never** a special case
-inside `setAll`, which cannot tell which route it serves.
+**RF-1 — closed 2026-08-26** by `rf1-session-cookie-on-email-links`. The decision:
+**keep the browser-session cookie** on the email-link paths and pin it with tests
+(`tests/remember-me-cookie.test.ts` 8–11, both directions). Two claims in the
+original wording were wrong and are corrected in that change's `change.md`: it is
+not a sign-out (the parent stays signed in, the session just does not survive a
+browser restart), and `signup` is not affected in production at all (`signUp`
+returns `session: null` when confirmations are on).
 
 ---
 
