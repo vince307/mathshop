@@ -52,14 +52,38 @@ the verified `## Current System`, and the resume condition are in
 `context/foundation/shape-notes-p2-curriculum.md`. Shaped to absorb backlog **B3
 `skill-path-screen`**, which is blocked on the same missing catalogue of modules.
 
-**The open question this parking creates** (2026-08-26, unresolved): telemetry only
-accumulates where children actually play. Development is local-only by decision and
-the local database is empty (0 rows in `auth.users`, `child_profiles`, `shift_log`,
-`task_attempt`, verified 2026-08-26). An adult clicking through shifts locally, or an
-e2e fixture, produces rows but **not evidence about six-to-nine-year-olds**, which is
-the only thing P2's tuning question is about. So "wait for telemetry" currently
-resolves to "wait for real children", which resolves to "wait for a deploy" — and no
-deploy is planned. Decide the data source before resuming P2, or P2 waits indefinitely.
+**Status 2026-08-26: parked, and the tooling to un-park it is built and waiting.**
+
+`scripts/telemetry-harness/` drives the real app in a real browser and fills
+`task_attempt`. Its first run produced 784 rows across 6 personas in 8.8 minutes
+and settled two things:
+
+- **The pipe is proven end-to-end.** Client → server validation → RLS → row →
+  `difficulty_state` advancing between AND within shifts. That chain had unit
+  tests only; it had never carried a row from a browser.
+- **`report.sql` is the readout `task_attempt` never had** (one writer, zero
+  readers before it). The same six queries will answer the same questions the
+  moment the rows come from a child instead of a script.
+
+**What is still missing is the only thing that matters: children.** The harness's
+`first_try` and `misses` come from a hand-written constant (`child-model.ts`), and
+`duration_ms` measures Playwright's click latency (89–663 ms), not hesitation —
+and time-on-task is one of the two signals P2 most needs. Harness rows must never
+justify a taxonomy, a threshold, or a gate migration; the README says so at length.
+
+**Resume condition — concrete.** A supervised kid-testing session against the local
+build is enough; it needs no deploy. Play fills the same tables, and
+`report.sql` §1/§2/§4 (grouped by cohort — do not pool) then reports evidence
+instead of a round trip. Until then P2 stays here.
+
+**One engine finding banked from the run** (conditional on the harness's accuracy
+curve, but the mechanism is read from source): with the fold rule's deliberate 4:1
+asymmetry — `+0.01` per clean answer, `−0.04` per miss (`ADAPT_RATE`,
+`TARGET_SUCCESS`, `src/data/adaptive.ts:263`) — plus the warm-up and post-miss
+guards, **no cohort reached the `d = 0.5` ceiling in 20 shifts**; the strongest
+ended at ~0.29. The spike's "16 shifts to the ceiling" assumed flawless play. This
+does not invalidate `adaptive-seed-vs-ceiling` (seed == ceiling for levels 2–3 was
+a real structural defect and remains one); it tempers the urgency behind it.
 
 ---
 
