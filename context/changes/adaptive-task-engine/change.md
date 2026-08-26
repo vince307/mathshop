@@ -1,7 +1,7 @@
 ---
 change_id: adaptive-task-engine
 title: Adaptive task engine — per-task telemetry and continuous difficulty
-status: implementing
+status: implemented
 created: 2026-08-25
 updated: 2026-08-26
 archived_at: null

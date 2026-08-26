@@ -837,18 +837,18 @@ dropping the table and the column respectively.
 
 #### Automated
 
-- [x] 5.1 Server-recompute matches the client-side rule
-- [x] 5.2 Client-supplied difficulty is ignored
-- [x] 5.3 Route-level ceiling test
-- [x] 5.4 Type-bias cap and both-types guarantee hold
-- [x] 5.5 Full suite green
-- [x] 5.6 E2E green in both projects
-- [x] 5.7 Type checking and linting pass
+- [x] 5.1 Server-recompute matches the client-side rule — 981c5b2
+- [x] 5.2 Client-supplied difficulty is ignored — 981c5b2
+- [x] 5.3 Route-level ceiling test — 981c5b2
+- [x] 5.4 Type-bias cap and both-types guarantee hold — 981c5b2
+- [x] 5.5 Full suite green — 981c5b2
+- [x] 5.6 E2E green in both projects — 981c5b2
+- [x] 5.7 Type checking and linting pass — 981c5b2
 
 #### Manual
 
-- [x] 5.8 Perfect streak on a LEVEL-1 profile: numbers grow, closing task visibly easier
-- [x] 5.9 Deliberate misses: numbers shrink, no rise immediately after a miss
-- [x] 5.10 Level-1 profile never exceeds its band ceiling on a perfect streak
-- [x] 5.11 Difficulty carries across two consecutive shifts
-- [x] 5.12 Baseline re-measured
+- [x] 5.8 Perfect streak on a LEVEL-1 profile: numbers grow, closing task visibly easier — 981c5b2
+- [x] 5.9 Deliberate misses: numbers shrink, no rise immediately after a miss — 981c5b2
+- [x] 5.10 Level-1 profile never exceeds its band ceiling on a perfect streak — 981c5b2
+- [x] 5.11 Difficulty carries across two consecutive shifts — 981c5b2
+- [x] 5.12 Baseline re-measured — 981c5b2
