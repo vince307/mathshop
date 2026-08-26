@@ -5,15 +5,19 @@ scope: tranche
 governing_prd: context/foundation/prd-v3.md
 created: 2026-08-26
 updated: 2026-08-26
-status: brainstorming-in-progress
-skill: superpowers:brainstorming (architectural path)
+status: shaping-in-progress
+skill: 10x-shape (scoped to this file — see D-2)
+consumed_by: docs/superpowers/specs/ -> backlog.md ## Ready -> /10x-autonomous-run
 ---
 
 # World expansion + purchase catalogue + virtual economy — brainstorm notes
 
-**Live brainstorm, not a finished design.** Opened 2026-08-26. The architectural
-path of `superpowers:brainstorming` is being followed; this file exists so the
-work survives a session boundary. The finished design belongs in
+**Live shaping notes, not a finished design.** Opened 2026-08-26.
+
+The framing below (verified baseline, PRD constraints, the four-layer
+decomposition, D-1) came out of one `superpowers:brainstorming` session. **D-2
+then moved this work onto the 10x chain**, so continue with `/10x-shape` scoped
+to this file — not with the brainstorming skill. The finished design belongs in
 `docs/superpowers/specs/YYYY-MM-DD-world-economy-design.md`, and only after the
 user has approved it section by section.
 
@@ -149,7 +153,8 @@ run 2026-08-26: **PASS, 77 paths, 0 missing**.
 ## Open — next in the brainstorm
 
 Nothing below has been decided. These are the questions the next session should
-work through, one at a time, per the brainstorming skill:
+work through, one at a time, per `/10x-shape`'s discovery loop (open question →
+gray areas as a multi-select → lock the decision → write it back here):
 
 - **Layer 1 first**: does a world stay cosmetic, or does it differentiate? This
   is the cheapest question with the largest cost consequence, and it decides
