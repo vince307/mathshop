@@ -77,11 +77,20 @@ where p.name like 'syn-%'
 group by a.scenario, a.competency
 order by first_try_pct;
 
-\echo '\n=== 4. DIFFICULTY RESPONSE CURVE — p(first try | d) ========================'
--- The function the whole engine is tuned against, measured instead of assumed.
--- With harness data this reproduces the INPUT model (see child-model.ts) and is
+\echo '\n=== 4. DIFFICULTY RESPONSE CURVE — p(first try | d), PER COHORT =========='
+-- The function the whole engine is tuned against.
+--
+-- **Grouped by cohort, and that is load-bearing.** Pooling cohorts inverts the
+-- relationship (Simpson's paradox): only strong players ever reach high `d`, so
+-- a pooled query shows accuracy RISING with difficulty, which is the opposite of
+-- what happens inside any single player. The first run of this harness produced
+-- exactly that artefact — 79.8 %% at d<0.1 rising to 85.6 %% at d>0.1 — while
+-- every cohort's own curve slopes the other way. Do not remove the grouping.
+--
+-- With harness data this reproduces the INPUT model (child-model.ts) and is
 -- therefore only a pipe check. With real children it is the actual finding.
 select
+  p.name                                            as cohort,
   width_bucket(a.difficulty, 0, 1, 10)              as d_bucket,
   round((width_bucket(a.difficulty, 0, 1, 10) - 1) * 0.1, 1) as d_from,
   count(*)                                          as attempts,
@@ -89,12 +98,17 @@ select
 from public.task_attempt a
 join public.child_profiles p on p.id = a.profile_id
 where p.name like 'syn-%' and a.difficulty is not null
-group by d_bucket
-order by d_bucket;
+group by p.name, d_bucket
+having count(*) >= 10   -- suppress tail buckets too thin to read
+order by p.name, d_bucket;
 
 \echo '\n=== 5. POSITION IN SHIFT — do warm-up and closing guards show up? =========='
--- P3 eases task 0 (warm-up) and task n-1 (closing). If those guards work, the
--- first-try rate at those positions should sit above the middle of the shift.
+-- Two P3 guards are positional, and they are NOT the same thing:
+--   * task 0 (warm-up) is generated at the current `d` like any other, it simply
+--     never MOVES `d` — so expect its d_mean to match the rest, not to dip.
+--   * task n-1 (closing) is generated EASED (`EASED_CLOSING`) — that one should
+--     show a visibly lower d_mean, and a higher first-try rate.
+-- Read the last populated row against the middle ones, not the first.
 select
   a.shift_index,
   count(*)                                          as attempts,
