@@ -85,6 +85,24 @@ describe("generateShift", () => {
       expect(types.has("change_making")).toBe(true);
     }
   });
+
+  it("still mixes both types under the HARDEST weak-competency bias (P5)", () => {
+    // The bias caps at MAX_TYPE_SHARE, but the both-types guarantee does not rest
+    // on the cap — `drawTypes` seeds one of each before it fills. Asserted at the
+    // most lopsided profile in both directions, because a bias that could starve
+    // a competency entirely would also stop it ever recovering: a child would
+    // never again be measured on the skill they had been doing well at.
+    for (const lopsided of [
+      { math: D1, money: D2 },
+      { math: D2, money: D1 },
+    ] satisfies DifficultyState[]) {
+      for (let i = 0; i < 30; i++) {
+        const types = new Set(generateShift(lopsided).map((t) => t.type));
+        expect(types.has("counting")).toBe(true);
+        expect(types.has("change_making")).toBe(true);
+      }
+    }
+  });
   it("every task carries the difficulty it was generated at", () => {
     for (const task of generateShift(uniform(D2))) {
       expect(task.difficulty).toBe(D2);

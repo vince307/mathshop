@@ -8,7 +8,7 @@ import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { readPurchased, shiftBonusTasks } from "@/data/upgrades";
 import { openShift } from "@/data/shift";
-import { readDifficultyState } from "@/data/adaptive";
+import { ceilingForLevel, readDifficultyState } from "@/data/adaptive";
 import { t } from "@/i18n";
 
 // Shift surface (S-04). Gated under /app. Loads the ACTIVE profile (S-11 fallback
@@ -50,8 +50,14 @@ const avatar = getAvatar(profile.avatar);
 // migration: it reads as its `starting_level`-derived seed, which reproduces
 // exactly what that child was getting yesterday. Shift LENGTH is derived from
 // `max(d.math, d.money)` inside `planShift` and is fixed for the whole shift.
+//
+// The age-band ceiling travels in the plan so the island's in-shift adaptation
+// (P5) honours the same guardrail: no streak of perfect answers carries a child
+// past their band. It is a bound, not an authority — `recordShiftResult`
+// recomputes the persisted `d` against its own `ceilingForLevel`.
 const difficulty = readDifficultyState(profile.difficulty_state, profile.starting_level);
-const { plan, firstTask } = openShift(difficulty, shiftBonusTasks(purchased));
+const ceiling = ceilingForLevel(profile.starting_level);
+const { plan, firstTask } = openShift(difficulty, ceiling, shiftBonusTasks(purchased));
 ---
 
 <Layout title={t.brand}>

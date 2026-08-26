@@ -8,12 +8,16 @@ import {
   TARGET_SUCCESS,
   TIER_ANCHOR,
   TWO_STAGE_THRESHOLD,
+  FINAL_TASK_RELIEF,
   ceilingForLevel,
   changeCapFor,
   countRangeFor,
   createSeededRandom,
   type DifficultyState,
+  foldShiftOutcomes,
   nextDifficulty,
+  relieveForFinalTask,
+  type ScoredTask,
   paidMaxFor,
   readDifficultyState,
   seedDifficultyFor,
@@ -53,22 +57,19 @@ const TRAY_CAP = 20;
 const uniform = (d: number): DifficultyState => ({ math: d, money: d });
 
 /**
- * Fold a shift's outcomes through the adaptation rule the way the engine will:
- * `index` is positional (0 is the warm-up), `shiftStartDifficulty` is the drift
- * clamp's anchor, and `afterMiss` looks at the PREVIOUS task. Phase 5's client
- * hook and server recompute both reduce to this; keeping the model here means the
- * guard tests exercise the real sequencing rather than one call in isolation.
+ * Fold a single-competency outcome stream — a shift in which every task
+ * exercises the same skill — through the PRODUCTION fold (P5). Delegating rather
+ * than re-implementing the loop is deliberate: the guard tests below are the
+ * only place the warm-up, the cooldown and the drift clamp are checked in
+ * sequence, and they are worth nothing if they check a copy of the rule that the
+ * client and the server do not actually run.
  */
 function foldShift(start: number, outcomes: readonly boolean[], ceiling: number): number {
-  let d = start;
-  outcomes.forEach((firstTry, index) => {
-    d = nextDifficulty(
-      d,
-      { firstTry },
-      { index, shiftStartDifficulty: start, ceiling, afterMiss: index > 0 && !outcomes[index - 1] },
-    );
-  });
-  return d;
+  return foldShiftOutcomes(
+    { math: start, money: start },
+    outcomes.map((firstTry, index) => ({ index, competency: "math" as const, firstTry })),
+    ceiling,
+  ).math;
 }
 
 describe("calibration — the tier anchors reproduce today's parameters exactly", () => {
@@ -474,5 +475,124 @@ describe("range invariants across the whole scale", () => {
     expect(generateCountingTask(5).difficulty).toBe(DIFFICULTY_MAX);
     expect(generateChangeMakingTask(-5, undefined, () => false).difficulty).toBe(DIFFICULTY_MIN);
     expect(generateChangeMakingTask(NaN, undefined, () => false).difficulty).toBe(DIFFICULTY_MIN);
+  });
+});
+
+/**
+ * The shift-wide fold (P5) — the one implementation the client draws from and
+ * the server persists from. What is being locked here is not the arithmetic
+ * (that is `nextDifficulty`, above) but the SEQUENCING it is fed: which `d` a
+ * task moves, what "the previous task" means when two competencies interleave,
+ * and what the drift clamp is anchored to. Those are exactly the decisions two
+ * hand-written copies of this loop would make differently.
+ */
+describe("foldShiftOutcomes", () => {
+  const START: DifficultyState = { math: 0.4, money: 0.4 };
+  const CEILING = TIER_ANCHOR[3];
+
+  /** A shift where the types alternate, starting with counting at the warm-up. */
+  const alternating = (firstTries: readonly boolean[]): ScoredTask[] =>
+    firstTries.map((firstTry, index) => ({
+      index,
+      competency: index % 2 === 0 ? ("math" as const) : ("money" as const),
+      firstTry,
+    }));
+
+  it("moves only the competency the task exercised", () => {
+    // One scored counting task: math moves, money is untouched. Without this the
+    // engine would credit a child's counting streak to their change-making.
+    const out = foldShiftOutcomes(START, [{ index: 1, competency: "math", firstTry: true }], CEILING);
+    expect(out.math).toBeGreaterThan(START.math);
+    expect(out.money).toBe(START.money);
+  });
+
+  it("leaves the input untouched — the caller's start is the drift anchor", () => {
+    const start: DifficultyState = { math: 0.4, money: 0.4 };
+    foldShiftOutcomes(start, alternating([true, true, true, true]), CEILING);
+    expect(start).toEqual({ math: 0.4, money: 0.4 });
+  });
+
+  it("anchors the drift clamp per competency, at the shift's opening value", () => {
+    // Long enough that an unclamped fold would sail past MAX_SHIFT_DRIFT.
+    const misses = Array.from({ length: 16 }, () => false);
+    const out = foldShiftOutcomes(START, alternating(misses), CEILING);
+    expect(out.math).toBeGreaterThanOrEqual(START.math - MAX_SHIFT_DRIFT);
+    expect(out.money).toBeGreaterThanOrEqual(START.money - MAX_SHIFT_DRIFT);
+  });
+
+  it("carries afterMiss ACROSS competencies — a rattled child is rattled either way", () => {
+    // Task 0 (math) is the warm-up and is missed; task 1 (money) is nailed. The
+    // cooldown must still veto the rise, even though the miss was on the other
+    // skill: the child is coming off a wrong answer, whatever it was about.
+    const out = foldShiftOutcomes(START, alternating([false, true]), CEILING);
+    expect(out.money).toBe(START.money);
+    // The same clean answer with no preceding miss DOES raise it — otherwise the
+    // assertion above would pass for the wrong reason.
+    expect(foldShiftOutcomes(START, alternating([true, true]), CEILING).money).toBeGreaterThan(START.money);
+  });
+
+  it("reads order from shift_index, not from array order", () => {
+    // The completion route already refines the array to exactly 0..n-1, but the
+    // fold's afterMiss depends on order — so a client that shuffles must not get
+    // a different answer than one that does not.
+    const scored = alternating([true, false, true, true, false, true]);
+    expect(foldShiftOutcomes(START, [...scored].reverse(), CEILING)).toEqual(foldShiftOutcomes(START, scored, CEILING));
+  });
+
+  it("never leaves the band, whatever the stream", () => {
+    for (const level of [1, 2, 3]) {
+      const ceiling = ceilingForLevel(level);
+      const start = seedDifficultyFor(level);
+      for (const seed of SEEDS) {
+        const rng = createSeededRandom(seed);
+        const out = foldShiftOutcomes(
+          start,
+          alternating(Array.from({ length: MAX_SHIFT_TASKS }, () => rng.chance(0.5))),
+          ceiling,
+        );
+        for (const d of [out.math, out.money]) {
+          expect(d).toBeGreaterThanOrEqual(DIFFICULTY_MIN);
+          expect(d).toBeLessThanOrEqual(ceiling);
+        }
+      }
+    }
+  });
+
+  it("a perfect streak cannot carry a level-1 child past their band, however many shifts", () => {
+    // The pedagogical guardrail, compounded: `d` carries across shifts, so a
+    // single shift's drift clamp is not on its own an answer. This is the one
+    // failure mode that would be WRONG rather than merely suboptimal.
+    const ceiling = ceilingForLevel(1);
+    let d = seedDifficultyFor(1);
+    const perfect = alternating(Array.from({ length: MAX_SHIFT_TASKS }, () => true));
+    for (let shift = 0; shift < 50; shift++) {
+      d = foldShiftOutcomes(d, perfect, ceiling);
+      expect(d.math).toBeLessThanOrEqual(ceiling);
+      expect(d.money).toBeLessThanOrEqual(ceiling);
+    }
+    expect(d.math).toBe(ceiling); // and it does reach it — the bound is not slack
+  });
+
+  it("an empty stream is the identity — an abandoned shift changes nothing", () => {
+    expect(foldShiftOutcomes(START, [], CEILING)).toEqual(START);
+  });
+});
+
+describe("relieveForFinalTask", () => {
+  it("lowers both competencies by FINAL_TASK_RELIEF", () => {
+    expect(relieveForFinalTask({ math: 0.5, money: 0.3 })).toEqual({
+      math: 0.5 - FINAL_TASK_RELIEF,
+      money: 0.3 - FINAL_TASK_RELIEF,
+    });
+  });
+
+  it("floors at the bottom of the scale rather than going negative", () => {
+    // A negative `d` would clamp inside the generators anyway, but it would also
+    // flow into `task.difficulty` and therefore into the telemetry column whose
+    // whole purpose is tuning the model.
+    expect(relieveForFinalTask({ math: 0, money: FINAL_TASK_RELIEF / 2 })).toEqual({
+      math: DIFFICULTY_MIN,
+      money: DIFFICULTY_MIN,
+    });
   });
 });

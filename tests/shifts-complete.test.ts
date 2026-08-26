@@ -5,6 +5,15 @@ import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } fro
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
 import { businessLevelForShifts, earningsForShift, MAX_SHIFT_TASKS } from "@/data/shift";
 import { readSkillState, type SkillState } from "@/data/skills";
+import {
+  DIFFICULTY_MAX,
+  ceilingForLevel,
+  foldShiftOutcomes,
+  readDifficultyState,
+  seedDifficultyFor,
+  type DifficultyState,
+  type ScoredTask,
+} from "@/data/adaptive";
 
 /**
  * Route-level persistence + isolation for POST /api/shifts/complete (S-04/S-05).
@@ -44,22 +53,39 @@ function skillsFor(taskCount: number, cleanCount: number): string {
  * A valid per-task `attempts` array (P1) that reconciles with the reported
  * aggregates: `taskCount` counting tasks (so `competency` matches `task_type`),
  * the first `cleanCount` of them first-try, and `shift_index` running 0..n-1.
- * `difficulty` is null — the continuous scale arrives in P3.
+ *
+ * `difficulty` defaults to null (the P1/P2 shape) and is overridable so the P5
+ * tamper case can put a hostile value in it. It is telemetry either way — the
+ * persisted difficulty is recomputed from `first_try`, never read from here.
  */
-function attemptsFor(taskCount: number, cleanCount: number): string {
+function attemptsFor(taskCount: number, cleanCount: number, difficulty: number | null = null): string {
   return JSON.stringify(
     Array.from({ length: taskCount }, (_unused, i) => ({
       shift_index: i,
       task_type: "counting",
       scenario: "count_till",
       competency: "math",
-      difficulty: null,
+      difficulty,
       params: { targetCount: 5 },
       first_try: i < cleanCount,
       misses: i < cleanCount ? 0 : 1,
       duration_ms: 3000,
     })),
   );
+}
+
+/**
+ * The scored-task view of `attemptsFor`'s shift — the same shift, as the
+ * adaptation rule sees it. Used to state the expected difficulty independently
+ * of the route, so the assertion is "the server ran the rule", not "the server
+ * agrees with itself".
+ */
+function scoredFor(taskCount: number, cleanCount: number): ScoredTask[] {
+  return Array.from({ length: taskCount }, (_unused, i) => ({
+    index: i,
+    competency: "math" as const,
+    firstTry: i < cleanCount,
+  }));
 }
 
 function completeContext(jar: CookieJar, formData: Record<string, string>) {
@@ -123,6 +149,17 @@ async function readSkill(profileId: string): Promise<SkillState> {
     .single()
     .overrideTypes<{ skill_state: unknown }, { merge: false }>();
   return readSkillState(data?.skill_state);
+}
+
+/** Read the profile's normalized difficulty_state via the RLS-bypassing admin client. */
+async function readDifficulty(profileId: string): Promise<DifficultyState> {
+  const { data } = await admin
+    .from("child_profiles")
+    .select("difficulty_state, starting_level")
+    .eq("id", profileId)
+    .single()
+    .overrideTypes<{ difficulty_state: unknown; starting_level: number }, { merge: false }>();
+  return readDifficultyState(data?.difficulty_state, data?.starting_level ?? 1);
 }
 
 /** Read the profile's shift_log rows via the RLS-bypassing admin client. */
@@ -413,6 +450,127 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const state = await readState(profileId);
     expect(state?.completed_shift_count).toBe(2); // replay counted as a 2nd shift
     expect(state?.wallet_balance).toBe(2 * earningsForShift(5, 5)); // and paid twice
+  });
+
+  /**
+   * Server-side difficulty recompute (adaptive-task-engine P5).
+   *
+   * The whole security argument of this phase is one sentence: the client is
+   * asked what HAPPENED, never what it should become. It reports outcomes; the
+   * server folds them through the same rule the island ran, from the stored
+   * state, inside this profile's own age band. So the only lie available to a
+   * tampered client is about how well its child did — and that lie moves its own
+   * difficulty, which is a punishment, not an exploit.
+   */
+  it("recomputes and persists difficulty from the reported outcomes", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    // A fresh profile normalises to its starting_level seed — no data migration.
+    expect(await readDifficulty(profileId)).toEqual(seedDifficultyFor(1));
+
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "6", cleanCount: "6" }));
+    expect(res.status).toBe(200);
+    expect(await readDifficulty(profileId)).toEqual(
+      foldShiftOutcomes(seedDifficultyFor(1), scoredFor(6, 6), ceilingForLevel(1)),
+    );
+  });
+
+  it("carries difficulty across consecutive shifts — the second starts where the first ended", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const ceiling = ceilingForLevel(1);
+
+    expect((await completePOST(completeContext(jar, { profileId, taskCount: "6", cleanCount: "6" }))).status).toBe(200);
+    const afterOne = await readDifficulty(profileId);
+    expect((await completePOST(completeContext(jar, { profileId, taskCount: "6", cleanCount: "6" }))).status).toBe(200);
+
+    // Folded from the STORED state, not from the seed: `d` is the profile's, not
+    // the shift's, and a child who improved yesterday keeps it today.
+    expect(await readDifficulty(profileId)).toEqual(foldShiftOutcomes(afterOne, scoredFor(6, 6), ceiling));
+    expect((await readDifficulty(profileId)).math).toBeGreaterThan(afterOne.math);
+  });
+
+  it("moves difficulty DOWN on a missed shift, and only for the competency played", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    // Climb first — a level-1 profile seeds at the floor and has nowhere to fall.
+    for (let i = 0; i < 6; i++) {
+      expect((await completePOST(completeContext(jar, { profileId, taskCount: "8", cleanCount: "8" }))).status).toBe(
+        200,
+      );
+    }
+    const climbed = await readDifficulty(profileId);
+    expect(climbed.math).toBeGreaterThan(0);
+
+    // attemptsFor credits every task to `math`, so `money` must not move at all.
+    expect((await completePOST(completeContext(jar, { profileId, taskCount: "8", cleanCount: "0" }))).status).toBe(200);
+    const after = await readDifficulty(profileId);
+    expect(after.math).toBeLessThan(climbed.math);
+    expect(after.money).toBe(climbed.money);
+  });
+
+  it("TAMPER: a client-supplied difficulty in the payload is ignored", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    // Every attempt claims it was generated at the very top of the scale, and
+    // every one of them was missed. If the route trusted the field the profile
+    // would jump to the hardest tasks in the game on its worst possible shift.
+    const res = await completePOST(
+      completeContext(jar, {
+        profileId,
+        taskCount: "6",
+        cleanCount: "0",
+        attempts: attemptsFor(6, 0, DIFFICULTY_MAX),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(await readDifficulty(profileId)).toEqual(
+      foldShiftOutcomes(seedDifficultyFor(1), scoredFor(6, 0), ceilingForLevel(1)),
+    );
+    // The claimed value is still STORED as telemetry — it is what the client says
+    // it generated at, and discarding it would lose the tuning signal entirely.
+    const { data: rows } = await admin
+      .from("task_attempt")
+      .select("difficulty")
+      .eq("profile_id", profileId)
+      .overrideTypes<{ difficulty: number | null }[], { merge: false }>();
+    expect(rows?.every((r) => r.difficulty === DIFFICULTY_MAX)).toBe(true);
+  });
+
+  it("CEILING: no number of perfect shifts can drive persisted difficulty past the age band", async () => {
+    // The pedagogical guardrail, at the route. Enforced against the server's own
+    // `ceilingForLevel(starting_level)` — the plan's ceiling crosses the wire for
+    // the island's benefit, and is never what the persisted value is bounded by.
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    const ceiling = ceilingForLevel(1);
+
+    for (let shift = 0; shift < 40; shift++) {
+      const res = await completePOST(
+        completeContext(jar, { profileId, taskCount: String(MAX_SHIFT_TASKS), cleanCount: String(MAX_SHIFT_TASKS) }),
+      );
+      expect(res.status).toBe(200);
+      const d = await readDifficulty(profileId);
+      expect(d.math).toBeLessThanOrEqual(ceiling);
+      expect(d.money).toBeLessThanOrEqual(ceiling);
+    }
+    // …and it does climb all the way there, so the bound is doing work rather
+    // than sitting above anything reachable.
+    expect((await readDifficulty(profileId)).math).toBe(ceiling);
+  });
+
+  it("a rejected shift leaves difficulty untouched", async () => {
+    const profileId = await seedProfile(accountA.id);
+    const jar = await mintSession(accountA.email);
+    expect((await completePOST(completeContext(jar, { profileId, taskCount: "6", cleanCount: "6" }))).status).toBe(200);
+    const before = await readDifficulty(profileId);
+
+    // Length disagreement — the P1 reconciliation refine 400s it.
+    const res = await completePOST(
+      completeContext(jar, { profileId, taskCount: "4", cleanCount: "4", attempts: attemptsFor(3, 3) }),
+    );
+    expect(res.status).toBe(400);
+    expect(await readDifficulty(profileId)).toEqual(before);
   });
 
   it("L-002: account B's shift never writes a shift_log row for account A", async () => {

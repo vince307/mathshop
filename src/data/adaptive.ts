@@ -333,3 +333,74 @@ export function createSeededRandom(seed: number): SeededRandom {
     chance: (probability) => next() < probability,
   };
 }
+
+/**
+ * One scored task, as the adaptation rule sees it — the minimum a fold needs and
+ * nothing else. Deliberately NOT `TaskAttempt`: that shape carries `params`,
+ * `duration_ms` and a task type, none of which the rule reads, and importing it
+ * here would tie this pure module to the telemetry wire format.
+ */
+export interface ScoredTask {
+  /** 0-based position within the shift. Index 0 is the warm-up. */
+  index: number;
+  /** Which `d` this task moves — counting → `math`, change-making → `money`. */
+  competency: PlayCompetency;
+  firstTry: boolean;
+}
+
+/**
+ * Fold a shift's scored tasks through `nextDifficulty`, per competency (P5).
+ *
+ * **This is the one implementation both sides run.** The client folds a growing
+ * prefix after every task, to draw the next one at the `d` the last answer
+ * produced; the server folds the whole reported array to decide what to persist,
+ * and never trusts the client's number. Two hand-kept copies of this loop would
+ * agree on the happy path and diverge exactly where it matters — around the
+ * guards — so the child's shift would drift from what gets written down.
+ *
+ * The sequencing the guards need is positional and shift-wide, not
+ * per-competency: `index` is the task's place in the shift (0 is the warm-up)
+ * and `afterMiss` looks at the PREVIOUS task whatever competency it exercised —
+ * a child rattled by missing a counting task is rattled for the change-making
+ * one that follows. Only `shiftStartDifficulty`, the drift clamp's anchor, is
+ * per-competency.
+ *
+ * Sorted by `index` defensively: the completion route already refines the array
+ * to exactly `0..n-1`, but the fold's `afterMiss` reads order, so relying on the
+ * caller's array order would make a validation change here a silent behaviour
+ * change. Pure — `start` is never mutated.
+ */
+export function foldShiftOutcomes(
+  start: DifficultyState,
+  scored: readonly ScoredTask[],
+  ceiling: number,
+): DifficultyState {
+  const out: DifficultyState = { math: start.math, money: start.money };
+  let afterMiss = false;
+  for (const task of [...scored].sort((a, b) => a.index - b.index)) {
+    out[task.competency] = nextDifficulty(
+      out[task.competency],
+      { firstTry: task.firstTry },
+      { index: task.index, shiftStartDifficulty: start[task.competency], ceiling, afterMiss },
+    );
+    afterMiss = !task.firstTry;
+  }
+  return out;
+}
+
+/**
+ * The difficulty a shift's CLOSING task is generated at — `d - FINAL_TASK_RELIEF`,
+ * floored at 0. The "end on a win" guard: the last thing a child does in a shift
+ * should be something they can do.
+ *
+ * Generation only. The task still scores and still records telemetry at this
+ * value, but the persisted `d` is recomputed from outcomes (`foldShiftOutcomes`),
+ * so the relief never leaks into the profile — otherwise every shift would end by
+ * quietly making the child's next one easier.
+ */
+export function relieveForFinalTask(d: DifficultyState): DifficultyState {
+  return {
+    math: Math.max(DIFFICULTY_MIN, d.math - FINAL_TASK_RELIEF),
+    money: Math.max(DIFFICULTY_MIN, d.money - FINAL_TASK_RELIEF),
+  };
+}

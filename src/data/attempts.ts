@@ -10,7 +10,7 @@
  */
 import type { Task } from "@/types";
 import type { TaskType } from "@/data/tasks";
-import { competencyForTaskType, type Competency } from "@/data/skills";
+import { competencyForTaskType, type PlayCompetency } from "@/data/skills";
 import type { TaskOutcome } from "@/components/hooks/useCoinTask";
 
 /** One task's telemetry row, as sent by the client and stored by the server. */
@@ -19,7 +19,14 @@ export interface TaskAttempt {
   shift_index: number;
   task_type: TaskType;
   scenario: string;
-  competency: Competency;
+  /**
+   * Derived from `task_type`, never chosen — the completion route refines it
+   * against `competencyForTaskType` and rejects a mismatch. `PlayCompetency`
+   * rather than `Competency` because `decisions` accrues at purchase and has no
+   * task: the narrowing is what lets P5's fold index the per-competency
+   * difficulty state with this value directly, checked by the compiler.
+   */
+  competency: PlayCompetency;
   /**
    * The continuous difficulty `d ∈ [0,1]` the task was generated at. Nullable for
    * the P1/P2 rows written before the scale existed — see `attemptDifficulty`.

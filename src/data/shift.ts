@@ -8,14 +8,17 @@
 import type { Task } from "@/types";
 import {
   type DifficultyState,
+  type ScoredTask,
   type SeededRandom,
   clampToBand,
   createSeededRandom,
+  foldShiftOutcomes,
   randomSeed,
+  relieveForFinalTask,
   shiftLengthRangeFor,
 } from "@/data/adaptive";
 import { STOCK_AND_CHANGE_RATE } from "@/data/change-making-tasks";
-import { TYPE_SPLIT, generateTask, type TaskType } from "@/data/tasks";
+import { generateTask, typeSplitFor, type TaskType } from "@/data/tasks";
 
 /**
  * Absolute ceiling on tasks in one shift (S-06): the longest base shift plus the
@@ -127,7 +130,7 @@ export function generateShift(
   difficulty: DifficultyState,
   bonus = 0,
   pick: (min: number, max: number) => number = defaultPick,
-  pickType: () => TaskType = () => (Math.random() < TYPE_SPLIT ? "counting" : "change_making"),
+  pickType: () => TaskType = () => (Math.random() < typeSplitFor(difficulty) ? "counting" : "change_making"),
   pickTwoStage?: () => boolean,
 ): Task[] {
   const n = shiftLength(lengthDifficulty(difficulty), bonus, pick);
@@ -149,8 +152,24 @@ export interface ShiftPlan {
   length: number;
   /** Seed for `createSeededRandom` — the client replays the server's draw order from it. */
   seed: number;
-  /** Per-competency `d` the shift opened at. Held constant through P4; P5 moves it in-shift. */
+  /**
+   * Per-competency `d` the shift opened at. From P5 the client moves this as the
+   * shift is played; the value here stays the OPENING one, because it is also the
+   * drift clamp's anchor and the type-bias's input — both of which must be fixed
+   * for the whole shift.
+   */
   difficulty: DifficultyState;
+  /**
+   * The profile's age-band bound (`ceilingForLevel(starting_level)`), carried
+   * across the wire so the client's in-shift adaptation honours the same
+   * pedagogical guardrail the server enforces on the persisted value (P5).
+   *
+   * Sending it is safe: it is a bound, not an authority. The server recomputes
+   * `d` from the reported outcomes against its OWN `ceilingForLevel`, so raising
+   * this number in the payload buys a tampered client nothing more durable than
+   * harder tasks for itself, for one shift.
+   */
+  ceiling: number;
 }
 
 /**
@@ -158,9 +177,14 @@ export interface ShiftPlan {
  * receives the number rather than re-deriving it, so a capacity bonus it does not
  * know about can never make the two disagree.
  */
-export function planShift(difficulty: DifficultyState, bonus = 0, seed: number = randomSeed()): ShiftPlan {
+export function planShift(
+  difficulty: DifficultyState,
+  ceiling: number,
+  bonus = 0,
+  seed: number = randomSeed(),
+): ShiftPlan {
   const rng = createSeededRandom(seed);
-  return { length: shiftLength(lengthDifficulty(difficulty), bonus, rng.pick), seed, difficulty };
+  return { length: shiftLength(lengthDifficulty(difficulty), bonus, rng.pick), seed, difficulty, ceiling };
 }
 
 /** A cursor over a planned shift's tasks: yields them in order, one at a time. */
@@ -193,7 +217,10 @@ export function createShiftSource(plan: ShiftPlan): ShiftSource {
   // Called through `shiftLength` rather than a bare `rng.pick` so the two stay in
   // step even if the length draw ever grows a second roll.
   shiftLength(lengthDifficulty(plan.difficulty), 0, rng.pick);
-  const types = drawTypes(plan.length, rng.pick, () => (rng.chance(TYPE_SPLIT) ? "counting" : "change_making"));
+  // Biased toward the child's weaker competency (P5), from the shift's OPENING
+  // difficulty — the same number the server drew task 1 from, so the two agree.
+  const split = typeSplitFor(plan.difficulty);
+  const types = drawTypes(plan.length, rng.pick, () => (rng.chance(split) ? "counting" : "change_making"));
   let cursor = 0;
   return {
     types,
@@ -214,6 +241,30 @@ export function createShiftSource(plan: ShiftPlan): ShiftSource {
 }
 
 /**
+ * The difficulty the shift's NEXT task should be generated at (P5) — the whole
+ * in-shift adaptation policy, in one pure expression.
+ *
+ * It lives here, beside the plan, rather than inside `useShiftEngine`, because
+ * the hook is the only stateful part of the loop and a policy trapped inside a
+ * hook can only be tested through a rendered component. Everything the decision
+ * needs is an argument: where the shift opened, what has been scored, and which
+ * task is about to be drawn.
+ *
+ * `scored` is folded whole on every call rather than accumulated — it is at most
+ * `MAX_SHIFT_TASKS` long, and recomputing removes the class of bug where a
+ * running total drifts out of agreement with the outcomes it summarises, which
+ * is exactly what the server's own fold would then contradict at shift end.
+ *
+ * The last task of the shift comes back relieved (`relieveForFinalTask`): end on
+ * something the child can do. Generation only — the relieved value is never
+ * persisted, because the server folds the reported outcomes, not this.
+ */
+export function drawDifficultyFor(plan: ShiftPlan, scored: readonly ScoredTask[], nextIndex: number): DifficultyState {
+  const difficulty = foldShiftOutcomes(plan.difficulty, scored, plan.ceiling);
+  return nextIndex >= plan.length - 1 ? relieveForFinalTask(difficulty) : difficulty;
+}
+
+/**
  * Open a shift on the server: fix the plan and draw the first task from it.
  *
  * Task 1 is drawn HERE, through the very same source the client will use, so
@@ -225,10 +276,11 @@ export function createShiftSource(plan: ShiftPlan): ShiftSource {
  */
 export function openShift(
   difficulty: DifficultyState,
+  ceiling: number,
   bonus = 0,
   seed: number = randomSeed(),
 ): { plan: ShiftPlan; firstTask: Task } {
-  const plan = planShift(difficulty, bonus, seed);
+  const plan = planShift(difficulty, ceiling, bonus, seed);
   return { plan, firstTask: createShiftSource(plan).next(difficulty) };
 }
 

@@ -1,6 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState, SkillState } from "@/types";
-import type { DifficultyState } from "@/data/adaptive";
+import { ceilingForLevel, foldShiftOutcomes, readDifficultyState, type DifficultyState } from "@/data/adaptive";
 import { businessLevelForShifts, earningsForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import type { TaskAttempt } from "@/data/attempts";
@@ -240,6 +240,25 @@ export async function recordShiftResult(
   const businessLevel = businessLevelForShifts(newCount);
   const skillState = addSkillDelta(readSkillState(current.skill_state), shift.skills);
 
+  // Per-competency difficulty (P5) — RECOMPUTED here, never taken from the
+  // client. The attempts array carries a `difficulty` field, but that is
+  // telemetry: what a task was generated at, not what the profile becomes. The
+  // persisted value is folded from the reported OUTCOMES through the very same
+  // `foldShiftOutcomes` the island ran, starting from the stored state and
+  // bounded by this profile's own age band. So the only lie a tampered client
+  // can tell is about how well it did — which moves its own difficulty, inside
+  // its own ceiling, and buys it nothing but harder tasks.
+  //
+  // Folded into the EXISTING update: no extra round trip, and therefore no new
+  // failure mode — it lands exactly when the wallet and the level do. It does
+  // inherit this function's pre-existing read-modify-write window (plan Open
+  // Risks); the cost of losing that race is one shift's drift.
+  const difficultyState = foldShiftOutcomes(
+    readDifficultyState(current.difficulty_state, current.starting_level),
+    shift.attempts.map((a) => ({ index: a.shift_index, competency: a.competency, firstTry: a.first_try })),
+    ceilingForLevel(current.starting_level),
+  );
+
   const { error: updateErr } = await client
     .from("child_profiles")
     .update({
@@ -247,6 +266,7 @@ export async function recordShiftResult(
       completed_shift_count: newCount,
       business_level: businessLevel,
       skill_state: skillState,
+      difficulty_state: difficultyState,
     })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };

@@ -5,8 +5,15 @@ import "@testing-library/jest-dom/vitest";
 import ShiftScreen from "@/components/child/ShiftScreen";
 import type { Task } from "@/types";
 import { DEFAULT_WORLD } from "@/data/worlds";
-import { TIER_ANCHOR, type DifficultyState } from "@/data/adaptive";
-import { createShiftSource, openShift } from "@/data/shift";
+import {
+  DIFFICULTY_MIN,
+  FINAL_TASK_RELIEF,
+  TIER_ANCHOR,
+  ceilingForLevel,
+  type DifficultyState,
+  type ScoredTask,
+} from "@/data/adaptive";
+import { createShiftSource, drawDifficultyFor, openShift } from "@/data/shift";
 import { attemptParams } from "@/data/attempts";
 import { competencyForTaskType } from "@/data/skills";
 import type { TaskAttempt } from "@/data/attempts";
@@ -33,16 +40,53 @@ import { t } from "@/i18n";
 /** A level-1 profile: the tier-1 envelope, and never a two-stage task. */
 const LEVEL_1: DifficultyState = { math: TIER_ANCHOR[1], money: TIER_ANCHOR[1] };
 const SEED = 20260825;
+/** The band a level-1 profile adapts inside — what `task.astro` puts in the plan. */
+const LEVEL_1_CEILING = ceilingForLevel(1);
+/**
+ * A profile sitting mid-band, where adaptation is visible in both directions.
+ * A level-1 profile seeds at the FLOOR of the scale, so a shift it plays can
+ * only ever move up by hundredths and its closing task's relief floors at 0 —
+ * true to life, and useless as an assertion. This is the plan's own Open Risks
+ * note ("any manual check of difficulty rising must be run on a level-1
+ * profile") read the other way: the DOWNWARD half needs headroom below.
+ */
+const MID: DifficultyState = { math: 0.4, money: 0.4 };
+const MID_CEILING = ceilingForLevel(3);
 
 const COIN = (n: number) => t.task.coinLabel.replace("{n}", String(n));
 const progressText = (current: number, total: number) =>
   t.results.progress.replace("{current}", String(current)).replace("{total}", String(total));
 
-/** The whole sequence the engine will draw, computed the same way it does. */
-function expectedTasks(seed: number, difficulty: DifficultyState): Task[] {
-  const plan = openShift(difficulty, 0, seed).plan;
+/**
+ * The whole sequence the engine will draw for a given outcome stream, replayed
+ * the same way it does — including P5's adaptation, which is why this can no
+ * longer be a fixed-difficulty `Array.from`.
+ *
+ * The POLICY is not duplicated here: `drawDifficultyFor` is the production one,
+ * imported. What this mirrors is only the plumbing — replay the source, skip the
+ * server's task 1, score each drawn task in turn — so a change to how difficulty
+ * moves cannot make this helper and the hook agree on the wrong thing.
+ */
+function expectedTasks(
+  seed: number,
+  difficulty: DifficultyState,
+  firstTries: readonly boolean[] = [],
+  ceiling = LEVEL_1_CEILING,
+): Task[] {
+  const plan = openShift(difficulty, ceiling, 0, seed).plan;
   const source = createShiftSource(plan);
-  return Array.from({ length: plan.length }, () => source.next(difficulty));
+  const tasks: Task[] = [source.next(plan.difficulty)];
+  const scored: ScoredTask[] = [];
+  while (tasks.length < plan.length) {
+    const index = tasks.length - 1;
+    scored.push({
+      index,
+      competency: competencyForTaskType(tasks[index].type),
+      firstTry: firstTries[index] ?? true,
+    });
+    tasks.push(source.next(drawDifficultyFor(plan, scored, tasks.length)));
+  }
+  return tasks;
 }
 
 /** Tap the correct number of coins and submit; then run out the 1.4 s beat. */
@@ -57,8 +101,8 @@ function solve(task: Task) {
   });
 }
 
-function renderShift(seed = SEED, difficulty = LEVEL_1) {
-  const { plan, firstTask } = openShift(difficulty, 0, seed);
+function renderShift(seed = SEED, difficulty = LEVEL_1, ceiling = LEVEL_1_CEILING) {
+  const { plan, firstTask } = openShift(difficulty, ceiling, 0, seed);
   render(
     <ShiftScreen
       plan={plan}
@@ -167,5 +211,82 @@ describe("ShiftScreen — the shift-end payload", () => {
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("heading", { name: t.results.heading })).toBeInTheDocument();
+  });
+});
+
+/**
+ * In-shift adaptation (adaptive-task-engine P5) — the only phase that changes
+ * what the child experiences, asserted through the orchestrator that drives it
+ * rather than against the policy in isolation (`tests/shift-source.test.ts` owns
+ * that). What could break here and nowhere else: the engine scoring a task
+ * against the wrong competency, or drawing the next one before folding the last
+ * outcome in — both of which leave a shift that still looks well-formed.
+ *
+ * The recorded `difficulty` is the observable, because it is the number the
+ * child's next task was generated from AND the number the tuning data will be
+ * read against. It is telemetry, not authority: the server recomputes what it
+ * persists from the reported outcomes (`tests/shifts-complete.test.ts`).
+ */
+describe("ShiftScreen — the shift adapts as it is played", () => {
+  /** Play a whole shift first-try and return the telemetry it posted. */
+  async function playPerfectShift(difficulty: DifficultyState, ceiling: number) {
+    const { plan } = renderShift(SEED, difficulty, ceiling);
+    for (const task of expectedTasks(SEED, difficulty, [], ceiling)) solve(task);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const attempts = JSON.parse((init.body as FormData).get("attempts") as string) as TaskAttempt[];
+    return { plan, attempts };
+  }
+
+  it("raises difficulty within the shift on a clean streak, per competency", async () => {
+    const { plan, attempts } = await playPerfectShift(MID, MID_CEILING);
+    expect(attempts.length).toBeGreaterThanOrEqual(4);
+
+    // Task 1 is the server's — drawn before anything was scored, so at the
+    // opening value — and the warm-up (index 0) never moves `d`.
+    expect(attempts[0].difficulty).toBe(plan.difficulty[attempts[0].competency]);
+
+    // Somewhere in the middle a task is generated ABOVE where the shift opened.
+    // Guaranteed rather than likely: both types appear, index 1's clean answer
+    // moves its competency, so by index 3 at the latest a task is drawn on a
+    // competency that has already risen.
+    const middle = attempts.slice(1, -1);
+    expect(middle.some((a) => (a.difficulty ?? 0) > plan.difficulty[a.competency])).toBe(true);
+
+    // And no task in that stretch is drawn BELOW the opening: a clean streak
+    // has nothing in it that should ever make the next task easier.
+    for (const attempt of middle) {
+      expect(attempt.difficulty).toBeGreaterThanOrEqual(plan.difficulty[attempt.competency]);
+    }
+  });
+
+  it("never lets a mid-shift task exceed the age band, even played perfectly", async () => {
+    const { attempts } = await playPerfectShift(LEVEL_1, LEVEL_1_CEILING);
+    for (const attempt of attempts) {
+      expect(attempt.difficulty).toBeLessThanOrEqual(LEVEL_1_CEILING);
+      expect(attempt.difficulty).toBeGreaterThanOrEqual(DIFFICULTY_MIN);
+    }
+  });
+
+  it("generates the CLOSING task easier — the shift ends on something they can do", async () => {
+    const { plan, attempts } = await playPerfectShift(MID, MID_CEILING);
+    const closing = attempts[attempts.length - 1];
+    // Below where the shift OPENED, not merely below its predecessor: after a
+    // perfect streak the fold has been climbing, so "lower than the last one"
+    // would pass on a relief of nearly zero.
+    expect(closing.difficulty).toBeLessThan(plan.difficulty[closing.competency]);
+    expect(closing.difficulty).toBeGreaterThanOrEqual(plan.difficulty[closing.competency] - FINAL_TASK_RELIEF);
+  });
+
+  it("scores each task against the competency it actually exercised", async () => {
+    // The positional join, from the adaptation side: a task's difficulty must be
+    // the one held for ITS type. Attribute a counting streak to `money` and the
+    // shift still looks fine — the child just gets the wrong tasks next time.
+    const { attempts } = await playPerfectShift(MID, MID_CEILING);
+    for (const attempt of attempts) {
+      expect(attempt.competency).toBe(attempt.task_type === "counting" ? "math" : "money");
+    }
   });
 });

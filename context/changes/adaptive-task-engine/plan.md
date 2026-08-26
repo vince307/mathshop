@@ -822,33 +822,33 @@ dropping the table and the column respectively.
 
 #### Automated
 
-- [x] 4.1 Sequence-equivalence test vs Phase 3 eager generation
-- [x] 4.2 No hydration warnings in the component suite
-- [x] 4.3 Full suite green
-- [x] 4.4 E2E green in both projects
-- [x] 4.5 Type checking and linting pass
+- [x] 4.1 Sequence-equivalence test vs Phase 3 eager generation — f248a04
+- [x] 4.2 No hydration warnings in the component suite — f248a04
+- [x] 4.3 Full suite green — f248a04
+- [x] 4.4 E2E green in both projects — f248a04
+- [x] 4.5 Type checking and linting pass — f248a04
 
 #### Manual
 
-- [x] 4.6 No hydration-mismatch error in the browser console; no task flash
-- [x] 4.7 Network killed mid-shift: play continues, offline halt only at save
+- [x] 4.6 No hydration-mismatch error in the browser console; no task flash — f248a04
+- [x] 4.7 Network killed mid-shift: play continues, offline halt only at save — f248a04
 
 ### Phase 5: Turn on adaptation
 
 #### Automated
 
-- [ ] 5.1 Server-recompute matches the client-side rule
-- [ ] 5.2 Client-supplied difficulty is ignored
-- [ ] 5.3 Route-level ceiling test
-- [ ] 5.4 Type-bias cap and both-types guarantee hold
-- [ ] 5.5 Full suite green
-- [ ] 5.6 E2E green in both projects
-- [ ] 5.7 Type checking and linting pass
+- [x] 5.1 Server-recompute matches the client-side rule
+- [x] 5.2 Client-supplied difficulty is ignored
+- [x] 5.3 Route-level ceiling test
+- [x] 5.4 Type-bias cap and both-types guarantee hold
+- [x] 5.5 Full suite green
+- [x] 5.6 E2E green in both projects
+- [x] 5.7 Type checking and linting pass
 
 #### Manual
 
-- [ ] 5.8 Perfect streak on a LEVEL-1 profile: numbers grow, closing task visibly easier
-- [ ] 5.9 Deliberate misses: numbers shrink, no rise immediately after a miss
-- [ ] 5.10 Level-1 profile never exceeds its band ceiling on a perfect streak
-- [ ] 5.11 Difficulty carries across two consecutive shifts
-- [ ] 5.12 Baseline re-measured
+- [x] 5.8 Perfect streak on a LEVEL-1 profile: numbers grow, closing task visibly easier
+- [x] 5.9 Deliberate misses: numbers shrink, no rise immediately after a miss
+- [x] 5.10 Level-1 profile never exceeds its band ceiling on a perfect streak
+- [x] 5.11 Difficulty carries across two consecutive shifts
+- [x] 5.12 Baseline re-measured
