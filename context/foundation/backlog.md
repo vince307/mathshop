@@ -37,13 +37,67 @@ invent it. `Parked` means a deliberate non-goal.
 
 ## Ready
 
-*Empty.* Both entries that were here — **H1 `autonomous-run-follow-ups`** and
-**A3 `remember-me-on-login`** — shipped on 2026-08-24; see `## Shipped` below.
+### R1 — `ship-matmaverse-v2-to-production` — **top priority, blocks everything**
 
-**Nothing in this file can go to `/10x-autonomous-run` today.** Everything under
-`## Needs shaping` needs `/10x-shape` → `/10x-prd` first, and the run skill refuses
-those by design: planning them would invent the product content that is
-deliberately missing. Refill this section before the next run.
+**Value:** everything built since the v3 re-baseline is invisible to real users, and
+**no telemetry can ever be collected until this ships**. **Migration: yes — three.**
+
+**[V] 2026-08-26.** `matmaverse-v2` is **103 commits ahead of `main`** and has never
+been pushed (there is no `origin/matmaverse-v2`). Production deploys from `main`.
+`npx supabase migration list --linked` against the hosted project (`mathshop`,
+`hozkukbsfdcrbszgdxbg`, `aws-1-eu-central-1`) shows the remote schema stops at
+`20260702120000` — exactly where `main`'s migration directory stops. The match is
+what makes "prod tracks `main`" verified rather than assumed.
+
+Absent from production:
+
+| migration | adds |
+| --- | --- |
+| `20260822120000_shift_log_add_earned` | `shift_log.earned` |
+| `20260825120000_create_task_attempt` | the whole telemetry table + its L-001 RLS contract |
+| `20260825130000_child_profiles_add_difficulty_state` | `child_profiles.difficulty_state` |
+
+**Nothing is currently broken** — `main`'s code never touches any of these, so old
+code against old schema is self-consistent. The risk is entirely in the transition.
+
+**The decision a planner would otherwise invent — ordering.** All three migrations
+are **additive** (a new table, two new columns), so they are safe to apply *before*
+the code deploy and are backward-compatible with the `main` code still running.
+That ordering is not optional: both telemetry writers swallow their errors by design
+(`appendShiftLog` explicitly, `appendTaskAttempts` by never inspecting the returned
+`{ error }`), so deploying the code first would make **every telemetry write fail in
+total silence**. `infrastructure.md` §Rollback also warns that migrations do not roll
+back with a deploy — so migrations first, deploy second, and no irreversible DB
+change coupled to a deploy that might be reverted.
+
+**Open questions for the maintainer, not for a planner:** whether to go through a PR
+into `main` or fast-forward; whether 103 unpushed commits want a squash or keep their
+history; and whether a preview deploy should be smoke-tested first (`vercel` gives one
+per push; Vercel Authentication should stay on so child surfaces are not publicly
+reachable pre-launch).
+
+**Related structural gap (separate, smaller change):** `.github/workflows/ci.yml`
+applies migrations only to a fresh **local** DB for the test gate (lines 47–48,
+89–90). **No step pushes migrations to the hosted project.** The three-migration
+drift found here is what that gap produces; it will produce the next one too.
+
+---
+
+**Everything else in this file still needs shaping.** The entries under
+`## Needs shaping` need `/10x-shape` → `/10x-prd` first, and the run skill refuses
+those by design: planning them would invent the product content that is deliberately
+missing.
+
+### Parked pending telemetry
+
+**P2 — curriculum (skill taxonomy + new task types).** Shaping was opened on
+2026-08-26 and **parked at Phase 1 by the maintainer**: *"collect data first, P2
+after telemetry."* `task_attempt` and `shift_log` hold 0 rows, so a competency
+taxonomy and an S-07 gate migration would be designed on arithmetic rather than
+evidence. Notes, the verified `## Current System`, and the resume condition are in
+`context/foundation/shape-notes-p2-curriculum.md`. **Blocked on R1** — until that
+ships, the row count cannot leave zero. Shaped to absorb backlog **B3
+`skill-path-screen`**, which is blocked on the same missing catalogue of modules.
 
 ---
 
