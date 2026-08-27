@@ -314,9 +314,6 @@ export const pl = {
     },
   },
 
-  // Upgrade catalog names (S-06). Keyed by upgrade id (`t.upgrades[id]`), so the
-  // catalog (src/data/upgrades.ts) carries no literal copy (L-003). Draft Polish —
-  // pending native-speaker review.
   // Decorations (E1 / D-11) — the renewing sink. Keyed by the globally unique,
   // world-prefixed decoration id from `src/data/decorations.ts`, so a world's set
   // can grow without touching another's. Every name says what the CHILD sees;
@@ -349,6 +346,9 @@ export const pl = {
     "laboratorium-atom": "Model atomu",
   },
 
+  // Upgrade catalog names (S-06). Keyed by upgrade id (`t.upgrades[id]`), so the
+  // catalog (src/data/upgrades.ts) carries no literal copy (L-003). Draft Polish —
+  // pending native-speaker review.
   upgrades: {
     sign: { name: "Szyld", desc: "Nowy szyld przyciąga wzrok." },
     shelf: { name: "Półka", desc: "Więcej miejsca na towar." },
