@@ -12,7 +12,15 @@ The codebase is the [10x-astro-starter](https://github.com/przeprogramowani/10x-
 
 The mockup sets directly under `assets/` are the **canonical UI/UX designs** — the binding source of truth for visual and layout decisions (screen structure, component placement, flow). When a feature has a matching mockup, build to the mockup, not to an improvised layout; the PRD governs behavior/copy, the mockups govern look-and-feel. Sets: `assets/matmaverse-auth-v2-{web,mobile}/` (login, register, **email-verification**, password-reset, **child-profile/avatar picker**, parent-PIN), `assets/matmaverse-ui-v2-{web,mobile}/` (world-selection, child-dashboard, change-mission, pricing-inventory, skill-path, parent-goals), and `assets/matmaverse-missing-screens-v3-{web,mobile}/` (world-progression, upgrades, mission-result, product-unlocked). Production-candidate art lives in `assets/atomic-assets-v2/` and `assets/atomic-assets-v3/` (manifests carry per-asset usage guidance); the screen↔function mapping is documented in `assets/app-docs-v2-llm-handoff/04_SCREENS_AND_DESIGN_MAPPING.md`.
 
-**Caveat — local only.** `assets/` is gitignored (it also holds minified vendor JS that broke `eslint`), so these designs are **not in the repo**: they live only on the maintainer's machine. A fresh clone, CI, or a cloud agent session will not have them. If the `assets/matmaverse-*` sets are absent, ask the maintainer to share the relevant mockup rather than guessing the layout.
+**Standing permission — take what a feature needs from `assets/`.** You do not need to ask before reading `assets/`, or before copying/converting an asset out of it into the repo. When a feature needs art that exists there, pull it in rather than improvising a placeholder or stopping to ask. Three rules make that safe:
+
+1. **Commit the asset, never the reference.** `assets/` is gitignored, so it is absent from a fresh clone, from CI, and from the git worktrees `/10x-autonomous-run` builds. **No code may resolve a path under `assets/`** — no import, `src=`, `fetch`, or filesystem read; it will resolve on the maintainer's machine and nowhere else. Copy or convert into committed `public/` and reference that. Naming an `assets/` path in a *comment*, to record where a committed file came from, is encouraged (see `src/data/stages.ts`).
+2. **Record where it came from** in `public/illustrations/slice-map.md` — the register of every asset pulled out of `assets/`, with its source path and the crop box or resize used, so the step is reproducible. Match the existing batch's dimensions and encoding unless you say why you didn't.
+3. **Pick from the manifests, don't guess.** `assets/atomic-assets-v{1,2,3}/manifest.json` carry `role` and `recommendedUse` per asset; `assets/app-docs-v2-llm-handoff/04_SCREENS_AND_DESIGN_MAPPING.md` maps screens to functions. Use them to choose the right asset instead of picking by filename.
+
+Never `git add assets/` and never un-gitignore it — it also holds minified vendor JS that broke `eslint`.
+
+**Caveat — local only.** These designs live only on the maintainer's machine. If `assets/` is absent (fresh clone, CI, cloud agent, worktree), the standing permission above cannot help: ask the maintainer to share the relevant mockup or to commit the asset, rather than guessing the layout or inventing a placeholder.
 
 ## Deployment
 
