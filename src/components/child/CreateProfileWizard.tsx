@@ -241,7 +241,13 @@ export default function CreateProfileWizard({ serverError }: Props) {
 
             <div>
               <Label className="text-foreground mb-3 block">{t.profileWizard.interestLabel}</Label>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
+              {/* `sm:grid-cols-3` (not 4) is chosen by the NO-ORPHAN-ROW rule at six
+                  worlds: 4 columns leaves a ragged 4+2 in the `sm`…`lg` band, 3
+                  gives a clean 3×2 there and 2×3 above and below. The `05`
+                  auth-v2 mockup would settle it and could not be consulted —
+                  `assets/` is gitignored and absent from this worktree — so this
+                  is an extrapolation and says so. */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2">
                 {WORLDS.map((w) => (
                   <SelectTile
                     key={w.slug}

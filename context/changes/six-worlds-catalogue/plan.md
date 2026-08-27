@@ -1098,25 +1098,25 @@ warrants — then this drops to Phase 2's manual pass and the handoff says so.
 
 #### Automated
 
-- [x] 1.1 `npm test` — branch baseline + new `tests/worlds-art.test.ts` cases; `tests/shop-art-slots.test.tsx` expected red (record which cases)
-- [x] 1.2 `npm run lint` exit 0
-- [x] 1.3 `npm run check` — 0 errors, 0 warnings
-- [x] 1.4 `tests/data-lookups.test.ts` and `tests/worlds-picker.test.tsx` green **unedited**
-- [x] 1.5 Deliberate break: wrong `image` stem → `tests/worlds-art.test.ts` red → restore green; meta-check recorded
+- [x] 1.1 `npm test` — branch baseline + new `tests/worlds-art.test.ts` cases; `tests/shop-art-slots.test.tsx` expected red (record which cases) — 8cec4c9
+- [x] 1.2 `npm run lint` exit 0 — 8cec4c9
+- [x] 1.3 `npm run check` — 0 errors, 0 warnings — 8cec4c9
+- [x] 1.4 `tests/data-lookups.test.ts` and `tests/worlds-picker.test.tsx` green **unedited** — 8cec4c9
+- [x] 1.5 Deliberate break: wrong `image` stem → `tests/worlds-art.test.ts` red → restore green; meta-check recorded — 8cec4c9
 
 #### Manual
 
 - [ ] 1.6 `/app/worlds` lists six tiles; both new plates load
-- [x] 1.7 L-007 two-direction substring sweep on *Pracownia* and *Laboratorium* over `src/i18n/pl.ts` and `src/data/*.ts` — no collision either way (re-run after F1's dictionary appends, do not inherit the plan-time check)
+- [x] 1.7 L-007 two-direction substring sweep on *Pracownia* and *Laboratorium* over `src/i18n/pl.ts` and `src/data/*.ts` — no collision either way (re-run after F1's dictionary appends, do not inherit the plan-time check) — 8cec4c9
 
 ### Phase 2: The two grids reflow and the comments that lied are rewritten
 
 #### Automated
 
-- [ ] 2.1 `npm test` — branch baseline + 0; `tests/worlds-picker.test.tsx` green unedited
-- [ ] 2.2 `npm run lint` exit 0
-- [ ] 2.3 `npm run check` — 0 errors, 0 warnings
-- [ ] 2.4 `grep`: no `WORLDS.map` grid carries `sm:grid-cols-4`; no header contains "Only FOUR worlds exist"
+- [x] 2.1 `npm test` — branch baseline + 0; `tests/worlds-picker.test.tsx` green unedited
+- [x] 2.2 `npm run lint` exit 0
+- [x] 2.3 `npm run check` — 0 errors, 0 warnings
+- [x] 2.4 `grep`: no `WORLDS.map` grid carries `sm:grid-cols-4`; no header contains "Only FOUR worlds exist"
 
 #### Manual
 
@@ -1128,17 +1128,17 @@ warrants — then this drops to Phase 2's manual pass and the handoff says so.
 
 #### Automated
 
-- [x] 3.1 `tests/shop-art-slots.test.tsx` — all five cases green over five tables
-- [x] 3.2 `npm test` — branch baseline + Phase 1 cases, 0 failures
-- [x] 3.3 `npm run lint` exit 0; `npm run check` 0 errors, 0 warnings
-- [x] 3.4 Deliberate break (a): delete `pracownia.sign` → id-coverage case red → restore
-- [x] 3.5 Deliberate break (b): delete the `laboratorium` table → per-world case red → restore; meta-check (prefix break proves nothing) recorded
+- [x] 3.1 `tests/shop-art-slots.test.tsx` — all five cases green over five tables — 8cec4c9
+- [x] 3.2 `npm test` — branch baseline + Phase 1 cases, 0 failures — 8cec4c9
+- [x] 3.3 `npm run lint` exit 0; `npm run check` 0 errors, 0 warnings — 8cec4c9
+- [x] 3.4 Deliberate break (a): delete `pracownia.sign` → id-coverage case red → restore — 8cec4c9
+- [x] 3.5 Deliberate break (b): delete the `laboratorium` table → per-world case red → restore; meta-check (prefix break proves nothing) recorded — 8cec4c9
 
 #### Manual
 
-- [x] 3.6 `/app/start` in Pracownia, all upgrades owned: no badge over a focal point
-- [x] 3.7 `/app/growth` in Laboratorium, all upgrades owned: no badge over a focal point
-- [x] 3.8 No badge clipped by the `aspect-[4/3]` box at either width
+- [x] 3.6 `/app/start` in Pracownia, all upgrades owned: no badge over a focal point — 8cec4c9
+- [x] 3.7 `/app/growth` in Laboratorium, all upgrades owned: no badge over a focal point — 8cec4c9
+- [x] 3.8 No badge clipped by the `aspect-[4/3]` box at either width — 8cec4c9
 
 ### Phase 4: Each new world's decoration set — CONDITIONAL on F1, droppable
 
@@ -1148,13 +1148,13 @@ warrants — then this drops to Phase 2's manual pass and the handoff says so.
 
 #### Automated
 
-- [x] 4.1 Gate: `src/data/decorations.ts` exists (guaranteed by the F1 branch point) — if absent, report **BLOCKED**; there is no `DROPPED` state for this phase *[contention sweep, CPD-4]*
-- [x] 4.2 Two world keys appended at F1's count and price curve; F1's four sets unedited
-- [x] 4.3 F1's invariant sweeps (no-trap / no-harm / no-dominance) pass over **all six** worlds
-- [x] 4.4 `npm test` — branch baseline + Phase 1 cases + F1's per-world sweeps
-- [x] 4.5 `npm run lint` exit 0; `npm run check` 0 errors, 0 warnings
-- [x] 4.6 L-007 substring sweep over `src/i18n/pl.ts` for every new decoration label, both directions
-- [x] 4.7 Deliberate break: remove one world's decoration set → F1's per-world sweep red → restore; if it stays green, report that F1's sweeps do not quantify over worlds
+- [x] 4.1 Gate: `src/data/decorations.ts` exists (guaranteed by the F1 branch point) — if absent, report **BLOCKED**; there is no `DROPPED` state for this phase *[contention sweep, CPD-4]* — 8cec4c9
+- [x] 4.2 Two world keys appended at F1's count and price curve; F1's four sets unedited — 8cec4c9
+- [x] 4.3 F1's invariant sweeps (no-trap / no-harm / no-dominance) pass over **all six** worlds — 8cec4c9
+- [x] 4.4 `npm test` — branch baseline + Phase 1 cases + F1's per-world sweeps — 8cec4c9
+- [x] 4.5 `npm run lint` exit 0; `npm run check` 0 errors, 0 warnings — 8cec4c9
+- [x] 4.6 L-007 substring sweep over `src/i18n/pl.ts` for every new decoration label, both directions — 8cec4c9
+- [x] 4.7 Deliberate break: remove one world's decoration set → F1's per-world sweep red → restore; if it stays green, report that F1's sweeps do not quantify over worlds — 8cec4c9
 
 #### Manual
 

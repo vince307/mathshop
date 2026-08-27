@@ -110,6 +110,11 @@ export const pl = {
         description: "Śledź rozwój, raporty i osiągnięcia w czasie rzeczywistym.",
       },
     ],
+    // A signed-out marketing SAMPLE, deliberately NOT a mirror of `WORLDS` — it
+    // stays at four while `WORLDS` carries six (W1). Nothing syncs the two and
+    // no test or e2e spec reads `marketing.*`, so growing this list is not free:
+    // `AuthShell.astro` renders it at `hidden grid-cols-4 … lg:grid` and would go
+    // ragged 4+2 on desktop, unnoticed. Grow it only together with that class.
     worlds: [
       { name: "Piekarnia", image: "/illustrations/world-piekarnia.webp" },
       { name: "Kawiarnia", image: "/illustrations/world-kawiarnia.webp" },
