@@ -37,269 +37,22 @@ invent it. `Parked` means a deliberate non-goal.
 
 ## Ready
 
-Two entries, from the world-economy shaping session closed 2026-08-27. Design:
-`docs/superpowers/specs/2026-08-27-world-economy-design.md`. Decisions and
-rejected alternatives: `context/foundation/shape-notes-world-economy.md` (D-1 …
-**D-13**).
+**Empty.** E1 and W1 — the two world-economy entries — shipped on 2026-08-27 and
+moved to `## Shipped` below. Nothing here is startable today, and that is a real
+state, not an oversight: `/10x-autonomous-run --top N` correctly finds nothing.
 
-**Both entries were revised on 2026-08-27**, after D-1…D-10 were benchmarked
-against the professional game-economy literature. The benchmark confirmed the
-structure and found three gaps: the wallet has no drain once the finite catalogue
-is empty (**D-11**), nothing verifies that neither branch dominates (**D-12**), and
-no model prices the economy before it ships (**D-13**). The spec carries all three.
+**What it would take to refill this section.** The three `## Needs shaping` entries
+each need FRs first, and they are blocked on one thing between them: **B2** needs a
+product entity *and* a new task type, which is **P2**; **B3** needs a catalogue of
+modules, which is also **P2**; **B5** is blocked on B2. P2 is parked on telemetry
+from real children. So the single unblocking move is not code — it is a supervised
+kid-testing session against the local build, which fills `task_attempt` and lets
+`report.sql` answer from evidence instead of arithmetic. The concrete resume
+condition is under `## Parked pending telemetry`.
 
-**Run them as one stack, E1 first.** Not because W1 depends on E1's mechanics —
-the copy fallback (D-3) deliberately decouples them — but because **both edit
-`src/i18n/pl.ts`**, and concurrent worktrees would collide there. E1 first also
-means W1 names eight catalogue entries once instead of six and then two more.
-
-### E1 — `world-economy-profit-rule`
-
-**Value / cost.** Turns a one-term economy with one purchasable effect into a
-profit rule with a decision in it — the thing PRD v3 FR-011 is built around and
-the shipped catalogue cannot express. Cost is concentrated in two pure modules
-(`src/data/upgrades.ts`, `src/data/shift.ts`) plus their two callers; the biggest
-single item is not code but the invariant sweep. **No new table, route, or RLS
-policy.**
-
-**Migration:** **no.** **[V]** 2026-08-27 — `shop_state.purchased` stays a flat
-global id list (`src/types.ts:98–107`) and gains an **optional sibling**
-`decorations?: string[]` in the same jsonb, exactly the precedent `purchasedMeta?`
-set, so every legacy `{}` and `{ purchased: [] }` row stays valid; the new effect
-fields live in the catalogue, which is code. `shift_log.earned` keeps its contract ("the amount
-added to the wallet") and needs no backfill: it starts recording profit, and
-every existing row is a shift whose cost was zero.
-
-The design, in one block:
-
-```
-revenue = (EARN_PER_TASK × quantityMargin) × taskCount
-        + (EARN_PER_CLEAN × accuracyMargin) × cleanCount
-cost    = shopRunningCost(investment ⊆ purchased)   // investment only — D-11
-profit  = max(0, revenue − cost)      // wallet += profit — NEVER a debit
-```
-
-Catalogue lands at **8 entries and stops**: 1 unlock (`sign`, re-cast as the gate
-to the margin branch) + 5 capacity (unchanged) + 2 margin (new).
-
-Beside it, a **second, non-catalogue list: per-world decorations** (D-11). Zero
-economic effect by construction, so they stay out of `investment`, out of
-`purchased`, and out of FR-010's 5–8 bound — FR-012 defines an upgrade as visible
-**and** functional, and a decoration is visible only. They are the wallet's sink,
-and it **renews per world**. Without them the wallet has no drain at all once the
-catalogue empties, which happens in the band **~7–25 shifts** (**[V]** arithmetic
-below) — after which FR-013 has no next upgrade to name and the results progress
-card degrades to `null`.
-
-**Verified claims** — all **[V]** 2026-08-27, read from source:
-
-- `earningsForShift(taskCount, cleanCount)` has **two** terms already, not one:
-  `EARN_PER_TASK = 5` (quantity) and `EARN_PER_CLEAN = 3` (accuracy, paid only
-  for miss-free tasks) — `src/data/shift.ts:44–47, 288–290`.
-- The five capacity entries carry `extraTasks: 1` each and `MAX_BONUS_TASKS = 5`,
-  so they sum to **exactly** the cap — `src/data/upgrades.ts`. A sixth capacity
-  entry would be an effect-less purchase.
-- FR-010 bounds the catalogue at **5–8 entries** (`prd-v3.md:106`); 6 exist, so
-  there are exactly two free slots.
-- `canBuy`'s rung order is fixed and documented, with the property that *"an
-  owned upgrade is NEVER retro-locked by a later rung"*, pinned at
-  `tests/upgrades.test.ts:115`. The new `requiredUpgrade` rung must inherit it.
-- `ShiftScreen` **already receives `purchased`** (`ShiftScreen.tsx:41,72`;
-  `task.astro:29,84`) — the island needs no new prop and `task.astro` likely
-  needs no change at all.
-- `src/data/shift.ts` does **not** import `src/data/upgrades.ts`, and
-  `MAX_SHIFT_TASKS`'s header explains why a derived cap was rejected there.
-  Spec §8 keeps it that way via a value-object seam; reversing it silently would
-  undo recorded reasoning.
-- FR-008 (`prd-v3.md:102`) forbids reducing funds outside a purchase. The design
-  clears it **only** because cost applies to a shift's revenue, never to the
-  wallet, and `profit ≥ 0`. `wallet -= rent` breaks FR-008; `wallet += max(0,
-  revenue − cost)` does not. **Reject a wallet debit on FR-008 grounds.**
-- Existing test surface to update: `earningsForShift` is asserted in
-  `tests/shift.test.ts:170–179` and at five places in
-  `tests/shifts-complete.test.ts`.
-- **The catalogue empties in ~7–25 shifts.** Total cost **850 zł**
-  (`src/data/upgrades.ts`); a shift returns **40–56 zł** early and **112–136 zł**
-  at full capacity (`shift.ts:45–47,289`, `adaptive.ts:236–238`, `shift.ts:85`).
-  `max(requiredWorldLevel) = 3` and `businessLevelForShifts(n) = 1 + ⌊n/3⌋`
-  (`shift.ts:302–304`), so the world-level gate is spent on shift **6** —
-  **affordability is the real pacing gate and nothing measures it.**
-- Nothing in the app decreases `wallet_balance` except `buyUpgrade` (full read of
-  every `wallet` site in `src/`), and `nextInfo` is `null` when no eligible
-  unowned entry exists (`ShiftScreen.tsx:131–132`, `ShiftResults.tsx:15`).
-- **The shipped catalogue already misses its own PRD pacing signal.**
-  `prd-v3.md:62` wants a first purchase within ~3 shifts; `sign` costs 30 zł
-  against a 40–56 zł first shift, so it lands on shift **1**. Nothing computes it.
-- **`ShopArt` already composites per-id overlays** with per-world slot overrides
-  and a documented corner-row fallback for unslotted ids
-  (`src/components/child/ShopArt.tsx`) — decorations need **no new UI system**.
-- **No decoration art exists.** All three manifests (`atomic-assets-v1/v2/v3`)
-  searched for `decor`/`plant`/`poster`/`lamp`/`banner`/`flower`/`sticker`/
-  `cosmetic`: zero asset hits. This is `6 × N` assets from scratch, and it is the
-  single largest new cost this entry carries.
-- **The "nothing left to buy" state already ships, and it is not the endgame.**
-  `e2e/growth.spec.ts:122` (*Risk E2E-F4-3*) seeds `purchased: ["sign","shelf"]` at
-  `business_level 1` and asserts the `t.growth.noNextUpgrade` copy, with the test's
-  own comment recording why: those are the only two entries at
-  `requiredWorldLevel 1`, so **"that is 90 zł of ordinary early play, not a terminal
-  edge case — it recurs at every level boundary."** D-11's sink therefore fixes the
-  *recurring* empty-shop state, not only the terminal one — a stronger case for it
-  than the endgame arithmetic alone.
-  **This is a regression E1 must handle deliberately.** Once decorations are always
-  buyable at price-only gating, that seeding strategy no longer produces an empty
-  shop, and the test goes red. Do **not** delete the assertion: `noNextUpgrade` still
-  has to exist for the case where a world's decorations are also exhausted. Re-seed
-  the state instead (own the level-1 catalogue entries **and** the world's
-  decorations), and keep the surrounding property the test was written to protect —
-  the shop CTA survives the empty state, because `/app/growth` is the only entrance
-  to the shop.
-- **`scripts/telemetry-harness/child-model.ts` already defines the child model**
-  the pacing deliverable needs — `ChildModel { pBaseline, dropAtCeiling }`,
-  deterministic mulberry32, three swept cohorts. Consume it; do not write a second
-  assumption file.
-
-**Inherited, re-check before planning:** nothing. Every claim above was read from
-source during shaping.
-
-**Three invariants, not one — the headline deliverable.**
-
-1. **No-trap (investment)** — `∀ u ∉ investment : profit(investment ∪ {u}) >
-   profit(investment)`, swept over all ≤2⁸ subsets × a grid of `d ∈ [0,1]`.
-2. **No-harm (non-investment)** — owning a decoration leaves `profit` unchanged,
-   and no decoration id ever reaches `shopRunningCost`. This clause is what makes
-   D-11's split safe; without it a decoration violates no-trap by giving equality.
-3. **No-dominance** (D-12) — over **reachable** states only, neither branch's best
-   marginal profit-per-złoty exceeds the other's by more than `DOMINANCE_FLOOR`
-   (first guess 0.6). Reachability is a BFS over the subset lattice under the
-   gates, and **naming that filter is part of the deliverable** — sweeping all 2⁸
-   here produces false alarms on states no child can occupy. Without this
-   invariant the capacity-vs-margin tension the whole tranche is built on may
-   simply not exist, and nothing would say so.
-
-**The reference shift is no longer an open decision.** It was: `profit` is not a
-single number, because shift length depends on `d` (`src/data/shift.ts:56–86`).
-**D-13's pacing model derives it** — see the next paragraph — so a planner neither
-invents it nor leaves it implicit.
-
-**Also a deliverable — the pacing model (D-13).** A pure simulation of `N` shifts
-per cohort, importing `src/data/*` (never a spreadsheet beside the repo — that
-drifts the moment a constant moves) and consuming the existing
-`scripts/telemetry-harness/child-model.ts`. It produces the purchase timeline, a
-**"cost in tasks solved"** figure for every catalogue entry and decoration (the
-right price unit here is mathematics, not play time), a test asserting
-`prd-v3.md:62`'s pacing signal, and the reference shift above. Its output carries
-the harness's own caveat: it says how the **economy** responds to a class of
-player, not what a real child does.
-
-**Open decision the planner must NOT invent — how a decoration renders with no art.**
-D-11 adds per-world decorations, and **no decoration art exists** (see the verified
-claims above). An unattended run cannot produce art and cannot reach `assets/`,
-which is gitignored and therefore absent from the worktrees the run builds. Do
-**not** stop on this and do **not** invent a placeholder file. **The repo already
-has a sanctioned answer to exactly this situation, and it is a deliberate,
-documented deviation rather than a workaround:** `src/data/stages.ts` faced the same
-problem — the mockup wanted per-stage art that existed for zero worlds — and
-resolved it by giving `Stage` **no `art` field at all**, rendering with lucide icons
-plus the app's own design tokens, and recording the art upgrade path in the module
-header. **[V]** `src/data/stages.ts:17–31`, `ShopArt.tsx`'s per-stage art seam.
-
-Follow that precedent: `Decoration` carries `art?: string`, unset in the first
-batch; decorations render from lucide + design tokens through `ShopArt`'s documented
-corner-row fallback; and the module header records the upgrade path the same way
-`stages.ts` does. That keeps the economy — which is what E1 is actually about —
-independent of an art batch that has to be commissioned. Pick this deliberately and
-record it; a planner choosing differently would either block the run or commit a
-placeholder asset.
-
-**Also open, but tuning** — the repo convention is "first-guess defaults, adjust
-after kid-testing", **narrowed by the pacing model**: what arithmetic can settle is
-settled before kid-testing, and kid-testing keeps only what children alone can
-answer (above all whether the accuracy margin reads as *reward for precision* or as
-*punishment for being a beginner*). These do not block: `shopRunningCost`'s curve
-shape and weights (**check it against the compounding case, capacity ×
-quantity-margin, not the base case**), the two margin values and entry costs, which
-competency each margin gates on, how many decorations per world and their price
-curve (rising within a world, or flat with the cross-world renewal doing the work),
-decoration slot positions or the corner-row fallback, `DOMINANCE_FLOOR` (a *policy*
-number the model measures against but does not decide), and whether
-`earningsForShift` is retained as `revenue` or replaced outright.
-
-### W1 — `six-worlds-catalogue`
-
-**Value / cost.** Closes the PRD-v3-assumes-six / code-has-four gap. **The cost
-dropped twice.** It was filed as "art plus per-world copy", implying an art task
-nobody could start; shaping found the source art already existed locally, and it
-has since been converted and committed. What is left is code: two entries in
-`WORLDS`, two i18n names, and whatever vocabulary the open decision below
-settles.
-
-**Migration:** **no.** **[V]** 2026-08-27 — `child_profiles.theme` is
-`text not null default 'default'` with **no CHECK constraint**
-(`supabase/migrations/20260609120000_child_profiles_isolation.sql:55`).
-Validation is app-layer only, against `WORLD_SLUGS` derived from `WORLDS`
-(`src/data/worlds.ts`), so adding worlds only widens a zod enum.
-
-**Verified claims** — **[V]** 2026-08-27:
-
-- `assets/atomic-assets-v2/png/worlds/` holds **six** world-card illustrations.
-  Four are shipped; the two that are not are `creative-studio-world.png` and
-  `invention-lab-world.png`, both tagged `"role": "world-card-illustration"` in
-  `assets/atomic-assets-v2/manifest.json`, themes *"creative studio"* and
-  *"invention lab"*.
-- `public/illustrations/` now holds **six** `world-*.webp`, all 896×718 with alpha.
-  The earlier four were crops of a mockup sheet; the two W1 ones are whole
-  illustrations, resized. Provenance for both batches is in
-  `public/illustrations/slice-map.md`.
-- Adding a world touches `src/data/worlds.ts`, `src/i18n/pl.ts`,
-  `WorldPicker.tsx` and `CreateProfileWizard.tsx` — all of which already iterate
-  `WORLDS` rather than hardcoding four.
-- Under D-3 a world also supplies its own **vocabulary** for catalogue entries,
-  resolved as `t.worlds[slug].upgrades[id] ?? t.upgrades[id]`. **The fallback is
-  mandatory**, and it is what makes vocabulary optional per world — so W1 can
-  ship the two worlds without writing 6 × 8 strings, and grow into them.
-
-**~~MANUAL PRECONDITION~~ — resolved 2026-08-27, before the run.** The art and
-the names were the two things `/10x-autonomous-run` could not produce for itself:
-`assets/` is gitignored (`.gitignore:37`) and therefore absent from the worktrees
-the run builds, and the names are product content. Both are now settled and
-committed, so **W1 needs no manual step at run time**:
-
-| Slug | Name | Art (committed) | Source |
-| ---- | ---- | --------------- | ------ |
-| `pracownia` | Pracownia | `public/illustrations/world-pracownia.webp` | `creative-studio-world.png` |
-| `laboratorium` | Laboratorium | `public/illustrations/world-laboratorium.webp` | `invention-lab-world.png` |
-
-Single-word names follow the `kawiarnia` / `piekarnia` precedent, and carry no
-diacritics, so slug and filename stem need no transliteration. **These three
-values — slug, filename stem, and `child_profiles.theme` value — must stay
-identical.** Renaming after profiles exist is a data change, not a copy change;
-see the precedent recorded in `src/data/worlds.ts`, where the `05` mockup labels
-the fourth world "Sklep kolekcjonera" while the committed art and slug are
-`sklep-ksiegarnia`, reconciled to a single name↔slug↔art.
-
-**Revised 2026-08-27 (D-11) — a world now owns one thing outright.** Beyond name,
-art and vocabulary, a world supplies its **own decoration set**: the wallet's sink,
-which renews when the child changes world. This is the first thing that makes six
-worlds mechanically worth having, and it grants no world an economic advantage —
-a decoration has zero economic effect by construction, so D-3's rejection of
-per-world economies is untouched and `pl.ts:204–205` stays literally true (the
-*shop* and its *upgrades* still carry over; the decoration **set** is what is
-world-local).
-
-**The art cost W1 does not yet carry.** Its world-card art is done, but **no
-decoration art exists** — all three manifests (`atomic-assets-v1/v2/v3`) searched
-for `decor`/`plant`/`poster`/`lamp`/`banner`/`flower`/`sticker`/`cosmetic`: zero
-asset hits **[V]** 2026-08-27. This is `6 × N` assets from scratch and it **cannot
-be pulled out of `assets/`**, so unlike the world art it is *not* something the run
-can be handed. Two mitigations, both already in the code: `ShopArt`'s documented
-corner-row fallback for unslotted ids lets decorations ship one at a time, and the
-copy fallback does the same for their names.
-
-**The two open decisions left:** (1) whether W1 also writes per-world catalogue
-vocabulary (6 × 8 strings) or ships on the neutral fallback and adds vocabulary
-later; (2) how many decorations each world gets in the first batch, given that the
-art does not exist yet. Both fallbacks exist precisely so these are choices; make
-them explicitly, because a planner will otherwise assume one.
+The nearest startable work is the follow-ups E1 and W1 left open — enumerated in
+their `## Shipped` entries below. Real work, but a small change each, not a tranche
+and not a run.
 
 ---
 
@@ -354,6 +107,76 @@ a real structural defect and remains one); it tempers the urgency behind it.
 ---
 
 ## Shipped
+
+### E1 — `world-economy-profit-rule` — 2026-08-27
+**The economy gained a decision.** A shift now pays
+`profit = max(0, revenue − cost)`, where `cost = shopRunningCost(investment ⊆
+purchased)`. The wallet is credited profit and is **never debited** — which is
+exactly what clears FR-008, and why a `wallet -= rent` design was rejected rather
+than escalated to a PRD change. The catalogue closed at **eight** entries (1 unlock
++ 5 capacity + 2 margin) and stops there; a second, non-catalogue list of **24
+decorations, four per world at 40/80/140/220 zł** became the wallet's renewing sink
+(D-11), living in the optional `shop_state.decorations` sibling and never in
+`purchased`, so a decoration can never reach `shopRunningCost` or `canBuy`.
+
+Branch `feat/world-economy-profit-rule`, 6 commits, 33 code files, +3183/−70,
+**no migration**, `MERGE: CLEAR` (0 critical, 3 warnings). Landed on `matmaverse-v2`
+via `run/2026-08-27-world-economy`, merge commit `c333f36`. Run journal:
+`context/runs/2026-08-27-world-economy/` (untracked, by policy). **Not yet
+archived** — change folder still at `context/changes/world-economy-profit-rule/`.
+
+**The headline deliverable was not the code.** Three invariants are machine facts in
+`tests/economy-invariants.test.ts` — no-trap, no-harm, and D-12's no-dominance over
+**reachable** states only — alongside D-13's pacing model
+(`scripts/telemetry-harness/pacing.ts`), which derives the reference shift instead of
+leaving it implicit and prices every entry in **tasks solved**.
+
+**Two decisions taken autonomously, both with reversal conditions recorded.**
+Decorations render with **no art**: `Decoration.art?: string` unset in the first
+batch, lucide glyphs plus design tokens through `ShopArt`'s corner-row fallback, and
+the art upgrade path recorded in the module header — the `src/data/stages.ts`
+precedent, chosen over committing a placeholder asset. Four decorations per world
+rather than two or eight, because the recurring level-boundary empty state needs
+something buyable in each ~3-shift band while the eventual art debt is
+`worlds × count`.
+
+**Left open:** four follow-ups in
+`context/changes/world-economy-profit-rule/follow-ups/review-fixes.md`. Sharpest is
+**RF-1** — the dominance sweep judges a branch by its **best** entry, so raising
+`precision.cost` to 400 leaves all six invariant cases green. The instrument meant to
+guard D-12 has a hole in it. Also five human-checklist items that need the app
+running, and a native-speaker pass on 24 decoration names authored unattended.
+
+### W1 — `six-worlds-catalogue` — 2026-08-27
+Closed the PRD-v3-assumes-six / code-has-four gap. **Pracownia** and **Laboratorium**
+joined `WORLDS`, both world grids reflow at six, two new `WORLD_SLOTS` tables landed,
+and each world now carries **its own decoration set** — the first thing that makes
+six worlds mechanically worth having. It grants no world an economic advantage,
+because a decoration has zero economic effect by construction, so D-3's rejection of
+per-world economies is untouched.
+
+Branch `feat/six-worlds-catalogue` (cut from `feat/world-economy-profit-rule`, so the
+two were one serial stack), 5 commits, 10 code files, +265/−7, **no migration**,
+`MERGE: CLEAR` (0 critical, 3 warnings). Landed via `run/2026-08-27-world-economy`,
+merge commit `d27bfb3`. **Not yet archived** — change folder still at
+`context/changes/six-worlds-catalogue/`.
+
+**The open decision went the cheap way.** W1 ships on the neutral copy fallback
+(`t.worlds[slug].upgrades[id] ?? t.upgrades[id]`) rather than writing 6 × 8 per-world
+catalogue strings. *Reversal:* write a world's vocabulary when its framing actually
+reads wrong to a child — the fallback exists so this is a choice, and the strings can
+be added one world at a time instead of as a batch of 48.
+
+**Left open — and this one is USER-VISIBLE.** `t.marketing.worlds`
+(`src/i18n/pl.ts:118`) is a hand-maintained duplicate of `WORLDS` that nothing syncs
+and no test covers, rendered in **two** places: `AuthShell.astro:79` and
+`Welcome.astro:83`. **The signed-out product still advertises four worlds while the
+app ships six.** Both art files are already committed, so the fix is two dictionary
+entries — but do it together with `AuthShell`'s `grid-cols-4`, or the desktop strip
+goes ragged 4+2. Six further follow-ups in
+`context/changes/six-worlds-catalogue/follow-ups/review-fixes.md`; the next sharpest
+is **W1-F3**, whose badge-placement evidence for the two new `WORLD_SLOTS` tables is
+not reproducible because the probe was deleted.
 
 ### H1 — `autonomous-run-follow-ups` — 2026-08-24
 Ten triaged follow-ups from the 2026-08-22 run. Branch `feat/autonomous-run-follow-ups`,
