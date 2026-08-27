@@ -38,11 +38,11 @@ import {
   MAX_SHIFT_TASKS,
   businessLevelForShifts,
   createShiftSource,
-  earningsForShift,
   lengthDifficulty,
   planShift,
+  profitForShift,
 } from "@/data/shift";
-import { UPGRADES, canBuy, shiftBonusTasks } from "@/data/upgrades";
+import { UPGRADES, canBuy, shiftBonusTasks, shopEffects } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { SkillState } from "@/types";
 import { type ChildModel, MISS_MODEL, missesThisTask, rng } from "./child-model";
@@ -63,15 +63,19 @@ export function referenceShift(d: number, bonus: number): { taskCount: number; c
 }
 
 /**
- * What one reference shift pays a shop owning `purchased`.
+ * What one reference shift pays a shop owning `purchased` — revenue, cost and
+ * the profit the wallet actually receives (E1's `profit = max(0, revenue - cost)`).
  *
- * **This is the seam the profit rule lands on.** In this phase it is revenue at
- * margin 1; once `profitForShift` exists it becomes profit, and every consumer
- * here (the timeline, `costInTasks`, the idle-wallet check) follows without
- * edits. Keep it as the module's single payout call site for exactly that reason.
+ * The module's SINGLE payout call site on purpose: the timeline, `costInTasks`
+ * and the idle-wallet check all read it, so the pacing model can never disagree
+ * with the rule the wallet is credited by.
  */
-export function shiftPayout(_purchased: string[], taskCount: number, cleanCount: number): number {
-  return earningsForShift(taskCount, cleanCount);
+export function shiftPayout(
+  purchased: string[],
+  taskCount: number,
+  cleanCount: number,
+): { revenue: number; cost: number; profit: number } {
+  return profitForShift(taskCount, cleanCount, shopEffects(purchased));
 }
 
 /**
@@ -82,9 +86,9 @@ export function shiftPayout(_purchased: string[], taskCount: number, cleanCount:
  */
 export function costInTasks(price: number, purchased: string[], d: number): number {
   const { taskCount, cleanCount } = referenceShift(d, shiftBonusTasks(purchased));
-  const payout = shiftPayout(purchased, taskCount, cleanCount);
-  if (payout <= 0 || taskCount <= 0) return Infinity;
-  return Math.ceil(price / (payout / taskCount));
+  const { profit } = shiftPayout(purchased, taskCount, cleanCount);
+  if (profit <= 0 || taskCount <= 0) return Infinity;
+  return Math.ceil(price / (profit / taskCount));
 }
 
 /** One purchase the simulated player made, and when. */
@@ -196,8 +200,7 @@ export function simulatePurchases(
 
     const taskCount = plan.length;
     const cleanCount = scored.filter((task) => task.firstTry).length;
-    const revenue = shiftPayout(purchased, taskCount, cleanCount);
-    const profit = revenue;
+    const { revenue, cost, profit } = shiftPayout(purchased, taskCount, cleanCount);
     wallet += profit;
     completedShifts += 1;
     difficulty = running;
@@ -249,7 +252,7 @@ export function simulatePurchases(
       taskCount,
       cleanCount,
       revenue,
-      cost: revenue - profit,
+      cost,
       profit,
       walletAfter: wallet,
       bought,

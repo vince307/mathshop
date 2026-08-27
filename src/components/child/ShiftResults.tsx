@@ -6,7 +6,12 @@ import { cn } from "@/lib/utils";
 import { t, upgradeCopy } from "@/i18n";
 
 interface ShiftResultsProps {
+  /** The wallet payout — the server's `profit`. */
   earned: number;
+  /** What the shift took in, before the shop's running cost (E1). */
+  revenue: number;
+  /** The shop's running cost for this shift. 0 hides the whole breakdown — see below. */
+  cost: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
   /** True when the child can now afford an upgrade — shows a gentle, factual nudge (S-06). */
@@ -24,7 +29,15 @@ interface ShiftResultsProps {
  * honest gap to the next upgrade (no urgency). Warm at every level — a 0-star
  * result still pays out and never reads as "game over".
  */
-export default function ShiftResults({ earned, stars, leveledUp, canUpgrade, nextInfo }: ShiftResultsProps) {
+export default function ShiftResults({
+  earned,
+  revenue,
+  cost,
+  stars,
+  leveledUp,
+  canUpgrade,
+  nextInfo,
+}: ShiftResultsProps) {
   const starCopy = [t.results.star0, t.results.star1, t.results.star2, t.results.star3][stars];
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 text-center">
@@ -59,6 +72,34 @@ export default function ShiftResults({ earned, stars, leveledUp, canUpgrade, nex
             <p className="text-foreground text-sm font-bold">{starCopy}</p>
           </div>
         </div>
+
+        {/*
+          The profit breakdown (E1 / D-11) — przychód − koszt = zysk, the ONLY
+          place a second arithmetic operation enters the economy, so it is the
+          lesson rather than decoration on it.
+
+          Rendered only when the shop HAS a running cost. At cost 0 the three
+          numbers would read "40, 0, 40": a subtraction a child has not yet caused
+          and cannot act on, and two identical figures beside the payout they
+          already see. It appears the shift after the first earning upgrade is
+          bought, which is exactly when the child made the decision it explains.
+        */}
+        {cost > 0 && (
+          <div className={childCard("2xl", "flex w-full flex-col gap-1 p-4 text-left")}>
+            <p className="text-muted-foreground text-xs font-bold tracking-wide uppercase">
+              {t.results.breakdownHeading}
+            </p>
+            <p className="text-foreground text-sm font-semibold">
+              {t.results.revenueLabel.replace("{revenue}", String(revenue))}
+            </p>
+            <p className="text-muted-foreground text-sm font-semibold">
+              {t.results.costLabel.replace("{cost}", String(cost))}
+            </p>
+            <p className="text-foreground font-extrabold">
+              {t.results.profitLabel.replace("{profit}", String(earned))}
+            </p>
+          </div>
+        )}
 
         {leveledUp && <p className="text-primary font-bold">{t.results.levelUp}</p>}
       </div>

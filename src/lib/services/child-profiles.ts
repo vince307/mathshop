@@ -1,10 +1,10 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState, SkillState } from "@/types";
 import { ceilingForLevel, foldShiftOutcomes, readDifficultyState, type DifficultyState } from "@/data/adaptive";
-import { businessLevelForShifts, earningsForShift } from "@/data/shift";
+import { businessLevelForShifts, profitForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import type { TaskAttempt } from "@/data/attempts";
-import { type BuyReason, canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
+import { type BuyReason, canBuy, getUpgrade, readPurchased, shopEffects } from "@/data/upgrades";
 import { worldForTheme } from "@/data/worlds";
 
 export { deriveStartingLevel } from "@/data/leveling";
@@ -159,7 +159,8 @@ export async function updateChildProfileTheme(
  * is swallowed. `account_id` comes from the RLS-verified profile row, never from
  * client input (L-002); the INSERT `with check` policy is the backstop.
  *
- * `earned` is the server-computed payout for a SHIFT (`earningsForShift`), and is
+ * `earned` is the server-computed payout for a SHIFT (`profitForShift`'s `profit`
+ * since E1 — the wallet delta, cost already applied to revenue), and is
  * omitted — i.e. stored as `null` — for a purchase event and for any caller that
  * has no payout to record. `null` therefore reads as "unknown / not a shift", never
  * as "earned nothing" (F4). Because this insert is best effort, `sum(earned)` is a
@@ -205,15 +206,29 @@ async function appendTaskAttempts(
 }
 
 export interface ShiftResult {
+  /**
+   * The amount added to the wallet. Under the profit rule (E1) this **is**
+   * `profit`, and the two fields are equal by construction. `earned` is kept as
+   * the wallet-delta name so `shift_log.earned`'s documented contract ("the
+   * amount added to the wallet") stays literally true with no backfill: every
+   * pre-E1 row is a shift whose cost was zero.
+   */
   earned: number;
+  /** What the shift took in, before the shop's running cost. */
+  revenue: number;
+  /** The shop's running cost for this shift — applied to revenue, NEVER to the wallet. */
+  cost: number;
+  /** `max(0, revenue - cost)` — equal to `earned`. */
+  profit: number;
   businessLevel: number;
   leveledUp: boolean;
 }
 
 /**
- * Persist a completed shift onto the parent's own profile (S-04/S-05). Wallet
- * earnings are recomputed server-side from the reported accuracy (`earningsForShift`),
- * so the client never supplies an amount — it cannot inflate the wallet. The row
+ * Persist a completed shift onto the parent's own profile (S-04/S-05). The wallet
+ * delta is recomputed server-side from the reported accuracy AND the trusted
+ * row's `shop_state` (`profitForShift` over `shopEffects`), so the client never
+ * supplies an amount and cannot claim a margin it has not bought. The row
  * is reached by `id` and the F-01 `child_profiles_update_own` RLS policy gates
  * ownership (a non-owner read returns no row, a non-owner update affects 0 rows);
  * `account_id` is NEVER taken from the caller (L-002). The per-competency `skills`
@@ -235,7 +250,18 @@ export async function recordShiftResult(
   const current = (data[0] as ChildProfile | undefined) ?? null;
   if (!current) return { error: new Error("profile not found") };
 
-  const earned = earningsForShift(shift.taskCount, shift.cleanCount);
+  // The profit rule, computed from the TRUSTED row's `shop_state` (E1). A client
+  // cannot claim a margin it has not bought, because the effects are resolved
+  // here from what the database says the child owns.
+  const { revenue, cost, profit } = profitForShift(
+    shift.taskCount,
+    shift.cleanCount,
+    shopEffects(readPurchased(current.shop_state)),
+  );
+  // The wallet only ever GROWS on this path (FR-008): `profit` is clamped at 0,
+  // so a costly shop can pay nothing but can never take anything away. Never
+  // reach for `wallet - cost` here.
+  const earned = profit;
   const newCount = current.completed_shift_count + 1;
   const businessLevel = businessLevelForShifts(newCount);
   const skillState = addSkillDelta(readSkillState(current.skill_state), shift.skills);
@@ -276,7 +302,7 @@ export async function recordShiftResult(
   // Per-task telemetry (P1) — same owner source, same best-effort posture.
   await appendTaskAttempts(client, { accountId: current.account_id, profileId, attempts: shift.attempts });
 
-  return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
+  return { earned, revenue, cost, profit, businessLevel, leveledUp: businessLevel > current.business_level };
 }
 
 /** Why a buy could not proceed. `not-found` = the row isn't readable/owned (RLS). */

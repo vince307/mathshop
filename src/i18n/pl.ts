@@ -432,6 +432,14 @@ export const pl = {
     // (no FOMO/urgency — guardrail).
     upgradesNudge: "Masz dość, żeby coś kupić do sklepu!",
     upgradesNudgeLink: "Zobacz ulepszenia",
+    // The profit breakdown (E1): przychód − koszt = zysk. Shown ONLY when the shop
+    // actually has a running cost, so a child on their first shift is never handed
+    // a subtraction they could not yet have caused. `earnedLabel` above still names
+    // the wallet payout and is the number the wallet actually receives.
+    breakdownHeading: "Rachunek zmiany",
+    revenueLabel: "Przychód: {revenue} zł",
+    costLabel: "Koszt sklepu: {cost} zł",
+    profitLabel: "Zysk: {profit} zł",
   },
 
   // Parent-PIN gate (S-07 / FR-016). A soft gate over the session protecting the

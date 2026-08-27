@@ -130,9 +130,16 @@ export const POST: APIRoute = async (context) => {
   });
   if ("error" in result) return json(500, { ok: false });
 
+  // The three economy numbers ship together (E1). `earned` stays the wallet delta
+  // the island credits; `revenue`/`cost` exist so the results screen can SHOW the
+  // subtraction rather than recompute it — a client that recomputes drifts the
+  // moment margins differ from the server's view of what the child owns.
   return json(200, {
     ok: true,
     earned: result.earned,
+    revenue: result.revenue,
+    cost: result.cost,
+    profit: result.profit,
     businessLevel: result.businessLevel,
     leveledUp: result.leveledUp,
   });

@@ -7,7 +7,7 @@ import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
-import { earningsForShift, starsForShift, type ShiftPlan } from "@/data/shift";
+import { starsForShift, type ShiftPlan } from "@/data/shift";
 import { useShiftEngine } from "@/components/hooks/useShiftEngine";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,12 @@ interface ShiftScreenProps {
 type Phase = "playing" | "saving" | "results" | "error";
 
 interface Outcome {
+  /** The wallet delta — the SERVER's `profit`, never a locally recomputed number. */
   earned: number;
+  /** What the shift took in, before the shop's running cost (E1). */
+  revenue: number;
+  /** The shop's running cost for this shift; 0 until something with a cost is owned. */
+  cost: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
   /** Whether the post-shift wallet can afford an upgrade — drives the results nudge. */
@@ -89,7 +94,6 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
 
     const taskCount = results.length;
     const cleanCount = results.filter((r) => r.firstTry).length;
-    const earned = earningsForShift(taskCount, cleanCount);
     const stars = starsForShift(taskCount, cleanCount);
 
     // Per-competency skill delta (S-07): pair each task's type with its outcome.
@@ -124,13 +128,34 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
           setPhase("error");
           return;
         }
-        const data = (await res.json()) as { leveledUp: boolean; businessLevel: number };
+        // The payout is the SERVER's, not a local recomputation (E1). The island
+        // used to call `earningsForShift` here; under the profit rule that number
+        // is revenue, so displaying it would have shown a figure the wallet never
+        // received — and nothing would have failed. There is no optimistic
+        // pre-response render to preserve: the old local value was bound inside
+        // this very `useEffect` and read only after the response resolved.
+        const data = (await res.json()) as {
+          leveledUp: boolean;
+          businessLevel: number;
+          revenue: number;
+          cost: number;
+          profit: number;
+        };
+        const earned = data.profit;
         // Post-shift affordability: does the new wallet cover the cheapest
         // level-eligible unowned upgrade? Drives the (factual) results nudge.
         const next = nextUpgrade({ businessLevel: data.businessLevel, purchased });
         const canUpgrade = next !== null && walletBalance + earned >= next.cost;
         const nextInfo = next ? { id: next.id, art: next.art, cost: next.cost, wallet: walletBalance + earned } : null;
-        setOutcome({ earned, stars, leveledUp: data.leveledUp, canUpgrade, nextInfo });
+        setOutcome({
+          earned,
+          revenue: data.revenue,
+          cost: data.cost,
+          stars,
+          leveledUp: data.leveledUp,
+          canUpgrade,
+          nextInfo,
+        });
         setPhase("results");
       })
       .catch((err: unknown) => {
@@ -148,6 +173,8 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
     return (
       <ShiftResults
         earned={outcome.earned}
+        revenue={outcome.revenue}
+        cost={outcome.cost}
         stars={outcome.stars}
         leveledUp={outcome.leveledUp}
         canUpgrade={outcome.canUpgrade}

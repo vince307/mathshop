@@ -8,9 +8,11 @@ import {
   earningsForShift,
   generateShift,
   lengthDifficulty,
+  profitForShift,
   shiftLength,
   starsForShift,
 } from "@/data/shift";
+import { UPGRADES, shopEffects } from "@/data/upgrades";
 import { STOCK_AND_CHANGE_RATE } from "@/data/change-making-tasks";
 import {
   TIER_ANCHOR,
@@ -176,6 +178,62 @@ describe("earningsForShift", () => {
   it("never pays zero — the floor is base * tasks", () => {
     expect(earningsForShift(5, 0)).toBe(EARN_PER_TASK * 5); // 25
     expect(earningsForShift(5, 0)).toBeGreaterThan(0);
+  });
+});
+
+describe("profitForShift", () => {
+  const NO_SHOP = shopEffects([]);
+
+  it("equals revenue minus cost at margin 1 — the profit rule's base case", () => {
+    const owned = ["shelf", "register"];
+    const effects = shopEffects(owned);
+    const { revenue, cost, profit } = profitForShift(6, 6, effects);
+    expect(revenue).toBe(earningsForShift(6, 6));
+    expect(cost).toBe(effects.runningCost);
+    expect(profit).toBe(earningsForShift(6, 6) - effects.runningCost);
+  });
+
+  it("pays revenue outright when nothing with a running cost is owned", () => {
+    expect(profitForShift(6, 6, NO_SHOP)).toEqual({
+      revenue: earningsForShift(6, 6),
+      cost: 0,
+      profit: earningsForShift(6, 6),
+    });
+  });
+
+  it("`sign` is free to run — the whole catalogue's cost still lands on what EARNS", () => {
+    expect(shopEffects(["sign"]).runningCost).toBe(0);
+    expect(profitForShift(5, 4, shopEffects(["sign"]))).toEqual(profitForShift(5, 4, NO_SHOP));
+  });
+
+  /**
+   * FR-008's floor, expressed at the formula: a shop whose running cost outruns a
+   * bad shift pays NOTHING — it never takes anything away. `max(0, …)` is what
+   * makes `wallet += profit` safe to write, so this case is the one that licenses
+   * the wallet update in `recordShiftResult`.
+   */
+  it("clamps at zero on the degenerate shift — never negative, whatever is owned", () => {
+    const everything = UPGRADES.map((u) => u.id);
+    const { revenue, cost, profit } = profitForShift(1, 0, shopEffects(everything));
+    expect(cost).toBeGreaterThan(revenue);
+    expect(profit).toBe(0);
+  });
+
+  it("never returns a negative profit, over every subset of the catalogue and a degenerate shift", () => {
+    const ids = UPGRADES.map((u) => u.id);
+    for (let mask = 0; mask < 1 << ids.length; mask++) {
+      const owned = ids.filter((_, i) => (mask & (1 << i)) !== 0);
+      expect(profitForShift(1, 0, shopEffects(owned)).profit).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("rounds the per-UNIT rate, not the total — margins stay whole zloty per task", () => {
+    // A 1.5× accuracy margin on a 3 zl clean bonus is 5 zl per clean task (round(4.5)),
+    // never 4.5 × cleanCount rounded once at the end. The difference is visible at
+    // any even cleanCount, and the per-unit form is what keeps the number legible.
+    const margin = { bonusTasks: 0, quantityMargin: 1, accuracyMargin: 1.5, runningCost: 0 };
+    expect(profitForShift(4, 4, margin).revenue).toBe(EARN_PER_TASK * 4 + Math.round(EARN_PER_CLEAN * 1.5) * 4);
+    expect(profitForShift(4, 4, margin).revenue).not.toBe(Math.round(EARN_PER_TASK * 4 + EARN_PER_CLEAN * 1.5 * 4));
   });
 });
 
