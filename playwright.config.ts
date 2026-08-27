@@ -54,7 +54,7 @@ export default defineConfig({
       // (the plan's 2×-runtime decision), not to the whole suite. EXTEND the
       // alternation when adding one (`|worlds`); never replace it.
       name: "touch",
-      testMatch: /(gameplay-restore|growth)\.spec\.ts/,
+      testMatch: /(gameplay-restore|growth|worlds)\.spec\.ts/,
       use: { ...devices["Galaxy Tab S4"] },
     },
   ],

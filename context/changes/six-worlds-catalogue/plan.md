@@ -1106,23 +1106,23 @@ warrants — then this drops to Phase 2's manual pass and the handoff says so.
 
 #### Manual
 
-- [ ] 1.6 `/app/worlds` lists six tiles; both new plates load
+- [x] 1.6 `/app/worlds` lists six tiles; both new plates load
 - [x] 1.7 L-007 two-direction substring sweep on *Pracownia* and *Laboratorium* over `src/i18n/pl.ts` and `src/data/*.ts` — no collision either way (re-run after F1's dictionary appends, do not inherit the plan-time check) — 8cec4c9
 
 ### Phase 2: The two grids reflow and the comments that lied are rewritten
 
 #### Automated
 
-- [x] 2.1 `npm test` — branch baseline + 0; `tests/worlds-picker.test.tsx` green unedited
-- [x] 2.2 `npm run lint` exit 0
-- [x] 2.3 `npm run check` — 0 errors, 0 warnings
-- [x] 2.4 `grep`: no `WORLDS.map` grid carries `sm:grid-cols-4`; no header contains "Only FOUR worlds exist"
+- [x] 2.1 `npm test` — branch baseline + 0; `tests/worlds-picker.test.tsx` green unedited — 9cbbd62
+- [x] 2.2 `npm run lint` exit 0 — 9cbbd62
+- [x] 2.3 `npm run check` — 0 errors, 0 warnings — 9cbbd62
+- [x] 2.4 `grep`: no `WORLDS.map` grid carries `sm:grid-cols-4`; no header contains "Only FOUR worlds exist" — 9cbbd62
 
 #### Manual
 
-- [ ] 2.5 `/app/worlds` 3×2 at ≥1024px, 2×3 at 712px, CTA reachable
-- [ ] 2.6 Wizard step 2 at ~700px: 3×2, no orphan row
-- [ ] 2.7 Signed-out marketing strip still four cards, layout unchanged
+- [x] 2.5 `/app/worlds` 3×2 at ≥1024px, 2×3 at 712px, CTA reachable
+- [x] 2.6 Wizard step 2 at ~700px: 3×2, no orphan row
+- [x] 2.7 Signed-out marketing strip still four cards, layout unchanged
 
 ### Phase 3: `WORLD_SLOTS` gains `pracownia` and `laboratorium`
 
@@ -1158,32 +1158,32 @@ warrants — then this drops to Phase 2's manual pass and the handoff says so.
 
 #### Manual
 
-- [ ] 4.8 Pracownia with the catalogue exhausted still offers a next thing to buy; each renders as a lucide glyph, not a broken image
-- [ ] 4.9 Laboratorium shows a visibly different set
+- [x] 4.8 Pracownia with the catalogue exhausted still offers a next thing to buy; each renders as a lucide glyph, not a broken image
+- [x] 4.9 Laboratorium shows a visibly different set
 
 ### Phase 5: E2E — six tiles at the touch viewport (droppable, for `/10x-e2e`)
 
 #### Automated
 
-- [ ] 5.0 `playwright.config.ts` `touch` project `testMatch` EXTENDED to `/(gameplay-restore|growth|worlds)\.spec\.ts/` (alternation extended, never replaced)
-- [ ] 5.1 `E2E_PORT=<yours> npx playwright test` — branch baseline + **2** (desktop + touch runs of the new spec), 0 failures; `+1` means 5.0 was skipped
-- [ ] 5.2 Six tiles located by `getByRole(..., { exact: true })`; no ambiguous accessible name
-- [ ] 5.3 Overflow measured on the grid element's own `scrollWidth`, not `document.documentElement` (L-004)
-- [ ] 5.4 Deliberate break: force `grid-cols-6` at the touch width → overflow assertion red → restore; meta-check that the redness came from the overflow assertion, not the count assertion
+- [x] 5.0 `playwright.config.ts` `touch` project `testMatch` EXTENDED to `/(gameplay-restore|growth|worlds)\.spec\.ts/` (alternation extended, never replaced)
+- [x] 5.1 `E2E_PORT=<yours> npx playwright test` — branch baseline + **2** (desktop + touch runs of the new spec), 0 failures; `+1` means 5.0 was skipped
+- [x] 5.2 Six tiles located by `getByRole(..., { exact: true })`; no ambiguous accessible name
+- [x] 5.3 Overflow measured on the grid element's own `scrollWidth`, not `document.documentElement` (L-004)
+- [x] 5.4 Deliberate break: force `grid-cols-6` at the touch width → overflow assertion red → restore; meta-check that the redness came from the overflow assertion, not the count assertion
 
 ### Phase 6: Reconciliation after the rebase onto F1 — MANDATORY, never droppable
 
 #### Automated
 
-- [ ] 6.1 Post-rebase baseline re-measured (`npm test`, `npx playwright test`) — the Phase 0 numbers are stale after a rebase (L-005)
-- [ ] 6.2 Merged `UPGRADE_IDS` re-read; the unrepaired sweep run first and its red recorded (L-009 path check), then both new `WORLD_SLOTS` tables completed to cover every merged id
-- [ ] 6.3 `tests/shop-art-slots.test.tsx` green over five tables × the merged id set; anchored on the `Object.entries(WORLD_SLOTS)` loop, not on F1's renamed case title
-- [ ] 6.4 Phase 4 gate RE-ASKED against the merged tree; if `src/data/decorations.ts` now exists, rows 4.2–4.9 run and flip from `DROPPED (F1 absent)`
-- [ ] 6.5 `decorationsForWorld("pracownia")` and `decorationsForWorld("laboratorium")` both non-empty, or the empty sink is raised as a BLOCKING handoff item naming that symbol
-- [ ] 6.6 `npm test` 0 failures, `npm run lint` exit 0, `npm run check` 0 errors / 0 warnings — all on the merged tree
-- [ ] 6.7 Deliberate break: delete one merged id from the `pracownia` table → id sweep red naming slug+id → restore
+- [x] 6.1 Post-rebase baseline re-measured (`npm test`, `npx playwright test`) — the Phase 0 numbers are stale after a rebase (L-005)
+- [x] 6.2 Merged `UPGRADE_IDS` re-read; the unrepaired sweep run first and its red recorded (L-009 path check), then both new `WORLD_SLOTS` tables completed to cover every merged id
+- [x] 6.3 `tests/shop-art-slots.test.tsx` green over five tables × the merged id set; anchored on the `Object.entries(WORLD_SLOTS)` loop, not on F1's renamed case title
+- [x] 6.4 Phase 4 gate RE-ASKED against the merged tree; if `src/data/decorations.ts` now exists, rows 4.2–4.9 run and flip from `DROPPED (F1 absent)`
+- [x] 6.5 `decorationsForWorld("pracownia")` and `decorationsForWorld("laboratorium")` both non-empty, or the empty sink is raised as a BLOCKING handoff item naming that symbol
+- [x] 6.6 `npm test` 0 failures, `npm run lint` exit 0, `npm run check` 0 errors / 0 warnings — all on the merged tree
+- [x] 6.7 Deliberate break: delete one merged id from the `pracownia` table → id sweep red naming slug+id → restore
 
 #### Manual
 
-- [ ] 6.8 `/app/start` in Pracownia and Laboratorium with the merged catalogue fully owned: no badge over a focal point
-- [ ] 6.9 With that catalogue exhausted, both new worlds still name a next thing to buy
+- [x] 6.8 `/app/start` in Pracownia and Laboratorium with the merged catalogue fully owned: no badge over a focal point
+- [x] 6.9 With that catalogue exhausted, both new worlds still name a next thing to buy
