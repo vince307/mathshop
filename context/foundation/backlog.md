@@ -122,8 +122,8 @@ decorations, four per world at 40/80/140/220 zł** became the wallet's renewing 
 Branch `feat/world-economy-profit-rule`, 6 commits, 33 code files, +3183/−70,
 **no migration**, `MERGE: CLEAR` (0 critical, 3 warnings). Landed on `matmaverse-v2`
 via `run/2026-08-27-world-economy`, merge commit `c333f36`. Run journal:
-`context/runs/2026-08-27-world-economy/` (untracked, by policy). **Not yet
-archived** — change folder still at `context/changes/world-economy-profit-rule/`.
+`context/runs/2026-08-27-world-economy/` (untracked, by policy). Archive:
+`context/archive/2026-08-27-world-economy-profit-rule/`.
 
 **The headline deliverable was not the code.** Three invariants are machine facts in
 `tests/economy-invariants.test.ts` — no-trap, no-harm, and D-12's no-dominance over
@@ -141,7 +141,8 @@ something buyable in each ~3-shift band while the eventual art debt is
 `worlds × count`.
 
 **Left open:** four follow-ups in
-`context/changes/world-economy-profit-rule/follow-ups/review-fixes.md`. Sharpest is
+`context/archive/2026-08-27-world-economy-profit-rule/follow-ups/review-fixes.md`.
+Sharpest is
 **RF-1** — the dominance sweep judges a branch by its **best** entry, so raising
 `precision.cost` to 400 leaves all six invariant cases green. The instrument meant to
 guard D-12 has a hole in it. Also five human-checklist items that need the app
@@ -158,8 +159,8 @@ per-world economies is untouched.
 Branch `feat/six-worlds-catalogue` (cut from `feat/world-economy-profit-rule`, so the
 two were one serial stack), 5 commits, 10 code files, +265/−7, **no migration**,
 `MERGE: CLEAR` (0 critical, 3 warnings). Landed via `run/2026-08-27-world-economy`,
-merge commit `d27bfb3`. **Not yet archived** — change folder still at
-`context/changes/six-worlds-catalogue/`.
+merge commit `d27bfb3`. Archive:
+`context/archive/2026-08-27-six-worlds-catalogue/`.
 
 **The open decision went the cheap way.** W1 ships on the neutral copy fallback
 (`t.worlds[slug].upgrades[id] ?? t.upgrades[id]`) rather than writing 6 × 8 per-world
@@ -174,7 +175,8 @@ and no test covers, rendered in **two** places: `AuthShell.astro:79` and
 app ships six.** Both art files are already committed, so the fix is two dictionary
 entries — but do it together with `AuthShell`'s `grid-cols-4`, or the desktop strip
 goes ragged 4+2. Six further follow-ups in
-`context/changes/six-worlds-catalogue/follow-ups/review-fixes.md`; the next sharpest
+`context/archive/2026-08-27-six-worlds-catalogue/follow-ups/review-fixes.md`; the
+next sharpest
 is **W1-F3**, whose badge-placement evidence for the two new `WORLD_SLOTS` tables is
 not reproducible because the probe was deleted.
 
