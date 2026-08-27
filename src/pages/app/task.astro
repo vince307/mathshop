@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase";
 import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
+import { readDecorations } from "@/data/decorations";
 import { readPurchased, shiftBonusTasks } from "@/data/upgrades";
 import { openShift } from "@/data/shift";
 import { ceilingForLevel, readDifficultyState } from "@/data/adaptive";
@@ -27,6 +28,9 @@ if (!profile) return Astro.redirect("/app");
 
 const world = worldForTheme(profile.theme);
 const purchased = readPurchased(profile.shop_state);
+// The decoration sink's own list (E1) — feeds the results screen's "next thing",
+// which must survive an exhausted catalogue.
+const decorations = readDecorations(profile.shop_state);
 const avatar = getAvatar(profile.avatar);
 
 // The shift's PLAN is fixed HERE, once per request — its length, its seed, and
@@ -82,6 +86,7 @@ const { plan, firstTask } = openShift(difficulty, ceiling, shiftBonusTasks(purch
       profileId={profile.id}
       walletBalance={profile.wallet_balance}
       purchased={purchased}
+      decorations={decorations}
     />
   </AppShell>
 </Layout>

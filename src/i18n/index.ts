@@ -54,6 +54,24 @@ export function upgradeCopy(id: string): { name: string; desc: string } {
 }
 
 /**
+ * Localized decoration copy by catalogue id (L-003). Guarded exactly as
+ * `upgradeCopy` is: an id missing from the dictionary falls back to the raw id
+ * rather than throwing mid-render.
+ */
+export function decorationCopy(id: string): string {
+  return (t.decorations as Record<string, string>)[id] ?? id;
+}
+
+/**
+ * The display name of whatever `nextPurchase` returned (L-003). One helper so the
+ * three FR-013 "next thing" surfaces resolve a name the same way and cannot drift
+ * — `start.astro`, `growth.astro` and `ShiftResults` all render this.
+ */
+export function purchaseName(thing: { kind: "upgrade" | "decoration"; id: string }): string {
+  return thing.kind === "upgrade" ? upgradeCopy(thing.id).name : decorationCopy(thing.id);
+}
+
+/**
  * Localized growth-stage copy by catalogue id (L-003). Guarded exactly as
  * `upgradeCopy` is: a stage id missing from the dictionary falls back to the raw
  * id rather than throwing mid-render.

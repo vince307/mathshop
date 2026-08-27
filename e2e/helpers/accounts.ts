@@ -40,7 +40,12 @@ export interface SeedProfileOptions {
   walletBalance?: number;
   completedShiftCount?: number;
   businessLevel?: number;
-  shopState?: { purchased: string[] };
+  /**
+   * Written to `shop_state` verbatim. `decorations` is the E1 sink's own list —
+   * optional here exactly as it is on `ShopState`, so every existing seed stays
+   * valid and a legacy `{ purchased: [] }` row is still what most specs want.
+   */
+  shopState?: { purchased: string[]; decorations?: string[] };
 }
 
 /** Seed a child profile directly (provisioning, not the flow under test). */

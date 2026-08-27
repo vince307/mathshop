@@ -312,6 +312,29 @@ export const pl = {
   // Upgrade catalog names (S-06). Keyed by upgrade id (`t.upgrades[id]`), so the
   // catalog (src/data/upgrades.ts) carries no literal copy (L-003). Draft Polish —
   // pending native-speaker review.
+  // Decorations (E1 / D-11) — the renewing sink. Keyed by the globally unique,
+  // world-prefixed decoration id from `src/data/decorations.ts`, so a world's set
+  // can grow without touching another's. Every name says what the CHILD sees;
+  // none of them promises an effect, because a decoration has none.
+  decorations: {
+    "kawiarnia-lampki": "Lampki nad stolikami",
+    "kawiarnia-kwiaty": "Kwiaty na parapecie",
+    "kawiarnia-obrazek": "Obrazek na ścianie",
+    "kawiarnia-fotel": "Wygodny fotel",
+    "piekarnia-wstazki": "Wstążki nad ladą",
+    "piekarnia-rogaliki": "Wystawka z rogalikami",
+    "piekarnia-tort": "Tort na witrynie",
+    "piekarnia-kawiarenka": "Kącik z kawą",
+    "galaktyczna-baza-orbita": "Model orbity",
+    "galaktyczna-baza-satelita": "Mały satelita",
+    "galaktyczna-baza-teleskop": "Teleskop przy oknie",
+    "galaktyczna-baza-rakieta": "Rakieta na podeście",
+    "sklep-ksiegarnia-listek": "Listek w doniczce",
+    "sklep-ksiegarnia-zakladka": "Zakładki z piórkiem",
+    "sklep-ksiegarnia-zwoje": "Stare zwoje",
+    "sklep-ksiegarnia-ksiegozbior": "Regał na zbiory",
+  },
+
   upgrades: {
     sign: { name: "Szyld", desc: "Nowy szyld przyciąga wzrok." },
     shelf: { name: "Półka", desc: "Więcej miejsca na towar." },
@@ -319,6 +342,11 @@ export const pl = {
     slot: { name: "Miejsce na produkt", desc: "Dodatkowy produkt w ofercie." },
     storage: { name: "Magazynek", desc: "Zapas towaru pod ręką." },
     customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
+    // The margin branch (E1). Both descriptions name what CHANGES, never a
+    // percentage — the multiplier is not a number a child sees, and the results
+    // screen shows the real arithmetic instead.
+    precision: { name: "Dokładna obsługa", desc: "Klienci częściej wracają zadowoleni." },
+    margin: { name: "Lepsza marża", desc: "Za każde zadanie dostajesz więcej." },
   },
 
   // The growth screen (F4, missing-screens-v3 `01-world-progression`). Deliberately
@@ -400,6 +428,15 @@ export const pl = {
     unlockedHeading: "Odblokowane!",
     unlockedDismiss: "Super!",
     lockedByLevel: "Dostępne od poziomu sklepu {level}",
+    // The E1 branch gate. Actionable on purpose — it names the one thing to buy
+    // first, rather than a level or a skill the child cannot yet reach.
+    lockedByBranch: "Najpierw kup: {name}",
+    // The decoration section (E1). The hint is the honest promise: an ozdoba is
+    // exactly as useless as it looks, and saying so is what keeps it from
+    // competing with a real upgrade decision.
+    decorationsHeading: "Ozdoby do sklepu",
+    decorationsHint: "Ozdoby nic nie zmieniają w liczeniu — po prostu ładnie wyglądają.",
+    emptyDecorations: "Masz już wszystkie ozdoby w tym świecie.",
     lockedByFunds: "Brakuje {amount} zł",
     lockedBySkill: "Rozwiń umiejętność „{competency}” do poziomu {level}",
     lockedByHistory: "Wykonaj {count} zadań: {competency}",
@@ -432,6 +469,14 @@ export const pl = {
     // (no FOMO/urgency — guardrail).
     upgradesNudge: "Masz dość, żeby coś kupić do sklepu!",
     upgradesNudgeLink: "Zobacz ulepszenia",
+    // The profit breakdown (E1): przychód − koszt = zysk. Shown ONLY when the shop
+    // actually has a running cost, so a child on their first shift is never handed
+    // a subtraction they could not yet have caused. `earnedLabel` above still names
+    // the wallet payout and is the number the wallet actually receives.
+    breakdownHeading: "Rachunek zmiany",
+    revenueLabel: "Przychód: {revenue} zł",
+    costLabel: "Koszt sklepu: {cost} zł",
+    profitLabel: "Zysk: {profit} zł",
   },
 
   // Parent-PIN gate (S-07 / FR-016). A soft gate over the session protecting the

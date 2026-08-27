@@ -1,10 +1,11 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState, SkillState } from "@/types";
 import { ceilingForLevel, foldShiftOutcomes, readDifficultyState, type DifficultyState } from "@/data/adaptive";
-import { businessLevelForShifts, earningsForShift } from "@/data/shift";
+import { businessLevelForShifts, profitForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import type { TaskAttempt } from "@/data/attempts";
-import { type BuyReason, canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
+import { type BuyReason, canBuy, getUpgrade, readPurchased, shopEffects } from "@/data/upgrades";
+import { canBuyDecoration, getDecoration, readDecorations } from "@/data/decorations";
 import { worldForTheme } from "@/data/worlds";
 
 export { deriveStartingLevel } from "@/data/leveling";
@@ -159,7 +160,8 @@ export async function updateChildProfileTheme(
  * is swallowed. `account_id` comes from the RLS-verified profile row, never from
  * client input (L-002); the INSERT `with check` policy is the backstop.
  *
- * `earned` is the server-computed payout for a SHIFT (`earningsForShift`), and is
+ * `earned` is the server-computed payout for a SHIFT (`profitForShift`'s `profit`
+ * since E1 — the wallet delta, cost already applied to revenue), and is
  * omitted — i.e. stored as `null` — for a purchase event and for any caller that
  * has no payout to record. `null` therefore reads as "unknown / not a shift", never
  * as "earned nothing" (F4). Because this insert is best effort, `sum(earned)` is a
@@ -205,15 +207,29 @@ async function appendTaskAttempts(
 }
 
 export interface ShiftResult {
+  /**
+   * The amount added to the wallet. Under the profit rule (E1) this **is**
+   * `profit`, and the two fields are equal by construction. `earned` is kept as
+   * the wallet-delta name so `shift_log.earned`'s documented contract ("the
+   * amount added to the wallet") stays literally true with no backfill: every
+   * pre-E1 row is a shift whose cost was zero.
+   */
   earned: number;
+  /** What the shift took in, before the shop's running cost. */
+  revenue: number;
+  /** The shop's running cost for this shift — applied to revenue, NEVER to the wallet. */
+  cost: number;
+  /** `max(0, revenue - cost)` — equal to `earned`. */
+  profit: number;
   businessLevel: number;
   leveledUp: boolean;
 }
 
 /**
- * Persist a completed shift onto the parent's own profile (S-04/S-05). Wallet
- * earnings are recomputed server-side from the reported accuracy (`earningsForShift`),
- * so the client never supplies an amount — it cannot inflate the wallet. The row
+ * Persist a completed shift onto the parent's own profile (S-04/S-05). The wallet
+ * delta is recomputed server-side from the reported accuracy AND the trusted
+ * row's `shop_state` (`profitForShift` over `shopEffects`), so the client never
+ * supplies an amount and cannot claim a margin it has not bought. The row
  * is reached by `id` and the F-01 `child_profiles_update_own` RLS policy gates
  * ownership (a non-owner read returns no row, a non-owner update affects 0 rows);
  * `account_id` is NEVER taken from the caller (L-002). The per-competency `skills`
@@ -235,7 +251,18 @@ export async function recordShiftResult(
   const current = (data[0] as ChildProfile | undefined) ?? null;
   if (!current) return { error: new Error("profile not found") };
 
-  const earned = earningsForShift(shift.taskCount, shift.cleanCount);
+  // The profit rule, computed from the TRUSTED row's `shop_state` (E1). A client
+  // cannot claim a margin it has not bought, because the effects are resolved
+  // here from what the database says the child owns.
+  const { revenue, cost, profit } = profitForShift(
+    shift.taskCount,
+    shift.cleanCount,
+    shopEffects(readPurchased(current.shop_state)),
+  );
+  // The wallet only ever GROWS on this path (FR-008): `profit` is clamped at 0,
+  // so a costly shop can pay nothing but can never take anything away. Never
+  // reach for `wallet - cost` here.
+  const earned = profit;
   const newCount = current.completed_shift_count + 1;
   const businessLevel = businessLevelForShifts(newCount);
   const skillState = addSkillDelta(readSkillState(current.skill_state), shift.skills);
@@ -276,7 +303,7 @@ export async function recordShiftResult(
   // Per-task telemetry (P1) — same owner source, same best-effort posture.
   await appendTaskAttempts(client, { accountId: current.account_id, profileId, attempts: shift.attempts });
 
-  return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
+  return { earned, revenue, cost, profit, businessLevel, leveledUp: businessLevel > current.business_level };
 }
 
 /** Why a buy could not proceed. `not-found` = the row isn't readable/owned (RLS). */
@@ -366,4 +393,84 @@ export async function buyUpgrade(
   });
 
   return { walletBalance, purchased: nextPurchased };
+}
+
+export type BuyDecorationResult =
+  | { walletBalance: number; decorations: string[] }
+  | { failure: BuyFailure }
+  | { error: PostgrestError | Error };
+
+/**
+ * Purchase a decoration onto the parent's own profile (E1 / D-11) — the SECOND
+ * sanctioned spend path beside `buyUpgrade`, and server-authoritative in exactly
+ * the same way. The row is read by `id` under RLS (a non-owner sees no row →
+ * `not-found`, never A's data); `account_id` is NEVER taken from the caller
+ * (L-002). Ownership, world and affordability are recomputed from the TRUSTED row
+ * via the shared `canBuyDecoration` — the client only names a `decorationId`.
+ *
+ * **FR-008, and it is load-bearing which way this reads.** "Never reduce a
+ * child's funds outside a purchase" governs the SHIFT path, where the profit rule
+ * applies cost to revenue and never to the wallet. This IS a purchase:
+ * `prd-v3.md:62` names "new shelf/sign/**decoration**" as a legitimate visible
+ * change, so v3's own vocabulary contemplates buying one. Reject a wallet debit
+ * in `recordShiftResult`; this debit is correct.
+ *
+ * **Two deliberate departures from `buyUpgrade`, both load-bearing:**
+ *
+ * 1. **No `shift_log` row.** A `{ upgrade_purchased: null, earned: null }` row
+ *    flips `computeWeeklyReport`'s `earningsKnown` false **permanently**, which
+ *    silently suppresses the parent report's earnings tile from then on; and
+ *    tagging it as `upgrade_purchased` would list a decoration among "upgrades
+ *    bought this week". Neither is worth a log line for a purchase that changes
+ *    nothing but a picture.
+ * 2. **No `+1 decisions` credit.** `decisions` is surfaced to the parent and
+ *    gates nothing, so crediting it here would make decoration-spam a way to
+ *    inflate a competency a parent reads. Choosing an UPGRADE is the decision.
+ */
+export async function buyDecoration(
+  client: SupabaseClient,
+  profileId: string,
+  decorationId: string,
+): Promise<BuyDecorationResult> {
+  const decoration = getDecoration(decorationId);
+  // Unknown-id short-circuit: no DB round-trip for a value outside the catalogue.
+  if (!decoration) return { failure: "unknown" };
+
+  const { data, error: readErr } = await client.from("child_profiles").select("*").eq("id", profileId).limit(1);
+  if (readErr) return { error: readErr };
+  const current = (data[0] as ChildProfile | undefined) ?? null;
+  if (!current) return { failure: "not-found" };
+
+  const decorations = readDecorations(current.shop_state);
+  const check = canBuyDecoration(decoration, {
+    walletBalance: current.wallet_balance,
+    // `worldForTheme` normalizes the DB default 'default' to `kawiarnia`, so the
+    // comparison is always against a real slug.
+    world: worldForTheme(current.theme).slug,
+    decorations,
+  });
+  if (!check.ok) return { failure: check.reason };
+
+  const nextDecorations = [...decorations, decoration.id];
+  const walletBalance = current.wallet_balance - decoration.cost;
+
+  const { error: updateErr } = await client
+    .from("child_profiles")
+    .update({
+      wallet_balance: walletBalance,
+      shop_state: {
+        ...current.shop_state,
+        // The INNER spread is load-bearing, exactly as in `buyUpgrade`: naming
+        // `decorations` as an explicit key SHADOWS the outer spread, so
+        // `purchased` and `purchasedMeta` must be carried forward by hand or a
+        // decoration purchase would silently erase the child's whole shop.
+        purchased: readPurchased(current.shop_state),
+        purchasedMeta: current.shop_state.purchasedMeta,
+        decorations: nextDecorations,
+      },
+    })
+    .eq("id", profileId);
+  if (updateErr) return { error: updateErr };
+
+  return { walletBalance, decorations: nextDecorations };
 }

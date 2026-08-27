@@ -3,7 +3,8 @@ import { POST as completePOST } from "@/pages/api/shifts/complete";
 import { POST as signinPOST } from "@/pages/api/auth/signin";
 import { admin, createSignedInUser, deleteUser, PASSWORD, type TestAccount } from "./helpers/supabase";
 import { buildContext, type CookieJar, createCookieJar } from "./helpers/astro";
-import { businessLevelForShifts, earningsForShift, MAX_SHIFT_TASKS } from "@/data/shift";
+import { businessLevelForShifts, earningsForShift, MAX_SHIFT_TASKS, profitForShift } from "@/data/shift";
+import { UPGRADES, shopEffects } from "@/data/upgrades";
 import { readSkillState, type SkillState } from "@/data/skills";
 import {
   DIFFICULTY_MAX,
@@ -111,6 +112,11 @@ async function seedProfile(accountId: string): Promise<string> {
     .overrideTypes<{ id: string }, { merge: false }>();
   if (!data) throw new Error("seed failed");
   return data.id;
+}
+
+/** Give a seeded profile an owned catalogue, via the RLS-bypassing admin client. */
+async function ownUpgrades(profileId: string, purchased: string[]): Promise<void> {
+  await admin.from("child_profiles").update({ shop_state: { purchased } }).eq("id", profileId);
 }
 
 async function readState(profileId: string) {
@@ -432,6 +438,71 @@ describe("POST /api/shifts/complete (route persistence + isolation)", () => {
     const rows = await readLogRows(profileId);
     expect(rows).toHaveLength(1);
     expect(rows[0].earned).toBe(5 * 4 + 3 * 3); // earningsForShift(taskCount, cleanCount) = 29
+  });
+
+  /**
+   * The profit rule (E1), end to end and from the TRUSTED row. The route is
+   * handed nothing about the shop; it resolves `shopEffects` from what the
+   * database says the child owns, so a client cannot claim a margin — or dodge a
+   * cost — by what it POSTs.
+   */
+  it("returns revenue, cost and profit, all recomputed from the row's own shop_state", async () => {
+    const profileId = await seedProfile(accountA.id);
+    await ownUpgrades(profileId, ["shelf", "register"]);
+    const jar = await mintSession(accountA.email);
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "6", cleanCount: "6" }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { earned: number; revenue: number; cost: number; profit: number };
+
+    const expected = profitForShift(6, 6, shopEffects(["shelf", "register"]));
+    expect(body).toMatchObject(expected);
+    // `earned` IS the wallet delta and IS profit — the two names, one number.
+    expect(body.earned).toBe(expected.profit);
+    expect(body.cost).toBeGreaterThan(0);
+    expect(body.revenue).toBe(earningsForShift(6, 6));
+
+    const state = await readState(profileId);
+    expect(state?.wallet_balance).toBe(expected.profit);
+  });
+
+  it("credits the wallet with PROFIT, not revenue — the cost never reaches the wallet twice", async () => {
+    const profileId = await seedProfile(accountA.id);
+    await ownUpgrades(profileId, ["shelf", "register", "slot"]);
+    const jar = await mintSession(accountA.email);
+    const before = await readState(profileId);
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "6", cleanCount: "4" }));
+    expect(res.status).toBe(200);
+    const { profit, revenue } = profitForShift(6, 4, shopEffects(["shelf", "register", "slot"]));
+    expect(profit).toBeLessThan(revenue); // the fixture is only meaningful if a cost exists
+    const after = await readState(profileId);
+    expect(after?.wallet_balance).toBe((before?.wallet_balance ?? 0) + profit);
+    expect(after?.wallet_balance).not.toBe((before?.wallet_balance ?? 0) + revenue);
+  });
+
+  /**
+   * FR-008 as a durable guard: the wallet may NEVER go down on the shift path,
+   * whatever the shop costs to run and however badly the shift went. This is the
+   * assertion that catches a future refactor reaching for `wallet -= cost`; it is
+   * deliberately a monotonicity guard and NOT a profit guard, so it stays true
+   * (and stays meaningful) independently of how the payout is computed.
+   */
+  it("FR-008: the wallet never decreases on a shift, even with the whole catalogue running", async () => {
+    const profileId = await seedProfile(accountA.id);
+    await ownUpgrades(
+      profileId,
+      UPGRADES.map((u) => u.id),
+    );
+    const jar = await mintSession(accountA.email);
+    const before = await readState(profileId);
+    // The worst shift the route accepts: one task, none clean. Revenue 5 zl
+    // against a fully-owned shop's running cost — profit clamps to 0.
+    const res = await completePOST(completeContext(jar, { profileId, taskCount: "1", cleanCount: "0" }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { revenue: number; cost: number; profit: number };
+    expect(body.cost).toBeGreaterThan(body.revenue);
+    expect(body.profit).toBe(0);
+    const after = await readState(profileId);
+    expect(after?.wallet_balance).toBeGreaterThanOrEqual(before?.wallet_balance ?? 0);
   });
 
   it("PINS current behavior: a duplicate shift-end POST pays twice (no idempotency key — Risk #2 §6.3.4)", async () => {

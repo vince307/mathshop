@@ -13,11 +13,16 @@ import {
   type DifficultyState,
   type ScoredTask,
 } from "@/data/adaptive";
-import { createShiftSource, drawDifficultyFor, openShift } from "@/data/shift";
+import { createShiftSource, drawDifficultyFor, earningsForShift, openShift } from "@/data/shift";
 import { attemptParams } from "@/data/attempts";
 import { competencyForTaskType } from "@/data/skills";
 import type { TaskAttempt } from "@/data/attempts";
 import { t } from "@/i18n";
+
+/** Interpolate an i18n template, exactly as the components do. */
+function fill(template: string, values: Record<string, string | number>): string {
+  return Object.entries(values).reduce((out, [key, value]) => out.replace(`{${key}}`, String(value)), template);
+}
 
 /**
  * The shift orchestrator under lazy generation (adaptive-task-engine P4).
@@ -111,10 +116,22 @@ function renderShift(seed = SEED, difficulty = LEVEL_1, ceiling = LEVEL_1_CEILIN
       profileId="profile-1"
       walletBalance={0}
       purchased={[]}
+      decorations={[]}
     />,
   );
   return { plan, firstTask };
 }
+
+/**
+ * The server's payout, as this file's mock reports it. Deliberately a shift with
+ * a real running cost (`profit < revenue`), so a component that displayed
+ * revenue where the payout belongs would be visibly wrong rather than
+ * accidentally right — the exact divergence the island stopped computing its own
+ * number to avoid.
+ */
+const MOCK_REVENUE = 48;
+const MOCK_COST = 6;
+const MOCK_PROFIT = MOCK_REVENUE - MOCK_COST;
 
 let fetchMock: ReturnType<typeof vi.fn>;
 let consoleError: ReturnType<typeof vi.spyOn>;
@@ -122,8 +139,22 @@ let consoleWarn: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   vi.useFakeTimers();
+  // The mock MUST carry `revenue`/`cost`/`profit` (E1). The island reads them off
+  // the response; a mock missing them yields `undefined`, and the results copy
+  // interpolates the string "undefined" WITHOUT throwing — a silent green. Keep
+  // this shape in step with `src/pages/api/shifts/complete.ts`'s 200 body.
   fetchMock = vi.fn(() =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve({ leveledUp: false, businessLevel: 1 }) }),
+    Promise.resolve({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          leveledUp: false,
+          businessLevel: 1,
+          revenue: MOCK_REVENUE,
+          cost: MOCK_COST,
+          profit: MOCK_PROFIT,
+        }),
+    }),
   );
   vi.stubGlobal("fetch", fetchMock);
   consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -195,6 +226,39 @@ describe("ShiftScreen — the shift-end payload", () => {
       expect(attempt.params).toEqual(attemptParams(tasks[i]));
       expect(attempt.first_try).toBe(true);
     });
+  });
+
+  /**
+   * The island shows the SERVER's payout and nothing it computed itself (E1).
+   * Before the profit rule it called `earningsForShift` locally; that number is
+   * revenue, so under a running cost the celebration would have named money the
+   * wallet never received — and no test would have failed.
+   */
+  it("credits the server's profit, never a locally recomputed payout", async () => {
+    const { plan } = renderShift();
+    for (const task of expectedTasks(SEED, LEVEL_1)) solve(task);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText(fill(t.results.earnedLabel, { earned: MOCK_PROFIT }))).toBeInTheDocument();
+    // The locally computable figure — what the island used to show — must be absent.
+    expect(
+      screen.queryByText(fill(t.results.earnedLabel, { earned: earningsForShift(plan.length, plan.length) })),
+    ).toBeNull();
+  });
+
+  it("shows the breakdown the server sent: przychód − koszt = zysk", async () => {
+    renderShift();
+    for (const task of expectedTasks(SEED, LEVEL_1)) solve(task);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText(t.results.breakdownHeading)).toBeInTheDocument();
+    expect(screen.getByText(fill(t.results.revenueLabel, { revenue: MOCK_REVENUE }))).toBeInTheDocument();
+    expect(screen.getByText(fill(t.results.costLabel, { cost: MOCK_COST }))).toBeInTheDocument();
+    expect(screen.getByText(fill(t.results.profitLabel, { profit: MOCK_PROFIT }))).toBeInTheDocument();
   });
 
   it("posts once and only once, at the end", async () => {

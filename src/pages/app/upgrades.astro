@@ -8,6 +8,7 @@ import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { readPurchased } from "@/data/upgrades";
+import { readDecorations } from "@/data/decorations";
 import { readSkillState } from "@/data/skills";
 import { t } from "@/i18n";
 
@@ -27,6 +28,8 @@ const profile = resolved.profile;
 
 const world = profile ? worldForTheme(profile.theme) : null;
 const purchased = profile ? readPurchased(profile.shop_state) : [];
+// The decoration sink's own list (E1) — deliberately NOT `purchased`.
+const decorations = profile ? readDecorations(profile.shop_state) : [];
 const skillState = readSkillState(profile?.skill_state);
 const avatar = profile ? getAvatar(profile.avatar) : null;
 ---
@@ -51,6 +54,7 @@ const avatar = profile ? getAvatar(profile.avatar) : null;
           walletBalance={profile.wallet_balance}
           businessLevel={profile.business_level}
           purchased={purchased}
+          decorations={decorations}
           skillState={skillState}
           world={world}
         />

@@ -18,6 +18,10 @@ import {
   shiftLengthRangeFor,
 } from "@/data/adaptive";
 import { STOCK_AND_CHANGE_RATE } from "@/data/change-making-tasks";
+// TYPE-ONLY. `shift.ts` stays value-independent of the catalogue (see the
+// `MAX_SHIFT_TASKS` header); a type import erases at compile time and creates no
+// module edge, which is what lets `profitForShift` take effects as data.
+import type { ShopEffects } from "@/data/upgrades";
 import { generateTask, typeSplitFor, type TaskType } from "@/data/tasks";
 
 /**
@@ -284,9 +288,50 @@ export function openShift(
   return { plan, firstTask: createShiftSource(plan).next(difficulty) };
 }
 
-/** Wallet earnings paid once at shift end (FR-007): base per task + perfect-task bonus. Floor is never zero. */
+/**
+ * A shift's **revenue** at margin 1: base per task + perfect-task bonus. Floor is
+ * never zero (FR-007).
+ *
+ * Retained on purpose after the profit rule landed (E1). This is revenue, not the
+ * payout: `profitForShift` is what the wallet receives. Keeping the two named
+ * apart is the whole lesson the results screen teaches — *przychód* is not
+ * *zysk* — and it is also what keeps `tests/shift.test.ts`'s "never pays zero"
+ * property true, which is a statement about revenue and false about profit.
+ */
 export function earningsForShift(taskCount: number, cleanCount: number): number {
   return EARN_PER_TASK * taskCount + EARN_PER_CLEAN * cleanCount;
+}
+
+/**
+ * The profit rule (E1 / D-11): `profit = max(0, revenue - cost)`.
+ *
+ * **Cost applies to a shift's revenue and NEVER to the wallet.** FR-008 forbids
+ * reducing a child's funds outside a purchase, and this formula honours it
+ * literally: a bad shift pays 0, it never takes anything away. Do not "simplify"
+ * this into a `wallet -= runningCost` anywhere — that is the one refactor this
+ * function exists to prevent, and `tests/shifts-complete.test.ts`'s wallet
+ * monotonicity case is the guard.
+ *
+ * Margins round the **per-unit rate**, not the total: the wallet stays in whole
+ * zloty and the effect stays legible to a child ("5 zl -> 7 zl za zadanie").
+ * The consequence is that the multiplier and the effective rate are different
+ * numbers — `round(EARN_PER_CLEAN * 1.5)` is 5, an effective 1.67 — so tune the
+ * RATE you want and derive the multiplier, never the other way round.
+ *
+ * Takes effects as DATA so this module still does not import
+ * `src/data/upgrades.ts`; the `ShopEffects` import above is **type-only**, which
+ * does not reopen that seam. Do not "fix" it into a value import.
+ */
+export function profitForShift(
+  taskCount: number,
+  cleanCount: number,
+  effects: ShopEffects,
+): { revenue: number; cost: number; profit: number } {
+  const revenue =
+    Math.round(EARN_PER_TASK * effects.quantityMargin) * taskCount +
+    Math.round(EARN_PER_CLEAN * effects.accuracyMargin) * cleanCount;
+  const cost = effects.runningCost;
+  return { revenue, cost, profit: Math.max(0, revenue - cost) };
 }
 
 /** Stars 0–3 by clean-task rate (FR-011). 3 = a perfect shift (every task first-try correct). */

@@ -109,6 +109,19 @@ export interface ShopState {
   purchased: string[];
   /** Keyed by upgrade id (unique — `canBuy` blocks re-buying). Write-only in v1. */
   purchasedMeta?: Record<string, { world: string; at: string }>;
+  /**
+   * Ids of owned decorations (E1 / D-11) — **never** catalogue ids.
+   *
+   * The separation is load-bearing, not tidiness: a decoration id in `purchased`
+   * would reach `shopRunningCost` and `canBuy` and recreate the trap the no-trap
+   * invariant exists to forbid, by the back door. Decorations have no economic
+   * effect by construction (`src/data/decorations.ts` has no field for one).
+   *
+   * Optional, on the `purchasedMeta?` precedent, so every legacy `{}` and
+   * `{ purchased: [] }` row stays valid and **no migration is needed**.
+   * `readDecorations` normalizes it exactly as `readPurchased` does.
+   */
+  decorations?: string[];
 }
 
 /**

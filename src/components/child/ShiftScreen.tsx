@@ -7,7 +7,9 @@ import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
-import { earningsForShift, starsForShift, type ShiftPlan } from "@/data/shift";
+import { starsForShift, type ShiftPlan } from "@/data/shift";
+import type { ShopIconKey } from "@/components/child/ShopGlyph";
+import { nextPurchase } from "@/data/decorations";
 import { useShiftEngine } from "@/components/hooks/useShiftEngine";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
@@ -39,19 +41,36 @@ interface ShiftScreenProps {
   walletBalance: number;
   /** Owned-upgrade ids — feed the results nudge's next-upgrade check (S-06). */
   purchased: string[];
+  /**
+   * Owned decoration ids (E1) — so the results nudge survives an exhausted
+   * catalogue. The world it scopes to is the `world` prop above.
+   */
+  decorations: string[];
 }
 
 type Phase = "playing" | "saving" | "results" | "error";
 
 interface Outcome {
+  /** The wallet delta — the SERVER's `profit`, never a locally recomputed number. */
   earned: number;
+  /** What the shift took in, before the shop's running cost (E1). */
+  revenue: number;
+  /** The shop's running cost for this shift; 0 until something with a cost is owned. */
+  cost: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
   /** Whether the post-shift wallet can afford an upgrade — drives the results nudge. */
   canUpgrade: boolean;
   /** The cheapest eligible unowned upgrade + post-shift wallet — the results
       screen's progress card (S-13, presentational only). Null when none. */
-  nextInfo: { id: string; art: string; cost: number; wallet: number } | null;
+  nextInfo: {
+    kind: "upgrade" | "decoration";
+    id: string;
+    art?: string;
+    icon?: ShopIconKey;
+    cost: number;
+    wallet: number;
+  } | null;
 }
 
 /**
@@ -69,7 +88,15 @@ interface Outcome {
  * far, and the competency/telemetry join stays positional against the engine's
  * retained `tasks`.
  */
-export default function ShiftScreen({ plan, firstTask, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
+export default function ShiftScreen({
+  plan,
+  firstTask,
+  world,
+  profileId,
+  walletBalance,
+  purchased,
+  decorations,
+}: ShiftScreenProps) {
   // The engine owns the cursor and draws tasks 2…N on demand; `total` is the
   // plan's fixed length, which is what every site below counts against.
   const { index, total, task: currentTask, tasks, results, advance } = useShiftEngine(plan, firstTask);
@@ -89,7 +116,6 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
 
     const taskCount = results.length;
     const cleanCount = results.filter((r) => r.firstTry).length;
-    const earned = earningsForShift(taskCount, cleanCount);
     const stars = starsForShift(taskCount, cleanCount);
 
     // Per-competency skill delta (S-07): pair each task's type with its outcome.
@@ -124,13 +150,49 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
           setPhase("error");
           return;
         }
-        const data = (await res.json()) as { leveledUp: boolean; businessLevel: number };
+        // The payout is the SERVER's, not a local recomputation (E1). The island
+        // used to call `earningsForShift` here; under the profit rule that number
+        // is revenue, so displaying it would have shown a figure the wallet never
+        // received — and nothing would have failed. There is no optimistic
+        // pre-response render to preserve: the old local value was bound inside
+        // this very `useEffect` and read only after the response resolved.
+        const data = (await res.json()) as {
+          leveledUp: boolean;
+          businessLevel: number;
+          revenue: number;
+          cost: number;
+          profit: number;
+        };
+        const earned = data.profit;
         // Post-shift affordability: does the new wallet cover the cheapest
         // level-eligible unowned upgrade? Drives the (factual) results nudge.
-        const next = nextUpgrade({ businessLevel: data.businessLevel, purchased });
+        // `nextPurchase`, not `nextUpgrade` (E1 / D-11): once the catalogue is
+        // exhausted the nudge names a decoration of the current world instead of
+        // going quiet, which is the whole point of the renewing sink.
+        const next = nextPurchase(
+          { businessLevel: data.businessLevel, purchased, world: world.slug, decorations },
+          nextUpgrade,
+        );
         const canUpgrade = next !== null && walletBalance + earned >= next.cost;
-        const nextInfo = next ? { id: next.id, art: next.art, cost: next.cost, wallet: walletBalance + earned } : null;
-        setOutcome({ earned, stars, leveledUp: data.leveledUp, canUpgrade, nextInfo });
+        const nextInfo = next
+          ? {
+              kind: next.kind,
+              id: next.id,
+              art: next.art,
+              icon: next.icon,
+              cost: next.cost,
+              wallet: walletBalance + earned,
+            }
+          : null;
+        setOutcome({
+          earned,
+          revenue: data.revenue,
+          cost: data.cost,
+          stars,
+          leveledUp: data.leveledUp,
+          canUpgrade,
+          nextInfo,
+        });
         setPhase("results");
       })
       .catch((err: unknown) => {
@@ -142,12 +204,14 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
           setPhase("error");
         }
       });
-  }, [results, tasks, total, profileId, walletBalance, purchased, markOffline]);
+  }, [results, tasks, total, profileId, walletBalance, purchased, decorations, world, markOffline]);
 
   if (phase === "results" && outcome) {
     return (
       <ShiftResults
         earned={outcome.earned}
+        revenue={outcome.revenue}
+        cost={outcome.cost}
         stars={outcome.stars}
         leveledUp={outcome.leveledUp}
         canUpgrade={outcome.canUpgrade}

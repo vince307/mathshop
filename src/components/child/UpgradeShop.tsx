@@ -4,16 +4,20 @@ import type { World } from "@/data/worlds";
 import type { SkillState } from "@/types";
 import { ChildButton } from "@/components/child/ChildButton";
 import { childCard } from "@/components/child/childCard";
+import { ShopGlyph } from "@/components/child/ShopGlyph";
 import { ShopArt } from "@/components/child/ShopArt";
 import { SkillBars } from "@/components/child/SkillBars";
 import { UPGRADES, canBuy, isOwned, nextUpgrade, type Upgrade } from "@/data/upgrades";
-import { t, upgradeCopy } from "@/i18n";
+import { canBuyDecoration, decorationsForWorld, type Decoration } from "@/data/decorations";
+import { decorationCopy, t, upgradeCopy } from "@/i18n";
 
 interface UpgradeShopProps {
   profileId: string;
   walletBalance: number;
   businessLevel: number;
   purchased: string[];
+  /** Owned decoration ids (E1) — the renewing sink's own list, never `purchased`. */
+  decorations: string[];
   /** Normalized per-competency skill (S-07) — feeds the skill/task-history gate. */
   skillState: SkillState;
   world: World;
@@ -42,11 +46,13 @@ export default function UpgradeShop({
   walletBalance,
   businessLevel,
   purchased,
+  decorations,
   skillState,
   world,
 }: UpgradeShopProps) {
   const [wallet, setWallet] = useState(walletBalance);
   const [owned, setOwned] = useState(purchased);
+  const [ownedDecorations, setOwnedDecorations] = useState(decorations);
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [errorId, setErrorId] = useState<string | null>(null);
   // The unlock moment (S-13): the id just bought, shown as an inline celebration
@@ -59,6 +65,12 @@ export default function UpgradeShop({
   const ownedList = UPGRADES.filter((u) => isOwned(u.id, owned));
   const next = nextUpgrade({ businessLevel, purchased: owned });
   const unlocked = unlockedId ? UPGRADES.find((u) => u.id === unlockedId) : undefined;
+  // Decorations are scoped to the CURRENT world and gated on price alone — that
+  // is D-11's premise: past the catalogue's end there is always something a child
+  // with money can buy.
+  const decorationCtx = { walletBalance: wallet, world: world.slug, decorations: ownedDecorations };
+  const worldDecorations = decorationsForWorld(world.slug);
+  const unownedDecorations = worldDecorations.filter((d) => !isOwned(d.id, ownedDecorations));
 
   async function buy(upgrade: Upgrade) {
     setBuyingId(upgrade.id);
@@ -87,11 +99,40 @@ export default function UpgradeShop({
     }
   }
 
+  async function buyDecorationItem(decoration: Decoration) {
+    setBuyingId(decoration.id);
+    setErrorId(null);
+    const body = new FormData();
+    body.set("profileId", profileId);
+    body.set("decorationId", decoration.id);
+    try {
+      const res = await fetch("/api/decorations/buy", { method: "POST", body });
+      if (!res.ok) {
+        setErrorId(decoration.id);
+        setBuyingId(null);
+        return;
+      }
+      const data = (await res.json()) as { walletBalance: number; decorations: string[] };
+      setWallet(data.walletBalance);
+      // Same shell-wallet sync as an upgrade buy — the chip is rendered
+      // server-side, outside this island.
+      document.dispatchEvent(new CustomEvent("matmaverse:wallet", { detail: data.walletBalance }));
+      setOwnedDecorations(data.decorations);
+      setBuyingId(null);
+    } catch {
+      setErrorId(decoration.id);
+      setBuyingId(null);
+    }
+  }
+
   function lockedReason(upgrade: Upgrade): string {
     const check = canBuy(upgrade, ctx);
     if (check.ok) return "";
     if (check.reason === "locked") {
       return fill(t.upgradeShop.lockedByLevel, { level: upgrade.requiredWorldLevel });
+    }
+    if (check.reason === "branch-locked" && upgrade.requiredUpgrade) {
+      return fill(t.upgradeShop.lockedByBranch, { name: upgradeCopy(upgrade.requiredUpgrade).name });
     }
     if (check.reason === "skill-locked" && upgrade.requiredSkill) {
       return fill(t.upgradeShop.lockedBySkill, {
@@ -122,7 +163,7 @@ export default function UpgradeShop({
               <CircleCheck className="size-7" aria-hidden="true" />
             </span>
             <p className="text-foreground text-xl font-extrabold">{t.upgradeShop.unlockedHeading}</p>
-            <img src={unlocked.art} alt="" className="size-20 object-contain" />
+            <ShopGlyph art={unlocked.art} icon={unlocked.icon} className="size-20" />
             <p className="text-foreground font-bold">{upgradeCopy(unlocked.id).name}</p>
             <p className="text-muted-foreground text-sm">{upgradeCopy(unlocked.id).desc}</p>
             <ChildButton
@@ -152,7 +193,7 @@ export default function UpgradeShop({
                     <span className="bg-success/15 text-success rounded-full px-2.5 py-0.5 text-xs font-bold">
                       {t.upgradeShop.availableTag}
                     </span>
-                    <img src={u.art} alt="" className="size-20 object-contain" />
+                    <ShopGlyph art={u.art} icon={u.icon} className="size-20" />
                     <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
                     <p className="text-muted-foreground text-xs leading-snug">{upgradeCopy(u.id).desc}</p>
                     <p className="text-accent flex items-center gap-1 font-extrabold">
@@ -189,7 +230,7 @@ export default function UpgradeShop({
                   key={u.id}
                   className="border-border flex h-full flex-col items-center gap-2 rounded-2xl border border-dashed p-4 text-center opacity-80"
                 >
-                  <img src={u.art} alt="" className="size-20 object-contain grayscale" />
+                  <ShopGlyph art={u.art} icon={u.icon} className="size-20 grayscale" />
                   <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
                   <p className="bg-muted text-muted-foreground flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold">
                     <Lock className="size-3 shrink-0" aria-hidden="true" />
@@ -208,7 +249,7 @@ export default function UpgradeShop({
             <ul className="flex flex-col gap-4">
               {ownedList.map((u) => (
                 <li key={u.id} className="bg-secondary/40 border-border flex items-center gap-4 rounded-2xl border p-4">
-                  <img src={u.art} alt="" className="size-16 shrink-0 object-contain" />
+                  <ShopGlyph art={u.art} icon={u.icon} className="size-16 shrink-0" />
                   <div className="flex-1">
                     <p className="text-foreground font-bold">{upgradeCopy(u.id).name}</p>
                   </div>
@@ -222,6 +263,51 @@ export default function UpgradeShop({
           </section>
         )}
 
+        {/* ---------- Decorations: the renewing sink (E1 / D-11) ---------- */}
+        <section className="flex flex-col gap-4">
+          <h2 className="text-foreground text-lg font-bold">{t.upgradeShop.decorationsHeading}</h2>
+          {/* The honest promise, and it is what keeps an ozdoba from competing
+              with a real upgrade decision: it changes nothing but the picture. */}
+          <p className="text-muted-foreground text-sm">{t.upgradeShop.decorationsHint}</p>
+          {unownedDecorations.length > 0 ? (
+            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {unownedDecorations.map((d) => {
+                const check = canBuyDecoration(d, decorationCtx);
+                return (
+                  <li
+                    key={d.id}
+                    className={childCard("2xl", "flex h-full flex-col items-center gap-2 p-4 text-center")}
+                  >
+                    <ShopGlyph art={d.art} icon={d.icon} className="size-14" />
+                    <p className="text-foreground text-sm leading-tight font-bold">{decorationCopy(d.id)}</p>
+                    <p className="text-accent font-extrabold">{fill(t.upgradeShop.costLabel, { cost: d.cost })}</p>
+                    {errorId === d.id && (
+                      <p className="text-destructive text-xs font-semibold">{t.upgradeShop.buyError}</p>
+                    )}
+                    {check.ok ? (
+                      <ChildButton
+                        variant="primary"
+                        className="mt-auto min-h-14 w-full px-4 text-lg"
+                        disabled={buyingId !== null}
+                        onClick={() => void buyDecorationItem(d)}
+                      >
+                        {buyingId === d.id ? t.upgradeShop.buying : t.upgradeShop.buy}
+                      </ChildButton>
+                    ) : (
+                      <p className="bg-muted text-muted-foreground mt-auto flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold">
+                        <Lock className="size-3 shrink-0" aria-hidden="true" />
+                        <span>{fill(t.upgradeShop.lockedByFunds, { amount: d.cost - wallet })}</span>
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground text-sm">{t.upgradeShop.emptyDecorations}</p>
+          )}
+        </section>
+
         <a href="/app/start" className="text-muted-foreground hover:text-foreground text-center text-sm font-semibold">
           {t.upgradeShop.back}
         </a>
@@ -231,7 +317,7 @@ export default function UpgradeShop({
       <aside className="flex flex-col gap-6">
         {/* The shop as it stands — grows as owned upgrades are bought (S-06) */}
         <div className={childCard("3xl", "overflow-hidden")}>
-          <ShopArt world={world} purchased={owned} />
+          <ShopArt world={world} purchased={owned} decorations={ownedDecorations} />
         </div>
 
         {/* Next-upgrade progress / all-owned (factual encouragement, no urgency) */}
