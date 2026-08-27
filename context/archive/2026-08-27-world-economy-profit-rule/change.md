@@ -1,10 +1,10 @@
 ---
 change_id: world-economy-profit-rule
 title: Profit rule — profit = max(0, revenue − cost), an 8-entry catalogue, and per-world decorations as the wallet sink
-status: impl_reviewed
+status: archived
 created: 2026-08-27
 updated: 2026-08-27
-archived_at: null
+archived_at: 2026-08-27T18:47:04Z
 ---
 
 ## Notes
