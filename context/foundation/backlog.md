@@ -137,6 +137,22 @@ card degrades to `null`.
   searched for `decor`/`plant`/`poster`/`lamp`/`banner`/`flower`/`sticker`/
   `cosmetic`: zero asset hits. This is `6 × N` assets from scratch, and it is the
   single largest new cost this entry carries.
+- **The "nothing left to buy" state already ships, and it is not the endgame.**
+  `e2e/growth.spec.ts:122` (*Risk E2E-F4-3*) seeds `purchased: ["sign","shelf"]` at
+  `business_level 1` and asserts the `t.growth.noNextUpgrade` copy, with the test's
+  own comment recording why: those are the only two entries at
+  `requiredWorldLevel 1`, so **"that is 90 zł of ordinary early play, not a terminal
+  edge case — it recurs at every level boundary."** D-11's sink therefore fixes the
+  *recurring* empty-shop state, not only the terminal one — a stronger case for it
+  than the endgame arithmetic alone.
+  **This is a regression E1 must handle deliberately.** Once decorations are always
+  buyable at price-only gating, that seeding strategy no longer produces an empty
+  shop, and the test goes red. Do **not** delete the assertion: `noNextUpgrade` still
+  has to exist for the case where a world's decorations are also exhausted. Re-seed
+  the state instead (own the level-1 catalogue entries **and** the world's
+  decorations), and keep the surrounding property the test was written to protect —
+  the shop CTA survives the empty state, because `/app/growth` is the only entrance
+  to the shop.
 - **`scripts/telemetry-harness/child-model.ts` already defines the child model**
   the pacing deliverable needs — `ChildModel { pBaseline, dropAtCeiling }`,
   deterministic mulberry32, three swept cohorts. Consume it; do not write a second
