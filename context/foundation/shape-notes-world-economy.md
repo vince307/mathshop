@@ -5,14 +5,17 @@ scope: tranche
 governing_prd: context/foundation/prd-v3.md
 created: 2026-08-26
 updated: 2026-08-27
-status: shaping-complete — design approved decision-by-decision; next artifact is the tranche spec
+status: shaping-complete — D-1…D-10 closed 2026-08-27, reopened the same day for a game-economy literature benchmark and closed again at D-13; spec + backlog E1/W1 propagated 2026-08-27
 skill: 10x-shape (scoped to this file — see D-2)
 consumed_by: docs/superpowers/specs/ -> backlog.md ## Ready -> /10x-autonomous-run
 ---
 
 # World expansion + purchase catalogue + virtual economy — brainstorm notes
 
-**Shaping is complete.** Opened 2026-08-26, closed 2026-08-27.
+**Shaping is complete for D-1…D-10, and was deliberately reopened on 2026-08-27**
+for a benchmark against the professional game-economy literature. That benchmark
+confirmed the structure and found three gaps it did not cover; **D-11** answers
+the first. Opened 2026-08-26, closed 2026-08-27, reopened 2026-08-27.
 
 The framing below (verified baseline, PRD constraints, the four-layer
 decomposition, D-1) came out of one `superpowers:brainstorming` session. **D-2
@@ -23,7 +26,8 @@ none was inferred.
 
 **Next artifact:** `docs/superpowers/specs/2026-08-27-world-economy-design.md`,
 sibling of `2026-08-24-adaptive-task-engine-design.md`. It transcribes D-3–D-10;
-it does not re-open them. Then `## Ready` entries in
+it does not re-open them. **It predates D-11 and does not yet carry it** — the
+exact propagation is tabulated at the end of D-11. Then `## Ready` entries in
 `context/foundation/backlog.md`, then `/10x-autonomous-run`.
 
 Read `## The design in one place` for the result; the D-numbered sections carry
@@ -42,6 +46,10 @@ Four exist — `kawiarnia`, `piekarnia`, `galaktyczna-baza`, `sklep-ksiegarnia`.
 PRD v3 assumes **six** (backlog W1). The gap is art plus per-world copy —
 **priced by D-3 and D-10** as 6 worlds × ≤8 catalogue entries of vocabulary, with
 a mandatory fallback so an unnamed world still renders.
+
+> **Superseded in part, 2026-08-27.** The "art" half of that gap is closed: all
+> six `world-*.webp` files are committed under `public/illustrations/` and
+> recorded in `slice-map.md`. **[V]** W1 is a data + copy task. See D-11.
 
 ### Six things to buy, one shared catalogue, one effect
 
@@ -365,6 +373,11 @@ outright". It does not. `prd-v3.md` stays governing and takes no churn.
 cost = SHIFT_COST(purchased)      // a bigger shop is more expensive to run
 ```
 
+> **Narrowed by D-11 (2026-08-27).** The domain is now the **investment** subset:
+> `shopRunningCost(investment ⊆ purchased)`. Everything below still holds — D-11
+> narrows what `cost` is a function of, and adds the no-harm clause that keeps
+> zero-effect entries out of the invariant.
+
 Chosen over `f(businessLevel)` and over a flat constant. It is the only shape
 where **the brake is paid by whoever compounds**: a child buying along both the
 capacity and the margin branch raises their own cost, so D-4 §1's runaway is
@@ -562,6 +575,338 @@ that "the gap is art plus per-world copy" now has a number. It is **6 worlds × 
 entries** of vocabulary, bounded above by FR-010, with a mandatory fallback to
 `t.upgrades[id]` (D-3) so a world without its own vocabulary still renders.
 
+### D-11 (2026-08-27) — the running cost is keyed on *investment* purchases; decorations are the wallet's renewable sink
+
+**Why this section exists after "shaping is complete".** D-1…D-10 were
+deliberately benchmarked against the professional game-economy literature
+(Adams & Dormans, *Game Mechanics: Advanced Game Design*, 2012 — the source of
+the Machinations model; Daniel Cook, *Value chains*; room8studio's five steps;
+Unity's economy guides; Alex Wiserax, *I Designed Economies for $150M Games*,
+2024 — a practitioner handbook drawing on Schreiber & Romero's *Game Balance*). **The benchmark confirmed the structure.** Every
+mechanism this session invented from scratch has a standard name: `revenue` is a
+**source/faucet**, `shopRunningCost` is an **upkeep sink**, a purchase is a
+**converter**, `wallet` is a **stock**, capacity × quantity-margin is a
+**positive feedback loop**, and D-6's ownership-keyed cost is the textbook
+**negative feedback loop** — matched to that positive loop in speed and
+durability, which is the stable configuration. The no-trap invariant has no
+standard name: formalising "no dominated purchase" as an exhaustively-swept
+invariant is *above* the industry norm rather than below it. Roughly 80% of that
+literature is unusable here, because it is written for hard currency, energy
+timers and F2P monetisation — all struck out by PRD v3 §Non-Goals.
+
+Three gaps survived the benchmark. This decision answers the first; **D-12** and
+**D-13** answer the other two.
+
+#### The gap — the wallet has no drain once the catalogue is exhausted
+
+Cook's rule: *every stock needs both a faucet and a drain, or it becomes a dead
+resource.* Under D-7/D-10 the catalogue is **finite and closed at eight**, so
+after the last purchase the wallet has **zero** drains and grows forever.
+Verified from the shipped constants, 2026-08-27:
+
+- catalogue total = **850 zł** **[V]** `src/data/upgrades.ts` (30+60+100+150+210+300)
+- `max(requiredWorldLevel) = 3` **[V]** ibid., and `businessLevelForShifts(n) = 1 + ⌊n/3⌋`
+  **[V]** `src/data/shift.ts:302–304` → level 3 lands on shift **6**. The only
+  time gate is spent long before affordability is; **affordability is the real
+  pacing gate**, and nothing measures it.
+- revenue = `8n` for a miss-free shift **[V]** `shift.ts:45–47, 289`; `n ∈ [5,7]`
+  at `d = 0`, `n ∈ [14,17]` at `d = 1` with full capacity **[V]**
+  `adaptive.ts:236–238`, `shift.ts:85` → **40–56 zł/shift** rising to
+  **112–136 zł/shift**
+
+The catalogue therefore empties in the band **~7–25 shifts** — longer once D-5's
+cost applies, but the same order of magnitude. After that:
+
+- nothing in the app decreases `wallet_balance` except `buyUpgrade` **[V]** (full
+  read of every `wallet` site in `src/`)
+- **FR-013 has no content** — *"show the NEXT meaningful upgrade and the concrete
+  amount still needed"* has no next
+- the results-screen progress card disappears: `nextInfo` is `null` when no
+  eligible unowned entry exists **[V]** `ShiftScreen.tsx:131–132`,
+  `ShiftResults.tsx:15`
+- under D-3 all **six** worlds go economically empty at once, because the shop
+  carries across worlds **[V]** `pl.ts:204–205`
+
+and the loop reverts to *do maths, watch a number rise* — the exact loop D-1
+through D-10 exist to escape. D-5 rejected "a terminating economy" as an option;
+**the design terminates anyway and simply does not say so.**
+
+#### The decision — two halves, both chosen by the maintainer
+
+1. **The running cost is keyed on *investment* purchases only** —
+   `shopRunningCost(investment ⊆ purchased)`. This is room8studio's
+   investment / non-investment split, which D-6 collapsed by keying the cost on
+   the whole of `purchased`. Restoring it makes a zero-effect entry legal again:
+   it costs money once, adds no upkeep, adds no earning power, and therefore
+   cannot trap anyone.
+2. **Decorations are per-world and live outside the eight.** Each world carries
+   its own decoration set, so the sink **renews when the child changes world**. A
+   finite global set would only move the wall from ~shift 25 to ~shift 60.
+
+**Corroborated by two independent practitioner sources, read 2026-08-27.**
+room8studio splits *investment* from *non-investment* resources; Wiserax splits
+*critical* from *non-critical* and names the non-critical category explicitly as
+*"cosmetic items or decorative elements"*. Neither was consulted when D-6 collapsed
+the distinction, and both converge on restoring it. Wiserax also reports the exact
+failure this decision prevents, from a shipped commercial title: in *Dreamdale*,
+*"players quickly accumulated the main currency… but spent almost none of it. An
+analysis of the resource flow chart showed that the spend points were not
+attractive enough. We added new upgrades and special events requiring resource
+expenditures, and the problem was solved."* That is this gap, diagnosed and fixed
+the same way, in production.
+
+Rejected: **a global decoration list** — cheaper art (`N` assets rather than
+`6 × N`) but the drain stays finite, the gap returns later, and six worlds stay
+wallpaper. Rejected: **a repeatable no-new-art drain** (re-painting the shop on a
+rising price) — a genuinely unbounded sink, but for a six-year-old it is burning
+money for nothing, and it is the hardest of the three to defend against *"growth
+must reinforce the math"*. Rejected: **shipping the cost split alone and
+deferring decorations to a later backlog entry** — keeps E1 small, but leaves the
+dead-wallet endgame in the shipped product until that entry lands.
+
+#### What it settles, verified against the code
+
+- **D-3 stops being wallpaper.** This is the first mechanism that makes six
+  worlds worth having, and it does so **without** giving any world an economic
+  advantage — a decoration has zero economic effect by construction. D-3's
+  rejection of per-world economies therefore stands untouched, and
+  `pl.ts:204–205` stays literally true: the *shop* and its *upgrades* still carry
+  over; the decoration **set** is what is world-local.
+- **No new UI system.** `ShopArt` already composites percent-positioned overlays
+  keyed by id, with per-world slot overrides for `piekarnia`,
+  `galaktyczna-baza` and `sklep-ksiegarnia` (`kawiarnia` deliberately left on
+  `DEFAULT_SLOTS`), and the documented rule *"an upgrade with no slot falls back
+  to the corner row"*. **[V]** `src/components/child/ShopArt.tsx`. A decoration is
+  **one art file plus an optional slot**, and the corner-row fallback lets them
+  ship one at a time.
+- **No migration.** `ShopState` gains `decorations?: string[]` — optional, inside
+  the existing jsonb, exactly the precedent `purchasedMeta?` set. **[V]**
+  `src/types.ts:98–112`. Every legacy `{}` and `{ purchased: [] }` row stays valid.
+- **`prd-v3.md` is not edited and D-2's `prd-v4` trigger stays unfired.** FR-012
+  (`prd-v3.md:108`) defines an upgrade as a **visible** change *plus* a
+  **functional** unlock. A visible-only decoration is therefore **not an upgrade
+  in v3's own terms**, so FR-010's 5–8 bound does not reach it. The catalogue
+  still lands on eight and stops — **D-10 survives as written** — and decorations
+  are a second, separate list. `prd-v3.md:62` already names *"new
+  shelf/sign/**decoration**"* as a legitimate visible change.
+
+#### Derived here, not chosen — **confirmed by the maintainer 2026-08-27**
+
+1. **The no-trap invariant needs a second clause.** As written it demands
+   `profit(purchased ∪ {u}) > profit(purchased)` *strictly*. A decoration gives
+   equality, so it violates the invariant as stated. The invariant splits:
+
+   > **No-trap (investment).** `∀ u ∉ investment : profit(investment ∪ {u}) > profit(investment)`
+   > **No-harm (non-investment).** `∀ d : profit` is **unchanged** by owning `d`.
+
+   The second clause is what makes the split safe — it is the machine-checkable
+   form of *"a decoration can never cost you anything but its price"*. The sweep
+   is unchanged in shape (still ≤2⁸ investment subsets × a grid of `d ∈ [0,1]`)
+   and gains one cheap test that decorations never enter `shopRunningCost`.
+
+2. **Decorations must not enter `purchased`.** If they did, they would feed
+   `shopRunningCost` and `canBuy`'s rung order and re-create the trap by the back
+   door. Hence a separate `decorations` key rather than a flag on the catalogue.
+
+3. **A decoration's only gate is its price.** Every other gate in the game is
+   merit-based (D-8) or time-based (D-9). The decoration list is deliberately the
+   one place where the answer to *"what can I do with this money"* is always
+   "something"; a skill gate here would re-create the empty-wallet endgame for
+   exactly the child who earns slowest.
+
+#### Open, as tuning (repo convention: first-guess defaults, adjust after kid-testing)
+
+- How many decorations per world, and their price curve.
+- Whether the price rises within a world (an intra-world sink) or stays flat,
+  with the cross-world renewal carrying the whole job.
+- Slot positions per world, or the corner-row fallback for the first batch.
+
+#### The cost, stated rather than discovered during planning
+
+**No decoration art exists.** All three manifests — `atomic-assets-v1`, `-v2`,
+`-v3` — were searched for `decor`, `plant`, `poster`, `lamp`, `banner`, `flower`,
+`sticker`, `cosmetic`: **zero** asset hits. The single `decor` match is the word
+*"decorative"* inside v3's `usePngFor` guidance. **[V]** 2026-08-27. This is
+`6 × N` new assets that **cannot** be pulled out of `assets/`, on top of the two
+art debts D-3 already recorded. The corner-row fallback is what keeps it
+shippable incrementally rather than as one blocking art batch.
+
+#### What this rewrites — the propagation, stated before the edits are made
+
+| Artifact | Section | Change |
+|---|---|---|
+| spec | §2 catalogue table | eight entries unchanged; add the decoration list as a second, non-catalogue list |
+| spec | §4 running cost | `shopRunningCost(investment)`; the invariant splits into no-trap + no-harm |
+| spec | §5 worlds | a world now supplies name, art, vocabulary **and its decoration set** |
+| spec | §6 constraint compliance | the FR-012 reading that keeps decorations outside FR-010's bound |
+| spec | §8 module boundaries | `shopEffects()` takes the investment subset; `ShopState.decorations` |
+| spec | §9 testing | the no-harm clause; decorations never enter `shopRunningCost` |
+| spec | Files affected | `src/types.ts`, `src/data/decorations.ts` (new), `ShopArt.tsx`, `UpgradeShop.tsx` |
+| backlog | E1 | the `profit` block gains the investment subset; "8 entries and stops" stays true but needs the decoration list named beside it |
+| backlog | W1 | decoration sets per world join the vocabulary count |
+
+**A stale claim to correct in two places — but not in the backlog.** **[V]**
+2026-08-27: `WORLDS` holds **4** entries (`src/data/worlds.ts`) while **all six**
+`world-*.webp` files are already committed under `public/illustrations/`, recorded
+in `slice-map.md`. **W1's world art is done**, and `## Ready` W1 already says so
+("the cost dropped twice… what is left is code"). The stale *"the gap is art plus
+per-world copy"* survives in **this file's `## Current system`** (a dated
+2026-08-26 snapshot, now annotated) and in **spec §5**, which inherited it. Both
+corrected; the backlog needed no correction on this point.
+
+### D-12 (2026-08-27) — no-dominance is a second invariant, swept alongside no-trap
+
+The literature benchmark's second gap (F-2). *Dominant strategy* is the balance
+failure the canon names first: if one branch is always the better buy, the
+"choice" evaporates and the player is executing, not deciding.
+
+**The design has no protection against it.** The no-trap invariant (D-6) says no
+purchase is *worse*. Nothing anywhere says no branch is *strictly better*. D-1
+exists entirely to create a capacity-vs-margin tension, and spec §9 lists seven
+test items, none of which checks that the tension exists. Chosen by the
+maintainer as a deliverable; it opens no earlier decision.
+
+#### The definition — derived here, **confirmed by the maintainer 2026-08-27**
+
+For a state `(I, d)` — investment subset `I`, difficulty `d` — the marginal
+return of a buyable entry `u` is its profit gain per złoty of price:
+
+```
+ROI(u | I, d) = [ profit(I ∪ {u}, d) − profit(I, d) ] / cost(u)
+ROI*_B(I, d)  = max over buyable u in branch B          // B ∈ { capacity, margin }
+```
+
+> **No-dominance invariant.** For every **reachable** state `(I, d)` in which both
+> branches have at least one buyable entry:
+> `min(ROI*_cap, ROI*_mar) ≥ DOMINANCE_FLOOR × max(ROI*_cap, ROI*_mar)`
+> with `DOMINANCE_FLOOR` a named tunable — **first guess 0.6**.
+
+Three things about that shape, each deliberate:
+
+1. **It does not demand equality.** Equal ROI would make the choice *arbitrary*,
+   which is a different failure from dominance and no better. The branches differ
+   in **kind** — capacity buys *more practice*, a margin *re-prices existing
+   practice* — and that qualitative difference is what makes the decision
+   meaningful. The floor exists only to stop one side from being strictly the
+   wrong answer.
+2. **It sweeps reachable states only.** No-trap sweeps all ≤2⁸ subsets, which is
+   conservative and correct for it. No-dominance must not: the gates (D-8, D-9)
+   make many subsets unoccupiable, and failing on a state no child can reach would
+   be a false alarm. Reachability is cheap — every gate is monotone (D-8) and
+   `canBuy`'s rung order is fixed **[V]** `src/data/upgrades.ts`, so it is a
+   breadth-first walk of the subset lattice. **Naming the reachability filter is
+   part of the deliverable**, not an implementation detail a planner should invent.
+3. **It shares the reference shift with no-trap.** Both invariants are undefined
+   until "steady-state profit" is pinned to a reference shift — the open decision
+   `## Ready` E1 explicitly forbids a planner from inventing. **D-13 supplies it.**
+
+#### Why the floor is one-sided — challenged 2026-08-27, confirmed
+
+The literature names **two** balance failures, not one. Wiserax gives both: the
+dominant option (a card reading *"Cost: 0 Mana. You win the game"*) and its mirror,
+the meaningless option — a multiple-choice question whose three answers are
+identical, with the conclusion *"if all choices are equal, the choice, ultimately,
+doesn't matter."* Balance, he argues, is the golden mean between them, which
+suggests a **two-sided band**: the branches must differ, but not too much.
+
+**The invariant stays one-sided anyway**, for two reasons the card-game analogy
+cannot see:
+
+1. **The branches differ in kind, not only in number.** Wiserax's example is three
+   *identical* answers — options indistinguishable in every respect. Capacity buys
+   **more practice**; a margin **re-prices practice already done**. A child sees
+   the difference in the shop and feels it in the shift length, whatever the ROI
+   ratio happens to be.
+2. **There is a pedagogical asymmetry the analogy has no place for.** Capacity is
+   the branch that produces *more mathematics* — the product's entire purpose. ROI
+   parity between the branches is therefore **desirable**, not a defect: a child
+   who prefers longer shifts must not be paying for that preference. A ceiling
+   would fail the sweep precisely at parity and force the fix in the wrong
+   direction — inflating margins, or weakening the branch that teaches.
+
+Rejected: **an absolute floor on each branch's ROI** (e.g. "every branch must
+return at least X zł per złoty"), because it is a statement about tuning rather
+than about the existence of a choice, and it would pass happily while one branch
+returned ten times the other. Rejected: **checking dominance only at the empty
+state**, because the interesting dominance appears late — capacity saturates at
+`MAX_BONUS_TASKS` while a margin does not, so the branches' relative return moves
+as `I` grows, which is exactly what the sweep is for.
+
+### D-13 (2026-08-27) — the pacing model, priced in tasks solved
+
+The benchmark's third gap (F-3), and the one all three sources agree on: **model
+the economy before building it**. room8studio decomposes per second / hour / day /
+week; Unity says spreadsheet then simulate; Machinations says run the diagram. The
+design as it stands defers **every** number to kid-testing.
+
+**It already costs something, verifiably.** `prd-v3.md:62` states a loop signal —
+*"a typical child chooses and buys at least one upgrade of their own within their
+first ~3 shifts"*. `sign` costs **30 zł** and a first shift returns **40–56 zł**
+**[V]** (see D-11's arithmetic). The first purchase therefore lands on shift
+**1**, not ~3 — **the shipped catalogue already misses its own PRD pacing signal,
+in the "too fast" direction**, and nobody noticed because nothing computes it.
+`shopRunningCost` and the two margins will move it again.
+
+**Corroborated 2026-08-27.** Wiserax states the same prescription as a first
+principle — *"your task is to translate all in-game values into units of time"* —
+with the same worked shape (a 1,000-gold sword against 100 gold/hour is a ten-hour
+sword), and the same decomposition room8studio gives: first session minute by
+minute, first day hour by hour. Three independent sources, one prescription, and
+this design had none of it.
+
+#### The unit is tasks solved, not time
+
+The canon's default is to express every price in units of play *time*. Here the
+better unit is the one the product is about: **expected tasks solved to afford
+it**. It follows the product's own thesis — *the only thing money can buy is more
+mathematics* — so the natural price unit is mathematics. Every catalogue entry and
+every decoration gains a derived "cost in tasks" figure in the design doc.
+
+#### The child model already exists — **[V]** 2026-08-27
+
+`scripts/telemetry-harness/child-model.ts` defines `ChildModel { pBaseline,
+dropAtCeiling }`, a deterministic mulberry32 RNG, and three swept cohorts
+(`p090`, `p075`, `p055`) chosen to straddle the engine's first-try target. The
+pacing model consumes it directly; **no new assumption file is written**, and the
+existing one is already caveated in its own header as *"a stated input… nothing in
+this file is evidence"*.
+
+The same caveat binds the output: the pacing model says how the **economy**
+responds to a class of player, not what a real child does.
+
+#### What it delivers
+
+- A pure simulation of `N` shifts per cohort → the purchase timeline: which entry
+  is bought on which shift, when each branch opens, when the catalogue is
+  exhausted, how long the decoration sink (D-11) then absorbs the surplus.
+- A test asserting the PRD's own pacing signal (`prd-v3.md:62`, first purchase
+  within ~3 shifts) instead of leaving it unmeasured.
+- The **reference shift** for D-6's no-trap and D-12's no-dominance sweeps —
+  which closes `## Ready` E1's *"open decision the planner must NOT invent"* with
+  a derivation rather than a planner's silent choice.
+- The "cost in tasks" column for the catalogue and the decoration sets.
+
+#### The cost, stated plainly
+
+**This will generate work.** It will almost certainly show the shipped prices are
+mistuned — the `sign` figure above is one instance already visible by hand — so
+E1 grows by a catalogue retune it would not otherwise have carried.
+
+It also **narrows a standing repo convention.** `src/data/upgrades.ts` and
+`src/data/stages.ts` both say costs are *"first-guess defaults, adjust after
+kid-testing"*. That stays true for what only children can answer — above all
+D-4's carried-forward question, whether the accuracy margin reads as *reward for
+precision* or as *punishment for being a beginner*. It stops being true for what
+arithmetic can settle. **Kid-testing gets one shot; it should not be spent on
+whether the catalogue empties at shift 9 or shift 40.**
+
+Rejected: **a spreadsheet kept beside the repo**, because it drifts from the
+constants the moment either changes; the model must import `src/data/*` so a
+price change re-runs it. Rejected: **modelling wall-clock pacing** (sessions per
+week, minutes per session), because it is unmeasured, it is not what the economy
+is a function of, and reasoning about elapsed time is the doorway to the timer
+mechanics PRD v3 bans.
+
 ### What `/10x-autonomous-run` requires — [V] read from the skill, 2026-08-26
 
 The run's intake is `context/foundation/backlog.md` § `## Ready`, and it
@@ -578,21 +923,27 @@ branch, Supabase up, no stray dev server, and
 `.claude/skills/10x-autonomous-run/scripts/validate-rule-files.sh` green — last
 run 2026-08-26: **PASS, 77 paths, 0 missing**.
 
-## Open — closed 2026-08-27
+## Open — closed 2026-08-27, extended by the literature benchmark the same day
 
 **Every question this section opened has been answered.** Kept as an audit trail
-of what was asked and where the answer lives.
+of what was asked and where the answer lives. The last three rows were **not**
+raised by the four-layer decomposition — they came out of benchmarking D-1…D-10
+against the professional game-economy literature, and are the only things that
+benchmark found the design did not cover.
 
 | Question | Answer |
 |---|---|
 | Layer 1 — cosmetic or differentiating? | **D-3** — skin-deep: shared spine, per-world identity |
 | Layer 2 — what effect types exist? | **D-4** — capacity, accuracy margin, quantity margin, unlock; no decorative entry |
 | Layer 4 — what absorbs funds? | **D-5** — a per-shift running cost; `profit = max(0, revenue − cost)` |
-| Layer 3 — what shape is the clamp? | **D-6** — `SHIFT_COST(purchased)`, under a no-trap invariant |
+| Layer 3 — what shape is the clamp? | **D-6** — `SHIFT_COST(purchased)`, under a no-trap invariant; narrowed to the investment subset by **D-11** |
 | What effect does `sign` get? | **D-7** — an unlock opening the "marka" branch |
 | What is a margin gate keyed to? | **D-8** — each margin gated by what it pays for; `d` rejected |
 | Does `SHIFTS_PER_LEVEL = 3` survive? | **D-9** — yes, unchanged; it is the access floor |
 | Non-exclusive unlocks? Catalogue budget? | **D-10** — both confirmed |
+| What drains the wallet once the catalogue is empty? | **D-11** — investment/non-investment split; per-world decorations renew the sink |
+| What stops one branch from strictly dominating? | **D-12** — a no-dominance invariant swept over reachable states |
+| Who picks the economy's numbers, and against what? | **D-13** — a pacing model priced in tasks solved; it also supplies the reference shift |
 
 **B2 `pricing-and-inventory` is NOT absorbed** (established under D-4). **[V]**
 `src/types.ts:113–120` puts `set-price` / `manage-stock` and the `inventory` /
@@ -604,7 +955,7 @@ are P2, which is parked. B2 stays a separate tranche and B5 stays blocked on it.
 ```
 revenue = (EARN_PER_TASK  × quantityMargin) × taskCount      // D-4
         + (EARN_PER_CLEAN × accuracyMargin) × cleanCount     // D-4
-cost    = SHIFT_COST(purchased)                              // D-5, D-6
+cost    = shopRunningCost(investment ⊆ purchased)             // D-5, D-6, D-11
 profit  = max(0, revenue − cost)                             // D-5
 wallet += profit                                             // never a debit — FR-008
 ```
@@ -617,18 +968,31 @@ Catalogue — **8 entries, and no more** (FR-010, D-10):
 | 5 | capacity | `shelf`, `register`, `slot`, `storage`, `customers` | world level; 2 carry S-07 gates today |
 | 2 | margin | accuracy, quantity — **new**, behind `sign` | `requiredSkill` / `requiredTaskHistory` (D-8) |
 
-A world supplies name, art and vocabulary for all 8; mechanics are shared, and
-copy falls back to `t.upgrades[id]` (D-3).
+Plus a **second, non-catalogue list: per-world decorations** (D-11). Zero economic
+effect by construction, so they are outside `investment` and outside FR-010's 5–8
+bound — an upgrade is defined by FR-012 as visible **and** functional, and a
+decoration is visible only. They are the wallet's sink, and it **renews per
+world**, which is the first thing that makes six worlds worth having.
 
-**No migration.** `shop_state.purchased` stays a flat global list; the new terms
-live in `src/data/shift.ts` and `src/data/upgrades.ts`, both pure and imported by
-client and server alike.
+A world supplies name, art, vocabulary for all 8 **and its own decoration set**;
+mechanics are shared, and copy falls back to `t.upgrades[id]` (D-3).
+
+**No migration.** `shop_state.purchased` stays a flat global list and gains an
+optional sibling `decorations?: string[]` in the same jsonb (the `purchasedMeta?`
+precedent); the new terms live in `src/data/shift.ts` and `src/data/upgrades.ts`,
+both pure and imported by client and server alike.
 
 **Invariants for the spec to carry as deliverables:**
 
-- **No-trap:** `∀ u ∉ purchased : profit(purchased ∪ {u}) > profit(purchased)`,
+- **No-trap (investment):** `∀ u ∉ investment : profit(investment ∪ {u}) > profit(investment)`,
   swept over every subset (≤2⁸) × a grid of `d ∈ [0,1]`. Same family as the
   sweeps already in `tests/adaptive.test.ts` and `tests/stages.test.ts`.
+- **No-harm (non-investment):** owning a decoration leaves `profit` **unchanged**
+  — the machine-checkable form of "a decoration can never cost you anything but
+  its price" (D-11).
+- **No-dominance:** at every *reachable* state where both branches are buyable,
+  neither branch's best marginal profit-per-złoty exceeds the other's by more than
+  `DOMINANCE_FLOOR` (D-12). Without it, D-1's whole tension may not exist.
 - **Wallet monotonicity:** the wallet never decreases outside a deliberate
   purchase (FR-008). The cost is never a debit.
 - **No re-locking:** every gate is monotone, so a reachable entry stays reachable.
@@ -645,10 +1009,13 @@ whose handoff is a spec in `docs/superpowers/specs/`, not `/10x-prd` (D-2).
 | Business logic (one sentence) | **present.** *A shift's profit is its revenue minus the cost of running the shop, and every purchasable effect is gated by the ability it pays for.* |
 | Project artifacts | present — this file. |
 | Timeline-cost acknowledged | **absent — deliberately.** The tranche is aimed at `/10x-autonomous-run` (D-2), which is unattended, so an after-hours week estimate is not the governing frame. Recorded as a known gap rather than a silent one. |
-| Non-Goals | **present.** PRD v3 §Non-Goals inherited verbatim, plus the rejections recorded inside D-3 through D-9 (per-world economies, decorative entries, a terminating economy, world-as-purchase, `d`-keyed gates, profit-keyed levels). |
+| Non-Goals | **present.** PRD v3 §Non-Goals inherited verbatim, plus the rejections recorded inside D-3 through D-13 (per-world economies, a terminating economy, world-as-purchase, `d`-keyed gates, profit-keyed levels, a global decoration list, a wall-clock pacing model). **One rejection was reversed:** D-4's "no purely decorative entry" is overturned by D-11 — decorative entries are legal again, outside the catalogue and outside the cost basis. |
 | Preserved behaviour | **present and load-bearing.** FR-008 wallet monotonicity; `pl.ts:204–205` world-carry-over copy stays literally true; `canBuy`'s no-retro-lock property; `MAX_SHIFT_TASKS = 17`; no migration. |
 
-Status: **accepted with one recorded gap** (timeline).
+Status: **accepted with one recorded gap** (timeline). Re-run is not required for
+D-11…D-13: none of them adds a table, route or RLS surface, and the business-logic
+sentence still holds — with *"and the wallet always has somewhere to go"* now
+appended by D-11.
 
 ## Related, and deliberately not merged in
 
@@ -660,4 +1027,5 @@ Status: **accepted with one recorded gap** (timeline).
   which does not exist in the codebase. Check it before designing layer 2 —
   `context/foundation/backlog.md`.
 - **Backlog B5 `product-unlocked-screen`** is blocked on B2.
-- **Backlog W1 `six-worlds-catalogue`** is layer 1.
+- **Backlog W1 `six-worlds-catalogue`** is layer 1. Its art is already committed
+  (**[V]** D-11); D-11 adds per-world decoration sets to its copy/art scope.

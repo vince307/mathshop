@@ -1,10 +1,22 @@
 # World Economy — worlds, catalogue, profit rule
 
 **Status:** design approved, ready for `/10x-new` → `/10x-plan`
-**Date:** 2026-08-27
+**Date:** 2026-08-27 (revised the same day — see *Revision*)
 **Scope:** the four-layer world/catalogue/economy tranche (W1 + the economy it depends on)
-**Shaping notes:** `context/foundation/shape-notes-world-economy.md` (decisions D-1 … D-10)
+**Shaping notes:** `context/foundation/shape-notes-world-economy.md` (decisions D-1 … D-13)
 **Governing PRD:** `context/foundation/prd-v3.md` — unchanged by this tranche
+
+**Revision — 2026-08-27.** D-1…D-10 were benchmarked against the professional
+game-economy literature (Adams & Dormans, *Game Mechanics: Advanced Game Design*;
+Daniel Cook, *Value chains*; room8studio; Unity's economy guides; Alex Wiserax,
+*I Designed Economies for $150M Games*). **The benchmark
+confirmed the structure** — every mechanism here has a standard name, and the
+no-trap invariant is above the industry norm rather than below it — and found
+three things it did not cover. **D-11, D-12 and D-13** answer them, and this
+document now carries them: a decoration sink outside the catalogue (§2, §4, §5),
+a no-dominance invariant (§4), and a pacing model that also supplies the reference
+shift (§9). One earlier rejection is reversed: D-4's "no purely decorative entry"
+no longer holds — see §2.
 
 ---
 
@@ -34,7 +46,15 @@ purchase at a different price. PRD v3's central bet — FR-011's *"in-world
 math/decision moment"* — needs at least two directions worth choosing between.
 
 **There is no sink.** Every effect raises earning power, so every purchase makes
-the next one easier. The economy accelerates and never resolves.
+the next one easier. The economy accelerates and never resolves — and then, at the
+other end, it resolves *too hard*: the catalogue is finite, so once it is empty the
+wallet has no drain at all. Verified arithmetic (D-11): the catalogue totals **850
+zł** **[V]** `src/data/upgrades.ts`, a shift returns **40–56 zł** early and
+**112–136 zł** at full capacity **[V]** `shift.ts:45–47,289`, `adaptive.ts:236–238`,
+so it empties in the band **~7–25 shifts**. After that FR-013 has no next upgrade to
+name, the results-screen progress card goes `null` **[V]** `ShiftScreen.tsx:131–132`,
+and — because the shop carries across worlds **[V]** `pl.ts:204–205` — all six worlds
+go economically empty at once.
 
 **A world is a picture.** `World = { slug, name, image }` **[V]**
 `src/data/worlds.ts`. A world selects an illustration and touches nothing else —
@@ -81,7 +101,12 @@ not hold. See *Constraint compliance* below.
 - **No new task type, no new competency.** Both are P2.
 - **No parent-facing economy controls.** Parked per PRD v3 §Non-Goals.
 - **No growth in catalogue size.** FR-010 caps it at 5–8 entries; this tranche
-  lands on 8 and stops.
+  lands on 8 and stops. Decorations (§2) are **not** catalogue entries — FR-012
+  defines an upgrade as visible **and** functional, and a decoration is visible
+  only, so FR-010's bound does not reach it.
+- **No real-time or wall-clock pacing.** The pacing model (§9) is a function of
+  shifts and tasks, never of elapsed time. Reasoning about elapsed time is the
+  doorway to the timer mechanics PRD v3 bans.
 
 ---
 
@@ -95,7 +120,7 @@ anything reaches the wallet.
 ```
 revenue = (EARN_PER_TASK  × quantityMargin) × taskCount
         + (EARN_PER_CLEAN × accuracyMargin) × cleanCount
-cost    = shopRunningCost(purchased)
+cost    = shopRunningCost(investment ⊆ purchased)      // investment only — D-11
 profit  = max(0, revenue − cost)
 wallet += profit
 ```
@@ -144,6 +169,68 @@ availability**. Buying `sign` opens the margins without closing capacity, and
 nothing in the catalogue can permanently foreclose anything else. An
 un-undoable wrong choice is pressure by another name.
 
+#### 2a. Decorations — a second list, outside the catalogue
+
+The eight entries above are the whole *catalogue*, and it does not grow. But a
+finite catalogue leaves the wallet with no drain once it is empty (§Problem), so
+the design carries a **second, separate list**: per-world decorations.
+
+| | Catalogue entry | Decoration |
+| --- | --- | --- |
+| economic effect | capacity / margin / unlock | **none, by construction** |
+| enters `shopRunningCost` | yes (it is `investment`) | **no** |
+| gate | world level, skill, task history, branch | **price only** |
+| scope | global — carries across worlds | **per world** |
+| persisted in | `shop_state.purchased` | `shop_state.decorations` |
+| bounded by FR-010 | yes (5–8) | **no** — see §6 |
+
+Three properties do the work:
+
+- **Zero economic effect** is what makes a decoration legal under §4. D-4
+  originally banned the purely decorative entry, and D-6 appeared to force that
+  ban: an entry with no effect raises `cost` and returns nothing, so it violates
+  no-trap by construction. That derivation only holds while `shopRunningCost` is
+  keyed on *all* of `purchased`. Keying it on the **investment** subset — the
+  investment / non-investment split the economy literature treats as standard —
+  removes the trap and makes the decorative entry legal again. **D-11 reverses
+  D-4's rejection on that basis.**
+- **Per-world** is what makes the sink *renew*. A finite global decoration list
+  would only move the empty-wallet wall from ~shift 25 to ~shift 60. Renewal on
+  world change is also the first mechanism that makes six worlds worth having —
+  and it grants no world an economic advantage, because a decoration has no
+  economic effect, so §5's rejection of per-world economies is untouched.
+- **Price is the only gate.** Every other gate in the game is merit-based (§3) or
+  time-based (§7). This list is deliberately the one place where the answer to
+  *"what can I do with this money"* is always "something"; a skill gate here would
+  re-create the empty wallet for exactly the child who earns slowest.
+
+**Decorations must never enter `purchased`.** If they did they would feed
+`shopRunningCost` and `canBuy`'s rung order and re-create the trap by the back
+door. Hence a separate key rather than a flag on the catalogue.
+
+**No new UI system is needed.** `ShopArt` already composites percent-positioned
+overlays keyed by id, with per-world slot overrides for `piekarnia`,
+`galaktyczna-baza` and `sklep-ksiegarnia` (`kawiarnia` deliberately on
+`DEFAULT_SLOTS`), and the documented rule that *"an upgrade with no slot falls
+back to the corner row"*. **[V]** `src/components/child/ShopArt.tsx`. A decoration
+is one art file plus an optional slot, and the corner-row fallback lets the sets
+ship one entry at a time.
+
+This split is not an invention of this design: the economy literature carries it
+as standard (room8studio's *investment / non-investment* resources; Wiserax's
+*critical / non-critical*, whose non-critical category is named as *"cosmetic items
+or decorative elements"*). Wiserax also reports the failure it prevents from a
+shipped title — in *Dreamdale*, *"players quickly accumulated the main currency…
+but spent almost none of it… the spend points were not attractive enough"*, fixed
+by adding things to spend on.
+
+**Known cost, stated rather than discovered during planning: no decoration art
+exists.** All three manifests (`atomic-assets-v1`, `-v2`, `-v3`) were searched for
+`decor`, `plant`, `poster`, `lamp`, `banner`, `flower`, `sticker`, `cosmetic` —
+**zero** asset hits; the single `decor` match is the word *"decorative"* in v3's
+`usePngFor` guidance. **[V]** 2026-08-27. This is `6 × N` new assets that cannot
+be pulled out of `assets/`, on top of the two art debts §5 already records.
+
 ### 3. Gates — each margin is gated by what it pays for
 
 | Entry | Gate | Mechanism |
@@ -180,13 +267,15 @@ because upgrade requirements reference it. Today **2 of 6** entries carry an S-0
 gate (`register`, `customers`). After this tranche it is **4 of 8** — half the
 catalogue — with no new concept invented.
 
-### 4. The running cost, and the no-trap invariant
+### 4. The running cost, and the three economic invariants
 
 ```
-cost = shopRunningCost(purchased)      // a bigger shop is more expensive to run
+cost = shopRunningCost(investment)     // a bigger shop is more expensive to run
+                                       // investment ⊆ purchased — decorations excluded
 ```
 
-Keyed on **what you own**, not on business level and not a flat constant. This is
+Keyed on **what you own that earns**, not on business level and not a flat
+constant, and not on the whole of `purchased`. This is
 the only shape where **the brake is paid by whoever compounds**: capacity and the
 quantity margin multiply each other (`taskCount` is itself raised by capacity),
 and `MAX_BONUS_TASKS` clamps only one of the two factors. A cost that rises with
@@ -196,9 +285,17 @@ second cap has to be invented.
 The price of that shape is a hard invariant, which is part of the design and not
 a testing detail:
 
-> **No-trap invariant.** For every unowned entry `u`, buying `u` must **strictly
-> increase** steady-state profit:
-> `∀ u ∉ purchased : profit(purchased ∪ {u}) > profit(purchased)`
+> **No-trap invariant (investment).** For every unowned investment entry `u`,
+> buying `u` must **strictly increase** steady-state profit:
+> `∀ u ∉ investment : profit(investment ∪ {u}) > profit(investment)`
+>
+> **No-harm invariant (non-investment).** Owning a decoration leaves profit
+> **unchanged**: `∀ d : profit(investment) is invariant under owning d`.
+
+The second clause is what makes the investment split safe. It is the
+machine-checkable form of *"a decoration can never cost you anything but its
+price"*, and it is why a decoration cannot re-enter the trap through
+`shopRunningCost`.
 
 Without it, `f(purchased)` can produce an upgrade that costs more to run than it
 earns. That is worse than an unbraked economy: an unbraked economy is merely too
@@ -220,18 +317,68 @@ technique in this repo: **[V]** `src/data/shift.ts:22–32` describes the sweep 
 `MAX_SHIFT_TASKS`, and `src/data/stages.ts:15` locks stage
 monotonicity/reachability in `tests/stages.test.ts`.
 
+#### The no-dominance invariant
+
+No-trap says no purchase is *worse*. Nothing so far says no **branch** is
+*strictly better* — and *dominant strategy* is the balance failure the economy
+literature names first: if one branch is always the better buy, the choice
+evaporates and the child is executing, not deciding. §2's capacity-vs-margin
+tension is the point of this entire tranche, so it must be verified rather than
+assumed.
+
+For a state `(I, d)` — investment subset `I`, difficulty `d` — the marginal
+return of a buyable entry is its profit gain per złoty of price:
+
+```
+ROI(u | I, d) = [ profit(I ∪ {u}, d) − profit(I, d) ] / cost(u)
+ROI*_B(I, d)  = max over buyable u in branch B          // B ∈ { capacity, margin }
+```
+
+> **No-dominance invariant.** For every **reachable** state `(I, d)` in which both
+> branches have at least one buyable entry:
+> `min(ROI*_cap, ROI*_mar) ≥ DOMINANCE_FLOOR × max(ROI*_cap, ROI*_mar)`,
+> with `DOMINANCE_FLOOR` a named tunable — first guess **0.6**.
+
+Three properties of that shape, each deliberate:
+
+1. **It is one-sided on purpose.** The literature names two balance failures: the
+   dominant option, and its mirror — the meaningless one, *"if all choices are
+   equal, the choice, ultimately, doesn't matter."* That argues for a two-sided
+   band, and it is **declined here**. The meaningless-choice example is a set of
+   *identical* options; these branches differ in **kind** — capacity buys *more
+   practice*, a margin *re-prices practice already done* — which a child sees in
+   the shop and feels in the shift length at any ROI ratio. More decisively,
+   capacity is the branch that produces *more mathematics*, so ROI parity is
+   **desirable** rather than a defect: a ceiling would fail the sweep exactly at
+   parity and force the fix in the wrong direction — inflating margins or
+   weakening the branch that teaches. The floor exists only to stop one side being
+   strictly the wrong answer.
+2. **It sweeps reachable states only.** No-trap sweeps all ≤2⁸ subsets, which is
+   conservative and correct for it. No-dominance must not: the gates in §3 and §7
+   make many subsets unoccupiable, and failing on a state no child can reach is a
+   false alarm. Reachability is cheap — every gate is monotone and `canBuy`'s rung
+   order is fixed **[V]** `src/data/upgrades.ts` — so it is a breadth-first walk of
+   the subset lattice. **The reachability filter is part of the deliverable**, not
+   an implementation detail for a planner to invent.
+3. **It shares the reference shift with no-trap**, and §9's pacing model supplies
+   it.
+
 ### 5. A world is a skin over one shared mechanical spine
 
-A world supplies **identity** — its name, its art, and its own vocabulary for
-every catalogue entry — and nothing mechanical. Same ids, same costs, same
-effects, same gates, in every world. A `register` bought in the galactic base is
+A world supplies **identity** — its name, its art, its own vocabulary for every
+catalogue entry, **and its own decoration set** (§2a) — and nothing mechanical.
+Same ids, same costs, same effects, same gates, in every world. A `register` bought in the galactic base is
 the same purchase as a `register` bought in the bakery; only the word and the
 picture change.
 
 ```ts
-World = { slug, name, image, art?: Record<UpgradeId, string> }
+World = { slug, name, image, art?: Record<UpgradeId, string>, decorations: DecorationId[] }
 // copy: t.worlds[slug].upgrades[id] ?? t.upgrades[id]
 ```
+
+The decoration set is the one thing a world owns outright rather than skins. It
+is still not *mechanical*: a decoration has no economic effect, so no world earns
+better than another and the rejection below stands.
 
 **The fallback is mandatory, not a convenience.** A world that has not yet been
 given its own vocabulary must still render, with world-neutral names. Without it,
@@ -249,9 +396,14 @@ buy, read by nothing, and documented as "the attribution data that change will
 need" — keeps that door open if telemetry ever argues for it. This tranche does
 not build it.
 
-**W1 is priced by this.** Backlog W1's inherited claim that "the gap is art plus
-per-world copy" now has a number: **6 worlds × ≤8 entries** of vocabulary,
-bounded above by FR-010, shippable incrementally because of the fallback.
+**W1 is priced by this.** The claim this document inherited — *"the gap is art
+plus per-world copy"* — is stale on its art half: **[V]** 2026-08-27, `WORLDS`
+holds **4** entries (`src/data/worlds.ts`) while **all six** `world-*.webp` files
+are committed under `public/illustrations/` and recorded in `slice-map.md`. **W1's
+world art is done**, and `backlog.md` § `## Ready` already records that. What
+remains is **6 worlds × ≤8 entries** of catalogue vocabulary (bounded by FR-010,
+shippable incrementally because of the fallback) **plus 6 × N decoration sets** —
+and the decoration *art* is the half that starts from zero (§2a).
 
 ### 6. Constraint compliance
 
@@ -280,6 +432,22 @@ mechanical spine stays shared. None of FR-010's stated requirements (cost, world
 level, skill progress, task history, "no random unlocks") is per-world. Recorded
 here so it is not re-litigated during planning.
 
+**FR-010 / FR-012 and the decoration list.** FR-012 (`prd-v3.md:108`) defines a
+purchase's effect as a **visible** change *plus* a **functional** unlock. A
+decoration is visible only, so it is **not an upgrade in v3's own terms**, and
+FR-010's 5–8 bound — which governs "the upgrade catalog" — does not reach it. The
+catalogue still lands on eight and stops; decorations are a second list beside it.
+`prd-v3.md:62` already names *"new shelf/sign/**decoration**"* as a legitimate
+visible change, so the vocabulary is v3's own. **D-2's `prd-v4` trigger stays
+unfired: no FR is edited.**
+
+**FR-013 is what the decoration list actually protects.** *"The start/results
+surface shows the **next** meaningful upgrade and the concrete amount still
+needed"* has no content once the catalogue is empty, and the results-screen
+progress card degrades to `null` **[V]** `ShiftScreen.tsx:131–132`,
+`ShiftResults.tsx:15`. With a renewing sink there is always a next thing to save
+toward, so FR-013 keeps its meaning past the catalogue's end.
+
 **FR-012 — the one place this tranche exceeds v3's letter.** `prd-v3.md:108`
 enumerates a purchase's functional effect as *"new product, task type, or
 capacity"*. `capacity` and `unlock` sit inside that list; **the two margins do
@@ -302,9 +470,11 @@ stay uncapped **[V]** `src/data/stages.ts:10–13`: capping it "would make
 `recordShiftResult`'s `leveledUp` flag permanently false and silence the level-up
 celebration forever".
 
-**No migration.** `shop_state.purchased` stays a flat global list of ids; the new
-effect fields live in the catalogue, which is code. `purchasedMeta` stays
-write-only.
+**No migration.** `shop_state.purchased` stays a flat global list of ids and gains
+an **optional sibling** `decorations?: string[]` in the same jsonb — exactly the
+precedent `purchasedMeta?` set, so every legacy `{}` and `{ purchased: [] }` row
+stays valid **[V]** `src/types.ts:98–112`. The new effect fields live in the
+catalogue, which is code. `purchasedMeta` stays write-only.
 
 **`shift_log.earned` keeps its contract.** The column is documented as the
 server-computed shift payout and constrained `>= 0` **[V]**
@@ -337,9 +507,12 @@ export interface ShopEffects {
   bonusTasks: number;      // existing shiftBonusTasks(), unchanged
   quantityMargin: number;  // 1 when unowned
   accuracyMargin: number;  // 1 when unowned
-  runningCost: number;
+  runningCost: number;     // over the INVESTMENT subset only — decorations never reach here
 }
 export function shopEffects(purchased: string[]): ShopEffects
+// `purchased` holds catalogue ids only; decorations live in `shop_state.decorations`
+// and are read by the art layer, never by this module. That separation IS the
+// no-harm invariant (§4) — enforced by module boundary, not only by test.
 
 // shift.ts — economy domain: one formula, takes effects as data
 export function profitForShift(
@@ -358,9 +531,15 @@ and `tests/shifts-complete.test.ts` in five places.
 
 ### 9. Testing
 
-- **No-trap invariant** — property sweep over all ≤2⁸ `purchased` subsets × a
-  grid of `d ∈ [0,1]`. The headline deliverable; same family as
+- **No-trap invariant (investment)** — property sweep over all ≤2⁸ investment
+  subsets × a grid of `d ∈ [0,1]`. The headline deliverable; same family as
   `tests/adaptive.test.ts` and `tests/stages.test.ts`.
+- **No-harm invariant (non-investment)** — owning any decoration leaves `profit`
+  bit-identical, and no decoration id ever reaches `shopRunningCost`.
+- **No-dominance invariant** — over **reachable** states only (BFS over the subset
+  lattice under the §3/§7 gates), neither branch's best marginal profit-per-złoty
+  exceeds the other's by more than `DOMINANCE_FLOOR`. Without it, §2's tension may
+  simply not exist and nothing would say so.
 - **Wallet monotonicity** — for any shift outcome, `wallet` after
   `recordShiftResult` is `>=` wallet before. Guards FR-008 against a future
   refactor that reaches for a debit.
@@ -377,8 +556,50 @@ and `tests/shifts-complete.test.ts` in five places.
 - **Server authority** — `/api/shifts/complete` recomputes profit from the
   trusted row's `shop_state`; a tampered client cannot claim a margin it has not
   bought. Extends `tests/shifts-complete.test.ts`.
+- **Decoration purchase** — server-authoritative like an upgrade buy: the route
+  recomputes affordability from the trusted row, a decoration cannot be bought
+  twice, and a decoration id from another world is rejected.
 - **Regression** — the shift E2E and `tests/upgrades-buy.test.ts` pass with
   updated expectations only.
+
+#### The pacing model
+
+All three sources benchmarked in the shaping session agree on one prescription:
+**model the economy before building it**. This design deferred every number to
+kid-testing, and that already costs something verifiably: `prd-v3.md:62` states a
+loop signal — *"a typical child chooses and buys at least one upgrade of their own
+within their first ~3 shifts"* — while `sign` costs **30 zł** against a first-shift
+return of **40–56 zł** **[V]**. The first purchase lands on shift **1**, not ~3.
+**The shipped catalogue already misses its own PRD pacing signal**, and nothing
+computed it.
+
+The deliverable:
+
+- **A pure simulation of `N` shifts per cohort**, importing `src/data/*` so a price
+  change re-runs it. Never a spreadsheet beside the repo — that drifts the moment a
+  constant moves.
+- **The child model already exists** — **[V]** `scripts/telemetry-harness/child-model.ts`
+  defines `ChildModel { pBaseline, dropAtCeiling }`, a deterministic mulberry32 RNG
+  and three swept cohorts (`p090`, `p075`, `p055`). Consume it; write no second
+  assumption file. Its header's caveat binds the output too: this says how the
+  **economy** responds to a class of player, not what a real child does.
+- **Prices expressed in tasks solved**, not in time. The canon's default unit is
+  play time; here the better unit is the one the product is about — *the only thing
+  money can buy is more mathematics*, so the natural price unit is mathematics.
+  Every catalogue entry and every decoration gains a derived "cost in tasks" figure.
+- **A test asserting `prd-v3.md:62`'s pacing signal**, instead of leaving it
+  unmeasured.
+- **The reference shift** for the no-trap and no-dominance sweeps — which closes
+  the open decision below by derivation rather than by a planner's silent choice.
+
+**This will generate work**, and that is the accepted cost: it will almost
+certainly show the shipped prices are mistuned. It also **narrows a standing repo
+convention**. `src/data/upgrades.ts` and `src/data/stages.ts` both say costs are
+*"first-guess defaults, adjust after kid-testing"*. That stays true for what only
+children can answer — above all whether the accuracy margin reads as *reward for
+precision* or as *punishment for being a beginner*. It stops being true for what
+arithmetic can settle. Kid-testing gets one shot; it should not be spent on whether
+the catalogue empties at shift 9 or shift 40.
 
 ---
 
@@ -386,23 +607,32 @@ and `tests/shifts-complete.test.ts` in five places.
 
 | Path | Change |
 | ---- | ------ |
-| `src/data/upgrades.ts` | `Upgrade` gains `quantityMargin?` / `accuracyMargin?` / `requiredUpgrade?`; two new entries; `sign` becomes the branch gate; `shopEffects()` + `shopRunningCost()`; `canBuy` gains the `branch-locked` rung |
+| `src/data/upgrades.ts` | `Upgrade` gains `quantityMargin?` / `accuracyMargin?` / `requiredUpgrade?`; two new entries; `sign` becomes the branch gate; `shopEffects()` + `shopRunningCost()` over the **investment** subset; `canBuy` gains the `branch-locked` rung |
+| `src/data/decorations.ts` | **new** — the per-world decoration lists: id, cost, art, optional slot. No effect fields by construction |
+| `src/types.ts` | `ShopState` gains `decorations?: string[]` (optional, same jsonb — the `purchasedMeta?` precedent) |
 | `src/data/shift.ts` | `profitForShift()`; `earningsForShift` retained as revenue or replaced |
-| `src/data/worlds.ts` | `World` gains optional per-world art override |
-| `src/i18n/pl.ts` | per-world upgrade vocabulary with fallback; two new entries; three result-screen strings (przychód / koszt / zysk) |
+| `src/data/worlds.ts` | `World` gains an optional per-world art override and its `decorations` set |
+| `src/i18n/pl.ts` | per-world upgrade vocabulary with fallback; two new entries; decoration names; three result-screen strings (przychód / koszt / zysk) |
 | `src/lib/services/child-profiles.ts` | `recordShiftResult` reads `shop_state`, writes profit; `ShiftResult` carries revenue/cost/profit |
 | `src/pages/api/shifts/complete.ts` | response carries the three numbers |
 | `src/components/child/ShiftScreen.tsx` | celebration shows three numbers. **[V]** it already receives `purchased` (`ShiftScreen.tsx:41,72`), so the island needs no new prop |
 | `src/pages/app/task.astro` | **no change expected** — already reads `readPurchased(profile.shop_state)` and passes it (`task.astro:29,84`) |
-| `src/components/child/UpgradeShop.tsx` | renders margin effects and the branch-locked state |
-| `tests/` | new invariant suites; updated expectations in `shift`, `shifts-complete`, `upgrades`, `upgrades-buy` |
+| `src/components/child/UpgradeShop.tsx` | renders margin effects, the branch-locked state, and the world's decoration list beside the catalogue |
+| `src/components/child/ShopArt.tsx` | decoration overlays reuse the existing slot map; unslotted decorations take the documented corner-row fallback. **[V]** no new compositing system needed |
+| `scripts/` or `tests/` | the pacing model (§9), importing `src/data/*` and `scripts/telemetry-harness/child-model.ts` |
+| `tests/` | new invariant suites (no-trap, no-harm, no-dominance); the pacing assertions; updated expectations in `shift`, `shifts-complete`, `upgrades`, `upgrades-buy` |
 
-No migration. No new table, route, or RLS policy.
+No migration. No new table, route, or RLS policy. The decoration purchase reuses
+the existing buy route's authority model — recompute from the trusted row, never
+trust a client amount.
 
 ## Open tuning parameters
 
-Named constants, first-guess values, settled after kid-testing — not blockers for
-implementation. This is the repo's standing convention for economy constants.
+Named constants, first-guess values — not blockers for implementation. This is the
+repo's standing convention for economy constants, **narrowed by §9's pacing model**:
+what arithmetic can settle is settled before kid-testing, and kid-testing keeps only
+the questions children alone can answer. The reference shift is **no longer** on this
+list — §9's model derives it.
 
 - `shopRunningCost`'s curve shape and per-entry weights — **checked against the
   compounding case (capacity × quantity-margin), not the base case**
@@ -413,20 +643,31 @@ implementation. This is the repo's standing convention for economy constants.
   (counting volume, the pattern `customers` already uses)
 - `sign`'s cost, if 30 zł stops being right once it gates a branch — note
   `prd-v3.md:62`'s loop signal, "a first purchase within ~3 shifts"
-- The reference shift used to evaluate the no-trap invariant
+- How many decorations per world, and their price curve — whether the price rises
+  within a world (an intra-world sink) or stays flat, with the cross-world renewal
+  carrying the whole job
+- Decoration slot positions per world, or the corner-row fallback for the first batch
+- `DOMINANCE_FLOOR` — first guess **0.6**; a *policy* number (how much asymmetry
+  still counts as a choice), which the pacing model measures against but does not
+  itself decide
 
 ## Follow-on
 
-- **W1 `six-worlds-catalogue`** — art plus 6 × ≤8 vocabulary entries. A sibling
-  of this tranche, not a prerequisite: the copy fallback lets worlds be named
-  incrementally. Two known art debts to price in: per-world *upgrade* art does
-  not exist (the six `upgrade-*.svg` are world-neutral), and per-stage world art
-  exists for **zero** worlds **[V]** `src/data/stages.ts:17–31`, which documents
-  the upgrade path. Neither blocks anything here.
+- **W1 `six-worlds-catalogue`** — 6 × ≤8 vocabulary entries **plus 6 × N decoration
+  sets**. A sibling of this tranche, not a prerequisite: the copy fallback lets
+  worlds be named incrementally and the corner-row fallback lets decorations ship
+  one at a time. **Its world art is already done** **[V]** — `WORLDS` holds 4
+  entries but all six `world-*.webp` are committed and recorded in `slice-map.md`.
+  Three art debts remain to price in: decoration art (**zero** assets exist,
+  §2a), per-world *upgrade* art (the six `upgrade-*.svg` are world-neutral), and
+  per-stage world art for **zero** worlds **[V]** `src/data/stages.ts:17–31`, which
+  documents the upgrade path. None blocks anything here.
 - **B2 `pricing-and-inventory`** — unblocked by neither this tranche nor W1. It
   needs P2's task types first.
 - **Revenue/cost columns on `shift_log`** — would let the weekly parent report
   show the profit breakdown over a week rather than a payout total. Deliberately
   out of scope; `earned` alone keeps the report correct today.
 - **Per-world economies** — if telemetry ever argues for them, `purchasedMeta`
-  is the attribution data that change needs.
+  is the attribution data that change needs. Note that §2a's decoration sets are
+  *not* a step toward this: they carry no economic effect, so they differentiate
+  worlds without ranking them.
