@@ -5,6 +5,7 @@ import { businessLevelForShifts, profitForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
 import type { TaskAttempt } from "@/data/attempts";
 import { type BuyReason, canBuy, getUpgrade, readPurchased, shopEffects } from "@/data/upgrades";
+import { canBuyDecoration, getDecoration, readDecorations } from "@/data/decorations";
 import { worldForTheme } from "@/data/worlds";
 
 export { deriveStartingLevel } from "@/data/leveling";
@@ -392,4 +393,84 @@ export async function buyUpgrade(
   });
 
   return { walletBalance, purchased: nextPurchased };
+}
+
+export type BuyDecorationResult =
+  | { walletBalance: number; decorations: string[] }
+  | { failure: BuyFailure }
+  | { error: PostgrestError | Error };
+
+/**
+ * Purchase a decoration onto the parent's own profile (E1 / D-11) — the SECOND
+ * sanctioned spend path beside `buyUpgrade`, and server-authoritative in exactly
+ * the same way. The row is read by `id` under RLS (a non-owner sees no row →
+ * `not-found`, never A's data); `account_id` is NEVER taken from the caller
+ * (L-002). Ownership, world and affordability are recomputed from the TRUSTED row
+ * via the shared `canBuyDecoration` — the client only names a `decorationId`.
+ *
+ * **FR-008, and it is load-bearing which way this reads.** "Never reduce a
+ * child's funds outside a purchase" governs the SHIFT path, where the profit rule
+ * applies cost to revenue and never to the wallet. This IS a purchase:
+ * `prd-v3.md:62` names "new shelf/sign/**decoration**" as a legitimate visible
+ * change, so v3's own vocabulary contemplates buying one. Reject a wallet debit
+ * in `recordShiftResult`; this debit is correct.
+ *
+ * **Two deliberate departures from `buyUpgrade`, both load-bearing:**
+ *
+ * 1. **No `shift_log` row.** A `{ upgrade_purchased: null, earned: null }` row
+ *    flips `computeWeeklyReport`'s `earningsKnown` false **permanently**, which
+ *    silently suppresses the parent report's earnings tile from then on; and
+ *    tagging it as `upgrade_purchased` would list a decoration among "upgrades
+ *    bought this week". Neither is worth a log line for a purchase that changes
+ *    nothing but a picture.
+ * 2. **No `+1 decisions` credit.** `decisions` is surfaced to the parent and
+ *    gates nothing, so crediting it here would make decoration-spam a way to
+ *    inflate a competency a parent reads. Choosing an UPGRADE is the decision.
+ */
+export async function buyDecoration(
+  client: SupabaseClient,
+  profileId: string,
+  decorationId: string,
+): Promise<BuyDecorationResult> {
+  const decoration = getDecoration(decorationId);
+  // Unknown-id short-circuit: no DB round-trip for a value outside the catalogue.
+  if (!decoration) return { failure: "unknown" };
+
+  const { data, error: readErr } = await client.from("child_profiles").select("*").eq("id", profileId).limit(1);
+  if (readErr) return { error: readErr };
+  const current = (data[0] as ChildProfile | undefined) ?? null;
+  if (!current) return { failure: "not-found" };
+
+  const decorations = readDecorations(current.shop_state);
+  const check = canBuyDecoration(decoration, {
+    walletBalance: current.wallet_balance,
+    // `worldForTheme` normalizes the DB default 'default' to `kawiarnia`, so the
+    // comparison is always against a real slug.
+    world: worldForTheme(current.theme).slug,
+    decorations,
+  });
+  if (!check.ok) return { failure: check.reason };
+
+  const nextDecorations = [...decorations, decoration.id];
+  const walletBalance = current.wallet_balance - decoration.cost;
+
+  const { error: updateErr } = await client
+    .from("child_profiles")
+    .update({
+      wallet_balance: walletBalance,
+      shop_state: {
+        ...current.shop_state,
+        // The INNER spread is load-bearing, exactly as in `buyUpgrade`: naming
+        // `decorations` as an explicit key SHADOWS the outer spread, so
+        // `purchased` and `purchasedMeta` must be carried forward by hand or a
+        // decoration purchase would silently erase the child's whole shop.
+        purchased: readPurchased(current.shop_state),
+        purchasedMeta: current.shop_state.purchasedMeta,
+        decorations: nextDecorations,
+      },
+    })
+    .eq("id", profileId);
+  if (updateErr) return { error: updateErr };
+
+  return { walletBalance, decorations: nextDecorations };
 }

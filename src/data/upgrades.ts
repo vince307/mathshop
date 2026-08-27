@@ -255,6 +255,10 @@ export type BuyReason =
   | "owned"
   | "locked"
   | "branch-locked"
+  // `src/data/decorations.ts`'s world rung. A distinct reason on purpose: reusing
+  // "locked" would show a child a business level that has nothing to do with why
+  // the buy failed.
+  | "wrong-world"
   | "skill-locked"
   | "history-locked"
   | "insufficient"

@@ -312,6 +312,29 @@ export const pl = {
   // Upgrade catalog names (S-06). Keyed by upgrade id (`t.upgrades[id]`), so the
   // catalog (src/data/upgrades.ts) carries no literal copy (L-003). Draft Polish —
   // pending native-speaker review.
+  // Decorations (E1 / D-11) — the renewing sink. Keyed by the globally unique,
+  // world-prefixed decoration id from `src/data/decorations.ts`, so a world's set
+  // can grow without touching another's. Every name says what the CHILD sees;
+  // none of them promises an effect, because a decoration has none.
+  decorations: {
+    "kawiarnia-lampki": "Lampki nad stolikami",
+    "kawiarnia-kwiaty": "Kwiaty na parapecie",
+    "kawiarnia-obrazek": "Obrazek na ścianie",
+    "kawiarnia-fotel": "Wygodny fotel",
+    "piekarnia-wstazki": "Wstążki nad ladą",
+    "piekarnia-rogaliki": "Wystawka z rogalikami",
+    "piekarnia-tort": "Tort na witrynie",
+    "piekarnia-kawiarenka": "Kącik z kawą",
+    "galaktyczna-baza-orbita": "Model orbity",
+    "galaktyczna-baza-satelita": "Mały satelita",
+    "galaktyczna-baza-teleskop": "Teleskop przy oknie",
+    "galaktyczna-baza-rakieta": "Rakieta na podeście",
+    "sklep-ksiegarnia-listek": "Listek w doniczce",
+    "sklep-ksiegarnia-zakladka": "Zakładki z piórkiem",
+    "sklep-ksiegarnia-zwoje": "Stare zwoje",
+    "sklep-ksiegarnia-ksiegozbior": "Regał na zbiory",
+  },
+
   upgrades: {
     sign: { name: "Szyld", desc: "Nowy szyld przyciąga wzrok." },
     shelf: { name: "Półka", desc: "Więcej miejsca na towar." },
@@ -408,6 +431,12 @@ export const pl = {
     // The E1 branch gate. Actionable on purpose — it names the one thing to buy
     // first, rather than a level or a skill the child cannot yet reach.
     lockedByBranch: "Najpierw kup: {name}",
+    // The decoration section (E1). The hint is the honest promise: an ozdoba is
+    // exactly as useless as it looks, and saying so is what keeps it from
+    // competing with a real upgrade decision.
+    decorationsHeading: "Ozdoby do sklepu",
+    decorationsHint: "Ozdoby nic nie zmieniają w liczeniu — po prostu ładnie wyglądają.",
+    emptyDecorations: "Masz już wszystkie ozdoby w tym świecie.",
     lockedByFunds: "Brakuje {amount} zł",
     lockedBySkill: "Rozwiń umiejętność „{competency}” do poziomu {level}",
     lockedByHistory: "Wykonaj {count} zadań: {competency}",

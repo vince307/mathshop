@@ -4,7 +4,7 @@ import { ShopGlyph, type ShopIconKey } from "@/components/child/ShopGlyph";
 import { childCard } from "@/components/child/childCard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { t, upgradeCopy } from "@/i18n";
+import { purchaseName, t } from "@/i18n";
 
 interface ShiftResultsProps {
   /** The wallet payout — the server's `profit`. */
@@ -18,7 +18,14 @@ interface ShiftResultsProps {
   /** True when the child can now afford an upgrade — shows a gentle, factual nudge (S-06). */
   canUpgrade: boolean;
   /** Cheapest eligible unowned upgrade + post-shift wallet (S-13 progress card); null when none. */
-  nextInfo: { id: string; art?: string; icon?: ShopIconKey; cost: number; wallet: number } | null;
+  nextInfo: {
+    kind: "upgrade" | "decoration";
+    id: string;
+    art?: string;
+    icon?: ShopIconKey;
+    cost: number;
+    wallet: number;
+  } | null;
 }
 
 /**
@@ -124,7 +131,7 @@ export default function ShiftResults({
             <p className="text-muted-foreground mt-1 text-sm font-semibold">
               {t.upgradeShop.nextProgress
                 .replace("{amount}", String(nextInfo.cost - nextInfo.wallet))
-                .replace("{name}", upgradeCopy(nextInfo.id).name)}
+                .replace("{name}", purchaseName(nextInfo))}
             </p>
           </div>
         </div>

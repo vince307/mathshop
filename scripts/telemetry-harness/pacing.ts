@@ -43,6 +43,8 @@ import {
   profitForShift,
 } from "@/data/shift";
 import { UPGRADES, canBuy, shiftBonusTasks, shopEffects } from "@/data/upgrades";
+import { canBuyDecoration, decorationsForWorld } from "@/data/decorations";
+import { DEFAULT_THEME } from "@/data/worlds";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { SkillState } from "@/types";
 import { type ChildModel, MISS_MODEL, missesThisTask, rng } from "./child-model";
@@ -132,11 +134,19 @@ export interface PurchaseTimeline {
   firstPurchaseShift: number | null;
   /** 1-based shift after which the catalogue was fully owned, or null if never. */
   catalogueEmptiedShift: number | null;
+  /**
+   * 1-based shift after which BOTH the catalogue and this world's sink were
+   * exhausted, or null if never. Past this point the wallet is idle — the state
+   * `t.growth.noNextUpgrade` names and `e2e/growth.spec.ts` seeds.
+   */
+  everythingOwnedShift: number | null;
 }
 
 export interface SimulateOptions {
   /** Frozen `starting_level` — fixes the age band's difficulty seed and ceiling. */
   startingLevel?: number;
+  /** Which world's decoration sink the simulated player can spend into. */
+  world?: string;
 }
 
 /** A fully zeroed `SkillState`, via the shipped normalizer (no second copy of the shape). */
@@ -165,6 +175,7 @@ export function simulatePurchases(
   options: SimulateOptions = {},
 ): PurchaseTimeline {
   const startingLevel = options.startingLevel ?? 1;
+  const world = options.world ?? DEFAULT_THEME;
   const ceiling = ceilingForLevel(startingLevel);
   const next = rng(seed);
 
@@ -173,10 +184,12 @@ export function simulatePurchases(
   let wallet = 0;
   let completedShifts = 0;
   const purchased: string[] = [];
+  const decorations: string[] = [];
 
   const records: ShiftRecord[] = [];
   const purchases: PurchaseEvent[] = [];
   let catalogueEmptiedShift: number | null = null;
+  let everythingOwnedShift: number | null = null;
 
   for (let shift = 1; shift <= shifts; shift++) {
     const openD = lengthDifficulty(difficulty);
@@ -225,26 +238,52 @@ export function simulatePurchases(
     for (;;) {
       const ctx = { walletBalance: wallet, businessLevel: levelAfter, purchased, skillState };
       const affordable = UPGRADES.filter((upgrade) => canBuy(upgrade, ctx).ok);
-      if (affordable.length === 0) break;
-      const pick = affordable.reduce((a, b) => (b.cost < a.cost ? b : a));
+      if (affordable.length > 0) {
+        const pick = affordable.reduce((a, b) => (b.cost < a.cost ? b : a));
+        wallet -= pick.cost;
+        purchased.push(pick.id);
+        bought.push(pick.id);
+        purchases.push({ shift, id: pick.id, cost: pick.cost, inTasks: costInTasks(pick.cost, purchased, openD) });
+        // A purchase credits the `decisions` competency, exactly as `buyUpgrade` does.
+        skillState = {
+          ...skillState,
+          decisions: {
+            completed: skillState.decisions.completed + 1,
+            firstTryCorrect: skillState.decisions.firstTryCorrect + 1,
+            misses: skillState.decisions.misses,
+          },
+        };
+        continue;
+      }
+      // The catalogue is exhausted (or nothing in it is affordable yet) — spend
+      // into the sink instead. UPGRADES FIRST is deliberate and mirrors
+      // `nextPurchase`: a decoration must never consume money the child could
+      // have put toward a real decision. A decoration buy credits NO `decisions`
+      // (AD-6), so nothing is bumped here.
+      const buyableDecorations = decorationsForWorld(world).filter(
+        (decoration) => canBuyDecoration(decoration, { walletBalance: wallet, world, decorations }).ok,
+      );
+      if (buyableDecorations.length === 0) break;
+      const pick = buyableDecorations.reduce((a, b) => (b.cost < a.cost ? b : a));
       wallet -= pick.cost;
-      purchased.push(pick.id);
+      decorations.push(pick.id);
       bought.push(pick.id);
       purchases.push({ shift, id: pick.id, cost: pick.cost, inTasks: costInTasks(pick.cost, purchased, openD) });
-      // A purchase credits the `decisions` competency, exactly as `buyUpgrade` does.
-      skillState = {
-        ...skillState,
-        decisions: {
-          completed: skillState.decisions.completed + 1,
-          firstTryCorrect: skillState.decisions.firstTryCorrect + 1,
-          misses: skillState.decisions.misses,
-        },
-      };
     }
 
     if (catalogueEmptiedShift === null && purchased.length === UPGRADES.length) catalogueEmptiedShift = shift;
+    if (
+      everythingOwnedShift === null &&
+      purchased.length === UPGRADES.length &&
+      decorations.length === decorationsForWorld(world).length
+    ) {
+      everythingOwnedShift = shift;
+    }
 
     const afterCtx = { walletBalance: wallet, businessLevel: levelAfter, purchased, skillState };
+    const buyableDecorationsAfter = decorationsForWorld(world).filter(
+      (decoration) => canBuyDecoration(decoration, { walletBalance: wallet, world, decorations }).ok,
+    ).length;
     records.push({
       shift,
       businessLevel: levelAfter,
@@ -256,7 +295,7 @@ export function simulatePurchases(
       profit,
       walletAfter: wallet,
       bought,
-      buyableAfter: UPGRADES.filter((upgrade) => canBuy(upgrade, afterCtx).ok).length,
+      buyableAfter: UPGRADES.filter((upgrade) => canBuy(upgrade, afterCtx).ok).length + buyableDecorationsAfter,
     });
   }
 
@@ -267,6 +306,7 @@ export function simulatePurchases(
     purchases,
     firstPurchaseShift: purchases.length > 0 ? purchases[0].shift : null,
     catalogueEmptiedShift,
+    everythingOwnedShift,
   };
 }
 
@@ -281,7 +321,8 @@ export function formatTimeline(timeline: PurchaseTimeline): string {
   const head =
     `cohort=${timeline.cohort} seed=${timeline.seed} ` +
     `firstPurchase=${timeline.firstPurchaseShift ?? "never"} ` +
-    `catalogueEmptied=${timeline.catalogueEmptiedShift ?? "never"}`;
+    `catalogueEmptied=${timeline.catalogueEmptiedShift ?? "never"} ` +
+    `everythingOwned=${timeline.everythingOwnedShift ?? "never"}`;
   const rows = timeline.shifts.map(
     (r) =>
       `  ${String(r.shift).padStart(3)} | lvl ${r.businessLevel} | d=${r.difficulty.toFixed(2)} | ` +

@@ -9,6 +9,7 @@ import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
 import { starsForShift, type ShiftPlan } from "@/data/shift";
 import type { ShopIconKey } from "@/components/child/ShopGlyph";
+import { nextPurchase } from "@/data/decorations";
 import { useShiftEngine } from "@/components/hooks/useShiftEngine";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,11 @@ interface ShiftScreenProps {
   walletBalance: number;
   /** Owned-upgrade ids — feed the results nudge's next-upgrade check (S-06). */
   purchased: string[];
+  /**
+   * Owned decoration ids (E1) — so the results nudge survives an exhausted
+   * catalogue. The world it scopes to is the `world` prop above.
+   */
+  decorations: string[];
 }
 
 type Phase = "playing" | "saving" | "results" | "error";
@@ -57,7 +63,14 @@ interface Outcome {
   canUpgrade: boolean;
   /** The cheapest eligible unowned upgrade + post-shift wallet — the results
       screen's progress card (S-13, presentational only). Null when none. */
-  nextInfo: { id: string; art?: string; icon?: ShopIconKey; cost: number; wallet: number } | null;
+  nextInfo: {
+    kind: "upgrade" | "decoration";
+    id: string;
+    art?: string;
+    icon?: ShopIconKey;
+    cost: number;
+    wallet: number;
+  } | null;
 }
 
 /**
@@ -75,7 +88,15 @@ interface Outcome {
  * far, and the competency/telemetry join stays positional against the engine's
  * retained `tasks`.
  */
-export default function ShiftScreen({ plan, firstTask, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
+export default function ShiftScreen({
+  plan,
+  firstTask,
+  world,
+  profileId,
+  walletBalance,
+  purchased,
+  decorations,
+}: ShiftScreenProps) {
   // The engine owns the cursor and draws tasks 2…N on demand; `total` is the
   // plan's fixed length, which is what every site below counts against.
   const { index, total, task: currentTask, tasks, results, advance } = useShiftEngine(plan, firstTask);
@@ -145,10 +166,23 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
         const earned = data.profit;
         // Post-shift affordability: does the new wallet cover the cheapest
         // level-eligible unowned upgrade? Drives the (factual) results nudge.
-        const next = nextUpgrade({ businessLevel: data.businessLevel, purchased });
+        // `nextPurchase`, not `nextUpgrade` (E1 / D-11): once the catalogue is
+        // exhausted the nudge names a decoration of the current world instead of
+        // going quiet, which is the whole point of the renewing sink.
+        const next = nextPurchase(
+          { businessLevel: data.businessLevel, purchased, world: world.slug, decorations },
+          nextUpgrade,
+        );
         const canUpgrade = next !== null && walletBalance + earned >= next.cost;
         const nextInfo = next
-          ? { id: next.id, art: next.art, icon: next.icon, cost: next.cost, wallet: walletBalance + earned }
+          ? {
+              kind: next.kind,
+              id: next.id,
+              art: next.art,
+              icon: next.icon,
+              cost: next.cost,
+              wallet: walletBalance + earned,
+            }
           : null;
         setOutcome({
           earned,
@@ -170,7 +204,7 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
           setPhase("error");
         }
       });
-  }, [results, tasks, total, profileId, walletBalance, purchased, markOffline]);
+  }, [results, tasks, total, profileId, walletBalance, purchased, decorations, world, markOffline]);
 
   if (phase === "results" && outcome) {
     return (

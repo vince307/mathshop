@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { deleteUser, provisionAccount, seedChildProfile, signInViaUI } from "./helpers/accounts";
 import { t } from "./helpers/i18n";
+import { decorationsForWorld } from "../src/data/decorations";
+
+/** The world the empty-shop seed below runs in — its decorations are seeded as owned. */
+const SEED_WORLD = "kawiarnia";
 
 /**
  * The `/app/growth` screen and the nav entry that reaches it
@@ -122,14 +126,25 @@ test("the nav entry reaches the growth screen and the rail shows every stage (Ri
 test("the next-upgrade card stays a finished thought when nothing is left to buy (Risk E2E-F4-3)", async ({ page }) => {
   const account = await provisionAccount("e2e-growth-empty");
   try {
-    // `sign` and `shelf` are the only two upgrades with requiredWorldLevel 1, so
-    // owning both at business_level 1 drives `nextUpgrade` to null. That is 90 zl
-    // of ordinary early play, not a terminal edge case — it recurs at every level
-    // boundary.
+    // Reaching the empty state now takes BOTH lists (E1 / D-11). `sign` and
+    // `shelf` are still the only two upgrades with requiredWorldLevel 1, so owning
+    // both at business_level 1 drives `nextUpgrade` to null — but `nextPurchase`
+    // then falls through to this world's decorations, which are gated on price
+    // alone and therefore always offerable. That fall-through is the whole point
+    // of the sink, so the seed owns the world's decorations too.
+    //
+    // Anchored on `decorationsForWorld(SEED_WORLD)` rather than a hand-written id
+    // list on purpose: `six-worlds-catalogue` and any future decoration batch
+    // change the set, and a stale literal here would re-create exactly the silent
+    // staleness this re-seed exists to fix (L-006).
     await seedChildProfile(account.id, {
       name: "Nela",
       businessLevel: 1,
-      shopState: { purchased: ["sign", "shelf"] },
+      theme: SEED_WORLD,
+      shopState: {
+        purchased: ["sign", "shelf"],
+        decorations: decorationsForWorld(SEED_WORLD).map((d) => d.id),
+      },
     });
     await signInViaUI(page, account.email);
     await page.goto("/app/growth");

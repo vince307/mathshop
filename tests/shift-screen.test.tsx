@@ -116,6 +116,7 @@ function renderShift(seed = SEED, difficulty = LEVEL_1, ceiling = LEVEL_1_CEILIN
       profileId="profile-1"
       walletBalance={0}
       purchased={[]}
+      decorations={[]}
     />,
   );
   return { plan, firstTask };

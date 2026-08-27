@@ -82,7 +82,7 @@ describe("ShopArt render", () => {
     // `piekarnia`'s sign sits at 7%/10%; DEFAULT_SLOTS.sign is 10%/6% — the two
     // differ on BOTH axes, so neither assertion can pass by coincidence.
     const world = worldForTheme("piekarnia");
-    const { container } = render(<ShopArt world={world} purchased={["sign"]} />);
+    const { container } = render(<ShopArt world={world} purchased={["sign"]} decorations={[]} />);
 
     expect(screen.getByAltText(world.name)).toBeInTheDocument();
 

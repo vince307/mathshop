@@ -16,9 +16,10 @@ import { listRecentActivity } from "@/lib/services/reports";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { nextUpgrade, readPurchased } from "@/data/upgrades";
+import { nextPurchase, readDecorations } from "@/data/decorations";
 import { readSkillState } from "@/data/skills";
 import { toActivityEntry, type ActivityEntry } from "@/data/activity";
-import { t } from "@/i18n";
+import { purchaseName, t } from "@/i18n";
 
 // Child dashboard (S-01b). Gated under /app. Loads the ACTIVE profile (S-11
 // fallback ladder: valid selection → sole profile). A 2+ account without a
@@ -44,7 +45,15 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
 // is next (all owned / none eligible) or when it's already affordable (FR-013 —
 // factual, no urgency).
 const purchased = profile ? readPurchased(profile.shop_state) : [];
-const next = profile ? nextUpgrade({ businessLevel: profile.business_level, purchased }) : null;
+const decorations = profile ? readDecorations(profile.shop_state) : [];
+// The "next thing" (E1 / D-11) — the cheapest level-eligible unowned upgrade, or,
+// once the catalogue is exhausted, the cheapest unowned decoration of the CURRENT
+// world. Switching from `nextUpgrade` to `nextPurchase` is what keeps this card a
+// finished thought past the catalogue's end, which was ~13 shifts of ordinary play.
+const next =
+  profile && world
+    ? nextPurchase({ businessLevel: profile.business_level, purchased, world: world.slug, decorations }, nextUpgrade)
+    : null;
 const skillState = readSkillState(profile?.skill_state);
 
 // Recent-activity feed (F2). Resolved HERE, in the frontmatter — the only place
@@ -74,7 +83,7 @@ const nextText =
   next && profile
     ? t.upgradeShop.nextProgress
         .replace("{amount}", String(next.cost - profile.wallet_balance))
-        .replace("{name}", t.upgrades[next.id as keyof typeof t.upgrades].name)
+        .replace("{name}", purchaseName(next))
     : "";
 // Saving progress toward that next upgrade — the one bar the data actually supports.
 const savingPercent =
@@ -124,7 +133,7 @@ const stats = profile
                   <p class="text-muted-foreground mt-2 text-sm font-semibold">{t.start.worldTagline}</p>
                 </div>
                 <div class="order-1 w-full max-w-xs shrink-0 sm:order-2 sm:w-2/5 sm:max-w-sm">
-                  <ShopArt world={world} purchased={purchased} />
+                  <ShopArt world={world} purchased={purchased} decorations={decorations} />
                 </div>
               </div>
 
@@ -199,7 +208,7 @@ const stats = profile
                 <div class="mt-3 flex items-center gap-4">
                   <ShopGlyph art={next.art} icon={next.icon} className="size-16 shrink-0" />
                   <div class="min-w-0 flex-1">
-                    <p class="text-foreground font-bold">{t.upgrades[next.id as keyof typeof t.upgrades].name}</p>
+                    <p class="text-foreground font-bold">{purchaseName(next)}</p>
                     <p class="text-accent mt-0.5 font-extrabold">
                       {t.start.amountZl.replace("{amount}", String(next.cost))}
                     </p>

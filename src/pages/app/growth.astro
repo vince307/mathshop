@@ -11,8 +11,9 @@ import { resolvePageProfile } from "@/lib/services/active-profile";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { nextUpgrade, readPurchased } from "@/data/upgrades";
+import { nextPurchase, readDecorations } from "@/data/decorations";
 import { STAGES, stageForLevel, unlocksForStage } from "@/data/stages";
-import { t, upgradeCopy } from "@/i18n";
+import { purchaseName, t, upgradeCopy } from "@/i18n";
 
 // The growth screen (F4, missing-screens-v3 `01-world-progression`). Gated under
 // /app by existing middleware (`PROTECTED_ROUTES = ["/app"]`, startsWith).
@@ -34,6 +35,7 @@ const profile = resolved.profile;
 const world = profile ? worldForTheme(profile.theme) : null;
 const avatar = profile ? getAvatar(profile.avatar) : null;
 const purchased = profile ? readPurchased(profile.shop_state) : [];
+const decorations = profile ? readDecorations(profile.shop_state) : [];
 
 // `stageForLevel` is total and saturating, so an uncapped `business_level` — a
 // child 50 levels in — resolves to the top stage rather than off the end.
@@ -43,13 +45,20 @@ const unlocks = unlocksForStage(current.stage);
 // The savings nudge + bar, reused verbatim from the dashboard: the one progress
 // bar the data actually supports. No earnings total is computed here — sum(earned)
 // is a lower bound and belongs on the parent report, not on a child's screen.
-const next = profile ? nextUpgrade({ businessLevel: profile.business_level, purchased }) : null;
+// The "next thing" (E1 / D-11) — the cheapest level-eligible unowned upgrade, or,
+// once the catalogue is exhausted, the cheapest unowned decoration of the CURRENT
+// world. Switching from `nextUpgrade` to `nextPurchase` is what keeps this card a
+// finished thought past the catalogue's end, which was ~13 shifts of ordinary play.
+const next =
+  profile && world
+    ? nextPurchase({ businessLevel: profile.business_level, purchased, world: world.slug, decorations }, nextUpgrade)
+    : null;
 const showNext = !!(next && profile && profile.wallet_balance < next.cost);
 const nextText =
   next && profile
     ? t.upgradeShop.nextProgress
         .replace("{amount}", String(next.cost - profile.wallet_balance))
-        .replace("{name}", upgradeCopy(next.id).name)
+        .replace("{name}", purchaseName(next))
     : "";
 const savingPercent =
   next && profile ? Math.max(0, Math.min(100, Math.round((profile.wallet_balance / next.cost) * 100))) : null;
@@ -85,7 +94,7 @@ const savingPercent =
                 <p class="text-muted-foreground mt-2 text-sm font-semibold">{t.growth.intro}</p>
               </div>
               <div class="order-1 w-full max-w-xs shrink-0 sm:order-2 sm:w-2/5 sm:max-w-sm">
-                <ShopArt world={world} purchased={purchased} />
+                <ShopArt world={world} purchased={purchased} decorations={decorations} />
               </div>
             </div>
           </div>
@@ -131,7 +140,7 @@ const savingPercent =
               <div class="mt-4 flex items-center gap-4">
                 <ShopGlyph art={next.art} icon={next.icon} className="size-12 shrink-0" />
                 <div class="min-w-0 flex-1">
-                  <p class="text-foreground text-sm font-extrabold">{upgradeCopy(next.id).name}</p>
+                  <p class="text-foreground text-sm font-extrabold">{purchaseName(next)}</p>
                   <p class="text-muted-foreground mt-0.5 text-xs font-semibold">
                     {t.start.amountZl.replace("{amount}", String(next.cost))}
                   </p>
