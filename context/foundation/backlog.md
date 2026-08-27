@@ -37,12 +37,155 @@ invent it. `Parked` means a deliberate non-goal.
 
 ## Ready
 
-*Empty.* **Nothing in this file can go to `/10x-autonomous-run` today.** The entries
-under `## Needs shaping` need `/10x-shape` → `/10x-prd` first, and the run skill
-refuses those by design: planning them would invent the product content that is
-deliberately missing. Refill this section before the next run.
+Two entries, from the world-economy shaping session closed 2026-08-27. Design:
+`docs/superpowers/specs/2026-08-27-world-economy-design.md`. Decisions and
+rejected alternatives: `context/foundation/shape-notes-world-economy.md` (D-1 …
+D-10).
 
-### Parked pending telemetry
+**Run them as one stack, E1 first.** Not because W1 depends on E1's mechanics —
+the copy fallback (D-3) deliberately decouples them — but because **both edit
+`src/i18n/pl.ts`**, and concurrent worktrees would collide there. E1 first also
+means W1 names eight catalogue entries once instead of six and then two more.
+
+### E1 — `world-economy-profit-rule`
+
+**Value / cost.** Turns a one-term economy with one purchasable effect into a
+profit rule with a decision in it — the thing PRD v3 FR-011 is built around and
+the shipped catalogue cannot express. Cost is concentrated in two pure modules
+(`src/data/upgrades.ts`, `src/data/shift.ts`) plus their two callers; the biggest
+single item is not code but the invariant sweep. **No new table, route, or RLS
+policy.**
+
+**Migration:** **no.** **[V]** 2026-08-27 — `shop_state.purchased` stays a flat
+global id list (`src/types.ts:98–107`); the new effect fields live in the
+catalogue, which is code. `shift_log.earned` keeps its contract ("the amount
+added to the wallet") and needs no backfill: it starts recording profit, and
+every existing row is a shift whose cost was zero.
+
+The design, in one block:
+
+```
+revenue = (EARN_PER_TASK × quantityMargin) × taskCount
+        + (EARN_PER_CLEAN × accuracyMargin) × cleanCount
+cost    = shopRunningCost(purchased)
+profit  = max(0, revenue − cost)      // wallet += profit — NEVER a debit
+```
+
+Catalogue lands at **8 entries and stops**: 1 unlock (`sign`, re-cast as the gate
+to the margin branch) + 5 capacity (unchanged) + 2 margin (new).
+
+**Verified claims** — all **[V]** 2026-08-27, read from source:
+
+- `earningsForShift(taskCount, cleanCount)` has **two** terms already, not one:
+  `EARN_PER_TASK = 5` (quantity) and `EARN_PER_CLEAN = 3` (accuracy, paid only
+  for miss-free tasks) — `src/data/shift.ts:44–47, 288–290`.
+- The five capacity entries carry `extraTasks: 1` each and `MAX_BONUS_TASKS = 5`,
+  so they sum to **exactly** the cap — `src/data/upgrades.ts`. A sixth capacity
+  entry would be an effect-less purchase.
+- FR-010 bounds the catalogue at **5–8 entries** (`prd-v3.md:106`); 6 exist, so
+  there are exactly two free slots.
+- `canBuy`'s rung order is fixed and documented, with the property that *"an
+  owned upgrade is NEVER retro-locked by a later rung"*, pinned at
+  `tests/upgrades.test.ts:115`. The new `requiredUpgrade` rung must inherit it.
+- `ShiftScreen` **already receives `purchased`** (`ShiftScreen.tsx:41,72`;
+  `task.astro:29,84`) — the island needs no new prop and `task.astro` likely
+  needs no change at all.
+- `src/data/shift.ts` does **not** import `src/data/upgrades.ts`, and
+  `MAX_SHIFT_TASKS`'s header explains why a derived cap was rejected there.
+  Spec §8 keeps it that way via a value-object seam; reversing it silently would
+  undo recorded reasoning.
+- FR-008 (`prd-v3.md:102`) forbids reducing funds outside a purchase. The design
+  clears it **only** because cost applies to a shift's revenue, never to the
+  wallet, and `profit ≥ 0`. `wallet -= rent` breaks FR-008; `wallet += max(0,
+  revenue − cost)` does not. **Reject a wallet debit on FR-008 grounds.**
+- Existing test surface to update: `earningsForShift` is asserted in
+  `tests/shift.test.ts:170–179` and at five places in
+  `tests/shifts-complete.test.ts`.
+
+**Inherited, re-check before planning:** nothing. Every claim above was read from
+source during shaping.
+
+**Open decision the planner must NOT invent — the reference shift.** The headline
+deliverable is a property sweep of the no-trap invariant
+`∀ u ∉ purchased : profit(purchased ∪ {u}) > profit(purchased)`, over all ≤2⁸
+`purchased` subsets × a grid of `d ∈ [0,1]`. But `profit` is not a single number:
+shift length depends on `d` (`src/data/shift.ts:56–86`), so "steady-state profit"
+is undefined until a **reference shift** is pinned — which tasks, at what
+accuracy assumption. Pick it deliberately and record it; a planner choosing one
+silently makes the invariant mean whatever that choice made it mean. The obvious
+candidate (expected shift at `d`, fixed accuracy) is a candidate, not a decision.
+
+**Also open, but tuning** — the repo convention is "first-guess defaults, adjust
+after kid-testing", so these do not block: `shopRunningCost`'s curve shape and
+weights (**check it against the compounding case, capacity × quantity-margin, not
+the base case**), the two margin values and entry costs, which competency each
+margin gates on, and whether `earningsForShift` is retained as `revenue` or
+replaced outright.
+
+### W1 — `six-worlds-catalogue`
+
+**Value / cost.** Closes the PRD-v3-assumes-six / code-has-four gap. **The cost
+dropped sharply during shaping**: this was filed as "art plus per-world copy",
+implying an art task nobody could start. Source art for **both** missing worlds
+already exists locally.
+
+**Migration:** **no.** **[V]** 2026-08-27 — `child_profiles.theme` is
+`text not null default 'default'` with **no CHECK constraint**
+(`supabase/migrations/20260609120000_child_profiles_isolation.sql:55`).
+Validation is app-layer only, against `WORLD_SLUGS` derived from `WORLDS`
+(`src/data/worlds.ts`), so adding worlds only widens a zod enum.
+
+**Verified claims** — **[V]** 2026-08-27:
+
+- `assets/atomic-assets-v2/png/worlds/` holds **six** world-card illustrations.
+  Four are shipped; the two that are not are `creative-studio-world.png` and
+  `invention-lab-world.png`, both tagged `"role": "world-card-illustration"` in
+  `assets/atomic-assets-v2/manifest.json`, themes *"creative studio"* and
+  *"invention lab"*.
+- `public/illustrations/` holds exactly four `world-*.webp`; the shipped four were
+  produced as crops with pixel boxes recorded in
+  `public/illustrations/slice-map.md:13–16`.
+- Adding a world touches `src/data/worlds.ts`, `src/i18n/pl.ts`,
+  `WorldPicker.tsx` and `CreateProfileWizard.tsx` — all of which already iterate
+  `WORLDS` rather than hardcoding four.
+- Under D-3 a world also supplies its own **vocabulary** for catalogue entries,
+  resolved as `t.worlds[slug].upgrades[id] ?? t.upgrades[id]`. **The fallback is
+  mandatory**, and it is what makes vocabulary optional per world — so W1 can
+  ship the two worlds without writing 6 × 8 strings, and grow into them.
+
+**MANUAL PRECONDITION — the run cannot do this step.** `assets/` is gitignored
+(`.gitignore:37`), so it does **not** exist in a git worktree, and
+`/10x-autonomous-run` builds code steps in bootstrapped worktrees. The two
+converted `world-<slug>.webp` files must be produced in the main checkout and
+**committed to `public/illustrations/` before the run starts**. Without them the
+run will either fail on missing art or invent a placeholder. Treat this as part
+of the run's Step 1 preflight for W1.
+
+**Open decision the planner must NOT invent — the two slugs and their Polish
+names.** This is product content. The English source themes are "creative studio"
+and "invention lab"; the Polish name, the slug, and the one-line world copy are
+the maintainer's call, and they are load-bearing three ways: the slug is the
+committed art filename stem (`world-<slug>.webp`), it is the value stored in
+`child_profiles.theme`, and it becomes a `WORLD_SLUGS` enum member. Renaming any
+of them after profiles exist is a data change, not a copy change. Note the
+precedent recorded in `src/data/worlds.ts`: the `05` mockup labels the fourth
+world "Sklep kolekcjonera" while the committed art and slug are
+`sklep-ksiegarnia` — reconciled to a single name↔slug↔art, and worth not
+repeating.
+
+**Second open decision:** whether W1 also writes per-world catalogue vocabulary
+(6 × 8 strings) or ships on the neutral fallback and adds vocabulary later. The
+fallback exists precisely so this is a choice; make it explicitly, because a
+planner will otherwise assume one.
+
+---
+
+## Parked pending telemetry
+
+*Not Ready.* `/10x-autonomous-run` must not pick this up. It was previously an
+`###` nested under `## Ready`, which was harmless only while that section was
+empty; promoted to `##` on 2026-08-27 so the run's `--top N` file-order scan
+cannot reach it.
 
 **P2 — curriculum (skill taxonomy + new task types).** Shaping was opened on
 2026-08-26 and **parked at Phase 1 by the maintainer**: *"collect data first, P2
@@ -127,6 +270,11 @@ stock), a state migration, a new task type in the generator and in scoring
 (`src/data/shift.ts`, `/api/shifts/complete`), a demand curve as a pure testable
 function, and the educational explanation screen. PRD v3 lists it under deferred
 tranches. **The largest entry in this backlog.**
+**[V] 2026-08-27 — B2 was deliberately NOT absorbed into the world-economy
+tranche.** It needs a new task type as well as a product entity, and
+`src/types.ts:113–120` puts `set-price` / `manage-stock` and the `inventory` /
+`profit` competencies out of scope "until those task types exist" — which is P2,
+parked. B2 waits on P2, not on E1 or W1.
 
 ### B3 — `skill-path-screen`
 **Mockup:** `assets/matmaverse-ui-v2-{web,mobile}/05-skill-path-*` **[I]**.
@@ -141,12 +289,6 @@ Without it the screen is three progress bars pretending to be a map. Shape first
 **[I]** The post-purchase "Odblokowane!" card inside `UpgradeShop` already covers
 the *moment*; what the mockup shows is a *product*, which does not exist as an
 entity. **Blocked on B2** and not meaningful before it.
-
-### W1 — `six-worlds-catalogue`
-**[V]** (2026-08-23, via the last run's research) `/app/worlds` ships and a world
-switch is functionally lossless. **[I]** The PRD assumes **six** worlds;
-`src/data/worlds.ts` has **four**. The gap is art plus per-world copy, not
-mechanics. Needs the two missing worlds specified before planning.
 
 ---
 
