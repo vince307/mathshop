@@ -7,12 +7,44 @@
  *
  * v1 is a single shared catalog for the current single world (per-world catalogs
  * are the multi-world tranche). Gates on cost + world level (S-06) and, for a
- * sparingly-chosen few entries, skill level / task history (S-07). The only
- * functional effect is capacity: owned upgrades add tasks to the shift, so a
- * busier shop earns more via `earningsForShift`.
+ * sparingly-chosen few entries, skill level / task history (S-07).
+ *
+ * **The catalogue is CLOSED at eight entries** (FR-010's 5–8 bound): one unlock
+ * (`sign`), five capacity, two margin. Capacity is exactly full — the five
+ * capacity entries sum to `MAX_BONUS_TASKS` — so a sixth would be an effect-less
+ * purchase that still costs money to run, i.e. a trap. The renewing sink past
+ * eight is `src/data/decorations.ts`, a SEPARATE list that never enters
+ * `shop_state.purchased` and never reaches `shopRunningCost`.
+ *
+ * Two effect axes, and `sign` gates both (E1 / D-11): **capacity** lengthens the
+ * shift (`extraTasks`), **margin** raises the per-unit rate
+ * (`quantityMargin`/`accuracyMargin`). Margins must never carry `extraTasks` —
+ * the capacity clamp would swallow it and the last capacity purchase would then
+ * add zero tasks while still adding its `runningCost`, manufacturing exactly the
+ * trap `tests/economy-invariants.test.ts` forbids.
+ *
+ * ART DEVIATION FROM THE MOCKUP — deliberate, recorded, with an upgrade path.
+ * The two margin entries have **no committed art**: all three
+ * `assets/atomic-assets-v{1,2,3}` manifests were searched for a margin-shaped
+ * asset and returned nothing usable, and `assets/` is gitignored so nothing under
+ * it may be referenced from code anyway. `art` is therefore OPTIONAL, and an
+ * entry without it renders its `icon` through `src/components/child/ShopGlyph.tsx`
+ * — lucide plus the app's own design tokens, exactly the deviation
+ * `src/data/stages.ts` established. **To add art later:** ship
+ * `public/illustrations/upgrade-<id>.svg`, add its row to
+ * `public/illustrations/slice-map.md` with the source path and crop box, and set
+ * `art` on the entry. Nothing else changes — `ShopGlyph` prefers `art` whenever
+ * it is set. Do NOT commit a placeholder asset instead: it reads as finished art
+ * to everyone who did not write it, and somebody has to find and delete it later.
  */
 import type { Competency, ShopState, SkillState } from "@/types";
 import { skillLevel } from "@/data/skills";
+// TYPE-ONLY, and deliberately so. The icon map is owned by the component that
+// renders it (`ShopGlyph`), because that is the only place that can guarantee
+// every key resolves to a real glyph; a type import erases at compile time, so
+// this module stays runtime-dependency-free and client-safe as its header claims.
+// Do not turn this into a value import.
+import type { ShopIconKey } from "@/components/child/ShopGlyph";
 
 export interface Upgrade {
   id: string;
@@ -42,8 +74,14 @@ export interface Upgrade {
   quantityMargin?: number;
   /** Margin effect on the per-clean-task rate (`EARN_PER_CLEAN`), unowned = 1. */
   accuracyMargin?: number;
-  /** Committed art path (served raw from `public/`). */
-  art: string;
+  /**
+   * Committed art path (served raw from `public/`). **Optional** — an entry
+   * without it renders `icon` through `ShopGlyph`; see the ART DEVIATION block in
+   * this module's header for why, and for what to do when art arrives.
+   */
+  art?: string;
+  /** Fallback glyph when there is no committed art. Ignored when `art` is set. */
+  icon?: ShopIconKey;
   /** Display / progression order. */
   order: number;
   /**
@@ -56,6 +94,17 @@ export interface Upgrade {
    * in `competency` before this can be bought.
    */
   requiredTaskHistory?: { competency: Competency; count: number };
+  /**
+   * Optional branch gate (E1): the id of an upgrade that must be owned first.
+   * `sign` is the shipped example — it has no effect of its own and exists to
+   * make the FIRST purchase a choice of direction (capacity or margin) rather
+   * than a step on a single line.
+   *
+   * Branches govern **visibility and order, never availability**: nothing here
+   * may permanently foreclose anything, and the rung sits after the owned-first
+   * short-circuit so a branch entry already bought can never be retro-locked.
+   */
+  requiredUpgrade?: string;
 }
 
 /** Max total bonus tasks from owned upgrades — caps how far shift length can grow. */
@@ -126,6 +175,45 @@ export const UPGRADES: readonly Upgrade[] = [
     // S-07: more customers rewards counting practice — gate on 8 completed math tasks (first-guess).
     requiredTaskHistory: { competency: "math", count: 8 },
   },
+  // ---- The margin branch (E1). Both gate behind `sign`, both carry
+  // `extraTasks: 0`, and that zero is LOAD-BEARING, not a default: capacity is
+  // already exactly full at MAX_BONUS_TASKS, so a margin entry adding a task
+  // would be swallowed by the clamp and would silently steal the effect of the
+  // child's LAST capacity purchase while leaving its running cost in place.
+  // Margins move the rate; they never move the count.
+  {
+    id: "precision",
+    nameKey: "precision",
+    cost: 140,
+    requiredWorldLevel: 2,
+    extraTasks: 0,
+    runningCost: 3,
+    // 3 zl -> 5 zl per clean task. The MULTIPLIER is derived from the rate, not
+    // the other way round: `round(EARN_PER_CLEAN * 1.5) = 5`, an effective 1.67.
+    // Tune the rate you want and back out the multiplier — nudging 1.5 to 1.55
+    // changes nothing at all.
+    accuracyMargin: 1.5,
+    icon: "target",
+    order: 7,
+    requiredUpgrade: "sign",
+    // S-07: a margin on accuracy rewards careful money handling.
+    requiredSkill: { competency: "money", level: 2 },
+  },
+  {
+    id: "margin",
+    nameKey: "margin",
+    cost: 180,
+    requiredWorldLevel: 3,
+    extraTasks: 0,
+    runningCost: 3,
+    // 5 zl -> 7 zl per task. `round(EARN_PER_TASK * 1.4) = 7`, exactly 1.4.
+    quantityMargin: 1.4,
+    icon: "percent",
+    order: 8,
+    requiredUpgrade: "sign",
+    // S-07: a margin on volume rewards counting practice.
+    requiredTaskHistory: { competency: "math", count: 20 },
+  },
 ] as const;
 
 /** Valid upgrade ids — the closed set for app-layer (zod) validation. */
@@ -154,7 +242,14 @@ export interface BuyContext {
   skillState: SkillState;
 }
 
-export type BuyReason = "owned" | "locked" | "skill-locked" | "history-locked" | "insufficient" | "unknown";
+export type BuyReason =
+  | "owned"
+  | "locked"
+  | "branch-locked"
+  | "skill-locked"
+  | "history-locked"
+  | "insufficient"
+  | "unknown";
 
 export type BuyCheck = { ok: true } | { ok: false; reason: BuyReason };
 
@@ -162,13 +257,22 @@ export type BuyCheck = { ok: true } | { ok: false; reason: BuyReason };
  * Server-authoritative purchasability — reused by the buy route (authority) and
  * the upgrades screen (display), so they never disagree. Order matters: unknown
  * id first, then already-owned (so an owned upgrade is NEVER retro-locked by a
- * later rung), then world-level lock, then the optional S-07 skill / task-history
- * gates (skipped entirely for entries without them), then affordability.
+ * later rung), then world-level lock, then the optional E1 branch gate, then the
+ * optional S-07 skill / task-history gates (skipped entirely for entries without
+ * them), then affordability.
  */
 export function canBuy(upgrade: Upgrade | undefined, ctx: BuyContext): BuyCheck {
   if (!upgrade) return { ok: false, reason: "unknown" };
   if (isOwned(upgrade.id, ctx.purchased)) return { ok: false, reason: "owned" };
   if (ctx.businessLevel < upgrade.requiredWorldLevel) return { ok: false, reason: "locked" };
+  // Branch gate (E1): AFTER the world-level check and BEFORE the skill gates, so
+  // the reason a child is shown is the one furthest up the chain they can act on
+  // — "buy the sign first" is actionable, "reach money level 2" is not while the
+  // entry is invisible behind the branch anyway. Inherits the owned-first
+  // short-circuit above, so a branch entry already bought is never retro-locked.
+  if (upgrade.requiredUpgrade && !isOwned(upgrade.requiredUpgrade, ctx.purchased)) {
+    return { ok: false, reason: "branch-locked" };
+  }
   if (upgrade.requiredSkill) {
     const { competency, level } = upgrade.requiredSkill;
     if (skillLevel(ctx.skillState[competency].firstTryCorrect) < level) return { ok: false, reason: "skill-locked" };

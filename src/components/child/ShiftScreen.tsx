@@ -8,6 +8,7 @@ import { ChildButton } from "@/components/child/ChildButton";
 import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
 import { starsForShift, type ShiftPlan } from "@/data/shift";
+import type { ShopIconKey } from "@/components/child/ShopGlyph";
 import { useShiftEngine } from "@/components/hooks/useShiftEngine";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
@@ -56,7 +57,7 @@ interface Outcome {
   canUpgrade: boolean;
   /** The cheapest eligible unowned upgrade + post-shift wallet — the results
       screen's progress card (S-13, presentational only). Null when none. */
-  nextInfo: { id: string; art: string; cost: number; wallet: number } | null;
+  nextInfo: { id: string; art?: string; icon?: ShopIconKey; cost: number; wallet: number } | null;
 }
 
 /**
@@ -146,7 +147,9 @@ export default function ShiftScreen({ plan, firstTask, world, profileId, walletB
         // level-eligible unowned upgrade? Drives the (factual) results nudge.
         const next = nextUpgrade({ businessLevel: data.businessLevel, purchased });
         const canUpgrade = next !== null && walletBalance + earned >= next.cost;
-        const nextInfo = next ? { id: next.id, art: next.art, cost: next.cost, wallet: walletBalance + earned } : null;
+        const nextInfo = next
+          ? { id: next.id, art: next.art, icon: next.icon, cost: next.cost, wallet: walletBalance + earned }
+          : null;
         setOutcome({
           earned,
           revenue: data.revenue,

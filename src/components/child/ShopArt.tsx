@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { World } from "@/data/worlds";
 import { UPGRADES, isOwned } from "@/data/upgrades";
+import { ShopGlyph } from "@/components/child/ShopGlyph";
 
 interface ShopArtProps {
   world: World;
@@ -30,6 +31,9 @@ const DEFAULT_SLOTS: Partial<Record<string, CSSProperties>> = {
   slot: { left: "44%", bottom: "5%" },
   storage: { left: "6%", bottom: "7%" },
   customers: { right: "6%", bottom: "7%" },
+  // The margin branch (E1) — the two remaining clear bands: high right, low centre-left.
+  precision: { right: "8%", top: "8%" },
+  margin: { left: "26%", bottom: "5%" },
 };
 export const WORLD_SLOTS: Partial<Record<string, Partial<Record<string, CSSProperties>>>> = {
   // `kawiarnia` is deliberately ABSENT — DEFAULT_SLOTS was tuned against its
@@ -45,6 +49,8 @@ export const WORLD_SLOTS: Partial<Record<string, Partial<Record<string, CSSPrope
     slot: { left: "46%", bottom: "3%" },
     storage: { left: "4%", bottom: "10%" },
     customers: { right: "4%", bottom: "12%" },
+    precision: { right: "6%", top: "10%" },
+    margin: { left: "26%", bottom: "3%" },
   },
   "galaktyczna-baza": {
     // Wide scene (x ≈ 8–92%); the sky above the base is the only real whitespace,
@@ -55,6 +61,8 @@ export const WORLD_SLOTS: Partial<Record<string, Partial<Record<string, CSSPrope
     slot: { left: "44%", bottom: "3%" },
     storage: { left: "3%", bottom: "13%" },
     customers: { right: "4%", bottom: "5%" },
+    precision: { right: "3%", top: "6%" },
+    margin: { left: "24%", bottom: "3%" },
   },
   "sklep-ksiegarnia": {
     // A very full frontal display — the margins are thin, so these hug the frame.
@@ -64,6 +72,8 @@ export const WORLD_SLOTS: Partial<Record<string, Partial<Record<string, CSSPrope
     slot: { left: "46%", bottom: "2%" },
     storage: { left: "3%", bottom: "16%" },
     customers: { right: "3%", bottom: "14%" },
+    precision: { right: "5%", top: "22%" },
+    margin: { left: "24%", bottom: "2%" },
   },
 };
 
@@ -88,7 +98,7 @@ export function ShopArt({ world, purchased }: ShopArtProps) {
           style={WORLD_SLOTS[world.slug]?.[u.id] ?? DEFAULT_SLOTS[u.id]}
           className="bg-card/90 border-border absolute flex size-10 items-center justify-center rounded-full border shadow-sm"
         >
-          <img src={u.art} alt="" loading="lazy" className="size-7 object-contain" />
+          <ShopGlyph art={u.art} icon={u.icon} className="size-7" />
         </span>
       ))}
       {unplaced.length > 0 && (
@@ -98,7 +108,7 @@ export function ShopArt({ world, purchased }: ShopArtProps) {
               key={u.id}
               className="bg-card/90 border-border flex size-9 items-center justify-center rounded-full border shadow-sm"
             >
-              <img src={u.art} alt="" loading="lazy" className="size-6 object-contain" />
+              <ShopGlyph art={u.art} icon={u.icon} className="size-6" />
             </span>
           ))}
         </div>

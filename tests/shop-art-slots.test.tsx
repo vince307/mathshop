@@ -18,8 +18,10 @@ import { ShopArt, WORLD_SLOTS } from "@/components/child/ShopArt";
  *
  * The four data assertions below pin the TABLE. They cannot see whether `ShopArt`
  * still reads it: dropping the `WORLD_SLOTS[world.slug]?.` prefix leaves all four
- * green. Nor can the placed/unplaced partition — `DEFAULT_SLOTS` covers all six
- * ids, so `unplaced` is ALWAYS empty and the badge count never moves either. The
+ * green. Nor can the placed/unplaced partition — `DEFAULT_SLOTS` covers EVERY
+ * `UPGRADE_ID` (which is what the assertions below quantify over, so it stays true
+ * as the catalogue grows), so `unplaced` is ALWAYS empty and the badge count never
+ * moves either. The
  * only observable the lookup controls is the badge's inline `style`, which is what
  * the render case at the bottom asserts (jsdom pragma above; vitest's global
  * environment is `node`).
@@ -45,7 +47,7 @@ describe("ShopArt WORLD_SLOTS", () => {
     }
   });
 
-  it("covers all six upgrade ids in every table", () => {
+  it("covers every upgrade id in every table", () => {
     for (const [slug, table] of Object.entries(WORLD_SLOTS)) {
       for (const id of UPGRADE_IDS) {
         // A missing id silently falls back to a coordinate tuned for another plate.

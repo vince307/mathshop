@@ -1,5 +1,6 @@
 import { CircleCheck, Star } from "lucide-react";
 import { ChildButton } from "@/components/child/ChildButton";
+import { ShopGlyph, type ShopIconKey } from "@/components/child/ShopGlyph";
 import { childCard } from "@/components/child/childCard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ interface ShiftResultsProps {
   /** True when the child can now afford an upgrade — shows a gentle, factual nudge (S-06). */
   canUpgrade: boolean;
   /** Cheapest eligible unowned upgrade + post-shift wallet (S-13 progress card); null when none. */
-  nextInfo: { id: string; art: string; cost: number; wallet: number } | null;
+  nextInfo: { id: string; art?: string; icon?: ShopIconKey; cost: number; wallet: number } | null;
 }
 
 /**
@@ -112,7 +113,7 @@ export default function ShiftResults({
       )}
       {!canUpgrade && nextInfo && (
         <div className={childCard("2xl", "flex w-full items-center gap-4 p-4 text-left")}>
-          <img src={nextInfo.art} alt="" className="size-12 shrink-0 object-contain" loading="lazy" />
+          <ShopGlyph art={nextInfo.art} icon={nextInfo.icon} className="size-12 shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="bg-muted h-3 w-full overflow-hidden rounded-full">
               <div

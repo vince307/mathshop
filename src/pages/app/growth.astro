@@ -3,6 +3,7 @@ import Layout from "@/layouts/Layout.astro";
 import AppShell from "@/components/app/AppShell.astro";
 import StageRail from "@/components/child/StageRail.astro";
 import { ShopArt } from "@/components/child/ShopArt";
+import { ShopGlyph } from "@/components/child/ShopGlyph";
 import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
 import { childCard } from "@/components/child/childCard";
 import { createClient } from "@/lib/supabase";
@@ -102,7 +103,7 @@ const savingPercent =
               <ul class="mt-4 grid gap-3 sm:grid-cols-2">
                 {unlocks.map((upgrade) => (
                   <li class="border-border bg-muted/20 flex items-center gap-3 rounded-2xl border p-3">
-                    <img src={upgrade.art} alt="" aria-hidden="true" class="size-10 shrink-0" />
+                    <ShopGlyph art={upgrade.art} icon={upgrade.icon} className="size-10 shrink-0" />
                     <div class="min-w-0">
                       <p class="text-foreground text-sm font-extrabold">{upgradeCopy(upgrade.id).name}</p>
                       <p class="text-muted-foreground mt-0.5 text-xs font-semibold">{upgradeCopy(upgrade.id).desc}</p>
@@ -128,7 +129,7 @@ const savingPercent =
                 the screen's only entrance to the shop. */}
             {next ? (
               <div class="mt-4 flex items-center gap-4">
-                <img src={next.art} alt="" aria-hidden="true" class="size-12 shrink-0" />
+                <ShopGlyph art={next.art} icon={next.icon} className="size-12 shrink-0" />
                 <div class="min-w-0 flex-1">
                   <p class="text-foreground text-sm font-extrabold">{upgradeCopy(next.id).name}</p>
                   <p class="text-muted-foreground mt-0.5 text-xs font-semibold">

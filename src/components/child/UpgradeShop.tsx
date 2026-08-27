@@ -4,6 +4,7 @@ import type { World } from "@/data/worlds";
 import type { SkillState } from "@/types";
 import { ChildButton } from "@/components/child/ChildButton";
 import { childCard } from "@/components/child/childCard";
+import { ShopGlyph } from "@/components/child/ShopGlyph";
 import { ShopArt } from "@/components/child/ShopArt";
 import { SkillBars } from "@/components/child/SkillBars";
 import { UPGRADES, canBuy, isOwned, nextUpgrade, type Upgrade } from "@/data/upgrades";
@@ -93,6 +94,9 @@ export default function UpgradeShop({
     if (check.reason === "locked") {
       return fill(t.upgradeShop.lockedByLevel, { level: upgrade.requiredWorldLevel });
     }
+    if (check.reason === "branch-locked" && upgrade.requiredUpgrade) {
+      return fill(t.upgradeShop.lockedByBranch, { name: upgradeCopy(upgrade.requiredUpgrade).name });
+    }
     if (check.reason === "skill-locked" && upgrade.requiredSkill) {
       return fill(t.upgradeShop.lockedBySkill, {
         competency: t.skills[upgrade.requiredSkill.competency],
@@ -122,7 +126,7 @@ export default function UpgradeShop({
               <CircleCheck className="size-7" aria-hidden="true" />
             </span>
             <p className="text-foreground text-xl font-extrabold">{t.upgradeShop.unlockedHeading}</p>
-            <img src={unlocked.art} alt="" className="size-20 object-contain" />
+            <ShopGlyph art={unlocked.art} icon={unlocked.icon} className="size-20" />
             <p className="text-foreground font-bold">{upgradeCopy(unlocked.id).name}</p>
             <p className="text-muted-foreground text-sm">{upgradeCopy(unlocked.id).desc}</p>
             <ChildButton
@@ -152,7 +156,7 @@ export default function UpgradeShop({
                     <span className="bg-success/15 text-success rounded-full px-2.5 py-0.5 text-xs font-bold">
                       {t.upgradeShop.availableTag}
                     </span>
-                    <img src={u.art} alt="" className="size-20 object-contain" />
+                    <ShopGlyph art={u.art} icon={u.icon} className="size-20" />
                     <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
                     <p className="text-muted-foreground text-xs leading-snug">{upgradeCopy(u.id).desc}</p>
                     <p className="text-accent flex items-center gap-1 font-extrabold">
@@ -189,7 +193,7 @@ export default function UpgradeShop({
                   key={u.id}
                   className="border-border flex h-full flex-col items-center gap-2 rounded-2xl border border-dashed p-4 text-center opacity-80"
                 >
-                  <img src={u.art} alt="" className="size-20 object-contain grayscale" />
+                  <ShopGlyph art={u.art} icon={u.icon} className="size-20 grayscale" />
                   <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
                   <p className="bg-muted text-muted-foreground flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold">
                     <Lock className="size-3 shrink-0" aria-hidden="true" />
@@ -208,7 +212,7 @@ export default function UpgradeShop({
             <ul className="flex flex-col gap-4">
               {ownedList.map((u) => (
                 <li key={u.id} className="bg-secondary/40 border-border flex items-center gap-4 rounded-2xl border p-4">
-                  <img src={u.art} alt="" className="size-16 shrink-0 object-contain" />
+                  <ShopGlyph art={u.art} icon={u.icon} className="size-16 shrink-0" />
                   <div className="flex-1">
                     <p className="text-foreground font-bold">{upgradeCopy(u.id).name}</p>
                   </div>

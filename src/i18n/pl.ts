@@ -319,6 +319,11 @@ export const pl = {
     slot: { name: "Miejsce na produkt", desc: "Dodatkowy produkt w ofercie." },
     storage: { name: "Magazynek", desc: "Zapas towaru pod ręką." },
     customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
+    // The margin branch (E1). Both descriptions name what CHANGES, never a
+    // percentage — the multiplier is not a number a child sees, and the results
+    // screen shows the real arithmetic instead.
+    precision: { name: "Dokładna obsługa", desc: "Klienci częściej wracają zadowoleni." },
+    margin: { name: "Lepsza marża", desc: "Za każde zadanie dostajesz więcej." },
   },
 
   // The growth screen (F4, missing-screens-v3 `01-world-progression`). Deliberately
@@ -400,6 +405,9 @@ export const pl = {
     unlockedHeading: "Odblokowane!",
     unlockedDismiss: "Super!",
     lockedByLevel: "Dostępne od poziomu sklepu {level}",
+    // The E1 branch gate. Actionable on purpose — it names the one thing to buy
+    // first, rather than a level or a skill the child cannot yet reach.
+    lockedByBranch: "Najpierw kup: {name}",
     lockedByFunds: "Brakuje {amount} zł",
     lockedBySkill: "Rozwiń umiejętność „{competency}” do poziomu {level}",
     lockedByHistory: "Wykonaj {count} zadań: {competency}",
