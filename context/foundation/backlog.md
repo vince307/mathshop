@@ -125,9 +125,11 @@ replaced outright.
 ### W1 — `six-worlds-catalogue`
 
 **Value / cost.** Closes the PRD-v3-assumes-six / code-has-four gap. **The cost
-dropped sharply during shaping**: this was filed as "art plus per-world copy",
-implying an art task nobody could start. Source art for **both** missing worlds
-already exists locally.
+dropped twice.** It was filed as "art plus per-world copy", implying an art task
+nobody could start; shaping found the source art already existed locally, and it
+has since been converted and committed. What is left is code: two entries in
+`WORLDS`, two i18n names, and whatever vocabulary the open decision below
+settles.
 
 **Migration:** **no.** **[V]** 2026-08-27 — `child_profiles.theme` is
 `text not null default 'default'` with **no CHECK constraint**
@@ -142,9 +144,10 @@ Validation is app-layer only, against `WORLD_SLUGS` derived from `WORLDS`
   `invention-lab-world.png`, both tagged `"role": "world-card-illustration"` in
   `assets/atomic-assets-v2/manifest.json`, themes *"creative studio"* and
   *"invention lab"*.
-- `public/illustrations/` holds exactly four `world-*.webp`; the shipped four were
-  produced as crops with pixel boxes recorded in
-  `public/illustrations/slice-map.md:13–16`.
+- `public/illustrations/` now holds **six** `world-*.webp`, all 896×718 with alpha.
+  The earlier four were crops of a mockup sheet; the two W1 ones are whole
+  illustrations, resized. Provenance for both batches is in
+  `public/illustrations/slice-map.md`.
 - Adding a world touches `src/data/worlds.ts`, `src/i18n/pl.ts`,
   `WorldPicker.tsx` and `CreateProfileWizard.tsx` — all of which already iterate
   `WORLDS` rather than hardcoding four.
@@ -153,27 +156,26 @@ Validation is app-layer only, against `WORLD_SLUGS` derived from `WORLDS`
   mandatory**, and it is what makes vocabulary optional per world — so W1 can
   ship the two worlds without writing 6 × 8 strings, and grow into them.
 
-**MANUAL PRECONDITION — the run cannot do this step.** `assets/` is gitignored
-(`.gitignore:37`), so it does **not** exist in a git worktree, and
-`/10x-autonomous-run` builds code steps in bootstrapped worktrees. The two
-converted `world-<slug>.webp` files must be produced in the main checkout and
-**committed to `public/illustrations/` before the run starts**. Without them the
-run will either fail on missing art or invent a placeholder. Treat this as part
-of the run's Step 1 preflight for W1.
+**~~MANUAL PRECONDITION~~ — resolved 2026-08-27, before the run.** The art and
+the names were the two things `/10x-autonomous-run` could not produce for itself:
+`assets/` is gitignored (`.gitignore:37`) and therefore absent from the worktrees
+the run builds, and the names are product content. Both are now settled and
+committed, so **W1 needs no manual step at run time**:
 
-**Open decision the planner must NOT invent — the two slugs and their Polish
-names.** This is product content. The English source themes are "creative studio"
-and "invention lab"; the Polish name, the slug, and the one-line world copy are
-the maintainer's call, and they are load-bearing three ways: the slug is the
-committed art filename stem (`world-<slug>.webp`), it is the value stored in
-`child_profiles.theme`, and it becomes a `WORLD_SLUGS` enum member. Renaming any
-of them after profiles exist is a data change, not a copy change. Note the
-precedent recorded in `src/data/worlds.ts`: the `05` mockup labels the fourth
-world "Sklep kolekcjonera" while the committed art and slug are
-`sklep-ksiegarnia` — reconciled to a single name↔slug↔art, and worth not
-repeating.
+| Slug | Name | Art (committed) | Source |
+| ---- | ---- | --------------- | ------ |
+| `pracownia` | Pracownia | `public/illustrations/world-pracownia.webp` | `creative-studio-world.png` |
+| `laboratorium` | Laboratorium | `public/illustrations/world-laboratorium.webp` | `invention-lab-world.png` |
 
-**Second open decision:** whether W1 also writes per-world catalogue vocabulary
+Single-word names follow the `kawiarnia` / `piekarnia` precedent, and carry no
+diacritics, so slug and filename stem need no transliteration. **These three
+values — slug, filename stem, and `child_profiles.theme` value — must stay
+identical.** Renaming after profiles exist is a data change, not a copy change;
+see the precedent recorded in `src/data/worlds.ts`, where the `05` mockup labels
+the fourth world "Sklep kolekcjonera" while the committed art and slug are
+`sklep-ksiegarnia`, reconciled to a single name↔slug↔art.
+
+**The one open decision left:** whether W1 also writes per-world catalogue vocabulary
 (6 × 8 strings) or ships on the neutral fallback and adds vocabulary later. The
 fallback exists precisely so this is a choice; make it explicitly, because a
 planner will otherwise assume one.
