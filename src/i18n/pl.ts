@@ -333,6 +333,15 @@ export const pl = {
     "sklep-ksiegarnia-zakladka": "Zakładki z piórkiem",
     "sklep-ksiegarnia-zwoje": "Stare zwoje",
     "sklep-ksiegarnia-ksiegozbior": "Regał na zbiory",
+    // Worlds five and six (W1) — appended, one entry per key.
+    "pracownia-naklejki": "Naklejki na szafce",
+    "pracownia-szpulki": "Kolorowe szpulki",
+    "pracownia-paleta": "Paleta z farbami",
+    "pracownia-nozyczki": "Ozdobne nożyczki",
+    "laboratorium-gwiazdki": "Świecące gwiazdki",
+    "laboratorium-kolby": "Kolorowe kolby",
+    "laboratorium-mikroskop": "Mikroskop na półce",
+    "laboratorium-atom": "Model atomu",
   },
 
   upgrades: {

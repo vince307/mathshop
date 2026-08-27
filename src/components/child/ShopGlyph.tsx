@@ -23,9 +23,12 @@ import {
   Ribbon,
   Rocket,
   Satellite,
+  Scissors,
   Scroll,
   Sparkles,
+  Spool,
   Star,
+  Sticker,
   Sun,
   Target,
   Telescope,
@@ -91,6 +94,11 @@ export const SHOP_ICONS = {
   scroll: Scroll,
   feather: Feather,
   leaf: Leaf,
+  // Decorations — pracownia (W1). Appended per the note above: the craft world
+  // reads as its own place only if it has craft objects, and E1's 16 held none.
+  scissors: Scissors,
+  spool: Spool,
+  sticker: Sticker,
   // Spare vocabulary, deliberately unused by E1 — W1 appends its two worlds'
   // sets from here (and may add more keys) so each world reads as its own place.
   atom: Atom,

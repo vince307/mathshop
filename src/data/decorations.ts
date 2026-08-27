@@ -120,6 +120,22 @@ export const DECORATIONS: readonly Decoration[] = [
     ["zwoje", "scroll"],
     ["ksiegozbior", "book"],
   ]),
+  // Worlds five and six (W1), appended at the SHARED price curve above — equal
+  // sink capacity per world is what keeps a world change from being an economy
+  // change (D-11). `scissors` / `spool` / `sticker` were appended to
+  // `SHOP_ICONS` for the craft set; the science set reuses E1's spare vocabulary.
+  ...setFor("pracownia", [
+    ["naklejki", "sticker"],
+    ["szpulki", "spool"],
+    ["paleta", "palette"],
+    ["nozyczki", "scissors"],
+  ]),
+  ...setFor("laboratorium", [
+    ["gwiazdki", "star"],
+    ["kolby", "flask"],
+    ["mikroskop", "microscope"],
+    ["atom", "atom"],
+  ]),
 ] as const;
 
 /** Valid decoration ids — the closed set for app-layer (zod) validation. */
