@@ -175,6 +175,26 @@ right price unit here is mathematics, not play time), a test asserting
 the harness's own caveat: it says how the **economy** responds to a class of
 player, not what a real child does.
 
+**Open decision the planner must NOT invent — how a decoration renders with no art.**
+D-11 adds per-world decorations, and **no decoration art exists** (see the verified
+claims above). An unattended run cannot produce art and cannot reach `assets/`,
+which is gitignored and therefore absent from the worktrees the run builds. Do
+**not** stop on this and do **not** invent a placeholder file. **The repo already
+has a sanctioned answer to exactly this situation, and it is a deliberate,
+documented deviation rather than a workaround:** `src/data/stages.ts` faced the same
+problem — the mockup wanted per-stage art that existed for zero worlds — and
+resolved it by giving `Stage` **no `art` field at all**, rendering with lucide icons
+plus the app's own design tokens, and recording the art upgrade path in the module
+header. **[V]** `src/data/stages.ts:17–31`, `ShopArt.tsx`'s per-stage art seam.
+
+Follow that precedent: `Decoration` carries `art?: string`, unset in the first
+batch; decorations render from lucide + design tokens through `ShopArt`'s documented
+corner-row fallback; and the module header records the upgrade path the same way
+`stages.ts` does. That keeps the economy — which is what E1 is actually about —
+independent of an art batch that has to be commissioned. Pick this deliberately and
+record it; a planner choosing differently would either block the run or commit a
+placeholder asset.
+
 **Also open, but tuning** — the repo convention is "first-guess defaults, adjust
 after kid-testing", **narrowed by the pacing model**: what arithmetic can settle is
 settled before kid-testing, and kid-testing keeps only what children alone can
