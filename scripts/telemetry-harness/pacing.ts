@@ -44,7 +44,7 @@ import {
 } from "@/data/shift";
 import { UPGRADES, canBuy, shiftBonusTasks, shopEffects } from "@/data/upgrades";
 import { canBuyDecoration, decorationsForWorld } from "@/data/decorations";
-import { DEFAULT_THEME } from "@/data/worlds";
+import { DEFAULT_THEME, WORLD_SLUGS } from "@/data/worlds";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
 import type { SkillState } from "@/types";
 import { type ChildModel, MISS_MODEL, missesThisTask, rng } from "./child-model";
@@ -97,6 +97,8 @@ export function costInTasks(price: number, purchased: string[], d: number): numb
 export interface PurchaseEvent {
   /** 1-based shift index after which the purchase happened. */
   shift: number;
+  /** The world the child was in when they bought it. */
+  world: string;
   id: string;
   cost: number;
   /** Price at the moment of purchase, in tasks solved. */
@@ -108,6 +110,8 @@ export interface ShiftRecord {
   /** 1-based. */
   shift: number;
   businessLevel: number;
+  /** The world the shop was in for this shift. */
+  world: string;
   /** `lengthDifficulty` at the shift's open — the number the length band was drawn from. */
   difficulty: number;
   taskCount: number;
@@ -119,10 +123,16 @@ export interface ShiftRecord {
   bought: string[];
   /**
    * How many things were buyable **after** this shift's purchases were made.
-   * Zero with money in the wallet is an idle wallet — the state the decoration
-   * sink exists to abolish (D-11).
+   * Zero is fine while the child is simply saving; zero when the wallet COULD
+   * afford something is the idle wallet D-11 exists to abolish.
    */
   buyableAfter: number;
+  /**
+   * The cheapest thing still unowned and reachable from THIS world, or null when
+   * nothing is left here. `buyableAfter === 0` is honest exactly when the wallet
+   * is below this.
+   */
+  cheapestRemaining: number | null;
 }
 
 export interface PurchaseTimeline {
@@ -135,18 +145,30 @@ export interface PurchaseTimeline {
   /** 1-based shift after which the catalogue was fully owned, or null if never. */
   catalogueEmptiedShift: number | null;
   /**
-   * 1-based shift after which BOTH the catalogue and this world's sink were
-   * exhausted, or null if never. Past this point the wallet is idle — the state
-   * `t.growth.noNextUpgrade` names and `e2e/growth.spec.ts` seeds.
+   * 1-based shift after which the catalogue AND every reachable world's sink were
+   * exhausted, or null if never. Past this point the wallet is genuinely idle —
+   * the state `t.growth.noNextUpgrade` names and `e2e/growth.spec.ts` seeds.
    */
   everythingOwnedShift: number | null;
+  /** 1-based shifts at which the player moved on to a new world. */
+  worldSwitches: { shift: number; from: string; to: string }[];
 }
 
 export interface SimulateOptions {
   /** Frozen `starting_level` — fixes the age band's difficulty seed and ceiling. */
   startingLevel?: number;
-  /** Which world's decoration sink the simulated player can spend into. */
-  world?: string;
+  /**
+   * The worlds the simulated player moves through, in order. Defaults to the
+   * shipped set starting at the default theme.
+   *
+   * **Modelling the world change is not embellishment.** The sink renews PER
+   * WORLD: exhaust one world's four decorations and the wallet is idle until the
+   * child moves, which `/app/worlds` invites them to do and `t.worlds` promises is
+   * lossless. A simulation pinned to one world would show a dead wallet the
+   * product does not actually have, and "the wallet is never idle" could not be
+   * stated at all.
+   */
+  worlds?: readonly string[];
 }
 
 /** A fully zeroed `SkillState`, via the shipped normalizer (no second copy of the shape). */
@@ -175,7 +197,8 @@ export function simulatePurchases(
   options: SimulateOptions = {},
 ): PurchaseTimeline {
   const startingLevel = options.startingLevel ?? 1;
-  const world = options.world ?? DEFAULT_THEME;
+  const worlds = options.worlds ?? [DEFAULT_THEME, ...WORLD_SLUGS.filter((slug) => slug !== DEFAULT_THEME)];
+  let worldIndex = 0;
   const ceiling = ceilingForLevel(startingLevel);
   const next = rng(seed);
 
@@ -190,6 +213,16 @@ export function simulatePurchases(
   const purchases: PurchaseEvent[] = [];
   let catalogueEmptiedShift: number | null = null;
   let everythingOwnedShift: number | null = null;
+  const worldSwitches: { shift: number; from: string; to: string }[] = [];
+
+  /** This world's decorations the wallet could buy right now. */
+  const buyableDecorationsIn = (slug: string, walletBalance: number) =>
+    decorationsForWorld(slug).filter(
+      (decoration) => canBuyDecoration(decoration, { walletBalance, world: slug, decorations }).ok,
+    );
+  /** Has this world's sink been fully drained? (An empty set counts as drained.) */
+  const worldExhausted = (slug: string) =>
+    decorationsForWorld(slug).every((decoration) => decorations.includes(decoration.id));
 
   for (let shift = 1; shift <= shifts; shift++) {
     const openD = lengthDifficulty(difficulty);
@@ -243,7 +276,13 @@ export function simulatePurchases(
         wallet -= pick.cost;
         purchased.push(pick.id);
         bought.push(pick.id);
-        purchases.push({ shift, id: pick.id, cost: pick.cost, inTasks: costInTasks(pick.cost, purchased, openD) });
+        purchases.push({
+          shift,
+          world: worlds[worldIndex],
+          id: pick.id,
+          cost: pick.cost,
+          inTasks: costInTasks(pick.cost, purchased, openD),
+        });
         // A purchase credits the `decisions` competency, exactly as `buyUpgrade` does.
         skillState = {
           ...skillState,
@@ -260,33 +299,55 @@ export function simulatePurchases(
       // `nextPurchase`: a decoration must never consume money the child could
       // have put toward a real decision. A decoration buy credits NO `decisions`
       // (AD-6), so nothing is bumped here.
-      const buyableDecorations = decorationsForWorld(world).filter(
-        (decoration) => canBuyDecoration(decoration, { walletBalance: wallet, world, decorations }).ok,
-      );
+      // Move on when this world is drained and another is left. `/app/worlds`
+      // invites exactly this and `t.worlds` promises it is lossless — the shop and
+      // its upgrades come along. Modelling it is what makes the sink RENEWING
+      // rather than merely larger.
+      while (worldExhausted(worlds[worldIndex]) && worldIndex < worlds.length - 1) {
+        worldSwitches.push({ shift, from: worlds[worldIndex], to: worlds[worldIndex + 1] });
+        worldIndex += 1;
+      }
+      const buyableDecorations = buyableDecorationsIn(worlds[worldIndex], wallet);
       if (buyableDecorations.length === 0) break;
       const pick = buyableDecorations.reduce((a, b) => (b.cost < a.cost ? b : a));
       wallet -= pick.cost;
       decorations.push(pick.id);
       bought.push(pick.id);
-      purchases.push({ shift, id: pick.id, cost: pick.cost, inTasks: costInTasks(pick.cost, purchased, openD) });
+      purchases.push({
+        shift,
+        world: worlds[worldIndex],
+        id: pick.id,
+        cost: pick.cost,
+        inTasks: costInTasks(pick.cost, purchased, openD),
+      });
     }
 
     if (catalogueEmptiedShift === null && purchased.length === UPGRADES.length) catalogueEmptiedShift = shift;
     if (
       everythingOwnedShift === null &&
       purchased.length === UPGRADES.length &&
-      decorations.length === decorationsForWorld(world).length
+      worlds.every((slug) => worldExhausted(slug))
     ) {
       everythingOwnedShift = shift;
     }
 
+    const currentWorld = worlds[worldIndex];
     const afterCtx = { walletBalance: wallet, businessLevel: levelAfter, purchased, skillState };
-    const buyableDecorationsAfter = decorationsForWorld(world).filter(
-      (decoration) => canBuyDecoration(decoration, { walletBalance: wallet, world, decorations }).ok,
-    ).length;
+    // What this child could buy RIGHT NOW if they had the money: unowned catalogue
+    // entries their level already allows, plus THIS world's unowned decorations.
+    // Scoped to the current world on purpose — another world's set is not for sale
+    // until the child moves there, and counting it would make the idle-wallet check
+    // fire on a state that is not actually idle.
+    const remainingCosts = [
+      ...UPGRADES.filter((u) => !purchased.includes(u.id) && u.requiredWorldLevel <= levelAfter).map((u) => u.cost),
+      ...decorationsForWorld(currentWorld)
+        .filter((decoration) => !decorations.includes(decoration.id))
+        .map((decoration) => decoration.cost),
+    ];
     records.push({
       shift,
       businessLevel: levelAfter,
+      world: currentWorld,
       difficulty: openD,
       taskCount,
       cleanCount,
@@ -295,7 +356,10 @@ export function simulatePurchases(
       profit,
       walletAfter: wallet,
       bought,
-      buyableAfter: UPGRADES.filter((upgrade) => canBuy(upgrade, afterCtx).ok).length + buyableDecorationsAfter,
+      buyableAfter:
+        UPGRADES.filter((upgrade) => canBuy(upgrade, afterCtx).ok).length +
+        buyableDecorationsIn(currentWorld, wallet).length,
+      cheapestRemaining: remainingCosts.length > 0 ? Math.min(...remainingCosts) : null,
     });
   }
 
@@ -307,6 +371,7 @@ export function simulatePurchases(
     firstPurchaseShift: purchases.length > 0 ? purchases[0].shift : null,
     catalogueEmptiedShift,
     everythingOwnedShift,
+    worldSwitches,
   };
 }
 
@@ -322,18 +387,21 @@ export function formatTimeline(timeline: PurchaseTimeline): string {
     `cohort=${timeline.cohort} seed=${timeline.seed} ` +
     `firstPurchase=${timeline.firstPurchaseShift ?? "never"} ` +
     `catalogueEmptied=${timeline.catalogueEmptiedShift ?? "never"} ` +
-    `everythingOwned=${timeline.everythingOwnedShift ?? "never"}`;
+    `everythingOwned=${timeline.everythingOwnedShift ?? "never"} ` +
+    `worldSwitches=${timeline.worldSwitches.map((w) => `${w.shift}:${w.to}`).join(" ") || "none"}`;
   const rows = timeline.shifts.map(
     (r) =>
-      `  ${String(r.shift).padStart(3)} | lvl ${r.businessLevel} | d=${r.difficulty.toFixed(2)} | ` +
+      `  ${String(r.shift).padStart(3)} | lvl ${r.businessLevel} | ${r.world.padEnd(17)} | d=${r.difficulty.toFixed(2)} | ` +
       `${String(r.cleanCount).padStart(2)}/${String(r.taskCount).padStart(2)} | ` +
       `rev ${String(r.revenue).padStart(3)} - ${String(r.cost).padStart(3)} = ${String(r.profit).padStart(3)} | ` +
       `wallet ${String(r.walletAfter).padStart(4)} | buyable ${r.buyableAfter} | ${r.bought.join(",") || "-"}`,
   );
-  const prices = timeline.purchases.map((p) => `  ${p.id}: ${p.cost} zl = ${p.inTasks} tasks (shift ${p.shift})`);
+  const prices = timeline.purchases.map(
+    (p) => `  ${p.id}: ${p.cost} zl = ${p.inTasks} tasks (shift ${p.shift}, ${p.world})`,
+  );
   return [
     head,
-    "  shift | level | d | clean/tasks | revenue - cost = profit | wallet | buyable | bought",
+    "  shift | level | world | d | clean/tasks | revenue - cost = profit | wallet | buyable | bought",
     ...rows,
     "  prices in tasks solved, at the reference shift of the moment:",
     ...prices,

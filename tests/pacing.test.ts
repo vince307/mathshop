@@ -14,6 +14,8 @@
 import { describe, expect, it } from "vitest";
 import { MAX_SHIFT_TASKS } from "@/data/shift";
 import { UPGRADES, shiftBonusTasks } from "@/data/upgrades";
+import { WORLD_SLUGS } from "@/data/worlds";
+import { getDecoration } from "@/data/decorations";
 import { MISS_MODEL } from "../scripts/telemetry-harness/child-model";
 import {
   PACING_SEED,
@@ -130,6 +132,67 @@ describe("simulatePurchases", () => {
       const timeline = simulatePurchases(model, 30, PACING_SEED);
       expect(timeline.firstPurchaseShift).not.toBeNull();
       expect(timeline.firstPurchaseShift).toBeLessThanOrEqual(3);
+    }
+  });
+});
+
+describe("the sink keeps the wallet working (E1 / D-11)", () => {
+  /**
+   * **The wallet is never idle while content remains.**
+   *
+   * "Idle" is precise here, and the precision is the point: zero buyable things
+   * is perfectly honest while a child is SAVING for something dearer. It is only
+   * a defect when the wallet could afford something and the game has nothing to
+   * sell — which is exactly the state a closed catalogue produced before D-11,
+   * and exactly what a world shipping an empty decoration set would recreate.
+   */
+  it("never leaves an affordable wallet with nothing to buy, until everything is owned", () => {
+    for (const model of MISS_MODEL) {
+      const timeline = simulatePurchases(model, 60, PACING_SEED);
+      const end = timeline.everythingOwnedShift ?? timeline.shifts.length;
+      for (const record of timeline.shifts) {
+        // Nothing left to sell is only honest once EVERYTHING is owned. Before
+        // that it is the dead state D-11 removes, so pin where it may appear.
+        if (record.cheapestRemaining === null) {
+          expect(
+            record.shift,
+            `IDLE WALLET: shift ${record.shift} (${record.world}) had nothing left to sell, but the run was not over`,
+          ).toBeGreaterThanOrEqual(end);
+          continue;
+        }
+        if (record.buyableAfter > 0) continue;
+        expect(
+          record.walletAfter,
+          `IDLE WALLET: shift ${record.shift} (${record.world}) held ${record.walletAfter} zl, ` +
+            `enough for the ${record.cheapestRemaining} zl thing still unowned, and nothing was for sale`,
+        ).toBeLessThan(record.cheapestRemaining);
+      }
+    }
+  });
+
+  /**
+   * The sink must materially outlast the catalogue, or it is decoration on a dead
+   * state rather than a fix for it. Anchored on the RELATIONSHIP, not on a shift
+   * number, so a price change moves both and the assertion stays meaningful.
+   */
+  it("outlasts the catalogue by a real margin, on every cohort", () => {
+    for (const model of MISS_MODEL) {
+      const timeline = simulatePurchases(model, 80, PACING_SEED);
+      expect(timeline.catalogueEmptiedShift, `${model.id} never emptied the catalogue in 80 shifts`).not.toBeNull();
+      expect(timeline.everythingOwnedShift, `${model.id} never exhausted the sink in 80 shifts`).not.toBeNull();
+      expect(timeline.everythingOwnedShift ?? 0).toBeGreaterThan(timeline.catalogueEmptiedShift ?? 0);
+      // Every world contributes: the player moves through all of them.
+      expect(timeline.worldSwitches.length).toBe(WORLD_SLUGS.length - 1);
+    }
+  });
+
+  it("renews per world — each world's set is bought in that world", () => {
+    const timeline = simulatePurchases(MISS_MODEL[0], 80, PACING_SEED);
+    for (const purchase of timeline.purchases) {
+      if (!getDecoration(purchase.id)) continue;
+      expect(purchase.id.startsWith(`${purchase.world}-`), `"${purchase.id}" was bought in "${purchase.world}"`).toBe(
+        true,
+      );
     }
   });
 });

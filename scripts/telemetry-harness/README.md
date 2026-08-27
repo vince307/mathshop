@@ -25,6 +25,77 @@ cohorts whose accuracy is a stated function of difficulty (`child-model.ts`), so
 the recorded `difficulty` trajectories show what the adaptation rule does to a
 strong, an on-target, and a struggling player. The finding is about the engine.
 
+## The pacing model (D-13)
+
+`pacing.ts` is a second, **browser-free** thing in this folder and it answers a
+different question: not "does the pipe work" but "**is this price reachable, and
+how long does the content last**". It imports `src/data/*` rather than restating
+it, so a price change re-runs it on the next `npm test`, and it reuses
+`child-model.ts` so `MISS_MODEL` stays the single stated assumption. Read it
+through `tests/pacing.test.ts`, or call `report()` for the timeline.
+
+Two exports carry past the report. `referenceShift(d, bonus)` is the shift the
+economy invariants in `tests/economy-invariants.test.ts` evaluate at — derived
+from `shiftLengthRangeFor` and `TARGET_SUCCESS`, not invented. `costInTasks`
+expresses a price in **tasks solved**, which is the natural unit for a product
+whose currency is mathematics.
+
+### Every price in tasks solved
+
+At the reference shift of the moment, greedy buyer, seed `20260827`. Task counts
+move with the shop the child already owns (a longer shift pays more per shift, so
+a later purchase costs fewer shifts than its zloty price suggests), so these are
+the figures **at the shift the simulated player actually bought each thing**.
+
+| thing | zl | tasks | bought at shift (p090 / p075 / p055) |
+|---|---:|---:|---|
+| `sign` | 30 | 4 | 1 / 1 / 1 |
+| decoration #1 (any world) | 40 | 5–6 | 2 / 2 / 2 |
+| `shelf` | 60 | 9 | 3 / 3 / 3 |
+| decoration #2 | 80 | 8–11 | 5 / 5 / 5 |
+| `register` | 100 | 15 | 7 / 7 / 8 |
+| `precision` | 140 | 18 | 9 / 10 / 11 |
+| decoration #3 | 140 | 14–18 | 13 / 14 / 15 |
+| `slot` | 150 | 19–20 | 11 / 12 / 13 |
+| `storage` | 210 | 26–27 | 15 / 16 / 18 |
+| `margin` | 220 | 23 | 17 / 19 / 21 |
+| decoration #4 | 220 | 22–23 | 19 / 21 / 23 |
+| `customers` | 300 | 31–32 | 23 / 22 / 29 |
+
+### What the model says about the content run
+
+| cohort | first purchase | catalogue emptied | everything owned | worlds visited |
+|---|---:|---:|---:|---:|
+| `p090` | shift 1 | shift 23 | shift 32 | 4 |
+| `p075` | shift 1 | shift 22 | shift 37 | 4 |
+| `p055` | shift 1 | shift 29 | shift 42 | 4 |
+
+Three findings, in descending order of how much they should change anyone's mind:
+
+1. **The sink roughly doubles the content run.** Before E1 the catalogue emptied
+   around shift 13 and the wallet then climbed past 1600 zl with nothing to buy
+   for seventeen straight shifts. With decorations and the world change the run
+   reaches shift 32–42, and the wallet is never idle before that —
+   `tests/pacing.test.ts` § *"never leaves an affordable wallet with nothing to
+   buy"* is the standing guard on that claim.
+2. **The first purchase lands on shift 1, not shift ~3.** `prd-v3.md:62` states a
+   bound ("at least one upgrade within their first ~3 shifts") which shift 1
+   satisfies, so this is reported rather than fixed — see plan AD-7. If the
+   maintainer decides a first purchase with no saving decision before it violates
+   the *intent*, `sign` rises to ~60–70 and every affordability assertion in
+   `e2e/gameplay-restore.spec.ts` is re-run.
+3. **`customers` is the worst buy in the game** and always has been: 300 zl for
+   the same +1 task `shelf` gives at 60. Under the profit rule that is an ROI
+   spread of 5x inside one branch, which is why `tests/economy-invariants.test.ts`
+   § `DOMINANCE_FLOOR` cannot enforce a per-state floor across the whole
+   catalogue. Plan AD-7 freezes the shipped prices for this tranche.
+
+**The caveat applies here too, and harder.** This says how the ECONOMY responds to
+a class of player, not what a real child does. The buyer is greedy — it spends the
+moment it can — which is the least patient player and therefore the soonest to hit
+an empty shop; a saver's timeline is longer. None of these numbers is evidence
+about children.
+
 ## What this does NOT prove
 
 **Nothing about children.** `first_try` and `misses` come from `MISS_MODEL` in
