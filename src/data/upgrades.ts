@@ -202,7 +202,16 @@ export const UPGRADES: readonly Upgrade[] = [
   {
     id: "margin",
     nameKey: "margin",
-    cost: 180,
+    // 220, not the 180 first guess. The quantity margin pays on EVERY task while
+    // the accuracy margin pays only on clean ones, so at the engine's own 0.8
+    // target it is worth 1.25x `precision`'s gross for the same running cost —
+    // and at 180 it was the dearer entry AND the better value per zloty, which is
+    // the intra-branch dominance `tests/economy-invariants.test.ts` § "within a
+    // branch, a dearer entry is never better value per zloty" forbids. 210 is the
+    // first passing value; 220 takes headroom and avoids tying `storage`'s price,
+    // where a tie would make `nextUpgrade`'s cheapest-first rule pick arbitrarily
+    // between two different branches.
+    cost: 220,
     requiredWorldLevel: 3,
     extraTasks: 0,
     runningCost: 3,
