@@ -1,14 +1,17 @@
 ---
 import { ShoppingCart, ShieldCheck, Globe, TrendingUp, LogIn, UserPlus, ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { WORLDS } from "@/data/worlds";
 import { t } from "@/i18n";
 
 /**
  * Signed-out landing (`/`). No mockup exists for this route, so it is built from
  * the product's own auth-mockup vocabulary — brand row, hero, world cards, the
  * three feature cards and the security footer — rather than the starter's
- * developer-facing scaffold copy. Every string already lives in `t.marketing`,
- * shared with the auth split view, so the two surfaces stay in step.
+ * developer-facing scaffold copy. Copy comes from `t.marketing`, shared with the
+ * auth split view, so the two surfaces stay in step; the world cards map `WORLDS`
+ * itself, so this page cannot advertise a different set than the app ships.
+ * `grid-cols-2` absorbs six as three rows and needs no breakpoint of its own.
  */
 const { user } = Astro.locals;
 const featureIcons = [ShieldCheck, Globe, TrendingUp];
@@ -82,7 +85,7 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
       {/* World cards — what the child actually runs */}
       <div class="grid grid-cols-2 gap-3 sm:gap-4">
         {
-          t.marketing.worlds.map((world) => (
+          WORLDS.map((world) => (
             <div class="bg-card border-border overflow-hidden rounded-2xl border shadow-sm">
               <img src={world.image} alt={world.name} loading="lazy" class="aspect-square w-full object-cover" />
               <p class="text-foreground px-2 py-2.5 text-center text-sm font-semibold">{world.name}</p>

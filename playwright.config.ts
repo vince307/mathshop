@@ -53,8 +53,18 @@ export default defineConfig({
       // pin WebKit). Deliberately scoped to the specs whose risk is viewport-shaped
       // (the plan's 2×-runtime decision), not to the whole suite. EXTEND the
       // alternation when adding one (`|worlds`); never replace it.
+      //
+      // ANCHORED, and that is load-bearing. This alternation used to be an
+      // unanchored substring match, so `marketing-worlds.spec.ts` joined this
+      // project purely because its name ENDS in `worlds.spec.ts` — coverage
+      // acquired by accident, and silently lost to a rename. Same class as L-007,
+      // one layer down. `(?:^|\/)` pins the filename to a path segment and `$`
+      // pins the end, so a spec runs here because someone listed it and for no
+      // other reason. Verify any edit with `npx playwright test --project=touch
+      // --list`: dropping a name here does NOT go red, it just quietly runs fewer
+      // tests and still exits 0 — the run of 2026-08-27 proved exactly that.
       name: "touch",
-      testMatch: /(gameplay-restore|growth|worlds)\.spec\.ts/,
+      testMatch: /(?:^|\/)(gameplay-restore|growth|worlds|marketing-worlds)\.spec\.ts$/,
       use: { ...devices["Galaxy Tab S4"] },
     },
   ],

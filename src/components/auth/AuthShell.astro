@@ -1,16 +1,23 @@
 ---
+import { WORLDS } from "@/data/worlds";
 import { t } from "@/i18n";
 import { ShoppingCart, ShieldCheck, Globe, TrendingUp } from "lucide-react";
 
 /**
  * Two-column auth layout (mockup `01`): a left marketing panel — brand,
- * hero, three feature cards, four world cards, decorative coins, security
+ * hero, three feature cards, one card per world, decorative coins, security
  * footer — beside a right-hand slot for the page's form card. Built once
  * here; reused by signup in Phase 5. Pure presentation, no behavior.
  *
  * Responsive: two columns on `lg+`; below that it stacks to a single column
  * (form first, then the marketing essentials). Marketing copy comes from
  * `t.marketing`; illustrations from committed `public/illustrations/` assets.
+ *
+ * The world strip maps `WORLDS` directly rather than a curated copy — a second
+ * list is what let this panel advertise four worlds while the app shipped six.
+ * Its column count is therefore a FUNCTION of that list: `grid-cols-3` holds six
+ * as two clean rows. Growing `WORLDS` past six means revisiting this class, and
+ * `e2e/marketing-worlds.spec.ts` is what makes that impossible to forget.
  */
 interface Props {
   /** Hero heading, e.g. "Panel rodzica". */
@@ -76,9 +83,9 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
         </div>
 
         {/* World cards (desktop only — mobile mockup omits them) */}
-        <div class="mt-6 hidden grid-cols-4 gap-3 lg:grid">
+        <div class="mt-6 hidden grid-cols-3 gap-3 lg:grid">
           {
-            t.marketing.worlds.map((world) => (
+            WORLDS.map((world) => (
               <div class="bg-card border-border overflow-hidden rounded-2xl border shadow-sm">
                 <img src={world.image} alt={world.name} loading="lazy" class="aspect-square w-full object-cover" />
                 <p class="text-foreground px-2 py-2.5 text-center text-sm font-semibold">{world.name}</p>
