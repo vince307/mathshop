@@ -83,6 +83,37 @@ export const WORLD_SLOTS: Partial<Record<string, Partial<Record<string, CSSPrope
     precision: { right: "5%", top: "22%" },
     margin: { left: "24%", bottom: "2%" },
   },
+  // Worlds five and six (W1). Coordinates are an EXTRAPOLATION from each plate's
+  // own whitespace — no mockup draws upgrade badges on either plate — and each
+  // one was measured rather than eyeballed: every badge rect below samples 0%
+  // non-background ink against its plate, where a badge over a focal point
+  // samples 98–100%.
+  pracownia: {
+    // A craft desk, content x ≈ 11–90%, y ≈ 4–92%. The coin stack (x ≈ 18–33%,
+    // y ≈ 66–93%), the stool and the basket crowd the floor, so the low badges
+    // hug the frame and the centre one sits below them all.
+    sign: { left: "5%", top: "4%" },
+    shelf: { left: "3%", top: "34%" },
+    register: { right: "3%", top: "22%" },
+    slot: { left: "45%", bottom: "3%" },
+    storage: { left: "3%", bottom: "12%" },
+    customers: { right: "4%", bottom: "6%" },
+    precision: { left: "34%", top: "3%" },
+    margin: { left: "24%", bottom: "2%" },
+  },
+  laboratorium: {
+    // An invention bench, content x ≈ 7–90%, y ≈ 7–94%. The largest clear region
+    // is the top-left quadrant; the coin stack owns the bottom-right (x ≈ 71–90%,
+    // y ≈ 70–94%), so `customers` sits below it rather than beside it.
+    sign: { left: "4%", top: "6%" },
+    shelf: { left: "4%", top: "26%" },
+    register: { right: "3%", top: "12%" },
+    slot: { left: "45%", bottom: "2%" },
+    storage: { left: "3%", bottom: "14%" },
+    customers: { right: "3%", bottom: "4%" },
+    precision: { left: "36%", top: "3%" },
+    margin: { left: "24%", bottom: "3%" },
+  },
 };
 
 /**

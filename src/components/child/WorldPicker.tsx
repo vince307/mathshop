@@ -23,10 +23,10 @@ interface WorldPickerProps {
  * The hidden inputs are ALWAYS mounted so the POST body is complete whatever the
  * selection state.
  *
- * Only FOUR worlds exist in `WORLDS`; the mockup draws six. The two missing ones
- * have no slug and no committed art, so rendering them would be invented data.
- * `grid-cols-2` at every breakpoint is the honest reflow — a clean 2×2 at four,
- * and it stays clean at six when the art lands (swap in `lg:grid-cols-3` then).
+ * SIX worlds now exist in `WORLDS` (W1), which is what the mockups draw, so the
+ * grid renders both of their shapes exactly: `grid-cols-2` is the mobile
+ * mockup's 2×3, and `lg:grid-cols-3` is the web mockup's 3×2. This is the swap
+ * the previous four-world note promised — no orphan row at either breakpoint.
  */
 export default function WorldPicker({ profileId, currentTheme }: WorldPickerProps) {
   const [selected, setSelected] = React.useState(() => worldForTheme(currentTheme).slug);
@@ -53,7 +53,7 @@ export default function WorldPicker({ profileId, currentTheme }: WorldPickerProp
       <input type="hidden" name="theme" value={selected} />
 
       <div>
-        <div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:gap-4 lg:mx-0 lg:max-w-none">
+        <div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:gap-4 lg:mx-0 lg:max-w-none lg:grid-cols-3">
           {WORLDS.map((w) => (
             <SelectTile
               key={w.slug}

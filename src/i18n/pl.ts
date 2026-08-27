@@ -110,6 +110,11 @@ export const pl = {
         description: "Śledź rozwój, raporty i osiągnięcia w czasie rzeczywistym.",
       },
     ],
+    // A signed-out marketing SAMPLE, deliberately NOT a mirror of `WORLDS` — it
+    // stays at four while `WORLDS` carries six (W1). Nothing syncs the two and
+    // no test or e2e spec reads `marketing.*`, so growing this list is not free:
+    // `AuthShell.astro` renders it at `hidden grid-cols-4 … lg:grid` and would go
+    // ragged 4+2 on desktop, unnoticed. Grow it only together with that class.
     worlds: [
       { name: "Piekarnia", image: "/illustrations/world-piekarnia.webp" },
       { name: "Kawiarnia", image: "/illustrations/world-kawiarnia.webp" },
@@ -333,6 +338,15 @@ export const pl = {
     "sklep-ksiegarnia-zakladka": "Zakładki z piórkiem",
     "sklep-ksiegarnia-zwoje": "Stare zwoje",
     "sklep-ksiegarnia-ksiegozbior": "Regał na zbiory",
+    // Worlds five and six (W1) — appended, one entry per key.
+    "pracownia-naklejki": "Naklejki na szafce",
+    "pracownia-szpulki": "Kolorowe szpulki",
+    "pracownia-paleta": "Paleta z farbami",
+    "pracownia-nozyczki": "Ozdobne nożyczki",
+    "laboratorium-gwiazdki": "Świecące gwiazdki",
+    "laboratorium-kolby": "Kolorowe kolby",
+    "laboratorium-mikroskop": "Mikroskop na półce",
+    "laboratorium-atom": "Model atomu",
   },
 
   upgrades: {
