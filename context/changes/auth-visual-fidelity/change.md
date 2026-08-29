@@ -105,6 +105,23 @@ Facts discovered while running the change that are not derivable from `plan.md`:
   the `*/`, producing `Parsing error: Unknown token ... expected "---"` at the END
   of the file plus 50 unrelated `astro check` errors. Write extraction globs
   without the slash after the star when they sit in a block comment.
+- **Gate 9.5's grep was over-broad; its intent is met.** The plan asked that
+  `grep -rn "ShoppingCart" src` return nothing. Two uses remain and neither is a
+  brand lockup on these six screens: `AppShell.astro` is the SIGNED-IN app
+  shell's own hand-rolled lockup (a seventh surface, outside this change), and
+  `WorldPicker.tsx` uses the glyph as the semantic "handel" competency icon.
+  `BrandRow` now covers all six auth/onboarding screens plus the landing page.
+  **Follow-up worth taking:** `AppShell.astro` is the last hand-rolled brand
+  lockup in the product and should adopt `BrandRow` too — left alone here because
+  it is signed-in chrome with its own nav and e2e coverage.
+- **`--primary-foreground` was under WCAG AA app-wide, and one token fixed it.**
+  It was `oklch(0.99 0.01 250)` — a faintly blue-tinted near-white — measuring
+  **4.38:1** on `--primary` (`rgb(46,111,239)`). Normal-size text needs 4.5, and
+  that pairing is every primary BUTTON LABEL in the product, not just these
+  screens. Pure white on the same blue is **4.53:1**. Changed to `oklch(1 0 0)`:
+  indistinguishable on screen, and it passes. Surfaced by the profile wizard's
+  stepper during Phase 8; the stepper's inactive discs were separately moved off
+  `text-muted-foreground` on `bg-muted` (4.34:1) to `text-foreground` (10.96:1).
 - **Deviation, screen 01 mobile: the hero stays out of the phone layout.**
   `01-parent-login-mobile.png` puts "Panel rodzica" and the tagline ABOVE the card
   and gives the card no heading of its own; the built screen keeps `AuthShell`'s

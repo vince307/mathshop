@@ -1264,11 +1264,11 @@ stored profile is invalidated.
 
 #### Automated
 
-- [x] 8.1 Unit suite passes: `npm run test`
-- [x] 8.2 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e`
-- [x] 8.3 Linting passes: `npm run lint`
-- [x] 8.4 Type/astro check passes: `npm run check`
-- [x] 8.5 No horizontal overflow at 1024, 1280, 1536, 1920
+- [x] 8.1 Unit suite passes: `npm run test` — c1d59e2
+- [x] 8.2 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e` — c1d59e2
+- [x] 8.3 Linting passes: `npm run lint` — c1d59e2
+- [x] 8.4 Type/astro check passes: `npm run check` — c1d59e2
+- [x] 8.5 No horizontal overflow at 1024, 1280, 1536, 1920 — c1d59e2
 
 #### Manual
 
@@ -1281,12 +1281,12 @@ stored profile is invalidated.
 
 #### Automated
 
-- [ ] 9.1 Unit suite passes: `npm run test`
-- [ ] 9.2 E2E suite passes, including `e2e/parent-surfaces.spec.ts`: `npm run test:e2e`
-- [ ] 9.3 Linting passes: `npm run lint`
-- [ ] 9.4 Type/astro check passes: `npm run check`
-- [ ] 9.5 No `ShoppingCart` remains anywhere in `src`
-- [ ] 9.6 No horizontal overflow at 1024, 1280, 1536, 1920
+- [x] 9.1 Unit suite passes: `npm run test`
+- [x] 9.2 E2E suite passes, including `e2e/parent-surfaces.spec.ts`: `npm run test:e2e`
+- [x] 9.3 Linting passes: `npm run lint`
+- [x] 9.4 Type/astro check passes: `npm run check`
+- [x] 9.5 No `ShoppingCart` remains anywhere in `src`
+- [x] 9.6 No horizontal overflow at 1024, 1280, 1536, 1920
 
 #### Manual
 
