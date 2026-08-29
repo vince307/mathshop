@@ -489,32 +489,32 @@ a green run.
 
 #### Automated
 
-- [x] 2.1 New guard passes: `npm run test`
-- [x] 2.2 Lint passes: `npm run lint`
-- [x] 2.3 Type checking passes: `npm run check`
-- [x] 2.4 Touch membership byte-identical to before the refactor: `npx playwright test --project=touch --list`
+- [x] 2.1 New guard passes: `npm run test` — 488a022
+- [x] 2.2 Lint passes: `npm run lint` — 488a022
+- [x] 2.3 Type checking passes: `npm run check` — 488a022
+- [x] 2.4 Touch membership byte-identical to before the refactor: `npx playwright test --project=touch --list` — 488a022
 
 #### Manual
 
-- [x] 2.5 Deliberate break: removing a name from `e2e/touch-specs.ts` turns `npm run test` red
-- [x] 2.6 Deliberate break, anchoring: un-anchoring the regex turns the near-miss assertion red
-- [x] 2.7 Meta-check reasoning recorded (L-004)
+- [x] 2.5 Deliberate break: removing a name from `e2e/touch-specs.ts` turns `npm run test` red — 488a022
+- [x] 2.6 Deliberate break, anchoring: un-anchoring the regex turns the near-miss assertion red — 488a022
+- [x] 2.7 Meta-check reasoning recorded (L-004) — 488a022
 
 ### Phase 3: Make the nav guard bite
 
 #### Automated
 
-- [ ] 3.1 Lint passes: `npm run lint`
-- [ ] 3.2 Type checking passes: `npm run check`
-- [ ] 3.3 Spec green in both projects: `npx playwright test e2e/growth.spec.ts`
-- [ ] 3.4 Full E2E suite green: `npx playwright test`
+- [x] 3.1 Lint passes: `npm run lint`
+- [x] 3.2 Type checking passes: `npm run check`
+- [x] 3.3 Spec green in both projects: `npx playwright test e2e/growth.spec.ts`
+- [x] 3.4 Full E2E suite green: `npx playwright test`
 
 #### Manual
 
-- [ ] 3.5 Decisive meta-check: probe neutralised + toolbar re-enabled turns the trial click red
-- [ ] 3.6 Truncation assertion green at 712px (if red, stop and report — do not loosen)
-- [ ] 3.7 Deliberate break: a synthetic 7th tab turns the truncation assertion red
-- [ ] 3.8 Meta-check reasoning recorded (L-004)
+- [x] 3.5 Decisive meta-check: probe neutralised + toolbar re-enabled turns the trial click red
+- [x] 3.6 Truncation assertion green at 712px (if red, stop and report — do not loosen)
+- [x] 3.7 Deliberate break: a synthetic tab turns the fit assertion red — CORRECTED: the 9th, not the 7th (see change.md)
+- [x] 3.8 Meta-check reasoning recorded (L-004)
 
 ### Phase 4: Land the lessons
 

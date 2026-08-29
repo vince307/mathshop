@@ -23,13 +23,18 @@ const SEED_WORLD = "kawiarnia";
  *   toggled with `display` (`hidden` / `lg:hidden`). If that toggle ever regresses
  *   to `opacity`, or a third nav appears, every accessible name doubles and
  *   `getByRole` locators across the whole suite go ambiguous — a failure only a
- *   real browser at a real viewport can see. The touch run is also the bottom
- *   bar's fit check: SIX tabs must sit in one row without pushing the document
- *   sideways. (`t.nav.items` has six keys — dashboard, missions, shop, growth,
- *   worlds, parent. `AppShell`'s `items` array holds five: the sidebar renders
- *   the sixth, `parent`, as its own pinned link below them, while `tabs` spreads
- *   all six into the bottom bar. That is why the count reads as five in the
- *   component and six in the accessibility tree.)
+ *   real browser at a real viewport can see. The touch run additionally carries
+ *   the two properties that break when the nav GROWS, and it carries them as
+ *   assertions that can actually fail: every tab can genuinely RECEIVE A CLICK
+ *   (a hit-test, not `toBeVisible()`), and no tab's label is CLIPPED by its own
+ *   ellipsis. The description this header used to carry — "SIX tabs must sit in
+ *   one row without pushing the document sideways" — was credited by three
+ *   handoffs to an assertion that could not fail; see the loop below for what
+ *   replaced it and why. (`t.nav.items` has six keys — dashboard, missions,
+ *   shop, growth, worlds, parent. `AppShell`'s `items` array holds five: the
+ *   sidebar renders the sixth, `parent`, as its own pinned link below them,
+ *   while `tabs` spreads all six into the bottom bar. That is why the count
+ *   reads as five in the component and six in the accessibility tree.)
  *
  * - **Where each nav entry POINTS.** This file owns the wiring half of the nav
  *   contract; `tests/nav-labels.test.ts` owns the dictionary half (uniqueness and
@@ -178,21 +183,98 @@ test("every nav entry stays uniquely reachable and the shell never scrolls sidew
     // 712 px that is the bottom bar carrying all six tabs, at 1280 px the sidebar
     // plus the pinned parent link. Presence alone was the whole assertion before;
     // an entry silently repointed at another route stayed green.
+    let clippers = 0;
     for (const [key, label] of Object.entries(t.nav.items)) {
       const entry = page.getByRole("link", { name: label, exact: true });
       await expect(entry).toHaveCount(1);
       await expect(entry).toBeVisible();
       await expect(entry).toHaveAttribute("href", NAV_HREFS[key as keyof typeof NAV_HREFS]);
+
+      // …and it can actually be CLICKED. `toBeVisible()` performs no hit-test,
+      // so an element covered by an overlay still reports visible: f0587ad
+      // records the dev toolbar occluding this very bottom bar while the link
+      // "still reported visible and uniquely located" — which is precisely the
+      // three assertions above, all green, over a tab no child could tap.
+      //
+      // `trial: true` runs Playwright's full actionability stack (visible,
+      // stable, enabled, RECEIVES EVENTS) and then skips the action, so this
+      // adds a hit-test without navigating. The receives-events check is the one
+      // the toolbar defeated. Do not delete this as redundant with
+      // `toBeVisible()` — that is exactly the mistake this replaces. The
+      // explicit timeout keeps an occluded tab a fast, legible failure rather
+      // than a 30 s test-level timeout.
+      await entry.click({ trial: true, timeout: 10_000 });
+
+      // Every tab's label must FIT ITS TAB. This replaces
+      // `primaryNav.scrollWidth - clientWidth <= 0`, which could not fail: under
+      // AppShell.astro's `flex-1 min-w-0` the tabs shrink to fit by construction
+      // at any width and any tab count, so the old check was a tautology, not a
+      // fit test. What actually breaks when the nav grows is the label.
+      //
+      // **Measure the label against the TAB's box, not against its own.** The
+      // obvious form of this assertion — `span.scrollWidth > span.clientWidth`
+      // on the element carrying `truncate` — is ALSO incapable of failing, for a
+      // subtler reason: the anchor is `flex-col items-center`, so in the cross
+      // axis the span sizes to its content and its scrollWidth and clientWidth
+      // are equal by construction. Measured directly: a 315 px label inside a
+      // 116 px tab still reported 0 overflow. It is the tab's content box that
+      // constrains the label, so that is what the label is compared against.
+      // (Consequence worth knowing: `truncate` on that span is inert — a label
+      // too long for its tab overflows and overlaps its neighbours rather than
+      // ellipsising. That is a product finding, not this spec's to fix.)
+      //
+      // This is a MEASUREMENT reached from the element `getByRole` located, the
+      // same category as `horizontalOverflow` above and the assertion it
+      // replaces — not element location, which is what e2e/CLAUDE.md restricts.
+      // It is not a new sanctioned exception to that rule.
+      //
+      // The walk selects by COMPUTED STYLE, not by structure: the label element
+      // is whichever descendant sets ellipsis + nowrap + hidden overflow (the
+      // bottom bar's `truncate` span). The desktop sidebar renders its label as
+      // a bare text node with nothing clipping it, so there is no such element
+      // at 1280 px and nothing to measure — which the positive control after
+      // this loop makes explicit rather than silent.
+      const clip = await entry.evaluate((el) => {
+        for (const node of [el, ...el.querySelectorAll("*")]) {
+          const style = getComputedStyle(node);
+          const clips = style.overflowX === "hidden" || style.overflowX === "clip";
+          if (style.textOverflow === "ellipsis" && style.whiteSpace === "nowrap" && clips) {
+            const tab = getComputedStyle(el);
+            const inner = el.clientWidth - parseFloat(tab.paddingLeft) - parseFloat(tab.paddingRight);
+            return node.scrollWidth - inner;
+          }
+        }
+        return null;
+      });
+
+      if (clip !== null) {
+        clippers += 1;
+        expect(clip, `nav label "${label}" (${key}) does not fit its tab`).toBeLessThanOrEqual(0);
+      }
     }
 
-    // The six entries fit the primary nav's own box — measured on the element
-    // `getByRole` found, not on a CSS-selected one. At 712 px this is the bottom
-    // bar: six tabs in ONE row, no sideways scroll to reach the last.
+    // Positive control (L-009): without this, a walk that found nothing — a
+    // typo'd style name, a refactor that drops `truncate` — would satisfy every
+    // truncation assertion above by never running one, and the check would be
+    // decorative. At 712 px all six tabs clip; at 1280 px none does, by
+    // construction of the sidebar markup. Both are asserted, so a change to
+    // EITHER nav's clipping behaviour is a finding rather than a silent
+    // reduction in what this test measures.
+    const entryCount = Object.keys(t.nav.items).length;
+    expect(clippers, "expected every bottom-bar tab to clip its label, and no sidebar entry to").toBe(
+      test.info().project.name === "touch" ? entryCount : 0,
+    );
+
+    // Exactly one nav carries the primary label at this viewport — the other
+    // copy is `display: none` and out of the accessibility tree. (This survived
+    // the assertion it used to serve: the vacuous `scrollWidth` measurement was
+    // taken on this element.)
     const primaryNav = page.getByRole("navigation", { name: t.nav.primaryLabel });
     await expect(primaryNav).toHaveCount(1);
-    expect(await primaryNav.evaluate((el) => el.scrollWidth - el.clientWidth)).toBeLessThanOrEqual(0);
 
-    // …and the nav does not push the page itself sideways either.
+    // …and the nav does not push the page itself sideways. Kept: a
+    // DOCUMENT-level measurement, so the flex tautology above does not apply to
+    // it — a nav that genuinely overflowed the viewport would still show here.
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   } finally {
     await deleteUser(account.id);

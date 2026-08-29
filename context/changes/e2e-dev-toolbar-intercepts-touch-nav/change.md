@@ -148,3 +148,81 @@ pre-break, guard 3 passed, `--list` back to 8 tests in 4 files.
 list. It cannot prove the list is *complete* — 6 of 10 specs still never run at a touch
 viewport, which the plan scopes out ("Not expanding `touch` coverage"). Making the
 current list loud is what landed; growing it remains a separate decision.
+
+## Phase 3 meta-check record (L-004)
+
+Two layers, proven independently — which is the only way defence in depth is
+demonstrated rather than asserted.
+
+**Break A — the decisive one: the spec catches the original incident on its own.**
+
+- *Broken:* the Phase 1 probe neutralised (`assertDevToolbarDisabled()` commented
+  out) **and** the toolbar re-enabled (`ASTRO_DEV_TOOLBAR_DISABLED: "false"` in
+  `webServer.env`), on an explicit `E2E_PORT` so Playwright launched its own
+  toolbar-serving server rather than adopting a stray one.
+- *Red:* Risk E2E-F4-2 failed at the trial click, 10 s, on the `Mój sklep` tab.
+  Call log: `element is visible, enabled and stable` → `scrolling into view if
+  needed` → `<astro-dev-toolbar></astro-dev-toolbar> intercepts pointer events`,
+  retried to timeout.
+- *Why that redness is evidence:* the call log contains the old assertions'
+  verdict and the new one's, in order, on the same element in the same
+  millisecond. Visible ✓, enabled ✓, stable ✓ — the exact three properties
+  `toHaveCount(1)` + `toBeVisible()` + `href` were checking, all satisfied — and
+  then a hit-test that fails, naming the occluding element. That is not "a test
+  failed"; it is the precise demonstration that the receives-events check sees
+  what the previous three could not. Under the old assertions this test passed in
+  1.5 s against a toolbar-serving server (Phase 1, Break C).
+- *Independence from Phase 1:* the probe was OFF for this run. Phase 1's Break A
+  proved the probe stops the suite; this proves the spec would have caught it had
+  the probe not existed. Neither result implies the other.
+- *Incidental confirmation:* the occluded tab here is `Mój sklep`, where Phase 1's
+  Break C hit `Rozwój świata` — the same overlay, a different victim, because
+  which tab a fixed bottom-centre overlay covers depends on the tab count. That is
+  the "silently breaks a different test each time the nav grows" claim in
+  `playwright.config.ts`, observed twice at two tab positions.
+- Probe and flag restored from HEAD immediately afterwards; `git diff --quiet`
+  clean on both files.
+
+**Break B — the truncation assertion, and a plan correction it forced.**
+
+The plan specified measuring truncation as `scrollWidth > clientWidth` on the
+element carrying `text-overflow: ellipsis`. Written that way it is **incapable of
+failing**, and the deliberate break is what surfaced it:
+
+- *Broken, B1:* a synthetic 7th tab, as step 3.7 prescribes. *Green.* Escalated to
+  8, 9, 10 tabs — still green, every label reporting overflow **exactly 0**.
+- *Broken, B2:* a 315 px label (`t.nav.items.growth` temporarily lengthened) inside
+  a 116 px tab. *Still green*, still reporting 0.
+- *Diagnosis:* the anchor is `flex-col items-center`, so in the cross axis the
+  `truncate` span sizes to its own CONTENT — `scrollWidth === clientWidth` by
+  construction, at any label length. Measured geometry at 6 tabs: span 315 px,
+  anchor 116 px, reported overflow 0.
+- *Why that greenness is evidence:* B2 is a positive control on the measurement
+  itself, not on the element. The Phase-3 draft already asserted that a clipping
+  element EXISTS (six of them at touch, none at desktop) and that control passed —
+  so the apparatus looked live while the number it produced was pinned at zero.
+  A check can be decorative one level below where you last looked (L-009).
+- *Correction:* the label is compared against the TAB's content box, which is what
+  actually constrains it. Falsifiable in both directions, and it degrades
+  monotonically instead of sitting at zero — worst-label (`Rozwój świata`)
+  headroom: **6 tabs −33 px, 7 −16 px, 8 −4 px, 9 +6 px (RED)**; long label
+  **+207 px (RED)**.
+- *Step 3.7 is corrected, not satisfied as written.* A 7th tab breaks nothing —
+  under either assertion. The nav's real headroom at 712 px is **two** more tabs;
+  the **9th** is the one that clips. The plan's prediction was wrong, and the
+  number above replaces it.
+
+**Product finding (reported, not fixed — this plan changes no product code).**
+`truncate` on the bottom-bar label span is **inert**: a label too long for its tab
+overflows and overlaps its neighbours rather than ellipsising, at any viewport.
+`AppShell.astro:66-67`'s "no truncation" is true at 712 px but for the wrong
+reason — truncation is impossible there, not avoided. This also does not explain
+the frame's observed "Rozwój ś…" / "Panel ro…" at 360–390 px, which deserves
+re-checking in the separate change that already owns the phone-width finding.
+
+**What the corrected assertion still does not cover.** It measures the label
+against its tab; it does not measure whether the TABS fit the nav. At 9–10 tabs
+the anchors stopped shrinking (77 px each, ~773 px of tabs in a 696 px row) and
+`horizontalOverflow(page)` stayed green because the bar is `position: fixed`. So
+a nav that outgrows its row is currently caught only via the label, and only once
+a label is the thing that overflows. Not in scope here; worth its own risk.
