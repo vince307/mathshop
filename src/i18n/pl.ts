@@ -130,6 +130,35 @@ export const pl = {
     ],
     security: "Twoje dane są chronione zgodnie z najlepszymi standardami bezpieczeństwa.",
     or: "lub",
+
+    // Per-screen headings for the `AuthShell` marketing column. Screen 01 uses
+    // `parentPanel` + `t.auth.signin.heading`; 02 and 04 have their own, because
+    // their mockups lead with a different promise than "log in".
+    signupTagline: "Zacznij bezpieczną naukę przez praktykę",
+    resetHeading: "Bezpieczny dostęp",
+    resetTagline: "Pomożemy Ci szybko odzyskać dostęp do konta. Twoje dane i postępy dziecka są bezpieczne.",
+
+    // Trust badges — the three-across reassurance row mockups 02 and 03 close
+    // with, rendered by `TrustBadges.astro`.
+    //
+    // **The two sets are deliberately different, and the difference is a locator
+    // constraint, not a copywriting whim.** Mockup 03's first badge is titled
+    // "Bezpieczna nauka", which is ALREADY `features[0].title`. `/auth/signup`
+    // renders `AuthShell`, and therefore `FeatureList`, so reusing 03's wording
+    // there would put the same accessible name on the page twice and make an
+    // unrelated `getByText` ambiguous (L-007). `/auth/confirm-email` renders no
+    // `FeatureList`, so 03's wording is safe there — which is also exactly what
+    // its own mockup says. `tests/marketing-labels.test.ts` holds this.
+    trustSignup: [
+      { title: "Chronimy Twoje dane" },
+      { title: "Oddzielne konto rodzica i profilu dziecka" },
+      { title: "Zgodne z zasadami bezpiecznego uczenia się" },
+    ],
+    trustVerify: [
+      { title: "Bezpieczna nauka", body: "Twoje dane są chronione zgodnie z najlepszymi standardami." },
+      { title: "Konto rodzica", body: "Oddzielone od profilu dziecka i w pełni kontrolowane przez Ciebie." },
+      { title: "Bez reklam", body: "Skupiamy się na nauce, nie na reklamach." },
+    ],
   },
 
   // App chrome / navigation (the landing header + the signed-in AppShell: desktop sidebar,

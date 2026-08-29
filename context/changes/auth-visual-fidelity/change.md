@@ -88,6 +88,23 @@ Facts discovered while running the change that are not derivable from `plan.md`:
   `e2e/smoke.spec.ts`, verified falsifiable in both directions. Candidate for
   `/10x-lesson`: it is L-009's shape ("a check that can pass without the thing it
   checks") one level up — a *documented* protection that was never a protection.
+- **Deviation, screen 02: the marketing column is screen 01's, not mockup 02's.**
+  `02-parent-register-web.png` gives its left panel three DIFFERENT value props
+  ("Ustal cele nauki / Bezpieczne środowisko / Śledź postępy"), a callout box and
+  a laptop-desk hero. The built screen shows `AuthShell`'s shared panel instead —
+  the same three features and world strip as sign-in — because that sharing is
+  the whole point of the Phase 2 extraction: `AuthShell` and `Welcome` were pulled
+  onto one set of components precisely so the signed-out product cannot present
+  itself two ways. Per-screen feature sets would undo that. Only the heading,
+  accent and tagline are per-screen, which `AuthShell` already supported. Also
+  absent from the card, both deliberate: the mockup's "Imię" field (the product
+  stores no parent name) and its terms checkbox (no regulamin page exists).
+- **`*/` inside a JSDoc comment closes it early, and Astro reports it 60 lines
+  later.** A provenance note in `TrustBadges.astro` written as
+  `` `02-*/png/cutouts/bottom-badge-*.png` `` terminated the frontmatter comment at
+  the `*/`, producing `Parsing error: Unknown token ... expected "---"` at the END
+  of the file plus 50 unrelated `astro check` errors. Write extraction globs
+  without the slash after the star when they sit in a block comment.
 - **Deviation, screen 01 mobile: the hero stays out of the phone layout.**
   `01-parent-login-mobile.png` puts "Panel rodzica" and the tagline ABOVE the card
   and gives the card no heading of its own; the built screen keeps `AuthShell`'s

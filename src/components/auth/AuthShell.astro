@@ -103,5 +103,12 @@ const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
         <slot />
       </div>
     </div>
+
+    {
+      /* Full-width footer under BOTH columns — mockup 02's trust-badge row runs
+        the width of the page, not the width of the card. Empty on every route
+        that passes nothing, so the markup costs the other three nothing. */
+    }
+    <slot name="footer" />
   </div>
 </div>

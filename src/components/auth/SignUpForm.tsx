@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { UserPlus } from "lucide-react";
-import { AuthEmailIcon, AuthLockIcon } from "@/components/icons/authIcons";
+import { AuthEmailIcon, AuthLockIcon, AuthShieldCheckIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
@@ -139,7 +138,7 @@ export default function SignUpForm({ serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText={t.auth.signup.pending} icon={<UserPlus className="size-4" />}>
+      <SubmitButton pendingText={t.auth.signup.pending} icon={<AuthShieldCheckIcon className="size-5" />}>
         {t.auth.signup.submit}
       </SubmitButton>
     </form>

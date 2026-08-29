@@ -2,25 +2,46 @@
 import Layout from "@/layouts/Layout.astro";
 import AuthShell from "@/components/auth/AuthShell.astro";
 import SignUpForm from "@/components/auth/SignUpForm";
-import { buttonVariants } from "@/components/ui/button";
-import { UserPlus, LogIn } from "lucide-react";
+import TrustBadges from "@/components/marketing/TrustBadges.astro";
+import { AuthUserPlusIcon } from "@/components/icons/authIcons";
 import { t } from "@/i18n";
 
+/**
+ * Parent registration (mockup `02-parent-register-web`).
+ *
+ * The marketing column leads with this screen's own promise — "Utwórz konto" /
+ * "Panel rodzica" over `signupTagline` — rather than screen `01`'s, because that
+ * is what the mockup's left panel says. No new `AuthShell` prop was needed; it
+ * already takes all three.
+ *
+ * **The mockup's "Krok 1 z 3" stepper is deliberately not built.** It counts
+ * signup → child profile → PIN, but `/app/new-profile` already renders its OWN
+ * three-step stepper for a different three steps ("Dane dziecka / Avatar i świat
+ * / Podsumowanie"). Two steppers both reading "Krok N z 3" is a layout collision
+ * and an L-007 locator collision at once. Same reason the terms-and-privacy
+ * checkbox is absent: there is no regulamin page to link to.
+ */
 const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout title={t.auth.signup.title}>
-  <AuthShell heading={t.marketing.parentPanel} accent={t.auth.signup.heading}>
-    <div class="bg-card text-card-foreground border-border rounded-3xl border p-6 shadow-md sm:p-8">
-      <div class="flex flex-col items-center text-center">
+  <AuthShell heading={t.auth.signup.heading} accent={t.marketing.parentPanel} tagline={t.marketing.signupTagline}>
+    <div class="bg-card text-card-foreground border-border shadow-mm-card rounded-3xl border p-6 sm:p-8">
+      {
+        /* The mockup's card opens straight into the fields — its heading lives in
+          the left panel. That panel is `hidden lg:block`, so below `lg` this
+          header is the only thing naming the screen; above `lg` it would be the
+          second copy. `lg:hidden` on the whole block, same as sign-in. */
+      }
+      <div class="flex flex-col items-center text-center lg:hidden">
         <span class="bg-primary/10 text-primary inline-flex size-14 items-center justify-center rounded-2xl">
-          <UserPlus className="size-7" />
+          <AuthUserPlusIcon className="size-7" />
         </span>
         <h1 class="text-foreground mt-4 text-3xl font-extrabold">{t.auth.signup.heading}</h1>
         <p class="text-muted-foreground mt-1 text-sm">{t.marketing.parentPanel}</p>
       </div>
 
-      <div class="mt-6">
+      <div class="mt-6 lg:mt-0">
         <SignUpForm serverError={error} client:load />
       </div>
 
@@ -30,13 +51,17 @@ const error = Astro.url.searchParams.get("error");
         <span class="bg-border h-px flex-1"></span>
       </div>
 
-      <a
-        href="/auth/signin"
-        class:list={buttonVariants({ variant: "outline", size: "lg", className: "w-full font-medium" })}
-      >
-        <LogIn className="size-4" />
-        {t.auth.signup.signinLink}
-      </a>
+      {
+        /* The mockup closes the card with a centred text line, not an outline
+          button — and it is where `t.auth.signup.hasAccount` finally lands, a
+          string that had sat in the dictionary referenced by nothing. */
+      }
+      <p class="text-center text-sm">
+        <span class="text-muted-foreground">{t.auth.signup.hasAccount}</span>{" "}
+        <a href="/auth/signin" class="text-primary font-bold hover:underline">{t.auth.signup.signinLink}</a>
+      </p>
     </div>
+
+    <TrustBadges slot="footer" items={t.marketing.trustSignup} class="mt-10 justify-items-center lg:mt-12" />
   </AuthShell>
 </Layout>

@@ -1,0 +1,77 @@
+---
+import { FEATURE_ICONS, BADGE_CHECK } from "@/data/marketing-art";
+import { AuthLockFilledIcon } from "@/components/icons/authIcons";
+
+/**
+ * The three-across reassurance row mockups `02` and `03` both close with: a
+ * glyph in a white circular tile beside a short title, optionally with a line of
+ * body copy beneath it.
+ *
+ * Built once and driven by `items` because two screens render it. That is the
+ * same argument that produced `FeatureList` in Phase 2 — copy was already shared
+ * through `t.marketing`, but duplicated markup is how two surfaces drift apart
+ * with nothing noticing.
+ *
+ * **The two screens pass DIFFERENT item sets, on purpose.** `t.marketing.trustVerify`
+ * (mockup `03`'s wording) opens with "Bezpieczna nauka", which is already
+ * `t.marketing.features[0].title`. `/auth/signup` renders `AuthShell` and
+ * therefore `FeatureList`, so that wording there would put one accessible name
+ * on the page twice and make an unrelated `getByText` ambiguous (L-007).
+ * `/auth/confirm-email` renders no `FeatureList`, so it is safe there — which is
+ * what its mockup says anyway. `tests/marketing-labels.test.ts` is what keeps
+ * the next added badge from re-colliding.
+ *
+ * The badges are built in CSS around Group A art — a tinted disc, a title, a
+ * body line. The extraction ships PNG cutouts for these
+ * (the `bottom-badge-*.png` cutouts under `02-parent-register-extracted`), and
+ * they are deliberately NOT used:
+ * three of them key badly, and the extraction index's own rule is to prefer SVG
+ * and rebuild the container in code.
+ */
+interface TrustItem {
+  title: string;
+  body?: string;
+}
+
+interface Props {
+  items: readonly TrustItem[];
+  class?: string;
+}
+
+const { items, class: className } = Astro.props;
+
+/**
+ * Glyph per position, matching both mockups: a green check-shield, a padlock,
+ * a blue tick. Index-aligned with `items`, which is safe because the component
+ * is closed to three — both mockups draw exactly three and the grid is
+ * `sm:grid-cols-3`. A fourth item would need a glyph, and would fall off this
+ * list rather than render blank: `ICONS[i]` is asserted below.
+ */
+const ICONS = [FEATURE_ICONS[0], null, BADGE_CHECK] as const;
+
+if (items.length !== ICONS.length) {
+  throw new Error(
+    `TrustBadges takes exactly ${ICONS.length} items (both mockups draw three, the grid is sm:grid-cols-3); got ${items.length}.`,
+  );
+}
+---
+
+<ul class:list={["grid gap-4 sm:grid-cols-3", className]}>
+  {
+    items.map((item, i) => (
+      <li class="flex items-center gap-3">
+        <span class="bg-card flex size-12 shrink-0 items-center justify-center rounded-full shadow-sm">
+          {ICONS[i] ? (
+            <img src={ICONS[i]} alt="" aria-hidden="true" width="64" height="64" class="size-6" />
+          ) : (
+            <AuthLockFilledIcon className="text-primary size-6" />
+          )}
+        </span>
+        <div>
+          <p class="text-foreground text-sm font-bold">{item.title}</p>
+          {item.body && <p class="text-muted-foreground mt-0.5 text-sm">{item.body}</p>}
+        </div>
+      </li>
+    ))
+  }
+</ul>

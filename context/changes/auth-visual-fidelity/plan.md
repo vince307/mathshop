@@ -1193,11 +1193,11 @@ stored profile is invalidated.
 
 #### Automated
 
-- [x] 4.1 Unit suite passes: `npm run test`
-- [x] 4.2 E2E suite passes, including the new smoke assertion: `npm run test:e2e`
-- [x] 4.3 Linting passes: `npm run lint`
-- [x] 4.4 Type/astro check passes: `npm run check`
-- [x] 4.5 No horizontal overflow on `/auth/signin` at 1024, 1280, 1536, 1920
+- [x] 4.1 Unit suite passes: `npm run test` — fa17a22
+- [x] 4.2 E2E suite passes, including the new smoke assertion: `npm run test:e2e` — fa17a22
+- [x] 4.3 Linting passes: `npm run lint` — fa17a22
+- [x] 4.4 Type/astro check passes: `npm run check` — fa17a22
+- [x] 4.5 No horizontal overflow on `/auth/signin` at 1024, 1280, 1536, 1920 — fa17a22
 
 #### Manual
 
@@ -1210,12 +1210,12 @@ stored profile is invalidated.
 
 #### Automated
 
-- [ ] 5.1 Unit suite passes: `npm run test` (baseline + ~2)
-- [ ] 5.2 New label guard passes: `npx vitest run tests/marketing-labels.test.ts`
-- [ ] 5.3 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e`
-- [ ] 5.4 Linting passes: `npm run lint`
-- [ ] 5.5 Type/astro check passes: `npm run check`
-- [ ] 5.6 No horizontal overflow on `/auth/signup` at 1024, 1280, 1536, 1920
+- [x] 5.1 Unit suite passes: `npm run test` (baseline + ~2)
+- [x] 5.2 New label guard passes: `npx vitest run tests/marketing-labels.test.ts`
+- [x] 5.3 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e`
+- [x] 5.4 Linting passes: `npm run lint`
+- [x] 5.5 Type/astro check passes: `npm run check`
+- [x] 5.6 No horizontal overflow on `/auth/signup` at 1024, 1280, 1536, 1920
 
 #### Manual
 
