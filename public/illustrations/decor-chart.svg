@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Progress">
+  <rect x="12" y="39" width="9" height="13" rx="3" fill="#93c5fd"/>
+  <rect x="28" y="29" width="9" height="23" rx="3" fill="#60a5fa"/>
+  <rect x="44" y="17" width="9" height="35" rx="3" fill="#2563eb"/>
+  <path d="M10 54h46" stroke="#64748b" stroke-width="4" stroke-linecap="round"/>
+</svg>

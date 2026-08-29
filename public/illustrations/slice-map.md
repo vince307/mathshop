@@ -81,11 +81,47 @@ theme-neutral, swappable for per-world art later.
 | `upgrade-storage.svg`   | `inventory-box.svg`                           | Magazynek (storage)               |
 | `upgrade-customers.svg` | `customer-happy.svg`                          | Więcej klientów (customers)       |
 
+## Signed-out surface art (auth-visual-fidelity) — 2026-08-29
+
+Copied **as-is** (not cropped, not resized, byte-for-byte) from the local-only atomic
+asset pack `assets/atomic-assets-v2/svg/` (gitignored) into committed
+`public/illustrations/`, so the auth split view and the landing page ship their art to
+Vercel. SVG — scalable, tiny, and it needs no alpha-keying. Same move as the upgrade
+icons below.
+
+| Output file            | Source (`assets/atomic-assets-v2/svg/`) | What it is                              |
+| ---------------------- | --------------------------------------- | --------------------------------------- |
+| `brand-symbol.svg`     | `brand/mathmarket-symbol.svg`           | Shop-front brand mark with a `zł` coin  |
+| `feature-safety.svg`   | `icons/shield-check.svg`                | "Bezpieczna nauka" — green check-shield |
+| `feature-worlds.svg`   | `icons/globe-worlds.svg`                | "Światy zainteresowań" — blue globe     |
+| `feature-progress.svg` | `icons/chart-up.svg`                    | "Postępy dziecka" — rising bar chart    |
+| `parent-lock.svg`      | `icons/lock-user.svg`                   | Sign-in card header glyph               |
+| `decor-chart.svg`      | `icons/progress-bars.svg`               | Background decoration, desktop only     |
+
+Paths are owned by `src/data/marketing-art.ts` and pinned by `tests/auth-art.test.ts`
+(every path resolves to a committed file; one feature icon per `t.marketing.features`
+entry). No surface hardcodes a string from this table.
+
+**Render these as `<img src>`, never inline the SVG.** `feature-safety.svg` and
+`parent-lock.svg` each declare `<linearGradient id="g">`, and `brand-symbol.svg`
+declares `blue` / `green` / `gold`. SVG element ids are document-global: inline two of
+these into one page and the later definition silently wins for both, so one glyph
+renders with the other's gradient. As `<img>` each file is its own document. The cost
+is that they can't be recoloured through `currentColor` — fine, they're illustrations
+with fixed brand colours, not UI icons.
+
+**This reverses an earlier call, recorded here so the reversal is legible.** The
+first note in this file said these glyphs were deliberately *not* sliced and were
+rendered with lucide instead — "visually faithful and keeps the asset set lean". The
+first half didn't hold: a 20 px flat outline where the mockup has a 64 px illustration
+is the single biggest reason `/auth/signin` read as the mockup's wireframe rather than
+the mockup. The second half was answered by a route that note didn't consider — the
+art doesn't have to be **sliced** out of a flattened mockup at all, because the atomic
+pack ships it standalone. Six files, 342–1500 bytes each, replacing rendered
+components: the asset set stays lean either way.
+
 ## Notes
 
-- The small feature-bullet icons (shield / globe / chart) and the form-panel avatar-lock
-  glyph are **not** sliced — they're generic and are rendered with lucide icons in the
-  surface layouts (Phase 4–5), which is visually faithful and keeps the asset set lean.
 - World cards include the rounded-illustration art only; their labels (Piekarnia,
   Kawiarnia, Galaktyczna baza, Sklep księgarnia, Pracownia, Laboratorium) are rendered
   as text from `i18n`, not baked in.
