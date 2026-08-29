@@ -1,7 +1,7 @@
 ---
 change_id: auth-visual-fidelity
 title: Bring all six auth/onboarding screens up to mockup fidelity from the per-screen auth-v2 extraction
-status: implementing
+status: implemented
 created: 2026-08-29
 updated: 2026-08-29
 archived_at: null

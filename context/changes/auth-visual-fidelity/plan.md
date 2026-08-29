@@ -1281,12 +1281,12 @@ stored profile is invalidated.
 
 #### Automated
 
-- [x] 9.1 Unit suite passes: `npm run test`
-- [x] 9.2 E2E suite passes, including `e2e/parent-surfaces.spec.ts`: `npm run test:e2e`
-- [x] 9.3 Linting passes: `npm run lint`
-- [x] 9.4 Type/astro check passes: `npm run check`
-- [x] 9.5 No `ShoppingCart` remains anywhere in `src`
-- [x] 9.6 No horizontal overflow at 1024, 1280, 1536, 1920
+- [x] 9.1 Unit suite passes: `npm run test` — 49ef788
+- [x] 9.2 E2E suite passes, including `e2e/parent-surfaces.spec.ts`: `npm run test:e2e` — 49ef788
+- [x] 9.3 Linting passes: `npm run lint` — 49ef788
+- [x] 9.4 Type/astro check passes: `npm run check` — 49ef788
+- [x] 9.5 No `ShoppingCart` remains anywhere in `src` — 49ef788
+- [x] 9.6 No horizontal overflow at 1024, 1280, 1536, 1920 — 49ef788
 
 #### Manual
 
