@@ -1,7 +1,7 @@
 ---
 change_id: e2e-dev-toolbar-intercepts-touch-nav
 title: E2e dev toolbar intercepts touch nav
-status: implemented
+status: impl_reviewed
 created: 2026-08-29
 updated: 2026-08-29
 archived_at: null

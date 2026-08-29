@@ -17,6 +17,16 @@ the plan/research in `context/archive/2026-07-12-testing-e2e-playwright/`.
   3. One positional `.first()` on the world-tile locator in the onboarding spec
      (composite accessible names make "Kawiarnia" ambiguous). Prefer
      `filter()`-scoped locators for any new ambiguity.
+  4. The computed-style walk in `growth.spec.ts`'s nav-fit assertion
+     (`[el, ...el.querySelectorAll("*")]`, Risk E2E-F4-2). It MEASURES a label
+     against its tab, starting from an element `getByRole` located; the
+     descendant is picked by computed style (`text-overflow: ellipsis` +
+     `white-space: nowrap` + hidden overflow), never by tag, class or position,
+     so reparenting or restyling the span cannot silently break it.
+     **The line this draws:** measurement reached from a role-located element is
+     allowed; structural SELECTION is still banned. `querySelectorAll` is not a
+     licence to locate — if you are choosing an element by what it IS rather than
+     reading a number off it, this exception does not cover you.
 - Every user-visible string a locator matches comes from the i18n dictionary via
   `helpers/i18n.ts` (`t`, `fill`, `templateRegex`) — never hardcode Polish
   beyond data the test itself injects (e.g. a child name it typed).
