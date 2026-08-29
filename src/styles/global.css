@@ -120,6 +120,12 @@
 
      No component carries a raw hex from that file — anything it needs is a
      utility built from these three. */
+  /* Text-weight green. `--success` (oklch 0.63) is a FILL colour — it is right on
+     a white disc or a solid button, and it measures 2.92:1 as text on its own
+     `bg-success/10` tint, under AA. This is the same green taken down to a
+     lightness that clears 4.5:1 there, so a success panel can label itself.
+     `--success` is untouched: four child surfaces fill with it. */
+  --color-success-strong: oklch(0.47 0.13 155);
   --shadow-mm-card: 0 24px 70px rgb(20 78 145 / 0.14);
   --shadow-mm-control: 0 12px 28px rgb(18 108 240 / 0.18);
   /* The auth card's own width, straight from the mockup: `max-w-auth-card`. */
