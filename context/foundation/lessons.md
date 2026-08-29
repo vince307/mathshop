@@ -36,6 +36,34 @@ Recurring rules and pitfalls surfaced during implementation and review. Treat ea
 
 **Most recent instance:** `e2e-dev-toolbar-intercepts-touch-nav` (2026-08-29), which is this lesson applied to a whole change. Its Phase 3 broke the two protective layers separately — the global-setup probe was neutralised so that re-enabling Astro's dev toolbar tested the _spec_ rather than the probe — and the resulting call log is the evidence: `element is visible, enabled and stable` (the three assertions that were there before, all green) immediately followed by `<astro-dev-toolbar> intercepts pointer events`. Same change, Phase 2: a break was run through both signals at once, Playwright reporting `exit 0` with fewer tests while the new unit guard went red on the identical tree.
 
+## L-005: Success criteria carry `baseline + delta`, never an absolute test count
+
+**Rule:** Never write an absolute test count into a plan's success criteria (`npm test` shows 346). Write the baseline plus the expected delta (`baseline + 28 new tests; baseline measured on this branch`), and **measure the baseline on the branch you are actually on**.
+
+**Why:** Baselines move between branches. In one run the unit baseline was 299 on the base, 318 after the first feature landed, 346 after the second and 382 after the third — with an independent branch sitting at 322 the whole time. A plan written against one number becomes unsatisfiable the moment a sibling lands. Plan review caught two such criteria before implementation, one demanding 17 Playwright runs when there were 15 and the change added none. Absolute counts also invite the opposite error: an implementer who _reaches_ the number stops looking.
+
+**How to apply:** In `## Success Criteria` write `npm test — baseline + N (measure the baseline on this branch before Phase 1)`. In handoffs report counts as `382 passed (baseline 346, +36)`. When a count cannot be reconciled arithmetically, say so rather than rounding the story. Stacked branches inherit their predecessor's baseline, not the base branch's.
+
+## L-006: Anchor on symbols, never on line numbers
+
+**Rule:** Every reference to code in a plan, review, handoff or follow-up names a **file plus a symbol** (function, component, exported constant, heading text) — never a line number as the primary anchor. A line number may appear as a convenience hint alongside the symbol, marked as of-the-moment.
+
+**Why:** Line numbers rot as soon as anything lands, and in a multi-feature run they rot _while the documents are being written_. In one run the same stale number (`~396` for `statTasks`/`statUpgrades`) reached **two plans at once**, and a hand-off recipe's find-strings broke the moment a sibling feature changed the `.select(...)` they matched. Reviews then spend their budget re-deriving coordinates instead of attacking substance.
+
+**How to apply:** Write "the `<section>` holding `t.start.nextUpgradeHeading` — today around `:120-147`; anchor on the string, not the number". When a recipe must be mechanical, use a `grep`-able unique string rather than a line. Re-verify anchors when the base branch moves under a plan.
+
+**Verified on landing (2026-08-29):** the lesson demonstrates itself. Its own citation said `statTasks`/`statUpgrades` sat at `:415-416`; they are now `WeeklyReport.tsx:159,177`. The symbols resolved instantly, the numbers did not.
+
+## L-007: `getByText` matches substrings — a new label can break an unrelated test
+
+**Rule:** Before adding any user-visible label, check that it is neither a substring nor a superstring of an existing one, and that no existing `getByText` locator becomes ambiguous. Prefer `getByRole(..., { name })` with `{ exact: true }` for anything a test will locate.
+
+**Why:** Playwright's `getByText` matches substrings, so a new string containing an existing phrase silently breaks a test in a feature nobody touched. This nearly derailed two changes in one run, and came back at merge time when two features each added a nav tab: "Światy" and "Rozwój świata" had to be checked programmatically to confirm neither contains the other before the merge could be trusted. The related trap is duplicated accessible names — the sidebar and bottom bar both render below `lg`, where the `touch` project runs at 712px, so a label rendered twice makes `getByRole` ambiguous and the failure looks like a product bug.
+
+**How to apply:** When adding a key to `src/i18n/pl.ts`, grep the dictionary for the new label as a substring in both directions. When adding a nav entry, count the tabs at 712px and confirm the bar still holds. Toggle chrome with `hidden` / `lg:hidden` (`display`), never `opacity` — `opacity` leaves both copies in the accessibility tree.
+
+**Verified on landing (2026-08-29):** still live. `src/i18n/pl.ts:144-145` carries the exact pair (`growth: "Rozwój świata"`, `worlds: "Światy"`), `tests/nav-labels.test.ts` is the standing programmatic guard for both directions, and `e2e/growth.spec.ts` (Risk E2E-F4-2) owns the duplicated-accessible-name half at 712px.
+
 ## L-008: Strip data that looks like code before the review model sees it
 
 **Rule:** The AI review gate reads a unified diff and nothing else. Any file whose _content_ is itself a diff — an eval fixture, a captured patch, review evidence — must be removed by the pre-filter in `packages/code-reviewer/noise.ts` before the model is called. When you commit a new class of file that carries code-shaped content as data, ask the test: _would this file's content be misread as change if the reviewer only saw the diff?_ If yes, it belongs in `isNoise`, alongside lockfiles and `context/**`.
