@@ -21,12 +21,20 @@ for (const name of ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_
 // Port is overridable so two checkouts/worktrees can run e2e side by side. With
 // `reuseExistingServer` on, a dev server left running by another checkout would
 // otherwise be silently reused and the suite would test THAT tree, not this one.
+//
+// Choosing a port EXPLICITLY is therefore also a statement that reuse is unwanted:
+// the whole point of E2E_PORT is isolation, and a stale server squatting on the
+// chosen port defeats it silently. Landing the follow-up accepted (and never
+// landed) in the world-progression-stages review —
+// `context/archive/2026-08-22-world-progression-stages/follow-ups/review-fixes.md:115-116`.
+const EXPLICIT_PORT = process.env.E2E_PORT !== undefined;
 const PORT = process.env.E2E_PORT ?? "4321";
 const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
-  // Backend-identity probe — fails loudly if a reused dev server points at a
+  // Precondition probes — fail loudly, before any spec, if a reused dev server is
+  // serving Astro's dev toolbar (it occludes the mobile bottom nav) or points at a
   // different Supabase stack than .env.test (see e2e/global-setup.ts).
   globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
@@ -71,7 +79,16 @@ export default defineConfig({
   webServer: {
     command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    // Reuse is a LOCAL convenience only, and it is the reason the `env` block below
+    // is not self-enforcing: on the reuse path Playwright returns before it ever
+    // launches a process, so NONE of these variables are applied — availability is
+    // just an HTTP probe of `url`, which any `npm run dev` satisfies. That is why
+    // e2e/global-setup.ts asserts the dev toolbar is actually absent rather than
+    // trusting ASTRO_DEV_TOOLBAR_DISABLED to have reached the server.
+    //
+    // `!EXPLICIT_PORT` closes the worktree half (see EXPLICIT_PORT above); the probe
+    // closes the default-:4321 half, which this flag deliberately does NOT cover.
+    reuseExistingServer: !process.env.CI && !EXPLICIT_PORT,
     timeout: 120_000,
     env: {
       // The app reads SUPABASE_KEY (anon) via astro:env/server; .env.test carries
