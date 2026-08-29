@@ -504,26 +504,26 @@ a green run.
 
 #### Automated
 
-- [x] 3.1 Lint passes: `npm run lint`
-- [x] 3.2 Type checking passes: `npm run check`
-- [x] 3.3 Spec green in both projects: `npx playwright test e2e/growth.spec.ts`
-- [x] 3.4 Full E2E suite green: `npx playwright test`
+- [x] 3.1 Lint passes: `npm run lint` — 2e5fad1
+- [x] 3.2 Type checking passes: `npm run check` — 2e5fad1
+- [x] 3.3 Spec green in both projects: `npx playwright test e2e/growth.spec.ts` — 2e5fad1
+- [x] 3.4 Full E2E suite green: `npx playwright test` — 2e5fad1
 
 #### Manual
 
-- [x] 3.5 Decisive meta-check: probe neutralised + toolbar re-enabled turns the trial click red
-- [x] 3.6 Truncation assertion green at 712px (if red, stop and report — do not loosen)
-- [x] 3.7 Deliberate break: a synthetic tab turns the fit assertion red — CORRECTED: the 9th, not the 7th (see change.md)
-- [x] 3.8 Meta-check reasoning recorded (L-004)
+- [x] 3.5 Decisive meta-check: probe neutralised + toolbar re-enabled turns the trial click red — 2e5fad1
+- [x] 3.6 Truncation assertion green at 712px (if red, stop and report — do not loosen) — 2e5fad1
+- [x] 3.7 Deliberate break: a synthetic tab turns the fit assertion red — CORRECTED: the 9th, not the 7th (see change.md) — 2e5fad1
+- [x] 3.8 Meta-check reasoning recorded (L-004) — 2e5fad1
 
 ### Phase 4: Land the lessons
 
 #### Automated
 
-- [ ] 4.1 Lint passes: `npm run lint`
-- [ ] 4.2 Formatting clean: `npx prettier --check context/foundation/lessons.md`
+- [x] 4.1 Lint passes: `npm run lint`
+- [x] 4.2 Formatting clean: `npx prettier --check context/foundation/lessons.md`
 
 #### Manual
 
-- [ ] 4.3 L-numbers unique and unrenumbered; both lessons read coherently standalone
-- [ ] 4.4 Committed separately from the harness changes
+- [x] 4.3 L-numbers unique and unrenumbered; both lessons read coherently standalone
+- [x] 4.4 Committed separately from the harness changes
