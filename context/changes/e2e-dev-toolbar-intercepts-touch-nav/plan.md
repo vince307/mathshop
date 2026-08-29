@@ -520,10 +520,10 @@ a green run.
 
 #### Automated
 
-- [x] 4.1 Lint passes: `npm run lint`
-- [x] 4.2 Formatting clean: `npx prettier --check context/foundation/lessons.md`
+- [x] 4.1 Lint passes: `npm run lint` — dcc8559
+- [x] 4.2 Formatting clean: `npx prettier --check context/foundation/lessons.md` — dcc8559
 
 #### Manual
 
-- [x] 4.3 L-numbers unique and unrenumbered; both lessons read coherently standalone
-- [x] 4.4 Committed separately from the harness changes
+- [x] 4.3 L-numbers unique and unrenumbered; both lessons read coherently standalone — dcc8559
+- [x] 4.4 Committed separately from the harness changes — dcc8559
