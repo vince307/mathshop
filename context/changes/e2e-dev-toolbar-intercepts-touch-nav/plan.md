@@ -474,31 +474,31 @@ a green run.
 
 #### Automated
 
-- [x] 1.1 Lint passes: `npm run lint`
-- [x] 1.2 Type checking passes: `npm run check`
-- [x] 1.3 Unit suite still green: `npm run test`
-- [x] 1.4 Full E2E suite green against a correctly-flagged server: `npx playwright test`
+- [x] 1.1 Lint passes: `npm run lint` — 0581a0c
+- [x] 1.2 Type checking passes: `npm run check` — 0581a0c
+- [x] 1.3 Unit suite still green: `npm run test` — 0581a0c
+- [x] 1.4 Full E2E suite green against a correctly-flagged server: `npx playwright test` — 0581a0c
 
 #### Manual
 
-- [x] 1.5 Deliberate break: unflagged dev server on :4321 fails global setup with the toolbar message
-- [x] 1.6 Deliberate break, second layer: E2E_PORT set with a stray server on that port starts a fresh server
-- [x] 1.7 Meta-check reasoning recorded (L-004)
+- [x] 1.5 Deliberate break: unflagged dev server on :4321 fails global setup with the toolbar message — 0581a0c
+- [x] 1.6 Deliberate break, second layer: E2E_PORT set with a stray server on that port starts a fresh server — 0581a0c
+- [x] 1.7 Meta-check reasoning recorded (L-004) — 0581a0c
 
 ### Phase 2: Make touch membership loud
 
 #### Automated
 
-- [ ] 2.1 New guard passes: `npm run test`
-- [ ] 2.2 Lint passes: `npm run lint`
-- [ ] 2.3 Type checking passes: `npm run check`
-- [ ] 2.4 Touch membership byte-identical to before the refactor: `npx playwright test --project=touch --list`
+- [x] 2.1 New guard passes: `npm run test`
+- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.3 Type checking passes: `npm run check`
+- [x] 2.4 Touch membership byte-identical to before the refactor: `npx playwright test --project=touch --list`
 
 #### Manual
 
-- [ ] 2.5 Deliberate break: removing a name from `e2e/touch-specs.ts` turns `npm run test` red
-- [ ] 2.6 Deliberate break, anchoring: un-anchoring the regex turns the near-miss assertion red
-- [ ] 2.7 Meta-check reasoning recorded (L-004)
+- [x] 2.5 Deliberate break: removing a name from `e2e/touch-specs.ts` turns `npm run test` red
+- [x] 2.6 Deliberate break, anchoring: un-anchoring the regex turns the near-miss assertion red
+- [x] 2.7 Meta-check reasoning recorded (L-004)
 
 ### Phase 3: Make the nav guard bite
 

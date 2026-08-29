@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import { config as loadEnv } from "dotenv";
+import { touchTestMatch } from "./e2e/touch-specs";
 
 // E2E runs against `npm run dev` (:4321) + the local Supabase stack. Credentials
 // come from `.env.test` (same file the vitest suite uses; copy `.env.test.example`,
@@ -59,20 +60,17 @@ export default defineConfig({
     {
       // Touch/tablet viewport — Chromium-engine preset (NOT an iPad preset; those
       // pin WebKit). Deliberately scoped to the specs whose risk is viewport-shaped
-      // (the plan's 2×-runtime decision), not to the whole suite. EXTEND the
-      // alternation when adding one (`|worlds`); never replace it.
+      // (the plan's 2×-runtime decision), not to the whole suite. EXTEND the list
+      // in `e2e/touch-specs.ts` when adding one; never replace an entry.
       //
-      // ANCHORED, and that is load-bearing. This alternation used to be an
-      // unanchored substring match, so `marketing-worlds.spec.ts` joined this
-      // project purely because its name ENDS in `worlds.spec.ts` — coverage
-      // acquired by accident, and silently lost to a rename. Same class as L-007,
-      // one layer down. `(?:^|\/)` pins the filename to a path segment and `$`
-      // pins the end, so a spec runs here because someone listed it and for no
-      // other reason. Verify any edit with `npx playwright test --project=touch
-      // --list`: dropping a name here does NOT go red, it just quietly runs fewer
-      // tests and still exits 0 — the run of 2026-08-27 proved exactly that.
+      // The list and the anchoring both live there now, because dropping a name
+      // does NOT go red here — it quietly runs fewer tests and still exits 0, as
+      // the run of 2026-08-27 proved. `tests/e2e-touch-project.test.ts` is the
+      // guard that turns that into a red unit test; it also asserts the anchoring
+      // still rejects a near-miss. Verify any edit with `npx playwright test
+      // --project=touch --list` as well.
       name: "touch",
-      testMatch: /(?:^|\/)(gameplay-restore|growth|worlds|marketing-worlds)\.spec\.ts$/,
+      testMatch: touchTestMatch(),
       use: { ...devices["Galaxy Tab S4"] },
     },
   ],

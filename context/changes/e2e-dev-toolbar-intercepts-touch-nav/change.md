@@ -11,6 +11,23 @@ archived_at: null
 
 <!-- Free-form notes for this change: links, ad-hoc context, decisions that don't belong in research/frame/plan. -->
 
+## Phase 2 baseline — `touch` membership BEFORE the refactor
+
+Captured on `0581a0c` with `npx playwright test --project=touch --list`. Phase 2
+extracts this list into a shared const; the refactor must reproduce this set exactly.
+
+```
+[touch] › gameplay-restore.spec.ts:36:1  gameplay: start → tasks … → upgrade purchase (Risk #6)
+[touch] › gameplay-restore.spec.ts:88:1  restore: a fresh browser context … (Risk #2)
+[touch] › growth.spec.ts:77:1            the nav entry reaches the growth screen … (Risk E2E-F4-1)
+[touch] › growth.spec.ts:126:1           the next-upgrade card stays a finished thought … (Risk E2E-F4-3)
+[touch] › growth.spec.ts:166:1           every nav entry stays uniquely reachable … (Risk E2E-F4-2)
+[touch] › marketing-worlds.spec.ts:36:1  the landing page advertises every world … (Risk W1-E2E-2)
+[touch] › marketing-worlds.spec.ts:47:1  the auth marketing panel advertises every world … (Risk W1-E2E-2)
+[touch] › worlds.spec.ts:51:1            every world tile fits the grid at this viewport … (Risk W1-E2E-1)
+Total: 8 tests in 4 files
+```
+
 ## Phase 1 meta-check record (L-004)
 
 The frame predicted the guard *could* silently fail to apply. On this machine it
@@ -77,3 +94,57 @@ isolation and the next full run was 31 passed / 1 skipped. Both runs used identi
 cold-server conditions, so the variance is pre-existing suite flakiness under parallel
 load — masked in CI by `retries: 2`, exposed locally by `retries: 0`. Unrelated to the
 toolbar guard; worth its own change.
+
+## Phase 2 meta-check record (L-004)
+
+The refactor is behaviour-preserving by construction, so the interesting question is
+not "does the list still work" but "does the new guard actually observe the thing it
+claims to guard". Both breaks below were executed, not staged.
+
+**Refactor fidelity first.** `npx playwright test --project=touch --list` after the
+change is byte-identical to the baseline recorded above — same 8 tests, same 4 files,
+same order. The list moved into `e2e/touch-specs.ts`; nothing about which specs run
+changed.
+
+**Break A — a name removed from the shared list.**
+
+- *Broken:* `worlds` deleted from `TOUCH_SPECS` in `e2e/touch-specs.ts` — the exact
+  edit that went unnoticed on 2026-08-27.
+- *Red:* `tests/e2e-touch-project.test.ts > matches the expected set exactly` failed,
+  with a diff naming the missing entry (`- "worlds"`).
+- *Why that redness is evidence:* the same break was run through **both** signals in
+  the same working tree. Playwright reported `Total: 7 tests in 3 files`, **exit 0** —
+  the 2026-08-27 failure mode reproduced exactly, green while covering less. The unit
+  guard went red on the identical tree. So the redness is not "a test failed
+  somewhere"; it is the specific demonstration that the new guard sees a shrinkage the
+  E2E runner structurally cannot report, which is the entire claim of this phase.
+- *Why the duplication is the mechanism:* the guard compares `TOUCH_SPECS` against a
+  second literal in the test file. Had it imported the list twice, Break A would have
+  been **green** — both sides would have shrunk together. The redness is therefore
+  evidence about the duplication, not just about the assertion.
+
+**Break B — the anchoring, tested at each end separately.**
+
+- *Broken, B1:* the `(?:^|/)` prefix anchor removed from the built regex.
+- *Red:* `e2e/foo-growth.spec.ts should NOT be in the touch project: expected true to
+  be false`.
+- *Broken, B2:* the `$` end anchor removed.
+- *Red:* `e2e/growth.spec.ts.bak should NOT be in the touch project`.
+- *Why that redness is evidence:* each anchor was broken independently and each
+  produced a **different** failing path. That rules out a single over-broad assertion
+  standing in for both, and it reproduces the historical accident directly — an
+  unanchored match is precisely how `marketing-worlds.spec.ts` joined this project by
+  name coincidence. Over-matching is the worse failure (L-008), so it is asserted
+  against rather than assumed.
+- *Positive control (L-009):* the same test first asserts every listed spec path
+  **does** match. Without it, a regex that matched nothing would satisfy all five
+  rejection assertions and prove nothing — the check would verify the outcome, not the
+  path. Both halves live in one test so neither can be deleted as redundant.
+
+Tree restored after each break and re-verified: `touch-specs.ts` byte-identical to
+pre-break, guard 3 passed, `--list` back to 8 tests in 4 files.
+
+**Not covered, deliberately:** the guard proves a name cannot silently *leave* the
+list. It cannot prove the list is *complete* — 6 of 10 specs still never run at a touch
+viewport, which the plan scopes out ("Not expanding `touch` coverage"). Making the
+current list loud is what landed; growing it remains a separate decision.
