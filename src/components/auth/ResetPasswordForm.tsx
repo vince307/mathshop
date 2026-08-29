@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Mail, Send } from "lucide-react";
+import { Send } from "lucide-react";
+import { AuthEmailIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
@@ -50,7 +51,7 @@ export default function ResetPasswordForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.emailPlaceholder}
         error={error}
-        icon={<Mail className="size-4" />}
+        icon={<AuthEmailIcon className="size-5" />}
       />
 
       <ServerError message={serverError} />

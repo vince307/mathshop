@@ -53,14 +53,25 @@ export const pl = {
       submit: "Zapisz nowe hasło",
       pending: "Zapisywanie…",
     },
+    // Field copy. The `*Label` keys are the accessible names — every e2e locator
+    // resolves a field through `getByLabel(t.auth.fields.*)`, so they are a
+    // contract and never change lightly. The `*Placeholder` keys are what a
+    // SIGHTED user sees, and mockups 01/02/04 all put the field's own name there
+    // because the label is visually hidden (see `FormField`). They therefore say
+    // the same thing as the labels rather than giving an example value.
     fields: {
       emailLabel: "Adres e-mail",
-      emailPlaceholder: "ty@przyklad.pl",
+      emailPlaceholder: "Email",
       passwordLabel: "Hasło",
-      passwordPlaceholderSignin: "Twoje hasło",
-      passwordPlaceholderSignup: "Minimum 6 znaków",
+      passwordPlaceholderSignin: "Hasło",
+      passwordPlaceholderSignup: "Hasło",
       confirmLabel: "Powtórz hasło",
-      confirmPlaceholder: "Wpisz hasło ponownie",
+      confirmPlaceholder: "Powtórz hasło",
+      // The length rule used to live in `passwordPlaceholderSignup`. With the
+      // placeholder now naming the field, it moved to the signup field's hint,
+      // where it is visible BEFORE the first attempt rather than only after a
+      // failed one.
+      passwordRule: "Minimum 6 znaków",
     },
     validation: {
       emailRequired: "Podaj adres e-mail",

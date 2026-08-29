@@ -1139,12 +1139,12 @@ stored profile is invalidated.
 
 #### Automated
 
-- [x] 1.1 Art test passes: `npx vitest run tests/auth-art.test.ts`
-- [x] 1.2 Full unit suite passes: `npm run test` (baseline 641 + ~4)
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Type/astro check passes: `npm run check`
-- [x] 1.5 No source file references a retired atomic-pack path
-- [x] 1.6 No source file resolves a path under `assets/`
+- [x] 1.1 Art test passes: `npx vitest run tests/auth-art.test.ts` — ecbcbc9
+- [x] 1.2 Full unit suite passes: `npm run test` (baseline 641 + ~4) — ecbcbc9
+- [x] 1.3 Linting passes: `npm run lint` — ecbcbc9
+- [x] 1.4 Type/astro check passes: `npm run check` — ecbcbc9
+- [x] 1.5 No source file references a retired atomic-pack path — ecbcbc9
+- [x] 1.6 No source file resolves a path under `assets/` — ecbcbc9
 
 #### Manual
 
@@ -1176,11 +1176,11 @@ stored profile is invalidated.
 
 #### Automated
 
-- [ ] 3.1 Unit suite passes, including `tests/signin-form.test.tsx`: `npm run test`
-- [ ] 3.2 Full e2e suite passes: `npm run test:e2e`
-- [ ] 3.3 Linting passes: `npm run lint`
-- [ ] 3.4 Type/astro check passes: `npm run check`
-- [ ] 3.5 No lucide mail/lock/eye remains in the auth forms
+- [x] 3.1 Unit suite passes, including `tests/signin-form.test.tsx`: `npm run test`
+- [x] 3.2 Full e2e suite passes: `npm run test:e2e`
+- [x] 3.3 Linting passes: `npm run lint`
+- [x] 3.4 Type/astro check passes: `npm run check`
+- [x] 3.5 No lucide mail/lock/eye remains in the auth forms
 
 #### Manual
 

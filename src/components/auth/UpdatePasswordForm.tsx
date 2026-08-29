@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Lock, KeyRound } from "lucide-react";
+import { KeyRound } from "lucide-react";
+import { AuthLockIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
@@ -61,7 +62,7 @@ export default function UpdatePasswordForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.passwordPlaceholderSignup}
         error={errors.password}
-        icon={<Lock className="size-4" />}
+        icon={<AuthLockIcon className="size-5" />}
         endContent={
           <PasswordToggle
             visible={showPassword}
@@ -83,7 +84,7 @@ export default function UpdatePasswordForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.confirmPlaceholder}
         error={errors.confirm}
-        icon={<Lock className="size-4" />}
+        icon={<AuthLockIcon className="size-5" />}
       />
 
       <ServerError message={serverError} />

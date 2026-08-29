@@ -71,6 +71,29 @@ Facts discovered while running the change that are not derivable from `plan.md`:
   `avatar-boy-selected.png`); `hero-parent-dashboard-desk.png` keeps a residual opaque
   background. The holes are invisible on a white card and visible on the pale page
   background — which is why every holed cutout this plan adopts is placed inside a card.
+- **The `sr-only` cliff this change inherited is not real, and the label was
+  unguarded.** Both this plan and its predecessor stated that "`sr-only` preserves
+  every one of the fifteen `getByLabel` locators; `hidden` or `aria-hidden` would
+  break the suite wholesale." Phase 3's deliberate break disproved it in two
+  steps. First, `getByLabel` matches the label's **DOM text** and never asks
+  whether the label reached the accessibility tree — so it could not have been the
+  safety net. Second, and more surprising, `display: none` on the label does not
+  cost the field its accessible name either: CDP reports the name of `#email` as
+  sourced from `["relatedElement", "placeholder"]`, because Chromium resolves a
+  `<label for>` association regardless of the label's CSS, and the placeholder is
+  an independent second source. So nothing was protecting the field's name, and
+  the edit everyone feared was harmless. The edit that is **not** harmless —
+  deleting a label that renders nothing, the obvious tidy-up — was caught by
+  nothing at all until Phase 3 added a `toHaveAccessibleName` assertion to
+  `e2e/smoke.spec.ts`, verified falsifiable in both directions. Candidate for
+  `/10x-lesson`: it is L-009's shape ("a check that can pass without the thing it
+  checks") one level up — a *documented* protection that was never a protection.
+- **A deliberate break can race Tailwind v4's on-demand CSS generation.** The
+  first attempt at the break above flipped `sr-only` to `hidden` and ran the spec
+  a second later; the suite stayed green because `.hidden` had not been generated
+  into the stylesheet yet, so the label was neither clipped nor hidden. Any break
+  that works by changing a utility class must confirm the computed style in the
+  browser BEFORE running the test, or it proves nothing.
 - **Phase 2 deviated once, deliberately, and that deviation is now reversed.** `FeatureList`'s
   icon box was `lg:size-20` because the retired SVGs did not fill their 64-unit viewBox. The
   extraction's do, so Phase 1 item 6 brings the box back to the mockup's scale.

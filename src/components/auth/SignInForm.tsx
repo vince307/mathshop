@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Mail, Lock, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
+import { AuthEmailIcon, AuthLockIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
@@ -56,7 +57,7 @@ export default function SignInForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.emailPlaceholder}
         error={errors.email}
-        icon={<Mail className="size-4" />}
+        icon={<AuthEmailIcon className="size-5" />}
       />
 
       <FormField
@@ -70,7 +71,7 @@ export default function SignInForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.passwordPlaceholderSignin}
         error={errors.password}
-        icon={<Lock className="size-4" />}
+        icon={<AuthLockIcon className="size-5" />}
         endContent={
           <PasswordToggle
             visible={showPassword}

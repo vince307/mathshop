@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Mail, Lock, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
+import { AuthEmailIcon, AuthLockIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
@@ -55,10 +56,24 @@ export default function SignUpForm({ serverError }: Props) {
     }
   }
 
-  const passwordHint =
-    !errors.password && password.length > 0 && password.length < MIN_PASSWORD_LENGTH ? (
-      <p className="text-muted-foreground mt-1 text-xs">{charsNeeded(MIN_PASSWORD_LENGTH - password.length)}</p>
-    ) : undefined;
+  /**
+   * The 6-character rule, stated up front.
+   *
+   * It used to be the password placeholder ("Minimum 6 znaków"). Mockups `01`
+   * and `02` put the field's own name there instead, so the rule needed a
+   * permanent home or it would only ever appear AFTER a rejected attempt. The
+   * hint slot is that home: the rule shows before the user types, and the
+   * existing countdown still takes over once a too-short password is being
+   * typed. Errors still win over both — `FormField` renders `hint` only when
+   * there is no `error`.
+   */
+  const passwordHint = errors.password ? undefined : (
+    <p className="text-muted-foreground mt-1.5 text-xs">
+      {password.length > 0 && password.length < MIN_PASSWORD_LENGTH
+        ? charsNeeded(MIN_PASSWORD_LENGTH - password.length)
+        : t.auth.fields.passwordRule}
+    </p>
+  );
 
   return (
     <form method="POST" action="/api/auth/signup" className="space-y-4" onSubmit={handleSubmit} noValidate>
@@ -73,7 +88,7 @@ export default function SignUpForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.emailPlaceholder}
         error={errors.email}
-        icon={<Mail className="size-4" />}
+        icon={<AuthEmailIcon className="size-5" />}
       />
 
       <FormField
@@ -88,7 +103,7 @@ export default function SignUpForm({ serverError }: Props) {
         placeholder={t.auth.fields.passwordPlaceholderSignup}
         error={errors.password}
         hint={passwordHint}
-        icon={<Lock className="size-4" />}
+        icon={<AuthLockIcon className="size-5" />}
         endContent={
           <PasswordToggle
             visible={showPassword}
@@ -111,7 +126,7 @@ export default function SignUpForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.confirmPlaceholder}
         error={errors.confirmPassword}
-        icon={<Lock className="size-4" />}
+        icon={<AuthLockIcon className="size-5" />}
         endContent={
           <PasswordToggle
             visible={showConfirmPassword}
