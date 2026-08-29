@@ -535,18 +535,18 @@ or in the i18n dictionary; rollback is a revert.
 
 #### Automated
 
-- [x] 2.1 Full unit suite passes: `npm run test`
-- [x] 2.2 E2E suite passes, including `e2e/marketing-worlds.spec.ts` on both surfaces: `npm run test:e2e`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Type/astro check passes: `npm run check`
-- [x] 2.5 No lucide feature icons remain in either surface
+- [x] 2.1 Full unit suite passes: `npm run test` — 5793073
+- [x] 2.2 E2E suite passes, including `e2e/marketing-worlds.spec.ts` on both surfaces: `npm run test:e2e` — 5793073
+- [x] 2.3 Linting passes: `npm run lint` — 5793073
+- [x] 2.4 Type/astro check passes: `npm run check` — 5793073
+- [x] 2.5 No lucide feature icons remain in either surface — 5793073
 
 #### Manual
 
-- [x] 2.6 At 1536 wide, feature blocks are borderless with large illustrated icons
-- [x] 2.7 At 390 wide, the same blocks are carded
-- [x] 2.8 `/` shows the same brand row, feature blocks and security panel as `/auth/signin`
-- [x] 2.9 The security note renders as a panel, not a bare text line
+- [x] 2.6 At 1536 wide, feature blocks are borderless with large illustrated icons — 5793073
+- [x] 2.7 At 390 wide, the same blocks are carded — 5793073
+- [x] 2.8 `/` shows the same brand row, feature blocks and security panel as `/auth/signin` — 5793073
+- [x] 2.9 The security note renders as a panel, not a bare text line — 5793073
 
 ### Phase 3: The mockup's field model
 
