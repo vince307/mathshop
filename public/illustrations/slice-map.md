@@ -81,44 +81,114 @@ theme-neutral, swappable for per-world art later.
 | `upgrade-storage.svg`   | `inventory-box.svg`                           | Magazynek (storage)               |
 | `upgrade-customers.svg` | `customer-happy.svg`                          | Więcej klientów (customers)       |
 
-## Signed-out surface art (auth-visual-fidelity) — 2026-08-29
+## Auth/onboarding art (auth-visual-fidelity) — 2026-08-29
 
-Copied **as-is** (not cropped, not resized, byte-for-byte) from the local-only atomic
-asset pack `assets/atomic-assets-v2/svg/` (gitignored) into committed
-`public/illustrations/`, so the auth split view and the landing page ship their art to
-Vercel. SVG — scalable, tiny, and it needs no alpha-keying. Same move as the upgrade
-icons below.
+Copied out of the local-only, gitignored per-screen extraction
+`assets/matmaverse-auth-v2-web/` into committed `public/illustrations/auth/`, so the six
+auth/onboarding screens ship their art to Vercel and to CI, where `assets/` does not exist.
 
-| Output file            | Source (`assets/atomic-assets-v2/svg/`) | What it is                              |
-| ---------------------- | --------------------------------------- | --------------------------------------- |
-| `brand-symbol.svg`     | `brand/mathmarket-symbol.svg`           | Shop-front brand mark with a `zł` coin  |
-| `feature-safety.svg`   | `icons/shield-check.svg`                | "Bezpieczna nauka" — green check-shield |
-| `feature-worlds.svg`   | `icons/globe-worlds.svg`                | "Światy zainteresowań" — blue globe     |
-| `feature-progress.svg` | `icons/chart-up.svg`                    | "Postępy dziecka" — rising bar chart    |
-| `parent-lock.svg`      | `icons/lock-user.svg`                   | Sign-in card header glyph               |
-| `decor-chart.svg`      | `icons/progress-bars.svg`               | Background decoration, desktop only     |
+**This section replaced an earlier one, it did not extend it.** The first pass at this
+change (commit `8850b18`) shipped six SVGs from `assets/atomic-assets-v2/svg/` —
+`brand-symbol.svg`, `feature-safety.svg`, `feature-worlds.svg`, `feature-progress.svg`,
+`parent-lock.svg`, `decor-chart.svg`, all at the root of `public/illustrations/`. That art
+did not meet the design's requirements and **all six files are deleted**; describing them
+here would make this register point at files that no longer exist. Its warning about
+colliding `<linearGradient id="g">` declarations went with them: that hazard was specific
+to the atomic pack, and **no file in this extraction declares an `id` at all** (verified
+across all 41). `tests/auth-art.test.ts` keeps it that way.
 
-Paths are owned by `src/data/marketing-art.ts` and pinned by `tests/auth-art.test.ts`
-(every path resolves to a committed file; one feature icon per `t.marketing.features`
-entry). No surface hardcodes a string from this table.
+### The set splits by colour authority, not by file type
 
-**Render these as `<img src>`, never inline the SVG.** `feature-safety.svg` and
-`parent-lock.svg` each declare `<linearGradient id="g">`, and `brand-symbol.svg`
-declares `blue` / `green` / `gold`. SVG element ids are document-global: inline two of
-these into one page and the later definition silently wins for both, so one glyph
-renders with the other's gradient. As `<img>` each file is its own document. The cost
-is that they can't be recoloured through `currentColor` — fine, they're illustrations
-with fixed brand colours, not UI icons.
+- **Group A — illustrations.** Colours belong to the design; a consumer never recolours
+  them. Committed as files below, rendered `<img src>`, paths owned by
+  `src/data/marketing-art.ts`.
+- **Group B — UI icons.** Colour belongs to the context the icon sits in (a field gutter,
+  a blue button, a muted footer line). Authored with `currentColor`, so they are
+  **inlined** as React components in `src/components/icons/authIcons.tsx` — through an
+  `<img>` each would render black, because `currentColor` in a standalone SVG document has
+  nothing to inherit from.
 
-**This reverses an earlier call, recorded here so the reversal is legible.** The
-first note in this file said these glyphs were deliberately *not* sliced and were
-rendered with lucide instead — "visually faithful and keeps the asset set lean". The
-first half didn't hold: a 20 px flat outline where the mockup has a 64 px illustration
-is the single biggest reason `/auth/signin` read as the mockup's wireframe rather than
-the mockup. The second half was answered by a route that note didn't consider — the
-art doesn't have to be **sliced** out of a flattened mockup at all, because the atomic
-pack ships it standalone. Six files, 342–1500 bytes each, replacing rendered
-components: the asset set stays lean either way.
+### Group A — `public/illustrations/auth/` (14 files)
+
+SVGs are byte-for-byte copies. The three PNGs are as-is copies of files the extraction had
+already cut out — no crop, no resize, no re-encoding by us.
+
+| Output file                 | Source (under `assets/matmaverse-auth-v2-web/`)                            | What it is                                    |
+| --------------------------- | -------------------------------------------------------------------------- | --------------------------------------------- |
+| `brand-mark.svg`            | `00-shared-auth-assets/svg/icons/brand-shop-basket-coin.svg`                 | Shop front with a basket and a `zł` coin       |
+| `feature-safety.svg`        | `00-shared-auth-assets/svg/icons/feature-shield-check.svg`                   | "Bezpieczna nauka" — green check-shield        |
+| `feature-worlds.svg`        | `00-shared-auth-assets/svg/icons/feature-globe.svg`                          | "Światy zainteresowań" — blue globe            |
+| `feature-progress.svg`      | `00-shared-auth-assets/svg/icons/feature-child-progress.svg`                 | "Postępy dziecka" — rising bars                |
+| `hero-parent-security.svg`  | `00-shared-auth-assets/svg/icons/security-user-shield.svg`                   | Sign-in card header — parent beside a shield   |
+| `badge-check.svg`           | `00-shared-auth-assets/svg/icons/check-badge-blue.svg`                       | Blue circular tick — selected tiles, badges    |
+| `coin.svg`                  | `00-shared-auth-assets/svg/icons/coin-zl.svg`                                | Single `zł` coin, decorative                   |
+| `coin-stack.svg`            | `00-shared-auth-assets/svg/icons/coin-stack-zl.svg`                          | `zł` coin stack, decorative                    |
+| `decor-chart.svg`           | `00-shared-auth-assets/svg/decor/decor-chart-up.svg`                         | Pale rising bar chart, decorative              |
+| `decor-receipt.svg`         | `00-shared-auth-assets/svg/decor/decor-receipt-coins.svg`                    | Pale receipt and coins, decorative             |
+| `decor-path.svg`            | `00-shared-auth-assets/svg/decor/dotted-growth-path.svg`                     | Pale dotted arc with an arrow, decorative      |
+| `hero-email.png`            | `03-email-verification-extracted/png/cutouts/hero-email-confirmation.png`    | 430×400 — open envelope with a green tick      |
+| `hero-reset.png`            | `04-password-reset-extracted/png/cutouts/hero-reset-card-top.png`            | 183×166 — envelope with a padlock              |
+| `hero-pin.png`              | `06-parent-pin-security-extracted/png/cutouts/hero-pin-lock-shield.png`      | 244×190 — padlock beside a green check-shield  |
+
+### The PNG cutouts are keyed by near-white removal — two of these have holes
+
+Composited on magenta, several of the extraction's cutouts turn out to have had their white
+*interior* content removed along with the white background: `hero-email-confirmation.png`
+loses the letter inside the envelope, `hero-reset-card-top.png` loses its white card, and
+the same is true of `security-shield-card-icon.png`, `status-email-green.png`,
+`next-child-profile-icon.png`, `level-starting-icon.png`, `top-security-shield.png` and
+`avatar-boy-selected.png`. `hero-parent-dashboard-desk.png` has the opposite problem — a
+residual opaque background block (corner alpha 231, not 0).
+
+**The hole is invisible on a `bg-card` surface and shows as a pale rectangle on the page
+background.** So `hero-email.png` and `hero-reset.png` are placed **inside cards, and only
+inside cards** — `src/data/marketing-art.ts` repeats the rule where a future move would
+read it. `hero-pin.png` keys cleanly and is safe anywhere. The holed cutouts not listed in
+the table above were rejected for this reason and replaced with SVG atoms, which is also
+the extraction index's own preference ("Prefer SVG as inline React components").
+
+### Group B — `src/components/icons/authIcons.tsx` (13 inlined icons)
+
+Transcribed path-for-path from `assets/matmaverse-auth-v2-web/00-shared-auth-assets/svg/icons/`.
+No file, so nothing lands in `public/` — the copy INTO the repo is the component source,
+which is what `CLAUDE.md`'s "commit the asset, never the reference" asks for.
+
+| Export                 | Source file                 | Derivation                                     |
+| ---------------------- | --------------------------- | ---------------------------------------------- |
+| `AuthEmailIcon`        | `auth-email.svg`            | verbatim (`currentColor` in source)             |
+| `AuthLockIcon`         | `auth-lock.svg`             | verbatim (`currentColor` in source)             |
+| `AuthLockFilledIcon`   | `auth-lock-filled.svg`      | verbatim (`currentColor` in source)             |
+| `AuthEyeIcon`          | `auth-eye.svg`              | verbatim (`currentColor` in source)             |
+| `AuthEyeOffIcon`       | `auth-eye.svg`              | **derived** — plus one diagonal slash           |
+| `AuthUserPlusIcon`     | `auth-user-plus.svg`        | verbatim (`currentColor` in source)             |
+| `AuthPaperPlaneIcon`   | `auth-paper-plane.svg`      | `#FFFFFF` stroke → `currentColor`               |
+| `AuthRefreshIcon`      | `auth-refresh.svg`          | `#0B6EFF` stroke → `currentColor`               |
+| `AuthArrowLeftIcon`    | `arrow-left.svg`            | `#0B6EFF` stroke → `currentColor`               |
+| `AuthArrowRightIcon`   | `arrow-right.svg`           | `#FFFFFF` stroke → `currentColor`               |
+| `AuthChevronRightIcon` | `chevron-right.svg`         | `#1A8F2A` stroke → `currentColor`               |
+| `AuthCalendarIcon`     | `calendar-age.svg`          | `#7EA2E8` stroke → `currentColor`               |
+| `AuthShieldCheckIcon`  | `feature-shield-check.svg`  | `#39c66a` fill → `currentColor`; tick stays `#fff` |
+
+**Why two derivations.** Each hardcoded literal suits exactly the one place its mockup uses
+it; as `currentColor` the consumer sets the mockup's colour with a Tailwind class, which is
+one icon family instead of six colour regimes — and is how the `lucide` icons they retire
+already behaved. `AuthEyeOffIcon` has no source at all: the extraction draws only the open
+eye, but `PasswordToggle` needs both states, and a `lucide` `EyeOff` beside an extraction
+eye would not read as one family.
+
+Group A paths are owned by `src/data/marketing-art.ts` and pinned by `tests/auth-art.test.ts`
+(every path resolves to a committed file; one feature icon per `t.marketing.features` entry;
+no Group A SVG carries an `id` or a gradient). The same test renders every Group B export
+and asserts it is `id`-free and `currentColor`-driven. No surface hardcodes a string from
+either table.
+
+### Not adopted
+
+`nav-*.svg`, `world-*.svg`, `setting-*.svg`, `toggle-on.svg`, `step-check.svg`,
+`checkbox-empty.svg` and the per-screen decor cutouts have no consuming surface in this
+product — the sidebar, the settings list, the four-box PIN and the mockups' four-world strip
+are all things this change deliberately does not build. See the change's
+`plan.md` § "What We're NOT Doing".
 
 ## Notes
 

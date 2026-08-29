@@ -14,17 +14,16 @@ import { t } from "@/i18n";
  * Icons come from `FEATURE_ICONS`, index-aligned with `t.marketing.features` and
  * pinned to the same length by `tests/auth-art.test.ts` — a parallel list with no
  * sync is what once let the marketing panel advertise four worlds while the app
- * shipped six. They are `<img>`, never inline `<svg>`: two of the committed files
- * declare `<linearGradient id="g">` and would collide in one document
- * (`src/data/marketing-art.ts`).
+ * shipped six. They are `<img>` because they are Group A art: fixed brand colours
+ * the caller never recolours (`src/data/marketing-art.ts`).
  *
  * The grid's column count belongs to the caller, not here — the auth panel runs
  * three columns at every width, the landing page stacks to one below `sm`.
  *
- * The icon box is larger than the mockup's apparent glyph because these SVGs do
- * not fill their 64-unit viewBox — the shield, for instance, spans about 44 of
- * it. Sizing the BOX to the mockup's glyph renders it visibly small; `lg:size-20`
- * is what puts the drawn shape at the mockup's scale.
+ * The icon box is sized straight to the mockup. It used to be a step larger,
+ * because the RETIRED atomic-pack SVGs did not fill their 64-unit viewBox and a
+ * mockup-sized box rendered them visibly small; the auth-v2 extraction's glyphs
+ * fill theirs, so the compensation is gone.
  */
 interface Props {
   /** Grid columns and spacing. The caller owns layout; this owns the blocks. */
@@ -42,7 +41,7 @@ const { class: className } = Astro.props;
           src={FEATURE_ICONS[i]}
           alt=""
           aria-hidden="true"
-          class="mx-auto size-11 sm:size-14 lg:size-20"
+          class="mx-auto size-11 sm:size-14 lg:size-16"
           width="64"
           height="64"
         />

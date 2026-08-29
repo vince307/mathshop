@@ -80,6 +80,51 @@
 
 @theme inline {
   --font-sans: "Nunito Variable", ui-sans-serif, system-ui, sans-serif;
+
+  /* ---------------------------------------------------------------------
+     auth-v2 extraction tokens
+     (`assets/matmaverse-auth-v2-web/01-parent-login-extracted/css/design-tokens.css`)
+
+     Mapped onto this theme, not substituted for it. Token-by-token comparison,
+     run 2026-08-29 — the extraction and `:root` above already agree everywhere
+     it matters, so only the three genuinely-missing values are added here:
+
+       extraction              :root today                    verdict
+       ----------------------  -----------------------------  --------------------
+       --mm-color-primary      --primary  (#2473F3 in oklch)  same blue, keep ours
+         #126cf0                                              (one hue step apart)
+       --mm-color-bg #f4f9ff   --background (#F3F8FE)         same, keep
+       --mm-color-surface      --card (#fff)                  same, keep
+       --mm-color-border       --border                       same, keep
+         #d7e3f3
+       --mm-color-green        --success (~#22A45D)           same role, keep
+         #27b65b
+       --mm-color-yellow       --accent (#F3BE5D)             same role, keep
+         #ffc43d
+       --mm-color-text         --foreground (#2D374C)         DIFFERS — the
+         #08164f                                              mockups' ink is a
+                                                              deeper navy, but
+                                                              --foreground is the
+                                                              whole app's body
+                                                              colour, child
+                                                              surfaces included.
+                                                              Out of this change's
+                                                              scope; NOT adopted.
+       --mm-radius-control     --radius (0.875rem = 14px)     identical
+         14px
+       --mm-radius-card 24px   rounded-3xl (24px)             identical
+       --mm-shadow-card        (none)                         ADDED below
+       --mm-shadow-control     (none)                         ADDED below
+       --mm-login-card-width   (none)                         ADDED below
+         542px
+
+     No component carries a raw hex from that file — anything it needs is a
+     utility built from these three. */
+  --shadow-mm-card: 0 24px 70px rgb(20 78 145 / 0.14);
+  --shadow-mm-control: 0 12px 28px rgb(18 108 240 / 0.18);
+  /* The auth card's own width, straight from the mockup: `max-w-auth-card`. */
+  --container-auth-card: 542px;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
