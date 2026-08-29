@@ -9,10 +9,17 @@ const BASE_URL = `http://localhost:${process.env.E2E_PORT ?? "4321"}`;
  * `devToolbar.enabled` (astro/dist/core/app/dev/pipeline.js:70-87): a module script
  * pointing at the entrypoint, and an inline `window.__astro_dev_toolbar__` metadata
  * assignment. Both vanish when the flag is off, so either one appearing in served
- * HTML proves the toolbar is live. These are Astro internals: an upstream rename
- * makes this probe fail LOUDLY (marker missing → positive control below trips, or
- * the toolbar returns undetected only if Astro renames both at once), which is the
- * deliberate trade — a maintenance point beats a silent guard.
+ * HTML proves the toolbar is live.
+ *
+ * These are Astro internals, so state the cost of a rename honestly. Renaming ONE
+ * marker is survivable: the probe fires on `found.length > 0`, so the other still
+ * catches it. Renaming BOTH is a SILENT hole — the probe goes green over a live
+ * toolbar. `DEV_MODE_MARKER` below does not cover that case and was never able to:
+ * it is a different string emitted on a different branch, and it certifies only
+ * that we are looking at a dev-rendered page at all. The hole is accepted because
+ * both markers come from the one `devToolbar.enabled` branch and would have to be
+ * renamed in the same upstream edit. Do not restate this as a claim of loudness the
+ * probe does not have.
  */
 const TOOLBAR_MARKERS = ["/@id/astro/runtime/client/dev-toolbar/entrypoint.js", "__astro_dev_toolbar__"] as const;
 

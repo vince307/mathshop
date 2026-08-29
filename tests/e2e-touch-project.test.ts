@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { TOUCH_SPECS, touchTestMatch } from "../e2e/touch-specs";
@@ -42,6 +42,22 @@ describe("touch project membership", () => {
       const path = fileURLToPath(new URL(`../e2e/${name}.spec.ts`, import.meta.url));
       expect(existsSync(path), `touch project names e2e/${name}.spec.ts, which does not exist`).toBe(true);
     }
+  });
+
+  it("is actually wired into the touch project's testMatch", () => {
+    // Read as TEXT, never imported: `playwright.config.ts` runs `loadEnv` and throws
+    // on missing env at import time, which is the whole reason the list was extracted
+    // into its own zero-dependency module.
+    //
+    // Without this the suite guards the wrong door. `TOUCH_SPECS` can stay pristine
+    // while `testMatch:` is edited back to a hand-written literal — ONE line, in the
+    // file this list used to live in — and the touch project shrinks silently with
+    // every other assertion here still green. That is precisely the 2026-08-27 failure
+    // mode wearing a different hat, so the chain is guarded end to end or not at all.
+    const config = readFileSync(fileURLToPath(new URL("../playwright.config.ts", import.meta.url)), "utf8");
+    expect(config, "playwright.config.ts must build the touch testMatch from touchTestMatch()").toMatch(
+      /testMatch:\s*touchTestMatch\(\)/,
+    );
   });
 
   it("builds an anchored regex that accepts every listed spec and rejects near-misses", () => {

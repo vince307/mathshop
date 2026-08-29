@@ -183,6 +183,12 @@ test("every nav entry stays uniquely reachable and the shell never scrolls sidew
     // 712 px that is the bottom bar carrying all six tabs, at 1280 px the sidebar
     // plus the pinned parent link. Presence alone was the whole assertion before;
     // an entry silently repointed at another route stayed green.
+    // Label widths are measured below, so the webfont has to have swapped in first.
+    // Nunito is self-hosted (`@fontsource-variable/nunito`, bundled by Vite, so it is
+    // byte-identical in CI and never fetched over the network) — but a measurement
+    // taken before the face loads uses FALLBACK metrics, which is a different number.
+    await page.evaluate(() => document.fonts.ready);
+
     let clippers = 0;
     for (const [key, label] of Object.entries(t.nav.items)) {
       const entry = page.getByRole("link", { name: label, exact: true });
@@ -249,7 +255,12 @@ test("every nav entry stays uniquely reachable and the shell never scrolls sidew
 
       if (clip !== null) {
         clippers += 1;
-        expect(clip, `nav label "${label}" (${key}) does not fit its tab`).toBeLessThanOrEqual(0);
+        // STRICTLY less than zero, not `<=`. The vacuous form this replaced reported
+        // exactly 0 for every label at every tab count, so `<= 0` would welcome it
+        // back green; `< 0` turns that regression red. Today every label clears its
+        // tab by a real margin (worst case `Rozwój świata`, −33 px at six tabs), and a
+        // label that fills its tab to the exact pixel is a state worth hearing about.
+        expect(clip, `nav label "${label}" (${key}) does not fit its tab`).toBeLessThan(0);
       }
     }
 
