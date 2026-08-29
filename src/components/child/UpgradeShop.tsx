@@ -197,7 +197,7 @@ export default function UpgradeShop({
                     <p className="text-foreground leading-tight font-bold">{upgradeCopy(u.id).name}</p>
                     <p className="text-muted-foreground text-xs leading-snug">{upgradeCopy(u.id).desc}</p>
                     <p className="text-accent flex items-center gap-1 font-extrabold">
-                      <img src="/illustrations/coin.png" alt="" className="size-4 rounded-full object-cover" />
+                      <img src="/illustrations/coin.png" alt="" className="size-4 object-contain" />
                       {fill(t.upgradeShop.costLabel, { cost: u.cost })}
                     </p>
                     {errorId === u.id && (

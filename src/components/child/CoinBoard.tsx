@@ -47,7 +47,7 @@ export function CoinBoard({ counted, toggle, arrangement, disabled, hint }: Coin
             isCounted ? "border-primary ring-primary/30 ring-4" : "border-border hover:border-primary/50",
           )}
         >
-          <img src="/illustrations/coin.png" alt="" className="size-full rounded-full object-cover" />
+          <img src="/illustrations/coin.png" alt="" className="size-full object-contain" />
           {isCounted && <CheckBadge className="-right-1 -bottom-1 size-5" />}
         </button>
       ))}
