@@ -14,7 +14,13 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.33 0.04 262);
   --primary: oklch(0.575 0.205 262);
-  --primary-foreground: oklch(0.99 0.01 250);
+  /* Pure white, not the near-white oklch(0.99 0.01 250) this started as. That
+     tint measured 4.38:1 against --primary (rgb 46,111,239) — under WCAG AA for
+     normal-size text, which is what every primary BUTTON LABEL in the app is.
+     Pure white on the same blue is 4.53:1 and clears it. The two are
+     indistinguishable on screen; the difference is only that one passes.
+     Measured 2026-08-29 during auth-visual-fidelity's screen-05 pass. */
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.96 0.013 240);
   --secondary-foreground: oklch(0.33 0.04 262);
   --muted: oklch(0.96 0.013 240);

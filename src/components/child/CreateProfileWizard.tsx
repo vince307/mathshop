@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CircleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, User } from "lucide-react";
+import { AuthCalendarIcon } from "@/components/icons/authIcons";
+import { FEATURE_ICONS } from "@/data/marketing-art";
 import { AVATARS } from "@/data/avatars";
 import { WORLDS } from "@/data/worlds";
 import { deriveStartingLevel } from "@/data/leveling";
@@ -122,7 +124,9 @@ export default function CreateProfileWizard({ serverError }: Props) {
                     ? "bg-success text-success-foreground"
                     : n === step
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground",
+                      : // `text-foreground`, not `text-muted-foreground`: on `bg-muted` the
+                        // muted pair measures 4.34:1, under AA for a 14 px numeral.
+                        "bg-muted text-foreground",
                 )}
               >
                 {n < step ? <Check className="size-4" /> : n}
@@ -158,18 +162,27 @@ export default function CreateProfileWizard({ serverError }: Props) {
               <Label htmlFor="child-name" className="text-foreground mb-1">
                 {t.profileWizard.nameLabel}
               </Label>
-              <Input
-                id="child-name"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  clearError("name");
-                }}
-                placeholder={t.profileWizard.namePlaceholder}
-                maxLength={MAX_NAME}
-                aria-invalid={Boolean(errors.name)}
-                className="h-12 text-base"
-              />
+              {/* Gutter glyph, matching `FormField`'s treatment on the auth
+                  screens. `lucide`'s `User` on purpose and only here: the
+                  extraction has no plain person outline — its `auth-user-plus`
+                  carries a plus this field must not imply. */}
+              <div className="relative">
+                <span className="text-primary pointer-events-none absolute top-1/2 left-4 z-10 size-5 -translate-y-1/2">
+                  <User className="size-5" />
+                </span>
+                <Input
+                  id="child-name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    clearError("name");
+                  }}
+                  placeholder={t.profileWizard.namePlaceholder}
+                  maxLength={MAX_NAME}
+                  aria-invalid={Boolean(errors.name)}
+                  className="h-14 rounded-xl pl-12 text-base"
+                />
+              </div>
               {errors.name && (
                 <p className="text-destructive mt-1 flex items-center gap-1 text-xs">
                   <CircleAlert className="size-3" />
@@ -179,7 +192,10 @@ export default function CreateProfileWizard({ serverError }: Props) {
             </div>
 
             <div>
-              <Label className="text-foreground mb-2 block">{t.profileWizard.ageLabel}</Label>
+              <Label className="text-foreground mb-2 flex items-center gap-2">
+                <AuthCalendarIcon className="text-primary size-5" />
+                {t.profileWizard.ageLabel}
+              </Label>
               <div className="flex flex-wrap gap-3">
                 {AGES.map((a) => (
                   <button
@@ -286,12 +302,31 @@ export default function CreateProfileWizard({ serverError }: Props) {
                 </p>
               </div>
             </div>
-            <div className="bg-accent/15 border-accent/40 flex flex-wrap items-center gap-2 rounded-xl border p-3 text-sm">
-              <span className="text-foreground font-semibold">{t.profileWizard.startingLevelLabel}:</span>
-              <span className="text-primary font-bold">{levelName}</span>
-              <span className="text-muted-foreground">— {t.profileWizard.levelDescription}</span>
+            {/* Mockup `05`'s starting-level tile: an illustrated glyph beside the
+                level name and what it covers, on a pale blue panel. */}
+            <div className="bg-primary/5 flex items-center gap-4 rounded-2xl p-4">
+              <span className="bg-card flex size-14 shrink-0 items-center justify-center rounded-2xl shadow-sm">
+                <img src={FEATURE_ICONS[2]} alt="" aria-hidden="true" width="64" height="64" className="size-8" />
+              </span>
+              <div>
+                <p className="text-muted-foreground text-xs font-semibold">{t.profileWizard.startingLevelLabel}</p>
+                <p className="text-primary text-lg font-bold">{levelName}</p>
+                <p className="text-muted-foreground text-sm">{t.profileWizard.levelDescription}</p>
+              </div>
             </div>
-            <p className="text-muted-foreground text-xs">{t.profileWizard.note}</p>
+
+            {/* The mockup's shield notice, in place of a bare grey line. */}
+            <div className="bg-primary/5 flex items-start gap-3 rounded-2xl p-4">
+              <img
+                src={FEATURE_ICONS[0]}
+                alt=""
+                aria-hidden="true"
+                width="64"
+                height="64"
+                className="mt-0.5 size-6 shrink-0"
+              />
+              <p className="text-foreground/85 text-sm">{t.profileWizard.note}</p>
+            </div>
           </>
         )}
       </div>
