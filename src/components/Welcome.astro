@@ -1,37 +1,37 @@
 ---
-import { ShoppingCart, ShieldCheck, Globe, TrendingUp, LogIn, UserPlus, ArrowRight } from "lucide-react";
+import { LogIn, UserPlus, ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { WORLDS } from "@/data/worlds";
 import { t } from "@/i18n";
+import BrandRow from "@/components/marketing/BrandRow.astro";
+import FeatureList from "@/components/marketing/FeatureList.astro";
+import SecurityNote from "@/components/marketing/SecurityNote.astro";
 
 /**
  * Signed-out landing (`/`). No mockup exists for this route, so it is built from
  * the product's own auth-mockup vocabulary — brand row, hero, world cards, the
- * three feature cards and the security footer — rather than the starter's
- * developer-facing scaffold copy. Copy comes from `t.marketing`, shared with the
- * auth split view, so the two surfaces stay in step; the world cards map `WORLDS`
- * itself, so this page cannot advertise a different set than the app ships.
- * `grid-cols-2` absorbs six as three rows and needs no breakpoint of its own.
+ * three feature blocks and the security note — rather than the starter's
+ * developer-facing scaffold copy.
+ *
+ * Those three are now the same components `AuthShell.astro` renders, not a second
+ * copy of their markup: text was already shared through `t.marketing`, but the
+ * markup was duplicated, so the two surfaces could drift apart visually with
+ * nothing noticing. The **world cards are deliberately not shared** — this page
+ * runs them `grid-cols-2` at every width (six absorb as three rows, no breakpoint
+ * needed) while the auth panel runs `hidden lg:grid grid-cols-3`; the counts
+ * answer to different layouts, not to a missing abstraction.
+ *
+ * The cards map `WORLDS` itself, so this page cannot advertise a different set
+ * than the app ships (`e2e/marketing-worlds.spec.ts`).
  */
 const { user } = Astro.locals;
-const featureIcons = [ShieldCheck, Globe, TrendingUp];
 ---
 
 <div class="bg-background min-h-screen w-full px-4 py-6 sm:px-6 lg:px-10">
   <div class="mx-auto w-full max-w-6xl">
     {/* Header: brand + the one action that fits the visitor's state */}
     <header class="flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <span
-          class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
-        >
-          <ShoppingCart className="size-5" />
-        </span>
-        <div>
-          <p class="text-foreground text-lg leading-none font-extrabold">{t.brand}</p>
-          <p class="text-muted-foreground mt-1 text-xs">{t.marketing.brandTagline}</p>
-        </div>
-      </div>
+      <BrandRow />
 
       {
         user ? (
@@ -95,27 +95,9 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
       </div>
     </div>
 
-    {/* Feature cards */}
-    <div class="mt-14 grid gap-4 sm:grid-cols-3 lg:mt-20">
-      {
-        t.marketing.features.map((feature, i) => {
-          const Icon = featureIcons[i];
-          return (
-            <div class="bg-card border-border rounded-2xl border p-5 shadow-sm">
-              <span class="bg-primary/10 text-primary inline-flex size-11 items-center justify-center rounded-2xl">
-                <Icon className="size-6" />
-              </span>
-              <p class="text-foreground mt-3 text-base font-bold">{feature.title}</p>
-              <p class="text-muted-foreground mt-1 text-sm leading-snug">{feature.description}</p>
-            </div>
-          );
-        })
-      }
-    </div>
+    {/* Feature blocks */}
+    <FeatureList class="mt-14 sm:grid-cols-3 lg:mt-20" />
 
-    <div class="text-muted-foreground mt-10 flex items-center justify-center gap-2 pb-10 text-xs">
-      <ShieldCheck className="text-primary size-4 shrink-0" />
-      {t.marketing.security}
-    </div>
+    <SecurityNote class="mt-10 mb-10" />
   </div>
 </div>

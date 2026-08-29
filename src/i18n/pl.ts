@@ -96,18 +96,25 @@ export const pl = {
     brandTagline: "Matematyka · Ekonomia · Przyszłość",
     parentPanel: "Panel rodzica",
     heroTagline: "Matematyka przez decyzje, handel i praktykę",
+    // Wording follows the WEB mockup (`01-parent-login-web`). The mobile mockup of
+    // the same screen words two of these differently ("Oddzielne konto rodzica
+    // i dziecka. Bez reklam i zakupów." / "Śledź rozwój, cele i osiągnięcia
+    // w czasie rzeczywistym."). The two disagree; web wins because it is the
+    // layout these three-column blocks are built to, and its shorter lines wrap
+    // cleanly there. Recorded so the difference reads as a decision, not drift.
+    // Icons live in `src/data/marketing-art.ts`, index-aligned with this array.
     features: [
       {
         title: "Bezpieczna nauka",
-        description: "Oddzielne konta rodzica i dziecka oraz nauka bez reklam.",
+        description: "Oddzielone konta rodzica i dziecka. Bez reklam.",
       },
       {
-        title: "Świat zainteresowań",
-        description: "Wybierz tematy bliskie dziecku i motywuj je do nauki.",
+        title: "Światy zainteresowań",
+        description: "Wybierz świat dopasowany do pasji Twojego dziecka.",
       },
       {
         title: "Postępy dziecka",
-        description: "Śledź rozwój, raporty i osiągnięcia w czasie rzeczywistym.",
+        description: "Śledź rozwój, umiejętności i osiągnięcia w czasie.",
       },
     ],
     security: "Twoje dane są chronione zgodnie z najlepszymi standardami bezpieczeństwa.",

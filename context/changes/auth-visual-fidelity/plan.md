@@ -521,32 +521,32 @@ or in the i18n dictionary; rollback is a revert.
 
 #### Automated
 
-- [x] 1.1 New art test passes: `npx vitest run tests/auth-art.test.ts`
-- [x] 1.2 Full unit suite still passes: `npm run test`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Type/astro check passes: `npm run check`
+- [x] 1.1 New art test passes: `npx vitest run tests/auth-art.test.ts` — 8850b18
+- [x] 1.2 Full unit suite still passes: `npm run test` — 8850b18
+- [x] 1.3 Linting passes: `npm run lint` — 8850b18
+- [x] 1.4 Type/astro check passes: `npm run check` — 8850b18
 
 #### Manual
 
-- [x] 1.5 Each of the six SVGs reads as its mockup counterpart
-- [x] 1.6 `slice-map.md` no longer claims these glyphs are rendered with lucide
+- [x] 1.5 Each of the six SVGs reads as its mockup counterpart — 8850b18
+- [x] 1.6 `slice-map.md` no longer claims these glyphs are rendered with lucide — 8850b18
 
 ### Phase 2: Shared marketing components
 
 #### Automated
 
-- [ ] 2.1 Full unit suite passes: `npm run test`
-- [ ] 2.2 E2E suite passes, including `e2e/marketing-worlds.spec.ts` on both surfaces: `npm run test:e2e`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Type/astro check passes: `npm run check`
-- [ ] 2.5 No lucide feature icons remain in either surface
+- [x] 2.1 Full unit suite passes: `npm run test`
+- [x] 2.2 E2E suite passes, including `e2e/marketing-worlds.spec.ts` on both surfaces: `npm run test:e2e`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Type/astro check passes: `npm run check`
+- [x] 2.5 No lucide feature icons remain in either surface
 
 #### Manual
 
-- [ ] 2.6 At 1536 wide, feature blocks are borderless with large illustrated icons
-- [ ] 2.7 At 390 wide, the same blocks are carded
-- [ ] 2.8 `/` shows the same brand row, feature blocks and security panel as `/auth/signin`
-- [ ] 2.9 The security note renders as a panel, not a bare text line
+- [x] 2.6 At 1536 wide, feature blocks are borderless with large illustrated icons
+- [x] 2.7 At 390 wide, the same blocks are carded
+- [x] 2.8 `/` shows the same brand row, feature blocks and security panel as `/auth/signin`
+- [x] 2.9 The security note renders as a panel, not a bare text line
 
 ### Phase 3: The mockup's field model
 

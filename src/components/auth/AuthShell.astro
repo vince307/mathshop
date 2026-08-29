@@ -1,17 +1,27 @@
 ---
 import { WORLDS } from "@/data/worlds";
+import { DECOR_COIN } from "@/data/marketing-art";
 import { t } from "@/i18n";
-import { ShoppingCart, ShieldCheck, Globe, TrendingUp } from "lucide-react";
+import BrandRow from "@/components/marketing/BrandRow.astro";
+import FeatureList from "@/components/marketing/FeatureList.astro";
+import SecurityNote from "@/components/marketing/SecurityNote.astro";
 
 /**
- * Two-column auth layout (mockup `01`): a left marketing panel — brand,
- * hero, three feature cards, one card per world, decorative coins, security
- * footer — beside a right-hand slot for the page's form card. Built once
- * here; reused by signup in Phase 5. Pure presentation, no behavior.
+ * Two-column auth layout (mockup `01`): a left marketing panel — brand, hero,
+ * three feature blocks, one card per world, decorative coins, security note —
+ * beside a right-hand slot for the page's form card. Built once here; reused by
+ * signup, password reset and update-password. Pure presentation, no behavior.
  *
  * Responsive: two columns on `lg+`; below that it stacks to a single column
  * (form first, then the marketing essentials). Marketing copy comes from
  * `t.marketing`; illustrations from committed `public/illustrations/` assets.
+ *
+ * Brand, features and the security note are shared components — `Welcome.astro`
+ * renders the same three, so the signed-out product cannot present itself two
+ * different ways. The **world strip below is deliberately NOT one of them**: this
+ * panel runs it `hidden lg:grid grid-cols-3` while the landing page runs it
+ * `grid-cols-2` at every width, and the two column counts answer to different
+ * layouts. Sharing it would mean a component whose every dimension is a prop.
  *
  * The world strip maps `WORLDS` directly rather than a curated copy — a second
  * list is what let this panel advertise four worlds while the app shipped six.
@@ -29,30 +39,18 @@ interface Props {
 }
 
 const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
-const featureIcons = [ShieldCheck, Globe, TrendingUp];
 ---
 
 <div class="bg-background flex min-h-screen flex-col justify-center px-4 py-8 sm:px-6 lg:px-10">
   <div class="mx-auto w-full max-w-6xl">
-    {/* Brand */}
-    <div class="mb-8 flex items-center justify-center gap-3 lg:justify-start">
-      <span
-        class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
-      >
-        <ShoppingCart className="size-5" />
-      </span>
-      <div>
-        <p class="text-foreground text-lg leading-none font-extrabold">{t.brand}</p>
-        <p class="text-muted-foreground mt-1 text-xs">{t.marketing.brandTagline}</p>
-      </div>
-    </div>
+    <BrandRow size="lg" class="mb-8 justify-center lg:justify-start" />
 
     <div class="grid items-center gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-16">
       {/* Marketing panel */}
       <section class="relative order-2 lg:order-1">
         {/* Decorative coin */}
         <img
-          src="/illustrations/coin.png"
+          src={DECOR_COIN}
           alt=""
           aria-hidden="true"
           class="pointer-events-none absolute -top-8 right-4 hidden size-20 rotate-12 lg:block"
@@ -64,23 +62,7 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
           <p class="text-muted-foreground mt-4 text-lg">{tagline}</p>
         </div>
 
-        {/* Feature cards */}
-        <div class="mt-6 grid grid-cols-3 gap-2 sm:gap-4 lg:mt-8">
-          {
-            t.marketing.features.map((feature, i) => {
-              const Icon = featureIcons[i];
-              return (
-                <div class="bg-card border-border rounded-2xl border p-3 text-center shadow-sm sm:p-4 lg:text-left">
-                  <span class="bg-primary/10 text-primary mx-auto inline-flex size-9 items-center justify-center rounded-2xl sm:size-11 lg:mx-0">
-                    <Icon className="size-5 sm:size-6" />
-                  </span>
-                  <p class="text-foreground mt-2 text-xs font-bold sm:mt-3 sm:text-base">{feature.title}</p>
-                  <p class="text-muted-foreground mt-1 hidden text-sm leading-snug sm:block">{feature.description}</p>
-                </div>
-              );
-            })
-          }
-        </div>
+        <FeatureList class="mt-6 grid-cols-3 lg:mt-8" />
 
         {/* World cards (desktop only — mobile mockup omits them) */}
         <div class="mt-6 hidden grid-cols-3 gap-3 lg:grid">
@@ -94,11 +76,7 @@ const featureIcons = [ShieldCheck, Globe, TrendingUp];
           }
         </div>
 
-        {/* Security footer */}
-        <div class="text-muted-foreground mt-6 flex items-center justify-center gap-2 text-xs lg:justify-start">
-          <ShieldCheck className="text-primary size-4 shrink-0" />
-          {t.marketing.security}
-        </div>
+        <SecurityNote class="mt-6" />
       </section>
 
       {/* Form slot */}
