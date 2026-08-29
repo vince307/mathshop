@@ -51,6 +51,13 @@ const VERIFY_CO_RENDERED = [
 /** `/auth/reset-password`'s panel heading, added alongside the badges (Phase 7). */
 const RESET_CO_RENDERED = [...featureTitles, t.marketing.security, t.auth.reset.heading, t.auth.reset.backToSignin];
 
+/**
+ * The reset card's own closing line. It sits on the same page as the panel-wide
+ * `marketing.security`, and the two say almost the same thing in almost the same
+ * words — precisely the pair most likely to end up one containing the other.
+ */
+const RESET_CARD_HINT = t.auth.reset.protectHint;
+
 function assertNoSubstringCollision(labels: readonly string[], coRendered: readonly string[], surface: string) {
   for (const label of labels) {
     for (const other of coRendered) {
@@ -94,6 +101,10 @@ describe("trust-badge titles", () => {
 describe("per-screen marketing headings", () => {
   it("collide with nothing that co-renders on /auth/reset-password", () => {
     assertNoSubstringCollision([t.marketing.resetHeading], RESET_CO_RENDERED, "/auth/reset-password");
+  });
+
+  it("keep the reset card's closing hint clear of everything else on that page", () => {
+    assertNoSubstringCollision([RESET_CARD_HINT], RESET_CO_RENDERED, "/auth/reset-password (card hint)");
   });
 
   it("keep the signup tagline clear of the shared hero tagline", () => {

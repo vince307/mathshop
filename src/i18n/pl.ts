@@ -39,6 +39,10 @@ export const pl = {
       pending: "Wysyłanie…",
       sentNotice: "Jeśli konto z tym adresem istnieje, wysłaliśmy na nie link do zmiany hasła. Sprawdź też spam.",
       backToSignin: "Wróć do logowania",
+      // The card's own closing reassurance (mockup 04), distinct from the
+      // panel-wide `marketing.security` — checked against it for substring
+      // collision in `tests/marketing-labels.test.ts`.
+      protectHint: "Chronimy dostęp do panelu rodzica",
       signinLinkLabel: "Nie pamiętasz hasła?",
     },
     // Set-new-password screen — the page the recovery link lands on. No mockup

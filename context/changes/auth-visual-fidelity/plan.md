@@ -1228,12 +1228,12 @@ stored profile is invalidated.
 
 #### Automated
 
-- [x] 6.1 Unit suite passes: `npm run test`
-- [x] 6.2 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e`
-- [x] 6.3 Linting passes: `npm run lint`
-- [x] 6.4 Type/astro check passes: `npm run check`
-- [x] 6.5 No lucide remains on the route
-- [x] 6.6 No horizontal overflow at 1024, 1280, 1536, 1920
+- [x] 6.1 Unit suite passes: `npm run test` — f353aad
+- [x] 6.2 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e` — f353aad
+- [x] 6.3 Linting passes: `npm run lint` — f353aad
+- [x] 6.4 Type/astro check passes: `npm run check` — f353aad
+- [x] 6.5 No lucide remains on the route — f353aad
+- [x] 6.6 No horizontal overflow at 1024, 1280, 1536, 1920 — f353aad
 
 #### Manual
 
@@ -1246,12 +1246,12 @@ stored profile is invalidated.
 
 #### Automated
 
-- [ ] 7.1 Unit suite passes: `npm run test`
-- [ ] 7.2 Extended label guard passes: `npx vitest run tests/marketing-labels.test.ts`
-- [ ] 7.3 E2E suite passes, including `e2e/password-reset.spec.ts`: `npm run test:e2e`
-- [ ] 7.4 Linting passes: `npm run lint`
-- [ ] 7.5 Type/astro check passes: `npm run check`
-- [ ] 7.6 No horizontal overflow on both routes at 1024, 1280, 1536, 1920
+- [x] 7.1 Unit suite passes: `npm run test`
+- [x] 7.2 Extended label guard passes: `npx vitest run tests/marketing-labels.test.ts`
+- [x] 7.3 E2E suite passes, including `e2e/password-reset.spec.ts`: `npm run test:e2e`
+- [x] 7.4 Linting passes: `npm run lint`
+- [x] 7.5 Type/astro check passes: `npm run check`
+- [x] 7.6 No horizontal overflow on both routes at 1024, 1280, 1536, 1920
 
 #### Manual
 

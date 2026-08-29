@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { KeyRound } from "lucide-react";
-import { AuthLockIcon } from "@/components/icons/authIcons";
+import { AuthLockIcon, AuthLockFilledIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
@@ -89,7 +88,7 @@ export default function UpdatePasswordForm({ serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText={t.auth.updatePassword.pending} icon={<KeyRound className="size-4" />}>
+      <SubmitButton pendingText={t.auth.updatePassword.pending} icon={<AuthLockFilledIcon className="size-5" />}>
         {t.auth.updatePassword.submit}
       </SubmitButton>
     </form>

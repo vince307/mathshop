@@ -110,8 +110,9 @@ across all 41). `tests/auth-art.test.ts` keeps it that way.
 
 ### Group A — `public/illustrations/auth/` (14 files)
 
-SVGs are byte-for-byte copies. The three PNGs are as-is copies of files the extraction had
-already cut out — no crop, no resize, no re-encoding by us.
+SVGs are byte-for-byte copies. `hero-email.png` and `hero-pin.png` are as-is copies of
+files the extraction had already cut out — no crop, no resize, no re-encoding by us.
+`hero-reset.png` is the one exception and is documented below.
 
 | Output file                 | Source (under `assets/matmaverse-auth-v2-web/`)                            | What it is                                    |
 | --------------------------- | -------------------------------------------------------------------------- | --------------------------------------------- |
@@ -127,8 +128,36 @@ already cut out — no crop, no resize, no re-encoding by us.
 | `decor-receipt.svg`         | `00-shared-auth-assets/svg/decor/decor-receipt-coins.svg`                    | Pale receipt and coins, decorative             |
 | `decor-path.svg`            | `00-shared-auth-assets/svg/decor/dotted-growth-path.svg`                     | Pale dotted arc with an arrow, decorative      |
 | `hero-email.png`            | `03-email-verification-extracted/png/cutouts/hero-email-confirmation.png`    | 430×400 — open envelope with a green tick      |
-| `hero-reset.png`            | `04-password-reset-extracted/png/cutouts/hero-reset-card-top.png`            | 183×166 — envelope with a padlock              |
+| `hero-reset.png`            | `04-password-reset-extracted/png/cutouts/hero-reset-envelope-lock-large.png` | 402×264 — envelope, padlock shield, coins, plane — **edited, see below** |
 | `hero-pin.png`              | `06-parent-pin-security-extracted/png/cutouts/hero-pin-lock-shield.png`      | 244×190 — padlock beside a green check-shield  |
+
+### `hero-reset.png` is the ONLY edited file, and the edit removes mockup text
+
+Both of screen 04's heroes were unusable as shipped, which is worth recording
+because the failures are of two different kinds:
+
+- `hero-reset-card-top.png` (183×166) is cropped **through its own subject** — the
+  envelope's bottom is gone and the green shield is sliced in half vertically. No
+  edit recovers that; it is simply not the illustration.
+- `hero-reset-envelope-lock-large.png` (411×270) is the complete composition
+  (envelope, padlock shield, `zł` coins, paper plane and its dotted trail) but
+  carries **stray body copy from the mockup baked into the top-left** — the tails
+  of "…o do konta." and "…eczne." from the paragraph the crop box overran.
+  Shipping visible Polish text fragments out of a design file is a defect, not a
+  cosmetic one.
+
+The large one is used, with the text erased. Reproduce exactly:
+
+1. Read `hero-reset-envelope-lock-large.png` as RGBA (411×270).
+2. Set `alpha = 0` over the rectangle `x ∈ [0, 108), y ∈ [0, 62)`. That rectangle
+   contains only the stray text: the shield starts at `y ≈ 28, x ≈ 155` and the
+   coin stack at `y ≈ 180`, so nothing drawn is inside it. **Erasing beats
+   cropping here** — any crop that clears the text also clips either the shield's
+   top or the coins.
+3. Zero any `alpha < 8` dust so the trim finds real bounds, then trim to the
+   alpha bounding box. Result: **402×264**.
+
+Like `hero-email.png`, its white interior is keyed out, so it belongs on a card.
 
 ### The PNG cutouts are keyed by near-white removal — two of these have holes
 
