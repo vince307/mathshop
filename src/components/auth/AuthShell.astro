@@ -1,6 +1,6 @@
 ---
 import { WORLDS } from "@/data/worlds";
-import { DECOR_COIN } from "@/data/marketing-art";
+import { DECOR_COIN, DECOR_COIN_STACK, DECOR_CHART, DECOR_RECEIPT, DECOR_PATH } from "@/data/marketing-art";
 import { t } from "@/i18n";
 import BrandRow from "@/components/marketing/BrandRow.astro";
 import FeatureList from "@/components/marketing/FeatureList.astro";
@@ -8,13 +8,15 @@ import SecurityNote from "@/components/marketing/SecurityNote.astro";
 
 /**
  * Two-column auth layout (mockup `01`): a left marketing panel — brand, hero,
- * three feature blocks, one card per world, decorative coins, security note —
- * beside a right-hand slot for the page's form card. Built once here; reused by
- * signup, password reset and update-password. Pure presentation, no behavior.
+ * three feature blocks, one card per world, security note — beside a right-hand
+ * slot for the page's form card, over a layer of ambient decoration. Built once
+ * here; reused by signup, password reset and update-password. Pure presentation,
+ * no behavior.
  *
  * Responsive: two columns on `lg+`; below that it stacks to a single column
  * (form first, then the marketing essentials). Marketing copy comes from
- * `t.marketing`; illustrations from committed `public/illustrations/` assets.
+ * `t.marketing`; illustrations from committed `public/illustrations/auth/` assets
+ * via `src/data/marketing-art.ts`.
  *
  * Brand, features and the security note are shared components — `Welcome.astro`
  * renders the same three, so the signed-out product cannot present itself two
@@ -28,6 +30,22 @@ import SecurityNote from "@/components/marketing/SecurityNote.astro";
  * Its column count is therefore a FUNCTION of that list: `grid-cols-3` holds six
  * as two clean rows. Growing `WORLDS` past six means revisiting this class, and
  * `e2e/marketing-worlds.spec.ts` is what makes that impossible to forget.
+ *
+ * **The grid is top-aligned, not centred.** The mockup's card starts near the top
+ * of the page and is tall; vertically centring it is what made the built screen
+ * read smaller and looser than the design.
+ *
+ * **The decoration layer is one element, and every rule about it is load-bearing.**
+ * `aria-hidden` and `alt=""` keep it out of the accessibility tree;
+ * `pointer-events-none` keeps it from swallowing a click on the card;
+ * `hidden lg:block` keeps it off phones, where the mockup has none of it and the
+ * viewport has no room; `z-0` against the content wrapper's `z-10` keeps it
+ * behind the content — NOT `-z-10`, which sends it behind this container's own
+ * painted `bg-background` and renders the whole layer invisible; and
+ * `overflow-hidden` on the outer container is what stops a decoration positioned
+ * near the viewport edge from scrolling the body sideways at narrow desktop
+ * widths. Four routes share this layer — signin, signup, reset, update — rather
+ * than each page laying down its own, which is how two of them would drift.
  */
 interface Props {
   /** Hero heading, e.g. "Panel rodzica". */
@@ -41,28 +59,29 @@ interface Props {
 const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
 ---
 
-<div class="bg-background flex min-h-screen flex-col justify-center px-4 py-8 sm:px-6 lg:px-10">
-  <div class="mx-auto w-full max-w-6xl">
+<div class="bg-background relative flex min-h-screen flex-col overflow-hidden px-4 py-8 sm:px-6 lg:px-10">
+  {/* Ambient decoration — see the component header. */}
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 z-0 hidden lg:block">
+    <img src={DECOR_PATH} alt="" class="absolute top-16 left-[38%] w-72 opacity-70" />
+    <img src={DECOR_CHART} alt="" class="absolute top-24 left-[52%] w-28 opacity-80" />
+    <img src={DECOR_COIN} alt="" class="absolute top-64 left-[42%] w-16 rotate-6" />
+    <img src={DECOR_RECEIPT} alt="" class="absolute -top-4 right-0 w-52 opacity-60" />
+    <img src={DECOR_COIN_STACK} alt="" class="absolute right-6 bottom-4 w-24" />
+  </div>
+
+  <div class="relative z-10 mx-auto w-full max-w-6xl">
     <BrandRow size="lg" class="mb-8 justify-center lg:justify-start" />
 
-    <div class="grid items-center gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-16">
+    <div class="grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-16">
       {/* Marketing panel */}
       <section class="relative order-2 lg:order-1">
-        {/* Decorative coin */}
-        <img
-          src={DECOR_COIN}
-          alt=""
-          aria-hidden="true"
-          class="pointer-events-none absolute -top-8 right-4 hidden size-20 rotate-12 lg:block"
-        />
-
         <div class="hidden lg:block">
-          <p class="text-foreground text-5xl font-extrabold tracking-tight xl:text-6xl">{heading}</p>
-          <p class="text-primary mt-2 text-3xl font-bold xl:text-4xl">{accent}</p>
-          <p class="text-muted-foreground mt-4 text-lg">{tagline}</p>
+          <p class="text-foreground text-5xl font-extrabold tracking-tight xl:text-7xl">{heading}</p>
+          <p class="text-primary mt-2 text-4xl font-bold xl:text-5xl">{accent}</p>
+          <p class="text-muted-foreground mt-4 max-w-sm text-lg">{tagline}</p>
         </div>
 
-        <FeatureList class="mt-6 grid-cols-3 lg:mt-8" />
+        <FeatureList class="mt-6 grid-cols-3 lg:mt-10" />
 
         {/* World cards (desktop only — mobile mockup omits them) */}
         <div class="mt-6 hidden grid-cols-3 gap-3 lg:grid">
@@ -79,8 +98,8 @@ const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
         <SecurityNote class="mt-6" />
       </section>
 
-      {/* Form slot */}
-      <div class="order-1 mx-auto w-full max-w-lg lg:order-2">
+      {/* Form slot — `max-w-auth-card` is the mockup's own 542 px (global.css). */}
+      <div class="max-w-auth-card order-1 mx-auto w-full lg:order-2">
         <slot />
       </div>
     </div>

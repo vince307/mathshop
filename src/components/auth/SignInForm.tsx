@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { LogIn } from "lucide-react";
-import { AuthEmailIcon, AuthLockIcon } from "@/components/icons/authIcons";
+import { AuthEmailIcon, AuthLockIcon, AuthLockFilledIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
@@ -111,7 +110,7 @@ export default function SignInForm({ serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText={t.auth.signin.pending} icon={<LogIn className="size-4" />}>
+      <SubmitButton pendingText={t.auth.signin.pending} icon={<AuthLockFilledIcon className="size-5" />}>
         {t.auth.signin.submit}
       </SubmitButton>
     </form>

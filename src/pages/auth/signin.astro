@@ -3,7 +3,8 @@ import Layout from "@/layouts/Layout.astro";
 import AuthShell from "@/components/auth/AuthShell.astro";
 import SignInForm from "@/components/auth/SignInForm";
 import { buttonVariants } from "@/components/ui/button";
-import { UserRound, UserPlus } from "lucide-react";
+import { AuthUserPlusIcon } from "@/components/icons/authIcons";
+import { PARENT_LOCK } from "@/data/marketing-art";
 import { t } from "@/i18n";
 
 const error = Astro.url.searchParams.get("error");
@@ -11,13 +12,22 @@ const error = Astro.url.searchParams.get("error");
 
 <Layout title={t.auth.signin.title}>
   <AuthShell heading={t.marketing.parentPanel} accent={t.auth.signin.heading}>
-    <div class="bg-card text-card-foreground border-border rounded-3xl border p-6 shadow-md sm:p-8">
+    <div class="bg-card text-card-foreground border-border shadow-mm-card rounded-3xl border p-6 sm:p-8">
       <div class="flex flex-col items-center text-center">
-        <span class="bg-primary/10 text-primary inline-flex size-14 items-center justify-center rounded-2xl">
-          <UserRound className="size-7" />
-        </span>
-        <h1 class="text-foreground mt-4 text-3xl font-extrabold">{t.marketing.parentPanel}</h1>
-        <p class="text-muted-foreground mt-1 text-base">{t.auth.signin.heading}</p>
+        <h1 class="text-foreground text-3xl font-extrabold">{t.marketing.parentPanel}</h1>
+        {
+          /* The mockup's card art: a parent beside a locked shield. A 96×64
+            viewBox, so it is sized by width with `h-auto` — a square `size-*`
+            would squash it. Decorative: the <h1> above already names the card. */
+        }
+        <img src={PARENT_LOCK} alt="" aria-hidden="true" width="96" height="64" class="mt-4 h-auto w-44 sm:w-52" />
+        {
+          /* `lg:hidden` keeps exactly one "Zaloguj się" per viewport (L-007).
+            Above `lg` the AuthShell hero's accent line carries it — the mockup's
+            card says only "Panel rodzica". Below `lg` that hero is hidden, so
+            this subline is the only thing naming the action. */
+        }
+        <p class="text-muted-foreground mt-3 text-base lg:hidden">{t.auth.signin.heading}</p>
       </div>
 
       <div class="mt-6">
@@ -30,12 +40,27 @@ const error = Astro.url.searchParams.get("error");
         <span class="bg-border h-px flex-1"></span>
       </div>
 
+      {
+        /* The mockup's two-part secondary button: the question in muted weight,
+          the action in bold blue, and the whole control outlined in blue rather
+          than neutral. `noAccount` had existed in the dictionary, referenced by
+          nothing, since it was written. Its accessible name — "Nie masz konta?
+          Utwórz konto" — is what `e2e/smoke.spec.ts` pins. */
+      }
       <a
         href="/auth/signup"
-        class:list={buttonVariants({ variant: "outline", size: "lg", className: "w-full font-medium" })}
+        class:list={buttonVariants({
+          variant: "outline",
+          size: "lg",
+          // `bg-card`, not the outline variant's default `bg-background`: the mockup
+          // puts this button on the card's own white, and the pale-blue default both
+          // departs from that and drops "Utwórz konto" to 4.23:1, under AA.
+          className: "bg-card border-primary text-primary hover:bg-primary/5 hover:text-primary h-14 w-full",
+        })}
       >
-        <UserPlus className="size-4" />
-        {t.auth.signin.signupLink}
+        <AuthUserPlusIcon className="size-5" />
+        <span class="text-muted-foreground font-normal">{t.auth.signin.noAccount}</span>
+        <span class="text-primary font-bold">{t.auth.signin.signupLink}</span>
       </a>
     </div>
   </AuthShell>

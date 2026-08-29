@@ -44,6 +44,19 @@ test.describe("harness smoke", () => {
     await expect(page.getByLabel(t.auth.fields.passwordLabel, { exact: true })).toHaveAccessibleName(
       t.auth.fields.passwordLabel,
     );
+
+    /*
+      The secondary CTA's label is two strings, not one: the mockup asks a
+      question in muted weight and answers it in bold blue. The question half
+      (`noAccount`) is the fragile one — it sat in the dictionary referenced by
+      nothing at all until this change wired it, which is exactly the kind of
+      string that gets silently dropped a second time. Asserting the composed
+      ACCESSIBLE NAME, rather than the presence of either half, is what makes
+      dropping one of them fail.
+    */
+    await expect(
+      page.getByRole("link", { name: `${t.auth.signin.noAccount} ${t.auth.signin.signupLink}` }),
+    ).toBeVisible();
   });
 
   // `PROTECTED_ROUTES` gates on a `startsWith("/app")` prefix, so a new screen

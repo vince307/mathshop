@@ -88,6 +88,33 @@ Facts discovered while running the change that are not derivable from `plan.md`:
   `e2e/smoke.spec.ts`, verified falsifiable in both directions. Candidate for
   `/10x-lesson`: it is L-009's shape ("a check that can pass without the thing it
   checks") one level up — a *documented* protection that was never a protection.
+- **Deviation, screen 01 mobile: the hero stays out of the phone layout.**
+  `01-parent-login-mobile.png` puts "Panel rodzica" and the tagline ABOVE the card
+  and gives the card no heading of its own; the built screen keeps `AuthShell`'s
+  hero `hidden lg:block` and lets the card's `<h1>` carry the words below `lg`.
+  Same words, same once-per-viewport guarantee (L-007), different placement.
+  Not chased because unhiding the hero below `lg` would have to be paired with
+  hiding the card `<h1>` below `lg` on all four `AuthShell` routes at once, and
+  mockups `02` and `04`'s phone layouts have not been checked against that.
+  Flagged for the human pass (Manual 4.7).
+- **Two WCAG AA misses were found and fixed during Phase 4's visual pass, and
+  both fixes moved TOWARD the mockup.** "Utwórz konto" measured 4.23:1 because
+  shadcn's `outline` variant paints `bg-background` (pale blue) over the white
+  card the mockup puts that button on — `bg-card` fixes the fidelity and the
+  contrast together. The security strip measured 4.26:1 with
+  `text-muted-foreground` on `bg-primary/5`; the mockup draws that line in dark
+  slate, so `text-foreground/85` was likewise both fixes at once.
+- **The first contrast checker written for this pass was itself decorative.** It
+  regex-parsed `getComputedStyle().color`, which this theme returns as
+  `oklch(...)`, and read the three oklch components as if they were 0–255 RGB —
+  every ratio it printed was fabricated, and it "failed" 25 elements including
+  ones that are plainly legible. Rewritten to resolve colours by painting them to
+  a 1×1 canvas (which also composites `bg-primary/5` over its real backdrop), and
+  given a positive control: `#000`/`#fff` → 21:1, `#bbb`/`#fff` → 1.92:1,
+  `oklch(0.33 0.04 262)` → `rgb(42,53,74)`. L-009 — confirm a measurement can come
+  out wrong before trusting it. The probe lives at `.playwright-mcp/verify.mjs`
+  (gitignored, and outside eslint's reach — in the repo root it added 48 lint
+  errors of its own).
 - **A deliberate break can race Tailwind v4's on-demand CSS generation.** The
   first attempt at the break above flipped `sr-only` to `hidden` and ran the spec
   a second later; the suite stayed green because `.hidden` had not been generated

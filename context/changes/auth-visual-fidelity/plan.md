@@ -1176,11 +1176,11 @@ stored profile is invalidated.
 
 #### Automated
 
-- [x] 3.1 Unit suite passes, including `tests/signin-form.test.tsx`: `npm run test`
-- [x] 3.2 Full e2e suite passes: `npm run test:e2e`
-- [x] 3.3 Linting passes: `npm run lint`
-- [x] 3.4 Type/astro check passes: `npm run check`
-- [x] 3.5 No lucide mail/lock/eye remains in the auth forms
+- [x] 3.1 Unit suite passes, including `tests/signin-form.test.tsx`: `npm run test` — 39993c5
+- [x] 3.2 Full e2e suite passes: `npm run test:e2e` — 39993c5
+- [x] 3.3 Linting passes: `npm run lint` — 39993c5
+- [x] 3.4 Type/astro check passes: `npm run check` — 39993c5
+- [x] 3.5 No lucide mail/lock/eye remains in the auth forms — 39993c5
 
 #### Manual
 
@@ -1193,11 +1193,11 @@ stored profile is invalidated.
 
 #### Automated
 
-- [ ] 4.1 Unit suite passes: `npm run test`
-- [ ] 4.2 E2E suite passes, including the new smoke assertion: `npm run test:e2e`
-- [ ] 4.3 Linting passes: `npm run lint`
-- [ ] 4.4 Type/astro check passes: `npm run check`
-- [ ] 4.5 No horizontal overflow on `/auth/signin` at 1024, 1280, 1536, 1920
+- [x] 4.1 Unit suite passes: `npm run test`
+- [x] 4.2 E2E suite passes, including the new smoke assertion: `npm run test:e2e`
+- [x] 4.3 Linting passes: `npm run lint`
+- [x] 4.4 Type/astro check passes: `npm run check`
+- [x] 4.5 No horizontal overflow on `/auth/signin` at 1024, 1280, 1536, 1920
 
 #### Manual
 
