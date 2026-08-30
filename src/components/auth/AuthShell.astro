@@ -75,8 +75,21 @@ const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
     <div class="grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-16">
       {/* Marketing panel */}
       <section class="relative order-2 lg:order-1">
+        {
+          /* The page's ONLY <h1>, on all four AuthShell routes. It sits OUTSIDE
+            the `hidden lg:block` block below on purpose: `display: none` drops a
+            subtree from the accessibility tree entirely, so a heading inside it
+            names nothing below `lg`. `sr-only lg:not-sr-only` keeps it in the
+            tree at every width while painting it only where the mockup draws it.
+            The cards' own headings are <h2> for the same reason — see the note
+            in each page. Measured before this change: /auth/signup had ZERO
+            headings at 1536 because its only <h1> was inside a `lg:hidden`
+            block and this hero was a <p>. */
+        }
+        <h1 class="text-foreground sr-only text-5xl font-extrabold tracking-tight lg:not-sr-only xl:text-7xl">
+          {heading}
+        </h1>
         <div class="hidden lg:block">
-          <p class="text-foreground text-5xl font-extrabold tracking-tight xl:text-7xl">{heading}</p>
           <p class="text-primary mt-2 text-4xl font-bold xl:text-5xl">{accent}</p>
           <p class="text-muted-foreground mt-4 max-w-sm text-lg">{tagline}</p>
         </div>

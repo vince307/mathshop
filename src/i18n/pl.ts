@@ -159,7 +159,7 @@ export const pl = {
       { title: "Zgodne z zasadami bezpiecznego uczenia się" },
     ],
     trustVerify: [
-      { title: "Bezpieczna nauka", body: "Twoje dane są chronione zgodnie z najlepszymi standardami." },
+      { title: "Bezpieczna nauka", body: "Szyfrujemy dane i nie udostępniamy ich nikomu." },
       { title: "Konto rodzica", body: "Oddzielone od profilu dziecka i w pełni kontrolowane przez Ciebie." },
       { title: "Bez reklam", body: "Skupiamy się na nauce, nie na reklamach." },
     ],

@@ -10,14 +10,24 @@ import { cn } from "@/lib/utils";
  * in the left gutter, the field's own name as the placeholder, and **no visible
  * label**.
  *
- * The label is `sr-only`, never `hidden` and never `aria-hidden`. Fifteen e2e
- * locators resolve these inputs through `page.getByLabel(t.auth.fields.*)` —
- * `e2e/helpers/accounts.ts`'s `signInViaUI` runs in nearly every spec. `sr-only`
- * clips the label visually while leaving it in the accessibility tree, so
- * Playwright and screen readers both still find it; anything that removes it from
- * the tree takes the whole suite down. It is also the only reason a
- * placeholder-only field is acceptable at all: the placeholder disappears the
- * moment the user types, so it cannot be the field's accessible name.
+ * The label is `sr-only`, never `hidden` and never `aria-hidden`, and it is the
+ * only reason a placeholder-only field is acceptable at all: the placeholder
+ * disappears the moment the user types, so it cannot be the field's name.
+ *
+ * **What actually protects it is narrower than it looks.** The claim this
+ * component inherited — that `hidden` or `aria-hidden` on the label "takes the
+ * whole suite down", because fifteen `page.getByLabel(t.auth.fields.*)` locators
+ * depend on it — is false in both halves, verified in Chromium. `getByLabel`
+ * matches the label's DOM TEXT and never asks whether it reached the
+ * accessibility tree, so it keeps resolving through `display: none`. And the
+ * field keeps its accessible name anyway: Chromium resolves the `<label for>`
+ * association regardless of the label's CSS or `aria-hidden`, and the name
+ * survives even with the placeholder removed. Nothing here was ever a safety net.
+ *
+ * The one edit that DOES cost the field its name is deleting the label — the
+ * obvious tidy-up on an element that renders nothing. That is what
+ * `toHaveAccessibleName` in the e2e suite guards, on every route this component
+ * backs. Do not "simplify" this label away.
  *
  * The gutter glyph is a bare icon, not an icon in a tinted tile — all three
  * mockups draw it directly on the field's own background.
@@ -50,6 +60,12 @@ export function FormField({
   icon,
   endContent,
 }: FormFieldProps) {
+  // The input carries `aria-invalid`, so assistive tech announces THAT the field
+  // is wrong; without `aria-describedby` it never announces WHY. That mattered
+  // less when the label was visible and the error sat under it in reading order.
+  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+
   return (
     <div>
       <Label htmlFor={id} className="sr-only">
@@ -69,18 +85,19 @@ export function FormField({
           }}
           placeholder={placeholder}
           aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : hint ? hintId : undefined}
           className={cn("h-14 rounded-xl pl-12 text-base", endContent && "pr-12")}
         />
         {endContent}
       </div>
       {error ? (
-        <p className="text-destructive mt-1 flex items-center gap-1 text-xs">
+        <p id={errorId} className="text-destructive mt-1 flex items-center gap-1 text-xs">
           <CircleAlert className="size-3" />
           {error}
         </p>
-      ) : (
-        hint
-      )}
+      ) : hint ? (
+        <div id={hintId}>{hint}</div>
+      ) : null}
     </div>
   );
 }

@@ -58,6 +58,34 @@ const RESET_CO_RENDERED = [...featureTitles, t.marketing.security, t.auth.reset.
  */
 const RESET_CARD_HINT = t.auth.reset.protectHint;
 
+/**
+ * Every string a badge renders. `TrustBadges` paints `title` AND `body` as plain
+ * `<p>` text, so both are reachable by `getByText` — but this suite checked only
+ * titles, which left a live collision invisible: `trustVerify[0].body` was a
+ * strict prefix of `t.marketing.security`. It was harmless purely because
+ * `/auth/confirm-email` happens to render `TrustBadges` without `SecurityNote`,
+ * and depending on that coincidence is the exact informality this file exists to
+ * replace.
+ */
+function badgeStrings(set: readonly { title: string; body?: string }[]): string[] {
+  return set.flatMap((badge) => (badge.body ? [badge.title, badge.body] : [badge.title]));
+}
+
+/**
+ * The panel-wide security line, checked against EVERY badge set rather than only
+ * the sets that share a page with it today. Passing a set to a different route is
+ * a one-line change, and this string says almost exactly what a security badge
+ * says — so it is the collision most likely to be introduced by accident.
+ *
+ * `featureTitles` are deliberately NOT in this list. `trustVerify[0].title` is
+ * "Bezpieczna nauka", which IS `features[0].title` — mockup `03` reuses the
+ * phrase on purpose (see this file's header). That identity is exactly why
+ * `trustVerify` must stay off `AuthShell` routes, and `VERIFY_CO_RENDERED` is
+ * what holds it to the surface it actually has. Folding feature titles in here
+ * would re-litigate a recorded decision instead of catching a new mistake.
+ */
+const PORTABLE_COLLISION_RISK = [t.marketing.security];
+
 function assertNoSubstringCollision(labels: readonly string[], coRendered: readonly string[], surface: string) {
   for (const label of labels) {
     for (const other of coRendered) {
@@ -76,25 +104,26 @@ describe("trust-badge titles", () => {
       ["trustSignup", t.marketing.trustSignup],
       ["trustVerify", t.marketing.trustVerify],
     ] as const) {
-      const titles = set.map((b) => b.title);
-      expect(new Set(titles).size, `${name} repeats a title`).toBe(titles.length);
+      const strings = badgeStrings(set);
+      expect(new Set(strings).size, `${name} repeats a string`).toBe(strings.length);
     }
   });
 
   it("collide with nothing that co-renders on /auth/signup", () => {
-    assertNoSubstringCollision(
-      t.marketing.trustSignup.map((b) => b.title),
-      SIGNUP_CO_RENDERED,
-      "/auth/signup",
-    );
+    assertNoSubstringCollision(badgeStrings(t.marketing.trustSignup), SIGNUP_CO_RENDERED, "/auth/signup");
   });
 
   it("collide with nothing that co-renders on /auth/confirm-email", () => {
-    assertNoSubstringCollision(
-      t.marketing.trustVerify.map((b) => b.title),
-      VERIFY_CO_RENDERED,
-      "/auth/confirm-email",
-    );
+    assertNoSubstringCollision(badgeStrings(t.marketing.trustVerify), VERIFY_CO_RENDERED, "/auth/confirm-email");
+  });
+
+  it("collide with the panel-wide security line in no set, wherever it is used", () => {
+    for (const [name, set] of [
+      ["trustSignup", t.marketing.trustSignup],
+      ["trustVerify", t.marketing.trustVerify],
+    ] as const) {
+      assertNoSubstringCollision(badgeStrings(set), PORTABLE_COLLISION_RISK, name);
+    }
   });
 });
 

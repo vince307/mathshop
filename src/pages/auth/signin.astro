@@ -14,11 +14,11 @@ const error = Astro.url.searchParams.get("error");
   <AuthShell heading={t.marketing.parentPanel} accent={t.auth.signin.heading}>
     <div class="bg-card text-card-foreground border-border shadow-mm-card rounded-3xl border p-6 sm:p-8">
       <div class="flex flex-col items-center text-center">
-        <h1 class="text-foreground text-3xl font-extrabold">{t.marketing.parentPanel}</h1>
+        <h2 class="text-foreground text-3xl font-extrabold">{t.marketing.parentPanel}</h2>
         {
           /* The mockup's card art: a parent beside a locked shield. A 96×64
             viewBox, so it is sized by width with `h-auto` — a square `size-*`
-            would squash it. Decorative: the <h1> above already names the card. */
+            would squash it. Decorative: the <h2> above already names the card. */
         }
         <img src={PARENT_LOCK} alt="" aria-hidden="true" width="96" height="64" class="mt-4 h-auto w-44 sm:w-52" />
         {

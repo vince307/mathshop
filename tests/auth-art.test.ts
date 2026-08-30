@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import { describe, expect, it } from "vitest";
 import { FEATURE_ICONS, MARKETING_ART } from "@/data/marketing-art";
+import * as authIconsModule from "@/components/icons/authIcons";
 import { AUTH_ICONS } from "@/components/icons/authIcons";
 import { t } from "@/i18n";
 
@@ -92,10 +93,21 @@ describe("the auth surfaces' inlined UI icons (Group B)", () => {
   );
 
   it("registers every icon the module means to guard", () => {
-    // A new export that never reaches AUTH_ICONS is guarded by nothing. Thirteen
-    // is the set the change landed; growing it means updating this number, which
-    // is the prompt to check the new icon meets the two rules below.
-    expect(rendered.length, "AUTH_ICONS has changed size — confirm the new icon is id-free and currentColor").toBe(13);
+    // A new export that never reaches AUTH_ICONS is guarded by nothing — it is
+    // covered by none of the three property assertions below, which all iterate
+    // the map. This used to be `expect(rendered.length).toBe(13)`, which could
+    // not see that case at all: `rendered` is DERIVED from the map, so forgetting
+    // to register an icon leaves the length untouched and the suite green, while
+    // registering one correctly is the only thing that turned it red. It fired on
+    // the safe edit and was silent on the dangerous one.
+    //
+    // Quantifying over the module's own exports inverts that, and follows the
+    // convention `src/components/child/ShopGlyph.tsx` states for `SHOP_ICONS`:
+    // never pin a registry with a fixed-length tuple or a literal key list.
+    const exported = Object.keys(authIconsModule).filter((key) => /^Auth.*Icon$/.test(key));
+    expect(new Set(Object.keys(AUTH_ICONS)), "an exported icon never reached AUTH_ICONS, so nothing guards it").toEqual(
+      new Set(exported),
+    );
   });
 
   it("renders an svg with a viewBox for every registered icon", () => {

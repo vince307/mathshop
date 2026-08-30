@@ -27,18 +27,29 @@ test.describe("harness smoke", () => {
       locate these inputs with `getByLabel`, and the change that hid the labels
       assumed those locators were the safety net — but `getByLabel` matches the
       label's TEXT IN THE DOM and never asks whether it reached the accessibility
-      tree. Swapping `sr-only` for `hidden` was run as a deliberate break and the
-      whole suite stayed green while a screen reader would have announced two
-      unnamed text boxes (L-009: a check that can pass without the thing it
-      checks). `toHaveAccessibleName` computes the name per the accname spec,
-      which skips `display: none` subtrees — so this one goes red on exactly that
-      edit. Verified falsifiable in both directions before it landed.
+      tree, so it keeps resolving through any amount of CSS.
 
-      The two mechanisms are different, which is what stops this being circular:
-      `getByLabel` REACHES the input through the label's DOM text (and keeps
-      working when the label is hidden), while `toHaveAccessibleName` RECOMPUTES
-      the name the way a screen reader would. The locator resolving and the
-      assertion failing is precisely the state being guarded against.
+      **Be precise about what this catches, because an earlier version of this
+      comment was not.** It claimed `toHaveAccessibleName` "skips display: none
+      subtrees" and therefore goes red when `sr-only` is swapped for `hidden`. It
+      does not. Measured in Chromium against this very page:
+
+        as shipped (sr-only)       getByLabel: 1   accessible name: PASS
+        label display:none         getByLabel: 1   accessible name: PASS
+        label deleted              getByLabel: 0   accessible name: FAIL
+
+      Chromium resolves a `<label for>` association regardless of the label's CSS
+      or `aria-hidden`, and the name survives even with the placeholder removed.
+      So hiding the label costs the field nothing, and NOTHING here guards
+      against hiding it — there is nothing to guard against.
+
+      What this assertion does catch is the one edit that genuinely removes the
+      name: DELETING a label that renders nothing, which is the tidy-up a future
+      reader is most likely to attempt and which the `getByLabel` locators would
+      have caught only as fifteen confusing timeouts. It is asserted on every
+      route `FormField` backs — here, `e2e/onboarding.spec.ts` for `/auth/signup`
+      and `e2e/password-reset.spec.ts` for the recovery pair — because this spec
+      alone covers one of the four.
     */
     await expect(page.getByLabel(t.auth.fields.emailLabel)).toHaveAccessibleName(t.auth.fields.emailLabel);
     await expect(page.getByLabel(t.auth.fields.passwordLabel, { exact: true })).toHaveAccessibleName(

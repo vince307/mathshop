@@ -120,7 +120,10 @@
          14px
        --mm-radius-card 24px   rounded-3xl (24px)             identical
        --mm-shadow-card        (none)                         ADDED below
-       --mm-shadow-control     (none)                         ADDED below
+       --mm-shadow-control     (none)                         not adopted — it
+                                                              had no consuming
+                                                              surface (dropped
+                                                              2026-08-30)
        --mm-login-card-width   (none)                         ADDED below
          542px
 
@@ -133,7 +136,6 @@
      `--success` is untouched: four child surfaces fill with it. */
   --color-success-strong: oklch(0.47 0.13 155);
   --shadow-mm-card: 0 24px 70px rgb(20 78 145 / 0.14);
-  --shadow-mm-control: 0 12px 28px rgb(18 108 240 / 0.18);
   /* The auth card's own width, straight from the mockup: `max-w-auth-card`. */
   --container-auth-card: 542px;
 

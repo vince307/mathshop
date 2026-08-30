@@ -24,6 +24,17 @@ test("onboarding: signup → confirm link → first profile → start screen (Ri
     // Sign up through the real, hydrated form.
     await page.goto("/auth/signup");
     await waitForIslands(page);
+
+    // `FormField` clips its labels with `sr-only`, so the accessible name is the
+    // field's only name. Deleting a label that renders nothing is the plausible
+    // tidy-up that removes it, and `getByLabel` below cannot report that cleanly
+    // (it degrades to a timeout). See the long note in `e2e/smoke.spec.ts`.
+    await expect(page.getByLabel(t.auth.fields.emailLabel)).toHaveAccessibleName(t.auth.fields.emailLabel);
+    await expect(page.getByLabel(t.auth.fields.passwordLabel, { exact: true })).toHaveAccessibleName(
+      t.auth.fields.passwordLabel,
+    );
+    await expect(page.getByLabel(t.auth.fields.confirmLabel)).toHaveAccessibleName(t.auth.fields.confirmLabel);
+
     await page.getByLabel(t.auth.fields.emailLabel).fill(email);
     await page.getByLabel(t.auth.fields.passwordLabel, { exact: true }).fill(PASSWORD);
     await page.getByLabel(t.auth.fields.confirmLabel).fill(PASSWORD);

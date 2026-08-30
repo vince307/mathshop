@@ -28,6 +28,10 @@ test("recovery: request → link → new password → signed in, old password de
     // Request the link through the real form.
     await page.goto("/auth/reset-password");
     await waitForIslands(page);
+
+    // The `sr-only` label is this field's only name — see `e2e/smoke.spec.ts`.
+    await expect(page.getByLabel(t.auth.fields.emailLabel)).toHaveAccessibleName(t.auth.fields.emailLabel);
+
     await page.getByLabel(t.auth.fields.emailLabel).fill(account.email);
     await page.getByRole("button", { name: t.auth.reset.submit }).click();
 
@@ -50,6 +54,13 @@ test("recovery: request → link → new password → signed in, old password de
 
     // `exact` because "Nowe hasło" is a substring of "Powtórz nowe hasło" — the
     // same disambiguation the sign-in/up specs use for their password label.
+    await expect(page.getByLabel(t.auth.updatePassword.newPasswordLabel, { exact: true })).toHaveAccessibleName(
+      t.auth.updatePassword.newPasswordLabel,
+    );
+    await expect(page.getByLabel(t.auth.updatePassword.repeatLabel)).toHaveAccessibleName(
+      t.auth.updatePassword.repeatLabel,
+    );
+
     await page.getByLabel(t.auth.updatePassword.newPasswordLabel, { exact: true }).fill(NEW_PASSWORD);
     await page.getByLabel(t.auth.updatePassword.repeatLabel).fill(NEW_PASSWORD);
     await page.getByRole("button", { name: t.auth.updatePassword.submit }).click();

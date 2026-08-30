@@ -256,21 +256,30 @@ export function AuthCalendarIcon({ className }: IconProps) {
 
 /**
  * Filled shield with a tick — the "Utwórz konto" and "Zakończ konfigurację"
- * buttons. `feature-shield-check.svg`, whose green fill becomes `currentColor`;
- * the tick stays `#fff` because it is knocked out of the shield body, exactly as
- * the keyhole is in `AuthLockFilledIcon`.
+ * buttons. `feature-shield-check.svg`, whose green fill becomes `currentColor`.
+ *
+ * **The tick is a genuine knockout, not a white stroke.** The source paints it
+ * `stroke="#fff"` over the shield body, which works on the mockup's green disc
+ * and nowhere else. Both call sites here are `bg-primary text-primary-foreground`
+ * buttons, so `currentColor` resolves to `--primary-foreground` — pure white
+ * since this change — and a white tick on a white shield is invisible. Measured
+ * on `/auth/signup`: body `oklch(1 0 0)`, tick `rgb(255,255,255)`, 1.00:1.
+ *
+ * So the tick became a second subpath of the SAME path with
+ * `fill-rule="evenodd"`, which renders it as a hole: correct on any background,
+ * and it follows `currentColor` for free. The subpath is the source polyline
+ * (21,32)→(28,39)→(43,22) offset by its half stroke-width of 3 and closed with
+ * butt ends — indistinguishable from the source's round caps at `size-5`.
+ * A `<mask>` would have been the obvious tool and is not available: it needs an
+ * `id`, which this module's invariant and `tests/auth-art.test.ts` forbid.
  */
 export function AuthShieldCheckIcon({ className }: IconProps) {
   return (
     <svg {...root(className)} viewBox="0 0 64 64">
-      <path d="M32 7l22 9v14c0 14-8 23-22 28C18 53 10 44 10 30V16l22-9z" fill="currentColor" />
       <path
-        d="M21 32l7 7 15-17"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M32 7l22 9v14c0 14-8 23-22 28C18 53 10 44 10 30V16l22-9z M18.88 34.12 L28.14 43.38 L45.25 23.99 L40.75 20.02 L27.86 34.62 L23.12 29.88 Z"
+        fill="currentColor"
+        fillRule="evenodd"
       />
     </svg>
   );
