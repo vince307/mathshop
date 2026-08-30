@@ -1,9 +1,9 @@
 ---
 change_id: auth-visual-fidelity
 title: Bring all six auth/onboarding screens up to mockup fidelity from the per-screen auth-v2 extraction
-status: implemented
+status: impl_reviewed
 created: 2026-08-29
-updated: 2026-08-29
+updated: 2026-08-30
 archived_at: null
 ---
 
@@ -158,3 +158,70 @@ Facts discovered while running the change that are not derivable from `plan.md`:
 - **Phase 2 deviated once, deliberately, and that deviation is now reversed.** `FeatureList`'s
   icon box was `lg:size-20` because the retired SVGs did not fill their 64-unit viewBox. The
   extraction's do, so Phase 1 item 6 brings the box back to the mockup's scale.
+
+## Deviations and fixes recorded during the implementation review — 2026-08-30
+
+- **Screen 04: the hero is a different source file from the one the plan named.**
+  Phase 7 item 2 contracts `hero-reset.png, 183×166` from
+  `04-password-reset-extracted/png/cutouts/hero-reset-card-top.png`. What shipped is
+  **402×264** from `hero-reset-envelope-lock-large.png`, edited. Both reasons are
+  sound and both are written up in `public/illustrations/slice-map.md`: the planned
+  cutout is cropped through its own subject (the envelope's bottom is gone, the green
+  shield sliced in half), and the substitute carried stray body copy from the mockup
+  baked into its top-left corner, which had to be erased. It is the single break in
+  this change's "copied byte-for-byte" rule and the only edited asset, so it is listed
+  here too — `slice-map.md` is where the recipe lives, but this is where an auditor
+  looks for deviations first.
+
+- **Screen 05: `SelectTile` keeps `CheckBadge`; Phase 8 item 3's contract was not
+  executed.** The plan asked the selected avatar and world tiles to render
+  `<img src={BADGE_CHECK}>` at the corner. `src/components/child/SelectTile.tsx` is
+  untouched by this change and still renders `CheckBadge` — a `bg-primary` disc with a
+  `lucide` `Check`, from `child-ui-polish` (`6457849`). **Accepted as the better
+  outcome, not repaired.** `CheckBadge` is the product's existing selected-state
+  primitive, it is already sized and positioned for these tiles, and the visual result
+  is the mockup's blue circular tick either way. `BADGE_CHECK` is not orphaned — it is
+  the `<img>` in `/auth/confirm-email`'s footer panels. Recorded here because the plan
+  reads as though the extraction's badge shipped on the wizard, and it did not.
+
+- **`FormField` gained `aria-describedby`, and the placeholder-as-label cost is
+  acknowledged.** The component set `aria-invalid` but never associated the error or
+  hint node, so assistive tech announced THAT a field was wrong and never WHY. That was
+  survivable while the label was visible above the field; with the label `sr-only` it
+  is not. Fixed. The larger trade-off is deliberate and stands: the mockups put the
+  field's name in the placeholder, so for a sighted user the name disappears on the
+  first keystroke — on `/auth/signup` that is three near-identical `h-14` boxes. The
+  mockups are binding (`CLAUDE.md`), the screen-reader path is now genuinely guarded,
+  and a float-label treatment is the obvious upgrade if this ever tests badly.
+
+- **`/auth/signup` had no heading at all above `lg`, and the fix moved the `<h1>` into
+  `AuthShell`.** Phase 5 wrapped the signup card's header in `lg:hidden`, and that block
+  held the page's only `<h1>`; `AuthShell`'s hero rendered its heading as a `<p>`, as do
+  `FeatureList`, `TrustBadges` and `BrandRow`. Measured at 1536×1024: **zero visible
+  headings**. The hero heading is now the `<h1>` on all four `AuthShell` routes, placed
+  OUTSIDE the `hidden lg:block` wrapper and clipped with `sr-only lg:not-sr-only` — a
+  heading inside a `display: none` subtree names nothing, so it had to leave that block
+  to stay in the accessibility tree below `lg`. The cards' own headings dropped to
+  `<h2>`, which keeps exactly one `<h1>` per route at every width and leaves the
+  `getByRole("heading", …)` locators in `e2e/password-reset.spec.ts` resolving (they do
+  not pin a level). No visual change at any width.
+
+- **`AuthShieldCheckIcon`'s tick was invisible at 100% of its call sites.** The source
+  paints it `stroke="#fff"` over a `currentColor` body — correct on the mockup's green
+  disc, wrong everywhere this product uses it. Both call sites (`SignUpForm`'s
+  `SubmitButton`, `ParentPinGate`'s submit) are `bg-primary text-primary-foreground`, so
+  the body resolved to `--primary-foreground` and the tick to `#fff`: measured on the
+  live page, `oklch(1 0 0)` against `rgb(255,255,255)`, **1.00:1**. The button rendered a
+  featureless white shield. The `--primary-foreground` fix above is what closed the last
+  sliver of difference, but the glyph was never legible. Now one path with
+  `fill-rule="evenodd"`, so the tick is real transparency and follows `currentColor` on
+  any background. A `<mask>` was not available: it needs an `id`, which this module's
+  invariant and `tests/auth-art.test.ts` forbid. **`AuthLockFilledIcon` has the identical
+  construction** (`circle fill="#fff"` keyhole) on the sign-in and update-password
+  buttons and is deliberately left alone — a padlock still reads without its keyhole.
+
+- **`e2e/growth.spec.ts` on `[touch]` does NOT fail.** The note above calls it a
+  pre-existing `main` failure. It is not: it was the Astro dev toolbar, the subject of
+  the sibling change `e2e-dev-toolbar-intercepts-touch-nav`. A green run reads
+  **"1 skipped, 31 passed"**, not "1 failed". The skip is `marketing-worlds.spec.ts` on
+  `[touch]`, which is correct by design.

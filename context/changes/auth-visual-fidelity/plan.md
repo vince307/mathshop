@@ -157,9 +157,29 @@ declare neither; SVG element ids are document-global and two inlined atoms shari
 silently cross-render. `tests/auth-art.test.ts` asserts this on the committed source, so the
 day someone pastes in a gradient-bearing atom the guard fires instead of the page.
 
-**Labels go `sr-only`, never `hidden`.** Fifteen e2e locators resolve fields through
-`getByLabel`. `sr-only` clips the label visually while leaving it in the accessibility tree.
-Any treatment that removes it from the tree takes the e2e suite down with it.
+**Labels go `sr-only`, never `hidden` — but NOT for the reason this plan first gave.**
+The original sentence here read "Fifteen e2e locators resolve fields through `getByLabel`;
+any treatment that removes the label from the accessibility tree takes the e2e suite down
+with it." **Both halves are false**, disproved by Phase 3's deliberate break and
+re-verified during the implementation review (2026-08-30) in Chromium against the live
+`/auth/signin`:
+
+```
+as shipped (sr-only)       getByLabel: 1   accessible name: PASS
+label display:none         getByLabel: 1   accessible name: PASS
+label deleted              getByLabel: 0   accessible name: FAIL
+```
+
+`getByLabel` matches the label's DOM **text** and never consults the accessibility tree, so
+it survives any CSS. And the field keeps its accessible name through `display: none`,
+`visibility: hidden` and `aria-hidden` alike, because Chromium resolves a `<label for>`
+association regardless of the label's presentation — it survives even with the placeholder
+removed. Nothing was protecting the field's name; the edit everyone feared was harmless.
+
+The label still goes `sr-only`, because it is the only name a placeholder-only field has
+once the user types. What actually needs guarding is **deleting** the label — the tidy-up on
+an element that renders nothing — and nothing caught that until Phase 3 added
+`toHaveAccessibleName`, now asserted on all four `FormField` routes.
 
 **Background decorations must not create horizontal overflow.** They are absolutely
 positioned near the viewport edges; without `overflow-hidden` on each shell's outer
@@ -1285,7 +1305,13 @@ stored profile is invalidated.
 - [x] 9.2 E2E suite passes, including `e2e/parent-surfaces.spec.ts`: `npm run test:e2e` — 49ef788
 - [x] 9.3 Linting passes: `npm run lint` — 49ef788
 - [x] 9.4 Type/astro check passes: `npm run check` — 49ef788
-- [x] 9.5 No `ShoppingCart` remains anywhere in `src` — 49ef788
+- [x] 9.5 No hand-rolled brand lockup remains on the six auth/onboarding screens; `BrandRow` covers all six plus the landing page — 49ef788
+      > Reworded 2026-08-30 (impl review). The row previously read "No `ShoppingCart`
+      > remains anywhere in `src`" and was checked while two uses remained, so the record
+      > certified more than was verified. Both are correct and out of this change's scope:
+      > `AppShell.astro` is the SIGNED-IN shell's own lockup (a seventh surface — follow-up
+      > below), and `WorldPicker.tsx` uses the glyph as the semantic "handel" competency
+      > icon, not as branding.
 - [x] 9.6 No horizontal overflow at 1024, 1280, 1536, 1920 — 49ef788
 
 #### Manual

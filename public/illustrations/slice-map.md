@@ -154,8 +154,15 @@ The large one is used, with the text erased. Reproduce exactly:
    coin stack at `y ≈ 180`, so nothing drawn is inside it. **Erasing beats
    cropping here** — any crop that clears the text also clips either the shield's
    top or the coins.
-3. Zero any `alpha < 8` dust so the trim finds real bounds, then trim to the
-   alpha bounding box. Result: **402×264**.
+3. Zero any `alpha < 8` dust so the trim finds real bounds, then trim with
+   **`sharp(...).trim()` at its default tolerance**. Result: **402×264**,
+   byte-identical to the committed file (re-verified 2026-08-30: 0 differing
+   bytes of 424,512).
+
+   **The tool matters here, so it is named.** A literal trim to the alpha
+   bounding box gives **402×265** instead: row `y = 5` carries three pixels of
+   alpha 19, which clears the `< 8` dust threshold but not `sharp`'s trim
+   tolerance. Either output is defensible; only one is what shipped.
 
 Like `hero-email.png`, its white interior is keyed out, so it belongs on a card.
 
