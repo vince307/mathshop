@@ -5,12 +5,12 @@ export const prerender = false;
 
 /**
  * Supabase keep-alive ping, invoked daily by .github/workflows/keep-alive.yml
- * against the production alias (mathshop.vercel.app).
+ * against production (https://matmaverse.ariom.cloud).
  *
  * The free-tier Supabase project auto-pauses after ~a week without API
- * activity, which takes production down AND breaks every Vercel deploy
- * ("Resource provisioning failed" — seen 2026-08-09). A Vercel-side ping is
- * not enough: the request must reach Supabase itself, so this route runs a
+ * activity, which takes production down (and, while it ran on Vercel, broke
+ * every deploy: "Resource provisioning failed" — seen 2026-08-09). An app-side
+ * ping is not enough: the request must reach Supabase itself, so this route runs a
  * real PostgREST query (RLS returns no rows to the anon key — the point is
  * the roundtrip, not the data).
  *

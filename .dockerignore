@@ -1,0 +1,31 @@
+# Build context for the Dockerfile. Secrets never enter the image: the app reads them at runtime from the server's
+# env file (/opt/apps/matmaverse/.env).
+.env*
+.vercel
+.wrangler
+node_modules
+dist
+.astro
+.git
+.github
+.husky
+.claude
+.mcp.json
+.vscode
+.idea
+# Not imported by the build (design mockups, scratch output, the code-review agent package).
+assets/
+outputs/
+packages/
+# Tests, docs and Supabase config/migrations (applied by the Supabase CLI, not the app).
+tests
+e2e
+playwright-report
+test-results
+blob-report
+coverage
+context
+docs
+supabase
+*.log
+.DS_Store

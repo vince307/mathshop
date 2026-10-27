@@ -3,12 +3,45 @@ project: MathShop
 researched_at: 2026-05-23
 recommended_platform: Vercel
 runner_up: Netlify
+current_platform: Owner's VPS (Docker container behind Caddy), since 2026-10
 context_type: mvp
 tech_stack:
   language: TypeScript
   framework: Astro 6 (SSR) + React 19
-  runtime: Node (Vercel Functions)
+  runtime: Node 22 (@astrojs/node standalone in a container)
 ---
+
+## Current production: VPS (2026-10)
+
+Production moved off Vercel to the owner's VPS. Everything from **Recommendation** down is the original
+2026-05-23 platform research, kept as history; where it disagrees with this section, this section wins.
+
+- **URL**: https://matmaverse.ariom.cloud (was https://mathshop.vercel.app). DNS points at the VPS; Caddy terminates
+  TLS and proxies to the container on `127.0.0.1:4401`. Supabase stays hosted (project `hozkukbsfdcrbszgdxbg`).
+- **Runtime**: `@astrojs/node` (pinned to `10.1.1`: 10.1.2+ import an API that only Astro 6.4 exports) in standalone
+  mode, `node dist/server/entry.mjs` (`npm run start`). The image is built from `Dockerfile`
+  (`node:22.14.0-bookworm-slim`, `USER node`, `PORT=4401`) and published as `ghcr.io/vince307/matmaverse:<commit sha>`.
+- **Behind the proxy**: `security.allowedDomains` in `astro.config.mjs` makes Astro trust Caddy's
+  `X-Forwarded-Proto`/`-Host` for `matmaverse.ariom.cloud` only. Without it the request URL is
+  `http://localhost:4401/…`: every form POST fails Astro's origin check (403) and signup/resend send
+  `emailRedirectTo=http://localhost:4401/app`. `scripts/check-proxy-origin.mjs` (CI `ci` job) guards both.
+- **Health**: `GET /api/health` → `200 {"status":"ok"}`, no Supabase (the middleware skips it). Used by the compose
+  healthcheck and by `app-deploy`.
+- **Deploy**: `.github/workflows/deploy.yml` runs after the CI workflow is green for a push to `main` (or by hand with
+  a full sha): it builds and pushes the image, then over Tailscale runs the `apps-deploy` forced command on the VPS —
+  `status`, `login` (GHCR token on stdin), `deploy matmaverse <sha>` (pull, start, health check, automatic fallback to
+  the last good image), `logout` — and finally checks `https://matmaverse.ariom.cloud/api/health`. The server side
+  (compose file, `app-deploy`, Caddy) lives in the `ariom-infra` repo. There are no preview deploys.
+- **Rollback**: `ssh apps-deploy@<host> rollback matmaverse` (owner only) returns to the previous good image; or run
+  the Deploy workflow by hand with an older sha. Schema migrations still do not roll back with the code.
+- **Secrets**: `SUPABASE_URL`, `SUPABASE_KEY`, `PARENT_SESSION_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET`
+  live in `/opt/apps/matmaverse/.env` on the server (never in the image or the repo). GitHub repository secrets for the
+  deploy: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; `CRON_SECRET`
+  for `.github/workflows/keep-alive.yml` must equal the server's.
+- **Supabase Auth URLs**: `[remotes.production.auth]` in `supabase/config.toml` carries `site_url` and the redirect
+  allow-list on the new host. It must be pushed (`supabase config push`) at the cut-over: the confirmation and
+  recovery e-mails link to `{{ .SiteURL }}/api/auth/confirm`.
+- **Logs**: `journalctl CONTAINER_NAME=matmaverse-web-1` on the VPS.
 
 ## Recommendation
 

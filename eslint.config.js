@@ -78,8 +78,9 @@ export default tseslint.config(
   includeIgnoreFile(gitignorePath),
   // packages/* are self-governed workspaces (own deps, own tsconfig) outside the
   // root project service — linting them here throws "not found by project service".
-  // .github/scripts/* are dependency-free Node CI helpers with the same problem.
-  { ignores: ["packages/**", ".github/scripts/**"] },
+  // .github/scripts/* and scripts/*.mjs (check-proxy-origin.mjs) are dependency-free
+  // Node CI helpers with the same problem.
+  { ignores: ["packages/**", ".github/scripts/**", "scripts/*.mjs"] },
   baseConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

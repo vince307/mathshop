@@ -6,7 +6,7 @@ MathShop is a Polish-language, server-rendered web app (Astro 6 + React 19 islan
 
 - **Per-account data isolation is the top correctness requirement.** One parent's child profiles must never be visible to another (PRD FR-012 / FR-015). Enable Supabase row-level security with per-operation, per-role policies in the *same* migration that adds a table — a missed policy is a silent data leak, not a crash.
 - **Every route under `src/pages/api/` must `export const prerender = false`**, or it is statically built and fails at runtime.
-- **Deployment target is Vercel** via the `@astrojs/vercel` adapter (`astro.config.mjs`); SSR routes compile to Vercel Functions. Decision + risk register: `@context/foundation/infrastructure.md`. Pin the function region to the EU (`fra1`/`arn1`) and budget Pro ($20/mo) — the Hobby tier is non-commercial-use only.
+- **Production is a Docker container on the owner's VPS** at https://matmaverse.ariom.cloud (`@astrojs/node` standalone, port 4401, behind Caddy; deployed only by `.github/workflows/deploy.yml`). Keep `security.allowedDomains` in `astro.config.mjs`, or form POSTs get 403 behind the proxy. Details: `@context/foundation/infrastructure.md` → "Current production: VPS".
 - **All user-visible strings are Polish**, authored so a future locale swaps via content, not code (FR-013).
 - Read secrets through `astro:env/server` (`SUPABASE_URL`, `SUPABASE_KEY`) — never `import.meta.env`.
 

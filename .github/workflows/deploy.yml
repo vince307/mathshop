@@ -1,0 +1,178 @@
+# Production deploy: https://matmaverse.ariom.cloud (Caddy -> container on 127.0.0.1:4401 on the owner's VPS).
+#
+# Runs after the CI workflow finishes green for a push to main (all of its jobs: ci, e2e, image), or by hand with a
+# full commit sha (deploy a given commit again, or roll forward/back to it). The `build` job pushes
+# ghcr.io/vince307/matmaverse:<sha>; the `deploy` job reaches the VPS over Tailscale as `apps-deploy`, whose forced
+# command (ariom-infra server/app-deploy) accepts only `login|deploy|rollback|status|logout matmaverse`: deploy pulls
+# the image, starts it, waits for /api/health and falls back to the last good tag on its own.
+# Rollback to the previous good image without a new build: the owner runs `ssh apps-deploy@<host> rollback matmaverse`.
+# Secrets live in /opt/apps/matmaverse/.env on the server, never in the image or here. Supabase stays hosted; this
+# workflow does not touch its schema or auth config.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Pełny SHA commita (40 znaków) do wdrożenia lub cofnięcia
+        required: true
+        type: string
+
+# app-deploy holds a per-app lock and fails a concurrent deploy: queue instead, never cancel a running one.
+concurrency:
+  group: deploy-matmaverse
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/vince307/matmaverse
+
+jobs:
+  build:
+    # workflow_run fires for every completed CI run; deploy only green pushes to main.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+      skip: ${{ steps.sha.outputs.skip }}
+    steps:
+      # The CI run's commit, not github.sha (for workflow_run that is the default branch's latest commit).
+      - name: Resolve commit SHA
+        id: sha
+        env:
+          SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.sha || github.event.workflow_run.head_sha }}
+          EVENT: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ ! "$SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::sha must be a full 40-character lowercase commit SHA (git rev-parse <ref>), got: $SHA"
+            exit 1
+          fi
+          echo "sha=$SHA" >>"$GITHUB_OUTPUT"
+          # CI runs can finish out of order; deploy only the current tip of main so an older commit never lands last.
+          if [[ "$EVENT" == "workflow_run" ]]; then
+            tip="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)"
+            if [[ "$tip" != "$SHA" ]]; then
+              echo "::notice::$SHA is no longer the tip of main ($tip); skipping deploy"
+              echo "skip=true" >>"$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        if: steps.sha.outputs.skip != 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for an existing image
+        id: existing
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          if docker manifest inspect "$IMAGE:$SHA" >/dev/null 2>&1; then
+            echo "Image $IMAGE:$SHA already exists, skipping build"
+            echo "found=true" >>"$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.sha.outputs.skip != 'true' && steps.existing.outputs.found != 'true'
+        with:
+          ref: ${{ steps.sha.outputs.sha }}
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        if: steps.sha.outputs.skip != 'true' && steps.existing.outputs.found != 'true'
+
+      # The server is amd64. Same cache as the CI `image` job, which already built this commit.
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        if: steps.sha.outputs.skip != 'true' && steps.existing.outputs.found != 'true'
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE }}:${{ steps.sha.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Read-only: this job's token is handed to the server for `docker pull`.
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SHA: ${{ needs.build.outputs.sha }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+    steps:
+      - uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Configure SSH
+        id: ssh
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$DEPLOY_HOST" || { echo "::error::DEPLOY_HOST secret is not set"; exit 1; }
+          install -d -m 700 ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_SSH_KEY" >~/.ssh/deploy_key
+          install -m 600 /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" >~/.ssh/known_hosts
+          cat >~/.ssh/config <<EOF
+          Host $DEPLOY_HOST
+            User apps-deploy
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            UserKnownHostsFile ~/.ssh/known_hosts
+            ConnectTimeout 30
+            ServerAliveInterval 15
+          EOF
+          chmod 600 ~/.ssh/config
+
+      # Preflight: an unreachable server or a broken forced command fails here, before anything changes.
+      - name: Server status before the deploy
+        run: ssh "apps-deploy@$DEPLOY_HOST" status matmaverse
+
+      # The token goes over stdin, never on a command line; app-deploy runs `docker login ghcr.io --password-stdin`.
+      - name: Log the server in to GHCR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GITHUB_TOKEN" | ssh "apps-deploy@$DEPLOY_HOST" login matmaverse
+
+      # The job's result is app-deploy's exit code: pull, compose up, health check; a failed check restores the last
+      # good tag and exits 1.
+      - name: Deploy
+        run: |
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::unexpected commit sha: $SHA"; exit 1; }
+          ssh "apps-deploy@$DEPLOY_HOST" deploy matmaverse "$SHA"
+
+      - name: Log the server out of GHCR
+        if: always() && steps.ssh.outcome == 'success'
+        run: ssh "apps-deploy@$DEPLOY_HOST" logout matmaverse
+
+      # Through DNS, Caddy and TLS, not just the container port app-deploy checked.
+      - name: Public health check
+        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors --max-time 15 https://matmaverse.ariom.cloud/api/health
