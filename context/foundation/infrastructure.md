@@ -17,7 +17,10 @@ Production moved off Vercel to the owner's VPS. Everything from **Recommendation
 2026-05-23 platform research, kept as history; where it disagrees with this section, this section wins.
 
 - **URL**: https://matmaverse.ariom.cloud (was https://mathshop.vercel.app). DNS points at the VPS; Caddy terminates
-  TLS and proxies to the container on `127.0.0.1:4401`. Supabase stays hosted (project `hozkukbsfdcrbszgdxbg`).
+  TLS and proxies to the container on `127.0.0.1:4401`.
+- **Supabase**: self-hosted on the same VPS since 2026-10 (stack `matmaverse-supabase`, configured in `ariom-infra`
+  `server/supabase/matmaverse/compose.yml`); the container reaches Kong at `http://kong:8000`. The hosted project
+  `hozkukbsfdcrbszgdxbg` is retired, and with it the free-tier auto-pause and the daily keep-alive workflow.
 - **Runtime**: `@astrojs/node` (pinned to `10.1.1`: 10.1.2+ import an API that only Astro 6.4 exports) in standalone
   mode, `node dist/server/entry.mjs` (`npm run start`). The image is built from `Dockerfile`
   (`node:22.14.0-bookworm-slim`, `USER node`, `PORT=4401`) and published as `ghcr.io/vince307/matmaverse:<commit sha>`.
@@ -29,18 +32,22 @@ Production moved off Vercel to the owner's VPS. Everything from **Recommendation
   healthcheck and by `app-deploy`.
 - **Deploy**: `.github/workflows/deploy.yml` runs after the CI workflow is green for a push to `main` (or by hand with
   a full sha): it builds and pushes the image, then over Tailscale runs the `apps-deploy` forced command on the VPS —
-  `status`, `login` (GHCR token on stdin), `deploy matmaverse <sha>` (pull, start, health check, automatic fallback to
+  `status`, `migrate matmaverse --dry-run` then `migrate matmaverse` (a ustar tar of `supabase/migrations` on stdin),
+  `migrations matmaverse` (prints the ledger), `login` (GHCR token on stdin), `deploy matmaverse <sha>` (pull, start, health check, automatic fallback to
   the last good image), `logout` — and finally checks `https://matmaverse.ariom.cloud/api/health`. The server side
   (compose file, `app-deploy`, Caddy) lives in the `ariom-infra` repo. There are no preview deploys.
 - **Rollback**: `ssh apps-deploy@<host> rollback matmaverse` (owner only) returns to the previous good image; or run
-  the Deploy workflow by hand with an older sha. Schema migrations still do not roll back with the code.
-- **Secrets**: `SUPABASE_URL`, `SUPABASE_KEY`, `PARENT_SESSION_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET`
-  live in `/opt/apps/matmaverse/.env` on the server (never in the image or the repo). GitHub repository secrets for the
-  deploy: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; `CRON_SECRET`
-  for `.github/workflows/keep-alive.yml` must equal the server's.
-- **Supabase Auth URLs**: `[remotes.production.auth]` in `supabase/config.toml` carries `site_url` and the redirect
-  allow-list on the new host. It must be pushed (`supabase config push`) at the cut-over: the confirmation and
-  recovery e-mails link to `{{ .SiteURL }}/api/auth/confirm`.
+  the Deploy workflow by hand with an older sha. Schema migrations do not roll back with the code, so each one must
+  stay backward-compatible with the deploy already in production.
+- **Secrets**: `SUPABASE_URL`, `SUPABASE_KEY`, `PARENT_SESSION_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` live in
+  `/opt/apps/matmaverse/.env` on the server (never in the image or the repo). GitHub repository secrets for the
+  deploy: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`. No Supabase
+  secrets in GitHub: migrations run on the VPS through the forced command. `CRON_SECRET` only matters to the `/api/keep-alive`
+  route, which nothing calls since the keep-alive workflow was removed.
+- **Supabase Auth config**: `site_url`, the redirect allow-list, SMTP (Brevo) and confirmations live in the `ariom-infra`
+  compose file, not in `supabase/config.toml` (that file now configures only the local/CI stack). GoTrue fetches the
+  e-mail templates from `https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html`, served by the
+  image from `supabase/templates/` (`Dockerfile`); the e-mails link to `{{ .SiteURL }}/api/auth/confirm`.
 - **Logs**: `journalctl CONTAINER_NAME=matmaverse-web-1` on the VPS.
 
 ## Recommendation

@@ -1,5 +1,8 @@
 # MathShop — Deployment Record
 
+> **Superseded (2026-10).** Production now runs on the owner's VPS with self-hosted Supabase; the hosted project
+> and the commands below are history. Current state: `@context/foundation/infrastructure.md` → "Current production: VPS".
+
 > Persisted hand-off from the first **Plan Mode deploy** (lesson Module 1, L5). Source of the decision: `@context/foundation/infrastructure.md`; stack: `@context/foundation/tech-stack.md`.
 
 ## Status — preview pipeline smoke-tested · main now served from the Git integration · 2026-06-07

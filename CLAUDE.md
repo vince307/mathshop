@@ -16,12 +16,13 @@ The mockup sets directly under `assets/` are the **canonical UI/UX designs** —
 
 ## Deployment
 
-Production is **https://matmaverse.ariom.cloud**: a Docker container (`Dockerfile`, `@astrojs/node` standalone, `node dist/server/entry.mjs`, port 4401) on the owner's VPS behind Caddy; Supabase stays hosted. Operational details (secrets in the server's env file, logs, the `ariom-infra` server side) live in `@context/foundation/infrastructure.md` → "Current production: VPS"; the rest of that file is the original Vercel research, kept as history. Non-obvious rules:
+Production is **https://matmaverse.ariom.cloud**: a Docker container (`Dockerfile`, `@astrojs/node` standalone, `node dist/server/entry.mjs`, port 4401) on the owner's VPS behind Caddy; Supabase is self-hosted on the same VPS (stack `matmaverse-supabase`, configured in `ariom-infra` `server/supabase/matmaverse/compose.yml`). Operational details (secrets in the server's env file, logs, the `ariom-infra` server side) live in `@context/foundation/infrastructure.md` → "Current production: VPS"; the rest of that file is the original Vercel research, kept as history. Non-obvious rules:
 
 - **`security.allowedDomains` in `astro.config.mjs` is load-bearing.** Caddy talks plain HTTP to the container; without it Astro sees `http://localhost:4401`, every form POST gets 403 from the origin check and signup e-mails redirect to localhost. `scripts/check-proxy-origin.mjs` (CI) guards it.
 - **`@astrojs/node` is pinned to `10.1.1`**: 10.1.2+ need Astro 6.4. Bump both together.
-- **Deploys only through CI**: `.github/workflows/deploy.yml` (after CI is green on `main`, or by hand with a full sha) builds `ghcr.io/vince307/matmaverse:<sha>` and runs `apps-deploy` on the VPS. Rollback: `ssh apps-deploy@<host> rollback matmaverse`, owner or CI only; agents never deploy or roll back by hand. There are no preview deploys.
+- **Deploys only through CI**: `.github/workflows/deploy.yml` (after CI is green on `main`, or by hand with a full sha) builds `ghcr.io/vince307/matmaverse:<sha>`, pushes `supabase/migrations` (`migrate matmaverse`, after a `--dry-run`) and runs `apps-deploy` on the VPS. Migrations must stay backward-compatible with the deploy already in production; `tests/migrations-no-backslash.test.ts` guards the file contract. Rollback: `ssh apps-deploy@<host> rollback matmaverse`, owner or CI only; agents never deploy or roll back by hand. There are no preview deploys.
 - `GET /api/health` is the container healthcheck: no Supabase, skipped by the middleware. Keep it that way.
+- **Auth e-mail templates are served by the app**: the `Dockerfile` copies `supabase/templates` to `/email-templates/`, where GoTrue fetches them. Don't rename them or drop that line (`tests/email-templates-served.test.ts`).
 
 ## Commands
 

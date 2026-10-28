@@ -3,11 +3,14 @@
 # Runs after the CI workflow finishes green for a push to main (all of its jobs: ci, e2e, image), or by hand with a
 # full commit sha (deploy a given commit again, or roll forward/back to it). The `build` job pushes
 # ghcr.io/vince307/matmaverse:<sha>; the `deploy` job reaches the VPS over Tailscale as `apps-deploy`, whose forced
-# command (ariom-infra server/app-deploy) accepts only `login|deploy|rollback|status|logout matmaverse`: deploy pulls
-# the image, starts it, waits for /api/health and falls back to the last good tag on its own.
+# command (ariom-infra server/app-deploy) accepts only `login|deploy|rollback|status|logout|migrate|migrations
+# matmaverse`: deploy pulls the image, starts it, waits for /api/health and falls back to the last good tag on its own.
 # Rollback to the previous good image without a new build: the owner runs `ssh apps-deploy@<host> rollback matmaverse`.
-# Secrets live in /opt/apps/matmaverse/.env on the server, never in the image or here. Supabase stays hosted; this
-# workflow does not touch its schema or auth config.
+# A rollback does not roll the schema back.
+# Secrets live in /opt/apps/matmaverse/.env on the server, never in the image or here. Supabase is self-hosted on the
+# same VPS (ariom-infra server/supabase/matmaverse/compose.yml, stack matmaverse-supabase; the app reaches Kong at
+# http://kong:8000). The deploy job pushes supabase/migrations to it through `migrate matmaverse` before the new image
+# goes live; auth config (SMTP, redirect URLs, e-mail templates) lives in that compose file, not in this repo.
 name: Deploy
 
 on:
@@ -108,6 +111,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # The schema goes live minutes before the new code, so migrations must stay backward-compatible with the
+  # deploy currently in production. The server is checked before the migrations, so an unreachable VPS stops the job
+  # before the schema changes; a failed migration stops it before the deploy.
   deploy:
     needs: build
     if: needs.build.outputs.skip != 'true'
@@ -121,6 +127,12 @@ jobs:
       SHA: ${{ needs.build.outputs.sha }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
     steps:
+      # The deployed commit's supabase/migrations, not the default branch's.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.sha }}
+          persist-credentials: false
+
       - uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
@@ -155,6 +167,25 @@ jobs:
       # Preflight: an unreachable server or a broken forced command fails here, before anything changes.
       - name: Server status before the deploy
         run: ssh "apps-deploy@$DEPLOY_HOST" status matmaverse
+
+      # The migration tar is plain ustar (GNU tar), uncompressed, containing only migrations/<version>_<name>.sql;
+      # `migrate` reads it on stdin and rejects anything else (exit 2), including files with a backslash
+      # (tests/migrations-no-backslash.test.ts catches those in the PR). pipefail: a failed tar must fail the step.
+      - name: Pending migrations
+        shell: bash
+        run: |
+          set -o pipefail
+          tar --format=ustar -C supabase -cf - migrations | ssh "apps-deploy@$DEPLOY_HOST" migrate matmaverse --dry-run
+
+      - name: Push migrations
+        shell: bash
+        run: |
+          set -o pipefail
+          tar --format=ustar -C supabase -cf - migrations | ssh "apps-deploy@$DEPLOY_HOST" migrate matmaverse
+
+      # Prints a JSON array of {version,name} in version order; keep the step name stable.
+      - name: Migration ledger
+        run: ssh "apps-deploy@$DEPLOY_HOST" migrations matmaverse
 
       # The token goes over stdin, never on a command line; app-deploy runs `docker login ghcr.io --password-stdin`.
       - name: Log the server in to GHCR

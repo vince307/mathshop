@@ -13,7 +13,7 @@
 // The confirm e-mail is resent for an unconfirmed user created through the GoTrue admin API, because the local stack
 // auto-confirms signups (enable_confirmations = false) and so sends no signup mail. The link's host is GoTrue's
 // site_url (`{{ .SiteURL }}` in supabase/templates/confirmation.html): http://localhost:4321 locally, and
-// https://matmaverse.ariom.cloud in production ([remotes.production.auth] in supabase/config.toml). Set
+// https://matmaverse.ariom.cloud in production (ariom-infra server/supabase/matmaverse/compose.yml). Set
 // EMAIL_SITE_URL to also assert it.
 //
 // Local/CI only: it creates and deletes accounts, so it refuses a non-loopback BASE_URL or SUPABASE_URL. GoTrue

@@ -51,7 +51,7 @@ Per-account parent settings (S-07) holding the scrypt-hashed parent PIN (FR-016 
   - `account_settings_insert_own` — `for insert with check (auth.uid() = account_id)`
   - `account_settings_update_own` — `for update using (...) with check (...)`
   - `account_settings_delete_own` — `for delete using (auth.uid() = account_id)`
-- **Env dependency:** `PARENT_SESSION_SECRET` (astro.config.mjs `env.schema`) — HMAC key for the signed `parent_verified` session marker. Set on Vercel Production scope (added 2026-07-11 with MAT-17; Preview fails closed — no marker minting, so the report + deletion actions are unreachable there).
+- **Env dependency:** `PARENT_SESSION_SECRET` (astro.config.mjs `env.schema`) — HMAC key for the signed `parent_verified` session marker. Set in the production server's env file (`/opt/apps/matmaverse/.env`; added 2026-07-11 with MAT-17, when production was on Vercel). Unset fails closed — no marker minting, so the report + deletion actions are unreachable.
 - **Isolation test:** `tests/account-settings-isolation.test.ts`.
 
 ## Account deletion (service-role surface)
@@ -60,7 +60,7 @@ Whole-account erasure (MAT-17) — the project's **first and only production ser
 
 - **Route:** `POST /api/account/delete` (`src/pages/api/account/delete.ts`). Gate order (all-or-nothing, each a hard stop): 503 (no RLS or admin client) → 401 (no session user) → 403 (invalid `parent_verified` marker) → 400 (zod) → PIN re-check via `verifyPin` (429 locked / 401 wrong / 400 no-pin — the atomic `register_pin_failure` throttle applies) → 400 (typed e-mail ≠ session e-mail) → `admin.auth.admin.deleteUser(user.id)` → best-effort `signOut()` + `clearAuthCookies` + delete `active_profile`/`parent_verified` → 200. The deletion target is **always** `user.id` from the session (`getUser()`), never client input (L-002).
 - **Admin client:** `createAdminClient()` (`src/lib/supabase-admin.ts`) — plain `@supabase/supabase-js` client with the **service-role** key, `{ autoRefreshToken: false, persistSession: false }`, no cookie adapter. Used for **exactly one operation** (`deleteUser`); never to read/write app tables (that bypasses RLS, the project's highest-risk invariant). Fails closed: missing key → `null` → route 503.
-- **Env dependency:** `SUPABASE_SERVICE_ROLE_KEY` (astro.config.mjs `env.schema`, `optional`). The most sensitive value in the project — Vercel **Production scope ONLY** (never Preview/Development; `infrastructure.md`), never the browser. `astro:env/server` import fails in client bundles, so islands cannot import the factory.
+- **Env dependency:** `SUPABASE_SERVICE_ROLE_KEY` (astro.config.mjs `env.schema`, `optional`). The most sensitive value in the project — production server env file **ONLY** (`/opt/apps/matmaverse/.env`; `infrastructure.md`), never the browser. `astro:env/server` import fails in client bundles, so islands cannot import the factory.
 - **Tests:** `tests/account-deletion.test.ts` (full-cascade erasure across all three tables + auth user via admin read-back; wrong-PIN throttle; missing marker; e-mail mismatch; bystander isolation; absent-key 503).
 
 ## Child-profile deletion (RLS surface)

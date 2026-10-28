@@ -23,6 +23,10 @@ WORKDIR /app
 COPY package.json ./
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# Auth e-mail templates for the self-hosted GoTrue (ariom-infra server/supabase/matmaverse/compose.yml), which fetches
+# them from https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html. Guarded by
+# tests/email-templates-served.test.ts.
+COPY --from=build /app/supabase/templates ./dist/client/email-templates
 USER node
 EXPOSE 4401
 CMD ["node", "./dist/server/entry.mjs"]
