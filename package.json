@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "start": "node dist/server/entry.mjs",
     "astro": "astro",
     "check": "astro check",
     "lint": "eslint .",
@@ -16,9 +17,9 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@astrojs/node": "10.1.1",
     "@astrojs/react": "^5.0.4",
     "@astrojs/sitemap": "^3.7.2",
-    "@astrojs/vercel": "^10.0.7",
     "@eslint/config-helpers": "^0.6.0",
     "@fontsource-variable/nunito": "^5.2.7",
     "@radix-ui/react-slot": "^1.1.2",

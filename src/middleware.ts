@@ -23,7 +23,18 @@ function needsNoStore(pathname: string): boolean {
   );
 }
 
+/**
+ * The container liveness probe (compose healthcheck, app-deploy on the VPS). It
+ * skips the session lookup so a broken or missing Supabase configuration can never
+ * turn "the process serves HTTP" into a failed health check.
+ */
+const HEALTH_PATH = "/api/health";
+
 export const onRequest = defineMiddleware(async (context, next) => {
+  if (context.url.pathname === HEALTH_PATH) {
+    return next();
+  }
+
   const supabase = createClient(context.request.headers, context.cookies);
 
   if (supabase) {

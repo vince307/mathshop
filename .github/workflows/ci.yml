@@ -39,6 +39,9 @@ jobs:
       # redirects to ?error= instead of ?sent=1. Dropping it turned CI red while
       # the same suites passed locally, where mailpit runs by default.
       - name: Start Supabase (local stack — db + auth + rest + mailer)
+        # Pull the stack from Docker Hub: public.ecr.aws answers "toomanyrequests: Data limit exceeded" to runners.
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: >-
           npx supabase start -x
           realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
@@ -60,6 +63,39 @@ jobs:
           rm -f sb.env
       - name: Run per-account isolation test
         run: npm run test
+      # The built server (dist/server/entry.mjs, what the container runs) reached the way Caddy reaches it on the VPS:
+      # plain HTTP + Host/X-Forwarded-*. Form POSTs must not get 403 from Astro's origin check and the confirm e-mail's
+      # redirect must carry https://matmaverse.ariom.cloud (security.allowedDomains in astro.config.mjs). Reads the
+      # e-mail from mailpit, which is why it stays in the stack above.
+      - name: Check the origin behind the proxy (built Node server)
+        run: |
+          SUPABASE_KEY="$SUPABASE_ANON_KEY" HOST=127.0.0.1 PORT=4401 node dist/server/entry.mjs &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:4401/api/health && break; sleep 1; done
+          BASE_URL=http://127.0.0.1:4401 PUBLIC_ORIGIN=https://matmaverse.ariom.cloud \
+            MAILPIT_URL=http://127.0.0.1:54324 node scripts/check-proxy-origin.mjs
+
+  # The production image (Dockerfile), built on every run so a broken Dockerfile fails the PR. Nothing is pushed here:
+  # .github/workflows/deploy.yml builds and pushes ghcr.io/vince307/matmaverse:<sha> after CI is green on main
+  # (same cache, so that build is mostly cache hits).
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      # The VPS is amd64.
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          tags: ghcr.io/vince307/matmaverse:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # Browser-level journey gate (test-plan §3 Phase 5). Runs alongside `ci` (not
   # chained) so wall-clock stays bounded. Playwright's webServer starts
@@ -83,6 +119,9 @@ jobs:
       # mailpit included for the same reason as the `ci` job above — the e2e
       # recovery journey submits the real reset form and asserts the sent notice.
       - name: Start Supabase (local stack — db + auth + rest + mailer)
+        # Pull the stack from Docker Hub: public.ecr.aws answers "toomanyrequests: Data limit exceeded" to runners.
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: >-
           npx supabase start -x
           realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta

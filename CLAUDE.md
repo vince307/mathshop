@@ -16,13 +16,20 @@ The mockup sets directly under `assets/` are the **canonical UI/UX designs** —
 
 ## Deployment
 
-Target is **Vercel** — `astro.config.mjs` uses the `@astrojs/vercel` adapter (v10; SSR routes compile to Vercel Functions). The full decision, operational story, and risk register live in `@context/foundation/infrastructure.md`. The Cloudflare scaffold (adapter, `wrangler`, `wrangler.jsonc`) has been removed. Two non-obvious deploy gotchas captured there: pin the function region to the EU (`fra1`/`arn1`) — Vercel defaults to US, taxing the Polish audience + EU Supabase on every SSR request — and budget **Pro ($20/mo)**, since the Hobby tier is non-commercial-use only.
+Production is **https://matmaverse.ariom.cloud**: a Docker container (`Dockerfile`, `@astrojs/node` standalone, `node dist/server/entry.mjs`, port 4401) on the owner's VPS behind Caddy; Supabase stays hosted. Operational details (secrets in the server's env file, logs, the `ariom-infra` server side) live in `@context/foundation/infrastructure.md` → "Current production: VPS"; the rest of that file is the original Vercel research, kept as history. Non-obvious rules:
+
+- **`security.allowedDomains` in `astro.config.mjs` is load-bearing.** Caddy talks plain HTTP to the container; without it Astro sees `http://localhost:4401`, every form POST gets 403 from the origin check and signup e-mails redirect to localhost. `scripts/check-proxy-origin.mjs` (CI) guards it.
+- **`@astrojs/node` is pinned to `10.1.1`**: 10.1.2+ need Astro 6.4. Bump both together.
+- **Deploys only through CI**: `.github/workflows/deploy.yml` (after CI is green on `main`, or by hand with a full sha) builds `ghcr.io/vince307/matmaverse:<sha>` and runs `apps-deploy` on the VPS. Rollback: `ssh apps-deploy@<host> rollback matmaverse`, owner or CI only; agents never deploy or roll back by hand. There are no preview deploys.
+- `GET /api/health` is the container healthcheck: no Supabase, skipped by the middleware. Keep it that way.
 
 ## Commands
 
 - `npm run dev` — dev server (Astro/Node)
 - `npm run build` — production build (SSR)
 - `npm run preview` — preview the production build
+- `npm run start` — run the production build (`node dist/server/entry.mjs`; set `HOST`/`PORT`, e.g. `PORT=4401`)
+- `docker build -t matmaverse:local .` — the production image
 - `npm run lint` / `npm run lint:fix` — ESLint, type-checked rules
 - `npm run format` — Prettier (astro + tailwind plugins)
 

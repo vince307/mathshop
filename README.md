@@ -11,7 +11,7 @@ A modern, opinionated starter template for building fast, accessible web applica
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS framework
 - [Supabase](https://supabase.com/) - Authentication and backend-as-a-service
-- [Vercel](https://vercel.com/) - Deployment platform (SSR via the `@astrojs/vercel` adapter)
+- [@astrojs/node](https://docs.astro.build/en/guides/integrations-guide/node/) - Standalone Node server, shipped as a Docker image to a VPS
 
 ## Prerequisites
 
@@ -184,30 +184,30 @@ npm --prefix packages/code-reviewer run fixtures
 
 ## Deployment
 
-This project deploys to [Vercel](https://vercel.com/) via the `@astrojs/vercel` adapter (SSR routes compile to Vercel Functions). See `context/foundation/infrastructure.md` for the full decision and risk register.
+Production runs at **https://matmaverse.ariom.cloud**: a Docker container (`Dockerfile`, `@astrojs/node` standalone,
+port 4401) on the owner's VPS behind Caddy, with hosted Supabase. Details, secrets and rollback:
+`context/foundation/infrastructure.md` → "Current production: VPS".
 
-1. Install the CLI and link the project:
-
-```bash
-npm i -g vercel
-vercel login
-vercel link
-```
-
-2. Set secrets for each scope, then deploy:
+Run the production build locally:
 
 ```bash
-vercel env add SUPABASE_URL
-vercel env add SUPABASE_KEY
-vercel          # preview deploy
-vercel --prod   # promote to production
+npm run build
+HOST=127.0.0.1 PORT=4401 npm run start          # node dist/server/entry.mjs
+curl http://127.0.0.1:4401/api/health           # {"status":"ok"}
+docker build -t matmaverse:local .              # the production image
 ```
 
-Pin the function region to the EU (`fra1`/`arn1`) in Project Settings → Functions so SSR co-locates with EU users and Supabase. Vercel's Hobby tier is non-commercial-use only — budget Pro ($20/mo) for a real deployment.
+Deploys are automatic: `.github/workflows/deploy.yml` runs after CI is green on `main`, builds and pushes
+`ghcr.io/vince307/matmaverse:<sha>`, and deploys it over Tailscale through the server's `apps-deploy` command (which
+health-checks the new container and falls back to the last good image on its own). To redeploy or roll to a given
+commit, run the Deploy workflow by hand with its full sha. There are no preview deploys.
 
 ## CI
 
-GitHub Actions runs lint + build on every push and PR to `main`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push and PR to `main`: `astro check`, lint, build, the
+Vitest suites against a local Supabase stack, the origin-behind-proxy check (`scripts/check-proxy-origin.mjs` against
+the built server), the Playwright e2e suite, and a build of the Docker image. Configure `SUPABASE_URL` and
+`SUPABASE_KEY` as repository secrets for the build step.
 
 ## License
 
