@@ -17,7 +17,7 @@ dist
 assets/
 outputs/
 packages/
-# Tests, docs and Supabase config/migrations (applied by the Supabase CLI, not the app).
+# Tests, docs and Supabase config/migrations (migrations reach the server through the deploy job, not the image).
 tests
 e2e
 playwright-report
@@ -26,6 +26,8 @@ blob-report
 coverage
 context
 docs
-supabase
+supabase/*
+# Except the auth e-mail templates, which the image serves at /email-templates/ (see Dockerfile).
+!supabase/templates
 *.log
 .DS_Store

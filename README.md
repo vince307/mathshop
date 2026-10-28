@@ -122,10 +122,10 @@ SUPABASE_KEY=<anon-key>
 
 ### Email confirmation
 
-Local and production diverge deliberately (both declared in `supabase/config.toml`):
+Local and production diverge deliberately (local in `supabase/config.toml`, production in `ariom-infra`):
 
 - **Local**: `enable_confirmations = false` — users sign in immediately after sign-up; the test suite depends on this. To manually test the email round-trip, flip it to `true`, restart the stack (`npx supabase stop && npx supabase start`), sign up, and read the Polish email in the local test inbox (Mailpit) at <http://localhost:54324>; flip back afterwards.
-- **Production**: governed by the `[remotes.production]` block (confirmations ON, Brevo SMTP, Polish template from `supabase/templates/confirmation.html`), synced to the hosted project with `npx -y supabase@latest config push` — review the printed diff before confirming. The Brevo credentials come from `BREVO_SMTP_USER` / `BREVO_SMTP_KEY` in the pusher's environment, never from the repo. **Two push-safety rules:** export both vars before _any_ `config push` (the push syncs the whole auth config — unset vars would push empty SMTP credentials and silently break production email), and run the push only from an interactive terminal — **the CLI auto-confirms when stdin is not a TTY**, so a scripted push applies without showing you the diff.
+- **Production**: self-hosted Supabase on the VPS, configured in the `ariom-infra` repo (`server/supabase/matmaverse/compose.yml`: confirmations ON, SMTP from the Hostinger mailbox `hello@ariom.cloud` via `smtp.hostinger.com:465`, site URL and redirect allow-list; credentials in ariom-infra's `/opt/supabase/matmaverse/.env` on the server, never in this repo). GoTrue fetches the Polish templates from `https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html`, which the image serves from `supabase/templates/` (`Dockerfile`), so the templates still ship from this repo with every deploy. There is no `supabase config push` any more.
 
 ### Auth routes
 
@@ -185,7 +185,8 @@ npm --prefix packages/code-reviewer run fixtures
 ## Deployment
 
 Production runs at **https://matmaverse.ariom.cloud**: a Docker container (`Dockerfile`, `@astrojs/node` standalone,
-port 4401) on the owner's VPS behind Caddy, with hosted Supabase. Details, secrets and rollback:
+port 4401) on the owner's VPS behind Caddy, with self-hosted Supabase on the same VPS. The deploy job applies
+`supabase/migrations` before the new image goes live. Details, secrets and rollback:
 `context/foundation/infrastructure.md` → "Current production: VPS".
 
 Run the production build locally:

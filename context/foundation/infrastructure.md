@@ -17,7 +17,10 @@ Production moved off Vercel to the owner's VPS. Everything from **Recommendation
 2026-05-23 platform research, kept as history; where it disagrees with this section, this section wins.
 
 - **URL**: https://matmaverse.ariom.cloud (was https://mathshop.vercel.app). DNS points at the VPS; Caddy terminates
-  TLS and proxies to the container on `127.0.0.1:4401`. Supabase stays hosted (project `hozkukbsfdcrbszgdxbg`).
+  TLS and proxies to the container on `127.0.0.1:4401`.
+- **Supabase**: self-hosted on the same VPS since 2026-10 (stack `matmaverse-supabase`, configured in `ariom-infra`
+  `server/supabase/matmaverse/compose.yml`); the container reaches Kong at `http://kong:8000`. The hosted project
+  `hozkukbsfdcrbszgdxbg` is retired, and with it the free-tier auto-pause and the daily keep-alive workflow.
 - **Runtime**: `@astrojs/node` (pinned to `10.1.1`: 10.1.2+ import an API that only Astro 6.4 exports) in standalone
   mode, `node dist/server/entry.mjs` (`npm run start`). The image is built from `Dockerfile`
   (`node:22.14.0-bookworm-slim`, `USER node`, `PORT=4401`) and published as `ghcr.io/vince307/matmaverse:<commit sha>`.
@@ -29,18 +32,25 @@ Production moved off Vercel to the owner's VPS. Everything from **Recommendation
   healthcheck and by `app-deploy`.
 - **Deploy**: `.github/workflows/deploy.yml` runs after the CI workflow is green for a push to `main` (or by hand with
   a full sha): it builds and pushes the image, then over Tailscale runs the `apps-deploy` forced command on the VPS —
-  `status`, `login` (GHCR token on stdin), `deploy matmaverse <sha>` (pull, start, health check, automatic fallback to
+  `status`, `migrate matmaverse --dry-run` then `migrate matmaverse` (a ustar tar of `supabase/migrations` on stdin),
+  `migrations matmaverse` (prints the ledger), `login` (GHCR token on stdin), `deploy matmaverse <sha>` (pull, start, health check, automatic fallback to
   the last good image), `logout` — and finally checks `https://matmaverse.ariom.cloud/api/health`. The server side
   (compose file, `app-deploy`, Caddy) lives in the `ariom-infra` repo. There are no preview deploys.
 - **Rollback**: `ssh apps-deploy@<host> rollback matmaverse` (owner only) returns to the previous good image; or run
-  the Deploy workflow by hand with an older sha. Schema migrations still do not roll back with the code.
-- **Secrets**: `SUPABASE_URL`, `SUPABASE_KEY`, `PARENT_SESSION_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET`
-  live in `/opt/apps/matmaverse/.env` on the server (never in the image or the repo). GitHub repository secrets for the
-  deploy: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`; `CRON_SECRET`
-  for `.github/workflows/keep-alive.yml` must equal the server's.
-- **Supabase Auth URLs**: `[remotes.production.auth]` in `supabase/config.toml` carries `site_url` and the redirect
-  allow-list on the new host. It must be pushed (`supabase config push`) at the cut-over: the confirmation and
-  recovery e-mails link to `{{ .SiteURL }}/api/auth/confirm`.
+  the Deploy workflow by hand with an older sha. Schema migrations do not roll back with the code, so each one must
+  stay backward-compatible with the deploy already in production.
+- **Secrets**: `SUPABASE_URL`, `SUPABASE_KEY`, `PARENT_SESSION_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` live in
+  `/opt/apps/matmaverse/.env` on the server (never in the image or the repo). GitHub repository secrets for the
+  deploy: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`. No Supabase
+  secrets in GitHub: migrations run on the VPS through the forced command. `CRON_SECRET` is still in the `astro:env`
+  schema (optional) but unused: it only guards the `/api/keep-alive` route, which nothing calls since the keep-alive
+  workflow was removed. Unset, the route answers 401.
+- **Supabase Auth config**: `site_url`, the redirect allow-list, SMTP and confirmations live in the `ariom-infra`
+  compose file, not in `supabase/config.toml` (that file now configures only the local/CI stack). GoTrue fetches the
+  e-mail templates from `https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html`, served by the
+  image from `supabase/templates/` (`Dockerfile`); the e-mails link to `{{ .SiteURL }}/api/auth/confirm`.
+- **E-mail sending**: from the Hostinger mailbox `hello@ariom.cloud` (`smtp.hostinger.com:465`); the credentials live in
+  `/opt/supabase/matmaverse/.env` on the server (ariom-infra). Brevo (§Email Delivery below) is no longer used.
 - **Logs**: `journalctl CONTAINER_NAME=matmaverse-web-1` on the VPS.
 
 ## Recommendation
@@ -122,6 +132,8 @@ How Vercel actually operates day to day for this project. One concrete answer pe
 Researched 2026-06-26 — full 9-provider comparison, no-domain matrix, and sources in `context/changes/parent-signup-first-profile-and-start-screen/research.md` → "Follow-up Research".
 
 Transactional email (parent **email verification**, resend, future password reset) is sent via **Supabase Auth custom SMTP**, not the built-in mailer. Supabase's built-in SMTP only delivers to pre-authorized team addresses and is rate-limited to **2 messages/hour** (explicitly non-production), so a custom SMTP provider is **mandatory before launch**. Enabling custom SMTP raises the default to **30 messages/hour** (adjustable: Auth → Rate Limits).
+
+> **Superseded (2026-10):** production now sends from the Hostinger mailbox `hello@ariom.cloud`; see "Current production: VPS". The Brevo decision below is history.
 
 **Provider decision: Brevo.** For this profile — <1k emails/mo, free-tier preferred, EU data residency + a signable DPA preferred (Polish children's app), and **no sending domain yet** — Brevo is the only provider that satisfies all four at once: free (**300/day**), EU/GDPR with a signable DPA, officially Supabase-listed, **and uniquely able to send to real recipients with zero DNS** (it rewrites `From` → `@brevosend.com` until a domain is authenticated). SMTP settings for the Supabase dashboard: Host `smtp-relay.brevo.com`, Port `587` (STARTTLS), Username = Brevo login, Password = SMTP master key.
 

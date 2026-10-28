@@ -1,8 +1,9 @@
 <!--
   Password-reset (recovery) email template (Polish) for BOTH the local stack and
-  production — `supabase config push` uploads this file to the hosted project by
-  content_path (config.toml [auth.email.template.recovery]), so the environments
-  cannot drift.
+  production — locally by content_path (config.toml
+  [auth.email.template.recovery]); in production the image serves it at
+  /email-templates/recovery.html (Dockerfile) and the self-hosted GoTrue fetches it
+  from there, so the environments cannot drift.
 
   `next` is a LITERAL PATH, not `{{ .RedirectTo }}`. The confirm route's
   `safeNext` accepts only same-origin paths and falls back to /app for anything
