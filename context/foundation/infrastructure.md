@@ -42,12 +42,15 @@ Production moved off Vercel to the owner's VPS. Everything from **Recommendation
 - **Secrets**: `SUPABASE_URL`, `SUPABASE_KEY`, `PARENT_SESSION_SECRET` and `SUPABASE_SERVICE_ROLE_KEY` live in
   `/opt/apps/matmaverse/.env` on the server (never in the image or the repo). GitHub repository secrets for the
   deploy: `DEPLOY_HOST`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`. No Supabase
-  secrets in GitHub: migrations run on the VPS through the forced command. `CRON_SECRET` only matters to the `/api/keep-alive`
-  route, which nothing calls since the keep-alive workflow was removed.
-- **Supabase Auth config**: `site_url`, the redirect allow-list, SMTP (Brevo) and confirmations live in the `ariom-infra`
+  secrets in GitHub: migrations run on the VPS through the forced command. `CRON_SECRET` is still in the `astro:env`
+  schema (optional) but unused: it only guards the `/api/keep-alive` route, which nothing calls since the keep-alive
+  workflow was removed. Unset, the route answers 401.
+- **Supabase Auth config**: `site_url`, the redirect allow-list, SMTP and confirmations live in the `ariom-infra`
   compose file, not in `supabase/config.toml` (that file now configures only the local/CI stack). GoTrue fetches the
   e-mail templates from `https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html`, served by the
   image from `supabase/templates/` (`Dockerfile`); the e-mails link to `{{ .SiteURL }}/api/auth/confirm`.
+- **E-mail sending**: from the Hostinger mailbox `hello@ariom.cloud` (`smtp.hostinger.com:465`); the credentials live in
+  `/opt/supabase/matmaverse/.env` on the server (ariom-infra). Brevo (§Email Delivery below) is no longer used.
 - **Logs**: `journalctl CONTAINER_NAME=matmaverse-web-1` on the VPS.
 
 ## Recommendation
@@ -129,6 +132,8 @@ How Vercel actually operates day to day for this project. One concrete answer pe
 Researched 2026-06-26 — full 9-provider comparison, no-domain matrix, and sources in `context/changes/parent-signup-first-profile-and-start-screen/research.md` → "Follow-up Research".
 
 Transactional email (parent **email verification**, resend, future password reset) is sent via **Supabase Auth custom SMTP**, not the built-in mailer. Supabase's built-in SMTP only delivers to pre-authorized team addresses and is rate-limited to **2 messages/hour** (explicitly non-production), so a custom SMTP provider is **mandatory before launch**. Enabling custom SMTP raises the default to **30 messages/hour** (adjustable: Auth → Rate Limits).
+
+> **Superseded (2026-10):** production now sends from the Hostinger mailbox `hello@ariom.cloud`; see "Current production: VPS". The Brevo decision below is history.
 
 **Provider decision: Brevo.** For this profile — <1k emails/mo, free-tier preferred, EU data residency + a signable DPA preferred (Polish children's app), and **no sending domain yet** — Brevo is the only provider that satisfies all four at once: free (**300/day**), EU/GDPR with a signable DPA, officially Supabase-listed, **and uniquely able to send to real recipients with zero DNS** (it rewrites `From` → `@brevosend.com` until a domain is authenticated). SMTP settings for the Supabase dashboard: Host `smtp-relay.brevo.com`, Port `587` (STARTTLS), Username = Brevo login, Password = SMTP master key.
 

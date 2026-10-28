@@ -4,8 +4,10 @@ import { SUPABASE_URL, SUPABASE_KEY, CRON_SECRET } from "astro:env/server";
 export const prerender = false;
 
 /**
- * Supabase keep-alive ping, invoked daily by .github/workflows/keep-alive.yml
- * against production (https://matmaverse.ariom.cloud).
+ * Supabase keep-alive ping. Unused since 2026-10: production Supabase is
+ * self-hosted on the VPS and does not auto-pause, so the daily
+ * .github/workflows/keep-alive.yml caller was removed. Kept until a separate
+ * change deletes the route and its tests.
  *
  * The free-tier Supabase project auto-pauses after ~a week without API
  * activity, which takes production down (and, while it ran on Vercel, broke
@@ -17,7 +19,7 @@ export const prerender = false;
  * This shipped as a Vercel cron (vercel.json `crons`) and silently never ran:
  * Vercel points crons at the generated deployment URL, which Standard
  * Protection restricts, and a cron that gets a 302 stops there and logs
- * nothing. Hence the external scheduler — see the workflow's header comment.
+ * nothing. Hence the GitHub Actions scheduler that replaced it (removed 2026-10).
  *
  * Auth: the caller sends `Authorization: Bearer <CRON_SECRET>`. No secret
  * configured, or a mismatch → 401 (fails closed).

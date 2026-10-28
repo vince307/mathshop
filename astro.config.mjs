@@ -42,9 +42,9 @@ export default defineConfig({
       // (infrastructure.md), never in the browser. Optional so builds without it
       // don't fail; createAdminClient() fails closed (null → route 503).
       SUPABASE_SERVICE_ROLE_KEY: envField.string({ context: "server", access: "secret", optional: true }),
-      // Shared secret for the daily Supabase keep-alive ping (/api/keep-alive),
-      // sent as the Authorization bearer by .github/workflows/keep-alive.yml.
-      // Production server env file; must match the CRON_SECRET repository secret.
+      // Bearer secret for /api/keep-alive. Unused since production Supabase is
+      // self-hosted on the VPS (no auto-pause): the scheduled keep-alive workflow
+      // was removed and nothing calls the route.
       // Optional so builds without it don't fail; the route answers 401 when
       // it's absent (fails closed).
       CRON_SECRET: envField.string({ context: "server", access: "secret", optional: true }),

@@ -125,7 +125,7 @@ SUPABASE_KEY=<anon-key>
 Local and production diverge deliberately (local in `supabase/config.toml`, production in `ariom-infra`):
 
 - **Local**: `enable_confirmations = false` — users sign in immediately after sign-up; the test suite depends on this. To manually test the email round-trip, flip it to `true`, restart the stack (`npx supabase stop && npx supabase start`), sign up, and read the Polish email in the local test inbox (Mailpit) at <http://localhost:54324>; flip back afterwards.
-- **Production**: self-hosted Supabase on the VPS, configured in the `ariom-infra` repo (`server/supabase/matmaverse/compose.yml`: confirmations ON, Brevo SMTP, site URL and redirect allow-list; credentials in the server's env file, never in this repo). GoTrue fetches the Polish templates from `https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html`, which the image serves from `supabase/templates/` (`Dockerfile`), so the templates still ship from this repo with every deploy. There is no `supabase config push` any more.
+- **Production**: self-hosted Supabase on the VPS, configured in the `ariom-infra` repo (`server/supabase/matmaverse/compose.yml`: confirmations ON, SMTP from the Hostinger mailbox `hello@ariom.cloud` via `smtp.hostinger.com:465`, site URL and redirect allow-list; credentials in ariom-infra's `/opt/supabase/matmaverse/.env` on the server, never in this repo). GoTrue fetches the Polish templates from `https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html`, which the image serves from `supabase/templates/` (`Dockerfile`), so the templates still ship from this repo with every deploy. There is no `supabase config push` any more.
 
 ### Auth routes
 
