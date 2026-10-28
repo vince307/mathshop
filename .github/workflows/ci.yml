@@ -39,6 +39,9 @@ jobs:
       # redirects to ?error= instead of ?sent=1. Dropping it turned CI red while
       # the same suites passed locally, where mailpit runs by default.
       - name: Start Supabase (local stack — db + auth + rest + mailer)
+        # Pull the stack from Docker Hub: public.ecr.aws answers "toomanyrequests: Data limit exceeded" to runners.
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: >-
           npx supabase start -x
           realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
@@ -116,6 +119,9 @@ jobs:
       # mailpit included for the same reason as the `ci` job above — the e2e
       # recovery journey submits the real reset form and asserts the sent notice.
       - name: Start Supabase (local stack — db + auth + rest + mailer)
+        # Pull the stack from Docker Hub: public.ecr.aws answers "toomanyrequests: Data limit exceeded" to runners.
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: docker.io
         run: >-
           npx supabase start -x
           realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
