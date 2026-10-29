@@ -1,16 +1,51 @@
 ---
+import { WORLDS } from "@/data/worlds";
+import { DECOR_COIN, DECOR_COIN_STACK, DECOR_CHART, DECOR_RECEIPT, DECOR_PATH } from "@/data/marketing-art";
 import { t } from "@/i18n";
-import { ShoppingCart, ShieldCheck, Globe, TrendingUp } from "lucide-react";
+import BrandRow from "@/components/marketing/BrandRow.astro";
+import FeatureList from "@/components/marketing/FeatureList.astro";
+import SecurityNote from "@/components/marketing/SecurityNote.astro";
 
 /**
- * Two-column auth layout (mockup `01`): a left marketing panel — brand,
- * hero, three feature cards, four world cards, decorative coins, security
- * footer — beside a right-hand slot for the page's form card. Built once
- * here; reused by signup in Phase 5. Pure presentation, no behavior.
+ * Two-column auth layout (mockup `01`): a left marketing panel — brand, hero,
+ * three feature blocks, one card per world, security note — beside a right-hand
+ * slot for the page's form card, over a layer of ambient decoration. Built once
+ * here; reused by signup, password reset and update-password. Pure presentation,
+ * no behavior.
  *
  * Responsive: two columns on `lg+`; below that it stacks to a single column
  * (form first, then the marketing essentials). Marketing copy comes from
- * `t.marketing`; illustrations from committed `public/illustrations/` assets.
+ * `t.marketing`; illustrations from committed `public/illustrations/auth/` assets
+ * via `src/data/marketing-art.ts`.
+ *
+ * Brand, features and the security note are shared components — `Welcome.astro`
+ * renders the same three, so the signed-out product cannot present itself two
+ * different ways. The **world strip below is deliberately NOT one of them**: this
+ * panel runs it `hidden lg:grid grid-cols-3` while the landing page runs it
+ * `grid-cols-2` at every width, and the two column counts answer to different
+ * layouts. Sharing it would mean a component whose every dimension is a prop.
+ *
+ * The world strip maps `WORLDS` directly rather than a curated copy — a second
+ * list is what let this panel advertise four worlds while the app shipped six.
+ * Its column count is therefore a FUNCTION of that list: `grid-cols-3` holds six
+ * as two clean rows. Growing `WORLDS` past six means revisiting this class, and
+ * `e2e/marketing-worlds.spec.ts` is what makes that impossible to forget.
+ *
+ * **The grid is top-aligned, not centred.** The mockup's card starts near the top
+ * of the page and is tall; vertically centring it is what made the built screen
+ * read smaller and looser than the design.
+ *
+ * **The decoration layer is one element, and every rule about it is load-bearing.**
+ * `aria-hidden` and `alt=""` keep it out of the accessibility tree;
+ * `pointer-events-none` keeps it from swallowing a click on the card;
+ * `hidden lg:block` keeps it off phones, where the mockup has none of it and the
+ * viewport has no room; `z-0` against the content wrapper's `z-10` keeps it
+ * behind the content — NOT `-z-10`, which sends it behind this container's own
+ * painted `bg-background` and renders the whole layer invisible; and
+ * `overflow-hidden` on the outer container is what stops a decoration positioned
+ * near the viewport edge from scrolling the body sideways at narrow desktop
+ * widths. Four routes share this layer — signin, signup, reset, update — rather
+ * than each page laying down its own, which is how two of them would drift.
  */
 interface Props {
   /** Hero heading, e.g. "Panel rodzica". */
@@ -22,82 +57,71 @@ interface Props {
 }
 
 const { heading, accent, tagline = t.marketing.heroTagline } = Astro.props;
-const featureIcons = [ShieldCheck, Globe, TrendingUp];
 ---
 
-<div class="bg-background min-h-screen px-4 py-8 sm:px-6 lg:px-10">
-  <div class="mx-auto w-full max-w-6xl">
-    {/* Brand */}
-    <div class="mb-8 flex items-center justify-center gap-3 lg:justify-start">
-      <span
-        class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
-      >
-        <ShoppingCart className="size-5" />
-      </span>
-      <div>
-        <p class="text-foreground text-lg leading-none font-extrabold">{t.brand}</p>
-        <p class="text-muted-foreground mt-1 text-xs">{t.marketing.brandTagline}</p>
-      </div>
-    </div>
+<div class="bg-background relative flex min-h-screen flex-col overflow-hidden px-4 py-8 sm:px-6 lg:px-10">
+  {/* Ambient decoration — see the component header. */}
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 z-0 hidden lg:block">
+    <img src={DECOR_PATH} alt="" class="absolute top-16 left-[38%] w-72 opacity-70" />
+    <img src={DECOR_CHART} alt="" class="absolute top-24 left-[52%] w-28 opacity-80" />
+    <img src={DECOR_COIN} alt="" class="absolute top-64 left-[42%] w-16 rotate-6" />
+    <img src={DECOR_RECEIPT} alt="" class="absolute -top-4 right-0 w-52 opacity-60" />
+    <img src={DECOR_COIN_STACK} alt="" class="absolute right-6 bottom-4 w-24" />
+  </div>
 
-    <div class="grid items-center gap-10 lg:grid-cols-2">
+  <div class="relative z-10 mx-auto w-full max-w-6xl">
+    <BrandRow size="lg" class="mb-8 justify-center lg:justify-start" />
+
+    <div class="grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-16">
       {/* Marketing panel */}
       <section class="relative order-2 lg:order-1">
-        {/* Decorative coin */}
-        <img
-          src="/illustrations/coin.png"
-          alt=""
-          aria-hidden="true"
-          class="pointer-events-none absolute -top-6 right-4 hidden size-14 rotate-12 lg:block"
-        />
-
+        {
+          /* The page's ONLY <h1>, on all four AuthShell routes. It sits OUTSIDE
+            the `hidden lg:block` block below on purpose: `display: none` drops a
+            subtree from the accessibility tree entirely, so a heading inside it
+            names nothing below `lg`. `sr-only lg:not-sr-only` keeps it in the
+            tree at every width while painting it only where the mockup draws it.
+            The cards' own headings are <h2> for the same reason — see the note
+            in each page. Measured before this change: /auth/signup had ZERO
+            headings at 1536 because its only <h1> was inside a `lg:hidden`
+            block and this hero was a <p>. */
+        }
+        <h1 class="text-foreground sr-only text-5xl font-extrabold tracking-tight lg:not-sr-only xl:text-7xl">
+          {heading}
+        </h1>
         <div class="hidden lg:block">
-          <p class="text-foreground text-4xl font-extrabold tracking-tight">{heading}</p>
-          <p class="text-primary mt-1 text-2xl font-bold">{accent}</p>
-          <p class="text-muted-foreground mt-3 text-base">{tagline}</p>
+          <p class="text-primary mt-2 text-4xl font-bold xl:text-5xl">{accent}</p>
+          <p class="text-muted-foreground mt-4 max-w-sm text-lg">{tagline}</p>
         </div>
 
-        {/* Feature cards */}
-        <div class="mt-8 grid gap-4 sm:grid-cols-3">
-          {
-            t.marketing.features.map((feature, i) => {
-              const Icon = featureIcons[i];
-              return (
-                <div class="bg-card border-border rounded-2xl border p-4 shadow-sm">
-                  <span class="bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl">
-                    <Icon className="size-5" />
-                  </span>
-                  <p class="text-foreground mt-3 text-sm font-bold">{feature.title}</p>
-                  <p class="text-muted-foreground mt-1 text-xs leading-snug">{feature.description}</p>
-                </div>
-              );
-            })
-          }
-        </div>
+        <FeatureList class="mt-6 grid-cols-3 lg:mt-10" />
 
         {/* World cards (desktop only — mobile mockup omits them) */}
-        <div class="mt-6 hidden grid-cols-4 gap-3 lg:grid">
+        <div class="mt-6 hidden grid-cols-3 gap-3 lg:grid">
           {
-            t.marketing.worlds.map((world) => (
+            WORLDS.map((world) => (
               <div class="bg-card border-border overflow-hidden rounded-2xl border shadow-sm">
                 <img src={world.image} alt={world.name} loading="lazy" class="aspect-square w-full object-cover" />
-                <p class="text-foreground px-2 py-2 text-center text-xs font-semibold">{world.name}</p>
+                <p class="text-foreground px-2 py-2.5 text-center text-sm font-semibold">{world.name}</p>
               </div>
             ))
           }
         </div>
 
-        {/* Security footer */}
-        <div class="text-muted-foreground mt-6 flex items-center justify-center gap-2 text-xs lg:justify-start">
-          <ShieldCheck className="text-primary size-4 shrink-0" />
-          {t.marketing.security}
-        </div>
+        <SecurityNote class="mt-6" />
       </section>
 
-      {/* Form slot */}
-      <div class="order-1 mx-auto w-full max-w-md lg:order-2">
+      {/* Form slot — `max-w-auth-card` is the mockup's own 542 px (global.css). */}
+      <div class="max-w-auth-card order-1 mx-auto w-full lg:order-2">
         <slot />
       </div>
     </div>
+
+    {
+      /* Full-width footer under BOTH columns — mockup 02's trust-badge row runs
+        the width of the page, not the width of the card. Empty on every route
+        that passes nothing, so the markup costs the other three nothing. */
+    }
+    <slot name="footer" />
   </div>
 </div>

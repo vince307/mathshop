@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import { config as loadEnv } from "dotenv";
+import { touchTestMatch } from "./e2e/touch-specs";
 
 // E2E runs against `npm run dev` (:4321) + the local Supabase stack. Credentials
 // come from `.env.test` (same file the vitest suite uses; copy `.env.test.example`,
@@ -18,11 +19,23 @@ for (const name of ["SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_
   }
 }
 
-const BASE_URL = "http://localhost:4321";
+// Port is overridable so two checkouts/worktrees can run e2e side by side. With
+// `reuseExistingServer` on, a dev server left running by another checkout would
+// otherwise be silently reused and the suite would test THAT tree, not this one.
+//
+// Choosing a port EXPLICITLY is therefore also a statement that reuse is unwanted:
+// the whole point of E2E_PORT is isolation, and a stale server squatting on the
+// chosen port defeats it silently. Landing the follow-up accepted (and never
+// landed) in the world-progression-stages review —
+// `context/archive/2026-08-22-world-progression-stages/follow-ups/review-fixes.md:115-116`.
+const EXPLICIT_PORT = process.env.E2E_PORT !== undefined;
+const PORT = process.env.E2E_PORT ?? "4321";
+const BASE_URL = `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "./e2e",
-  // Backend-identity probe — fails loudly if a reused dev server points at a
+  // Precondition probes — fail loudly, before any spec, if a reused dev server is
+  // serving Astro's dev toolbar (it occludes the mobile bottom nav) or points at a
   // different Supabase stack than .env.test (see e2e/global-setup.ts).
   globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
@@ -46,16 +59,34 @@ export default defineConfig({
     },
     {
       // Touch/tablet viewport — Chromium-engine preset (NOT an iPad preset; those
-      // pin WebKit). Scoped to the gameplay spec per the plan's 2×-runtime decision.
+      // pin WebKit). Deliberately scoped to the specs whose risk is viewport-shaped
+      // (the plan's 2×-runtime decision), not to the whole suite. EXTEND the list
+      // in `e2e/touch-specs.ts` when adding one; never replace an entry.
+      //
+      // The list and the anchoring both live there now, because dropping a name
+      // does NOT go red here — it quietly runs fewer tests and still exits 0, as
+      // the run of 2026-08-27 proved. `tests/e2e-touch-project.test.ts` is the
+      // guard that turns that into a red unit test; it also asserts the anchoring
+      // still rejects a near-miss. Verify any edit with `npx playwright test
+      // --project=touch --list` as well.
       name: "touch",
-      testMatch: /gameplay-restore\.spec\.ts/,
+      testMatch: touchTestMatch(),
       use: { ...devices["Galaxy Tab S4"] },
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: `npm run dev -- --port ${PORT}`,
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    // Reuse is a LOCAL convenience only, and it is the reason the `env` block below
+    // is not self-enforcing: on the reuse path Playwright returns before it ever
+    // launches a process, so NONE of these variables are applied — availability is
+    // just an HTTP probe of `url`, which any `npm run dev` satisfies. That is why
+    // e2e/global-setup.ts asserts the dev toolbar is actually absent rather than
+    // trusting ASTRO_DEV_TOOLBAR_DISABLED to have reached the server.
+    //
+    // `!EXPLICIT_PORT` closes the worktree half (see EXPLICIT_PORT above); the probe
+    // closes the default-:4321 half, which this flag deliberately does NOT cover.
+    reuseExistingServer: !process.env.CI && !EXPLICIT_PORT,
     timeout: 120_000,
     env: {
       // The app reads SUPABASE_KEY (anon) via astro:env/server; .env.test carries
@@ -65,6 +96,11 @@ export default defineConfig({
       PARENT_SESSION_SECRET: process.env.PARENT_SESSION_SECRET ?? "",
       // Without the service-role key the account-deletion endpoint answers 503.
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+      // Astro's dev toolbar is a fixed bottom-centre overlay that intercepts
+      // clicks on the mobile bottom nav. Which tab it covers depends on how many
+      // tabs there are, so it silently breaks a different test each time the nav
+      // grows. Off for the harness only.
+      ASTRO_DEV_TOOLBAR_DISABLED: "true",
     },
   },
 });

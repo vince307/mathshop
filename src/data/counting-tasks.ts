@@ -3,31 +3,17 @@
  * (mirrors `src/data/leveling.ts`) so the `/app/task` SSR loader and the
  * counting island share one source of truth. The reusable contract S-03 /
  * S-04 build on: `generate → render → answer → isCorrect`.
+ *
+ * The count band is now a function of the continuous difficulty `d`
+ * (`src/data/adaptive.ts`) rather than a three-tier lookup — `d = 0` reproduces
+ * the old tier-1 band exactly, so this is a rewrite of *where the numbers come
+ * from*, not of what they are.
  */
 import type { CountingScenario, CountingTask } from "@/types";
-
-/**
- * Inclusive count range per difficulty tier. Tiers 1–2 are the grades 1–2 band
- * (≤ 20, FR-007); tier 3 (S-08) widens the upper cohort (age 9) to ≤ 25 — still
- * concrete/tappable, not a formal grade-3 surface. First-guess, tunable.
- */
-export const COUNT_RANGE: Record<1 | 2 | 3, { min: number; max: number }> = {
-  1: { min: 3, max: 10 },
-  2: { min: 6, max: 20 },
-  3: { min: 10, max: 25 },
-};
+import { clampDifficulty, clampToBand, countRangeFor } from "@/data/adaptive";
 
 /** Count at/below which objects are scattered; above it they group into rows of 5 (subitizing aid). Shared with the change-making generator. */
 export const SCATTER_MAX = 5;
-
-/**
- * Map a profile's stored `starting_level` (1|2|3, see `deriveStartingLevel`) to a
- * counting tier. Out-of-range values clamp into the band so generation can never
- * produce an out-of-band count.
- */
-export function tierForLevel(startingLevel: number): 1 | 2 | 3 {
-  return startingLevel >= 3 ? 3 : startingLevel >= 2 ? 2 : 1;
-}
 
 /** Default count picker — inclusive on both ends. Injectable so tests stay deterministic. */
 function defaultPickCount(min: number, max: number): number {
@@ -35,17 +21,18 @@ function defaultPickCount(min: number, max: number): number {
 }
 
 /**
- * Build a concrete `count_till` task for a child at `startingLevel`. The count
- * is drawn within the tier's band and clamped, so callers can't produce an
- * out-of-band task. `pickCount` is injectable for deterministic tests.
+ * Build a concrete `count_till` task at difficulty `d`. The count is drawn within
+ * the band `countRangeFor(d)` and clamped, so callers can't produce an
+ * out-of-band task however the picker misbehaves. `pickCount` is injectable for
+ * deterministic tests — and, from P4, for seeded client-side generation.
  */
 export function generateCountingTask(
-  startingLevel: number,
+  difficulty: number,
   pickCount: (min: number, max: number) => number = defaultPickCount,
 ): CountingTask {
-  const difficultyTier = tierForLevel(startingLevel);
-  const { min, max } = COUNT_RANGE[difficultyTier];
-  const targetCount = Math.min(max, Math.max(min, Math.round(pickCount(min, max))));
+  const d = clampDifficulty(difficulty);
+  const { min, max } = countRangeFor(d);
+  const targetCount = clampToBand(pickCount(min, max), min, max);
   const scenario: CountingScenario = "count_till";
   return {
     type: "counting",
@@ -53,7 +40,7 @@ export function generateCountingTask(
     objectType: "coin",
     targetCount,
     arrangement: targetCount <= SCATTER_MAX ? "scatter" : "rows_of_5",
-    difficultyTier,
+    difficulty: d,
   };
 }
 

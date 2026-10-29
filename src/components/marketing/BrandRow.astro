@@ -1,0 +1,55 @@
+---
+import { BRAND_SYMBOL } from "@/data/marketing-art";
+import { t } from "@/i18n";
+
+/**
+ * The brand lockup every signed-out surface opens with (auth-v2 mockup `01`,
+ * top-left): shop-front symbol, `t.brand` wordmark, tagline beneath.
+ *
+ * Extracted because `AuthShell` and `Welcome` each hand-rolled it — same markup,
+ * two files, nothing keeping them in step. They differ only in scale, which is
+ * what `size` is for: `sm` for the landing header, where the lockup shares a row
+ * with the sign-in/sign-up buttons, `lg` for the auth marketing panel, where it
+ * heads the page.
+ *
+ * The symbol is an `<img>` because it is Group A art — a fixed-colour
+ * illustration, never recoloured by a caller (`src/data/marketing-art.ts`). It is
+ * also **not square**: a 96×80 viewBox, so it is sized by width with `h-auto`.
+ * Square `size-*` classes squash the shop's awning, which is how the retired
+ * atomic-pack symbol was sized.
+ *
+ * The mockup's own wordmark reads "MathMarket"; the product's is `t.brand`. Only
+ * the symbol is adopted — the name is not a design decision to take from a stale
+ * mockup.
+ */
+interface Props {
+  /** Lockup scale. `sm` (default) for a header row, `lg` to head a page. */
+  size?: "sm" | "lg";
+  class?: string;
+}
+
+const { size = "sm", class: className } = Astro.props;
+
+const SCALE = {
+  sm: { symbol: "w-11", name: "text-lg", tagline: "text-xs" },
+  lg: { symbol: "w-16", name: "text-2xl", tagline: "text-sm" },
+} as const;
+
+const scale = SCALE[size];
+---
+
+<div class:list={["flex items-center gap-3", className]}>
+  {/* Empty alt: the wordmark beside it already names the product. */}
+  <img
+    src={BRAND_SYMBOL}
+    alt=""
+    aria-hidden="true"
+    width="96"
+    height="80"
+    class:list={["h-auto shrink-0", scale.symbol]}
+  />
+  <div>
+    <p class:list={["text-foreground leading-none font-extrabold", scale.name]}>{t.brand}</p>
+    <p class:list={["text-muted-foreground mt-1", scale.tagline]}>{t.marketing.brandTagline}</p>
+  </div>
+</div>

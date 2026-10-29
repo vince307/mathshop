@@ -1,9 +1,33 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { buttonVariants } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import BrandRow from "@/components/marketing/BrandRow.astro";
+import TrustBadges from "@/components/marketing/TrustBadges.astro";
+import {
+  AuthEmailIcon,
+  AuthRefreshIcon,
+  AuthArrowRightIcon,
+  AuthUserPlusIcon,
+  AuthChevronRightIcon,
+} from "@/components/icons/authIcons";
+import { HERO_EMAIL, BADGE_CHECK, DECOR_PATH, DECOR_CHART, DECOR_RECEIPT } from "@/data/marketing-art";
 import { t } from "@/i18n";
 
+/**
+ * Email-verification screen (mockup `03-email-verification-web`).
+ *
+ * The only auth route that does NOT use `AuthShell` — its mockup is a single
+ * centred card, not a two-column split — so it lays down its own decoration
+ * layer under the same rules the shell applies. Sharing that layer would mean a
+ * component whose every offset is a prop; the two page geometries genuinely
+ * differ.
+ *
+ * **Action order deliberately departs from the mockup.** The mockup's primary is
+ * "Otwórz pocztę", an action this product has no way to perform, and it puts the
+ * secondary "Wyślij ponownie" beneath. Here the resend IS the page's job, so it
+ * stays first, and the primary is the continue link. Same two controls, same
+ * treatment, swapped emphasis — recorded rather than silently "fixed".
+ */
 const email = Astro.url.searchParams.get("email");
 const resent = Astro.url.searchParams.get("resent") === "1";
 const resendError = Astro.url.searchParams.get("error");
@@ -13,79 +37,159 @@ const resendError = Astro.url.searchParams.get("error");
 // post-signup flow always carries ?email= and shows the check-your-email panel.
 const isAutoConfirmed = import.meta.env.DEV && !email;
 const content = isAutoConfirmed ? t.confirmEmail.autoConfirmed : t.confirmEmail.checkEmail;
+const canResend = !!email && !isAutoConfirmed;
 ---
 
 <Layout title={content.heading}>
-  <div class="bg-background flex min-h-screen flex-col items-center justify-center p-4">
-    {/* Brand */}
-    <div class="mb-8 flex items-center gap-3">
-      <span
-        class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
-      >
-        <ShoppingCart className="size-5" />
-      </span>
-      <div class="text-left">
-        <p class="text-foreground text-lg leading-none font-extrabold">{t.brand}</p>
-        <p class="text-muted-foreground mt-1 text-xs">{t.marketing.brandTagline}</p>
-      </div>
+  <div
+    class="bg-background relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-8 sm:px-6"
+  >
+    {
+      /* Ambient decoration. Same contract as `AuthShell`'s layer: `aria-hidden`
+        and `alt=""` keep it out of the a11y tree, `pointer-events-none` keeps it
+        from swallowing a click, `hidden lg:block` keeps it off phones, `z-0`
+        against the content's `z-10` keeps it behind (NOT `-z-10`, which would
+        put it behind this container's own painted background and make the whole
+        layer invisible), and `overflow-hidden` above stops an overhanging piece
+        scrolling the body sideways. */
+    }
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 z-0 hidden lg:block">
+      <img src={DECOR_PATH} alt="" class="absolute top-12 left-1/3 w-80 opacity-70" />
+      <img src={DECOR_CHART} alt="" class="absolute top-40 left-8 w-32 opacity-70" />
+      <img src={DECOR_RECEIPT} alt="" class="absolute top-24 right-4 w-56 opacity-60" />
     </div>
 
-    <div
-      class="bg-card text-card-foreground border-border w-full max-w-md rounded-2xl border p-8 text-center shadow-sm"
-    >
-      <div class="mb-4 text-5xl">{content.emoji}</div>
-      <h1 class="text-foreground mb-3 text-2xl font-bold">
-        {content.heading}
-      </h1>
-      <p class="text-muted-foreground mb-4">{content.description}</p>
+    <div class="relative z-10 flex w-full max-w-4xl flex-col items-center">
+      <BrandRow size="lg" class="mb-8" />
 
       {
-        email && !isAutoConfirmed && (
-          <p class="text-muted-foreground mb-6 text-sm break-all">
-            {t.confirmEmail.checkEmail.sentToPrefix} <span class="text-foreground font-medium">{email}</span>
-          </p>
-        )
+        /* Wide two-panel card (mockup `03`): the mail moment on the left, what to
+          do on the right. Stacks to one column below `sm`. */
       }
+      <div class="bg-card text-card-foreground border-border shadow-mm-card w-full rounded-3xl border p-6 sm:p-8">
+        <div class="grid items-center gap-8 sm:grid-cols-2">
+          {
+            /* The envelope hero. It MUST stay on this `bg-card` surface: its white
+              letter is keyed out of the PNG, so on the pale page background the
+              hole would read as a pale rectangle (`slice-map.md`). */
+          }
+          <div class="flex justify-center">
+            <img src={HERO_EMAIL} alt="" aria-hidden="true" width="430" height="400" class="h-auto w-72 max-w-full" />
+          </div>
 
-      {
-        resent && (
-          <p class="mb-4 rounded-lg border border-green-600/30 bg-green-50 px-3 py-2 text-sm text-green-700">
-            {t.confirmEmail.checkEmail.resentNotice}
-          </p>
-        )
-      }
-
-      {
-        resendError && (
-          <p class="border-destructive/30 text-destructive mb-4 rounded-lg border bg-red-50 px-3 py-2 text-sm">
-            {resendError}
-          </p>
-        )
-      }
-
-      {
-        email && !isAutoConfirmed && (
-          <form method="POST" action="/api/auth/resend" class="mb-6">
-            <input type="hidden" name="email" value={email} />
-            <button
-              type="submit"
-              class:list={buttonVariants({ variant: "outline", size: "lg", className: "w-full font-medium" })}
+          <div class="text-center sm:text-left">
+            {/* The mockup's small green status pill above the heading. */}
+            <span
+              class="bg-success/10 text-success mb-4 inline-flex size-12 items-center justify-center rounded-full"
+              aria-hidden="true"
             >
-              {t.confirmEmail.checkEmail.resendButton}
-            </button>
-          </form>
-        )
-      }
+              <AuthEmailIcon className="size-6" />
+            </span>
+
+            <h1 class="text-foreground text-3xl font-extrabold">{content.heading}</h1>
+            <p class="text-muted-foreground mt-3">{content.description}</p>
+
+            {
+              canResend && (
+                <p class="text-muted-foreground mt-3 text-sm break-all">
+                  {t.confirmEmail.checkEmail.sentToPrefix} <span class="text-foreground font-medium">{email}</span>
+                </p>
+              )
+            }
+
+            {
+              resent && (
+                <p
+                  role="status"
+                  class="border-success/30 bg-success/10 text-success mt-4 rounded-xl border px-3 py-2 text-sm font-semibold"
+                >
+                  {t.confirmEmail.checkEmail.resentNotice}
+                </p>
+              )
+            }
+
+            {
+              resendError && (
+                <p
+                  role="alert"
+                  class="border-destructive/30 text-destructive mt-4 rounded-xl border bg-red-50 px-3 py-2 text-sm"
+                >
+                  {resendError}
+                </p>
+              )
+            }
+
+            {
+              canResend && (
+                <form method="POST" action="/api/auth/resend" class="mt-5">
+                  {/* Direct child of the form — a hidden input inside the <button>
+                      is an invalid content model and puts the resend at risk. */}
+                  <input type="hidden" name="email" value={email} />
+                  <button
+                    type="submit"
+                    class:list={buttonVariants({
+                      variant: "outline",
+                      size: "lg",
+                      className:
+                        "bg-card border-primary text-primary hover:bg-primary/5 hover:text-primary h-14 w-full",
+                    })}
+                  >
+                    <AuthRefreshIcon className="size-5" />
+                    {t.confirmEmail.checkEmail.resendButton}
+                  </button>
+                </form>
+              )
+            }
+
+            <a
+              href="/auth/signin"
+              class:list={[buttonVariants({ variant: "default", size: "lg" }), "mt-3 h-14 w-full font-medium"]}
+            >
+              {content.linkText}
+              <AuthArrowRightIcon className="size-5" />
+            </a>
+          </div>
+        </div>
+
+        {/* Next step + why it matters — the mockup's two footer panels */}
+        <div class="border-border mt-8 grid gap-4 border-t pt-6 sm:grid-cols-2">
+          <div class="bg-success/10 flex items-center gap-3 rounded-2xl p-4">
+            <span class="bg-card text-success inline-flex size-10 shrink-0 items-center justify-center rounded-full">
+              <AuthUserPlusIcon className="size-5" />
+            </span>
+            <p class="text-muted-foreground flex-1 text-sm">
+              {t.confirmEmail.nextStepLabel}
+              <span class="text-success-strong block font-bold">{t.confirmEmail.nextStepValue}</span>
+            </p>
+            <AuthChevronRightIcon className="text-success size-5 shrink-0" />
+          </div>
+          <div class="bg-primary/5 flex items-center gap-3 rounded-2xl p-4">
+            <span class="bg-card inline-flex size-10 shrink-0 items-center justify-center rounded-full">
+              <img src={BADGE_CHECK} alt="" aria-hidden="true" width="32" height="32" class="size-6" />
+            </span>
+            <p class="text-sm">
+              <span class="text-foreground block font-bold">{t.confirmEmail.protectsTitle}</span>
+              <span class="text-muted-foreground">{t.confirmEmail.protectsBody}</span>
+            </p>
+          </div>
+        </div>
+
+        {
+          !isAutoConfirmed && (
+            <p class="text-muted-foreground mt-6 text-center text-xs leading-relaxed">
+              {t.confirmEmail.checkEmail.troubleHint}
+            </p>
+          )
+        }
+      </div>
 
       {
-        !isAutoConfirmed && (
-          <p class="text-muted-foreground mb-4 text-xs leading-relaxed">{t.confirmEmail.checkEmail.troubleHint}</p>
-        )
+        /* `trustVerify`, not `trustSignup`: this route renders no `FeatureList`,
+          so mockup 03's own wording — which opens with "Bezpieczna nauka", also
+          `features[0].title` — cannot collide here. `tests/marketing-labels.test.ts`
+          holds that. */
       }
-
-      <a href="/auth/signin" class="text-primary text-sm font-medium hover:underline">
-        {content.linkText}
-      </a>
+      <TrustBadges items={t.marketing.trustVerify} class="mt-10 w-full" />
     </div>
   </div>
 </Layout>

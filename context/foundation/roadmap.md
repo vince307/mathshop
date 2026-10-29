@@ -3,7 +3,7 @@ project: MathShop
 version: 1
 status: draft
 created: 2026-07-01
-updated: 2026-07-08
+updated: 2026-08-26
 prd_version: 3
 main_goal: market-feedback
 top_blocker: capacity
@@ -46,7 +46,9 @@ MathShop teaches math to Polish children (6–9) by framing every operation as r
 
 ## Streams
 
-Navigation aid — groups items that share a Prerequisites chain. Canonical ordering lives in the dependency graph below; this table is the proposed reading order across parallel tracks. Because the #1 blocker is **capacity**, the parallel tracks (B, C, D) matter: their `ready` heads (S-08, S-11, S-12) can be picked up alongside the economy chain.
+Navigation aid — groups items that share a Prerequisites chain; the proposed reading order across parallel tracks at the time this roadmap was written.
+
+> **Historical.** Every stream below has fully landed. The `ready now` / `ready capacity lever` notes in the table describe the sequencing decision made under `top_blocker: capacity`, not work available today — see `## Backlog Handoff`.
 
 | Stream | Theme                    | Chain                                                          | Note                                                                                       |
 | ------ | ------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -251,22 +253,15 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                    | Suggested issue title                                                  | Ready for `/10x-plan` | Notes                                              |
-| ---------- | ---------------------------- | --------------------------------------------------------------------- | --------------------- | -------------------------------------------------- |
-| F-01       | per-account-isolation-contract | RLS isolation contract + first migration + isolation test           | no                    | Done / archived                                    |
-| S-01       | parent-signup-first-profile-and-start-screen | Polish parent sign-up + first child profile + start screen | no                    | Done / archived                                    |
-| S-02       | counting-task-in-business-context | Counting task in shop narrative                                   | no                    | Done / archived                                    |
-| S-03       | change-making-task-in-business-context | Change-making task in shop narrative                         | no                    | Done / archived                                    |
-| S-04       | full-shift-with-results      | Full shift + results + persistence                                     | no                    | Done / archived                                    |
-| S-05       | spendable-funds-wallet       | Earn spendable funds + wallet (coins → wallet migration)               | yes                   | Run `/10x-plan spendable-funds-wallet` — unlocks S-06 |
-| S-06       | upgrade-choice-and-growth    | Choose-upgrade → visible + functional shop growth (north star)         | no                    | Unblocks when S-05 done; absorbs paused visible-shop-growth |
-| S-07       | skill-path-upgrade-gate      | Skill-progress tracking + skill-gated upgrades                         | no                    | Unblocks when S-06 done                            |
-| S-08       | upper-band-task-difficulty   | Harder tasks for the 6–9 upper band                                    | yes                   | Parallel; run `/10x-plan upper-band-task-difficulty` |
-| S-09       | minimal-parent-weekly-report | Minimal read-only parent weekly report                                 | no                    | Unblocks when S-06 + S-07 done; isolation read test |
-| S-10       | cross-device-economy-restore | Cross-device login restores funds/upgrades/shop                        | no                    | Unblocks when S-06 done; load-bearing isolation gate |
-| S-11       | multi-profile-picker         | Add 2nd profile + scoped profile-picker                                | yes                   | Parallel; run `/10x-plan multi-profile-picker`     |
-| S-12       | network-loss-handling        | Graceful mid-shift network-loss halt                                   | yes                   | Parallel; change folder already exists             |
-| S-13       | child-ui-polish              | Child UI polish to mockup fidelity + primitive library                 | no                    | Unblocks when S-06 done; sequence last             |
+**This section is closed.** Every roadmap item above (F-01, S-01…S-13) is `done`
+and archived under `context/archive/`, so the handoff table that used to live here
+— which still advertised S-05, S-08, S-11 and S-12 as "ready for `/10x-plan`" —
+was removed on 2026-08-26 rather than reconciled: it duplicated the `## At a glance`
+index row for row, and its only unique column was the stale one.
+
+**Future work does not come from this file.** The single input to `/10x-plan` and
+to `/10x-autonomous-run` is now `context/foundation/backlog.md`. This roadmap stays
+as the record of the v3 re-baseline, not as a queue.
 
 ## Open Roadmap Questions
 

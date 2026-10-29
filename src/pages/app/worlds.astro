@@ -1,0 +1,49 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AppShell from "@/components/app/AppShell.astro";
+import WorldPicker from "@/components/child/WorldPicker";
+import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
+import { createClient } from "@/lib/supabase";
+import { resolvePageProfile } from "@/lib/services/active-profile";
+import { getAvatar } from "@/data/avatars";
+import { t } from "@/i18n";
+
+// World-selection surface (F5) — makes `profileWizard.note`'s "Świat możesz
+// zmienić później" true. Gated under /app by the existing middleware
+// (PROTECTED_ROUTES = ["/app"] matched with startsWith); NO parent-PIN gate —
+// this is a child surface, like the shop.
+// Loads the ACTIVE profile with the same posture as upgrades.astro (S-11
+// fallback ladder: valid selection → sole profile; 2+ without a selection →
+// /app router → picker), then mounts the pick-and-commit island. The no-profile
+// branch is the 0-profile defensive fallback for direct navigation.
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const resolved = supabase ? await resolvePageProfile(supabase, Astro.cookies) : { profile: null, profileCount: 0 };
+if (!resolved.profile && resolved.profileCount >= 2) return Astro.redirect("/app");
+const profile = resolved.profile;
+
+const avatar = profile ? getAvatar(profile.avatar) : null;
+---
+
+<Layout title={t.brand}>
+  {
+    profile ? (
+      <AppShell
+        heading={t.worlds.heading}
+        subtitle={t.worlds.subtitle}
+        active="worlds"
+        profile={{
+          name: profile.name,
+          avatarImage: avatar?.image ?? null,
+          level: profile.business_level,
+          wallet: profile.wallet_balance,
+        }}
+      >
+        <WorldPicker client:load profileId={profile.id} currentTheme={profile.theme} />
+      </AppShell>
+    ) : (
+      <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
+        <EmptyStateCard />
+      </div>
+    )
+  }
+</Layout>

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { BarChart3, Sparkles, Trash2 } from "lucide-react";
+import { BarChart3, CalendarDays, Sparkles, Trash2 } from "lucide-react";
 import { AvatarCircle } from "@/components/child/AvatarCircle";
 import { ConfirmDeleteDialog } from "@/components/parent/ConfirmDeleteDialog";
+import WeeklyActivityChart from "@/components/parent/WeeklyActivityChart";
 import { Button } from "@/components/ui/button";
 import type { Competency, WeeklyReport as WeeklyReportData, WeeklyReportUpgrade } from "@/types";
-import { COMPETENCIES } from "@/data/skills";
+import { COMPETENCIES, firstTryPercent } from "@/data/skills";
+import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
 /**
@@ -62,12 +64,8 @@ export default function WeeklyReport({ reports }: Props) {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <header className="mb-6">
-        <h1 className="text-foreground text-2xl font-extrabold">{copy.heading}</h1>
-        <p className="text-muted-foreground mt-1 text-sm">{copy.intro}</p>
-      </header>
-
+    <div className="w-full">
+      {/* The heading + intro live in the page shell (mockup's parent top bar). */}
       {children.length === 0 ? (
         <p className="bg-card border-border text-muted-foreground rounded-2xl border p-6 text-center text-sm shadow-sm">
           {copy.noProfiles}
@@ -129,14 +127,82 @@ function ChildSection({ child, onDelete }: { child: ChildReport; onDelete: () =>
     );
   }
 
-  const { practice, upgrades } = child.report;
+  const { practice, upgrades, daily, earned, earningsKnown } = child.report;
   // Only competencies actually practiced this week (completed > 0) — nothing to
   // shame for the rest. Order follows the canonical competency list.
   const practiced = COMPETENCIES.filter((competency) => practice[competency].completed > 0);
+  // Summary tiles: every figure is a sum of what the week's shift log recorded.
+  const tasksThisWeek = COMPETENCIES.reduce((sum, competency) => sum + practice[competency].completed, 0);
+  // `null` (not NaN, not 0) when nothing countable was practised — and math +
+  // money only, because a purchase is 100 % correct by construction.
+  const firstTry = firstTryPercent(practice);
 
   return (
     <section className="bg-card border-border rounded-3xl border p-6 shadow-sm">
       <ChildIdentity child={child} />
+
+      {/* Two-up on a phone, three-up from `sm`: at 390 px a three-column row
+          leaves ~63 px of text per tile, which these multi-word Polish labels
+          do not fit. A responsive grid class, not a duplicated element — the
+          accessibility tree is identical at every width.
+
+          The earnings tile makes it FOUR, and four tiles in a three-column grid
+          leave a lone orphan on a second row at every width >= `sm` — so the
+          column count follows the tile count. `sm:grid-cols-4` was rejected: at
+          exactly 640 px it gives ~98 px of text per tile, the same legibility
+          failure the three-column row already has at 390 px. */}
+      <ul
+        className={cn("mt-5 grid gap-3", earningsKnown ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2 sm:grid-cols-3")}
+      >
+        <li className="bg-primary/5 rounded-2xl p-4">
+          <p className="text-foreground text-2xl font-extrabold">{tasksThisWeek}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statTasks}</p>
+        </li>
+        {/* Named for what is measured — tasks nailed with no wrong taps — not
+            for an error rate. No verdict line, no colour coding, no threshold
+            and no comparison: a number a parent can read is fine, a product
+            that grades the child is not (guardrail). */}
+        <li className="bg-accent/10 rounded-2xl p-4">
+          <p className="text-foreground text-2xl font-extrabold">
+            {firstTry === null ? copy.statFirstTryNone : copy.statFirstTryValue.replace("{percent}", String(firstTry))}
+          </p>
+          {/* A sibling of the value, not a child of it: a screen reader must
+              hear a reason instead of a punctuation mark, and the visible value
+              must stay exactly the em-dash for anything reading it whole. */}
+          {firstTry === null && <span className="sr-only">{copy.statFirstTryNoData}</span>}
+          <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statFirstTry}</p>
+        </li>
+        <li className="bg-success/10 rounded-2xl p-4">
+          <p className="text-foreground text-2xl font-extrabold">{upgrades.length}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statUpgrades}</p>
+        </li>
+        {/* Suppressed, never faked, while a shift row in this week has no recorded
+            payout — those rows predate the `earned` column, and rendering their
+            absence as `0` would undercount silently. A week that simply had no
+            shifts is NOT that case: it renders `0`, exactly as the tasks tile
+            already does. The label says what was *logged*, never a balance — the
+            sum is a lower bound and is deliberately not placed near a wallet. */}
+        {earningsKnown && (
+          <li className="bg-accent/10 rounded-2xl p-4">
+            <p className="text-foreground text-2xl font-extrabold">
+              {copy.statEarnedValue.replace("{amount}", String(earned))}
+            </p>
+            <p className="text-muted-foreground mt-0.5 text-xs font-semibold">{copy.statEarned}</p>
+          </li>
+        )}
+      </ul>
+
+      {/* The daily decomposition of the tile above: same rows, split by Warsaw
+          day. Deliberately a `div`, not a heading element — the sibling
+          sub-sections are too, and adding an `h3` would change the page's
+          heading tree under existing `getByRole("heading")` locators. */}
+      <div className="mt-5">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
+          <CalendarDays className="size-4" />
+          {copy.chartHeading}
+        </div>
+        <WeeklyActivityChart days={daily} />
+      </div>
 
       <div className="mt-5">
         <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">

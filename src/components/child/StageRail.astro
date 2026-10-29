@@ -1,0 +1,132 @@
+---
+import { Check, Lock } from "lucide-react";
+import { childCard } from "@/components/child/childCard";
+import type { Stage, StageProgress } from "@/data/stages";
+import { stageCopy } from "@/i18n";
+import { t } from "@/i18n";
+
+/**
+ * The growth-stage rail (F4) — done / current / locked, built to the
+ * `missing-screens-v3 01-world-progression` mockup's structure.
+ *
+ * **ONE DOM tree, not two.** The base is the mobile card list (it carries strictly
+ * more information — name *and* description) and it becomes a horizontal rail at
+ * `lg` with utility classes. A mobile copy plus a desktop copy would put every
+ * stage name in the accessibility tree twice, which breaks `getByRole` locators at
+ * the 712 px touch viewport — the same doctrine `AppShell` follows for its navs.
+ *
+ * **Not `aria-hidden`,** unlike the decorative milestone path on the dashboard
+ * this supersedes: state here is conveyed by colour and icon, so each stage also
+ * carries an `sr-only` state word and the ordinal badge carries a label.
+ *
+ * **No per-stage artwork** — lucide icons plus the app's own design tokens. That
+ * is a deliberate, recorded deviation with an upgrade path; the reasoning lives in
+ * `src/data/stages.ts`'s header.
+ *
+ * **Terminal stage:** when `current.atMax`, nothing is rendered after the last
+ * node — no phantom fifth stage, no next-stage bar that can never fill.
+ */
+interface Props {
+  stages: readonly Stage[];
+  current: StageProgress;
+}
+
+const { stages, current } = Astro.props;
+
+const stageState = (index: number) => (index < current.index ? "done" : index === current.index ? "current" : "locked");
+const stateLabel = { done: t.growth.stateDone, current: t.growth.stateCurrent, locked: t.growth.stateLocked };
+---
+
+<section class:list={[childCard("3xl", "p-5 sm:p-6")]}>
+  <h2 class="text-foreground text-lg font-extrabold">{t.growth.stagesHeading}</h2>
+
+  <ol class="mt-4 flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-0">
+    {
+      stages.map((stage, index) => {
+        const state = stageState(index);
+        const copy = stageCopy(stage.id);
+        return (
+          <li class="lg:flex lg:min-w-0 lg:flex-1 lg:items-start">
+            {/* Connector — built in code, never an image. Horizontal at `lg`
+                between cards; the vertical stack needs none because the cards
+                already read top-to-bottom. Purely decorative: the state each
+                stage is in is spoken by its own `sr-only` word. */}
+            {index > 0 && (
+              <span
+                aria-hidden="true"
+                class:list={[
+                  "mt-8 hidden h-0.5 w-full min-w-2 shrink rounded-full lg:block",
+                  index <= current.index ? "bg-success" : "bg-muted",
+                ]}
+              />
+            )}
+            <div
+              class:list={[
+                "flex min-w-0 flex-1 items-start gap-3 rounded-2xl border p-4 lg:flex-col lg:items-center lg:text-center",
+                state === "current" ? "border-primary ring-primary/25 ring-2" : "border-border",
+                state === "locked" ? "bg-muted/30" : "bg-card",
+              ]}
+            >
+              {/* State marker. `t.growth.stageOrdinal` is the accessible label, so a
+                  screen reader hears the stage's ordinal spelled out rather than a
+                  bare digit or an icon name. `role="img"` is what makes that true:
+                  `aria-label` on a bare <span> (role=generic) is NOT exposed, so
+                  without the role the label was inert. Same shape as ShiftResults'
+                  star row. Under `role="img"` the `current` branch's bare digit
+                  becomes presentational — intended: "Etap 2", not "2". */}
+              {state === "done" ? (
+                <span
+                  role="img"
+                  class="bg-success text-success-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
+                  aria-label={t.growth.stageOrdinal.replace("{n}", String(stage.order))}
+                >
+                  <Check className="size-5" aria-hidden="true" />
+                </span>
+              ) : state === "current" ? (
+                <span
+                  role="img"
+                  class="bg-primary text-primary-foreground ring-primary/25 flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4"
+                  aria-label={t.growth.stageOrdinal.replace("{n}", String(stage.order))}
+                >
+                  {stage.order}
+                </span>
+              ) : (
+                <span
+                  role="img"
+                  class="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full"
+                  aria-label={t.growth.stageOrdinal.replace("{n}", String(stage.order))}
+                >
+                  <Lock className="size-4" aria-hidden="true" />
+                </span>
+              )}
+
+              <div class="min-w-0 flex-1 lg:flex-none">
+                <p
+                  class:list={[
+                    "text-sm font-extrabold",
+                    state === "locked" ? "text-muted-foreground" : "text-foreground",
+                  ]}
+                >
+                  {copy.name}
+                </p>
+                <p class="text-muted-foreground mt-1 text-xs font-semibold">{copy.desc}</p>
+                <span class="sr-only">{stateLabel[state]}</span>
+                {state === "current" && (
+                  <span class="bg-primary/10 text-primary mt-2 inline-block rounded-full px-2 py-0.5 text-[0.7rem] font-bold">
+                    {t.growth.current}
+                  </span>
+                )}
+              </div>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ol>
+
+  {
+    /* At the top stage there is nothing further to reach, so say so plainly
+      instead of drawing a locked node or a bar that can never fill. */
+  }
+  {current.atMax && <p class="text-muted-foreground mt-4 text-sm font-semibold">{t.growth.maxStage}</p>}
+</section>

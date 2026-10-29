@@ -14,7 +14,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "db:reset": "supabase db reset",
+    "db:seed": "bash scripts/db-seed.sh"
   },
   "dependencies": {
     "@astrojs/node": "10.1.1",

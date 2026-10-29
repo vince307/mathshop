@@ -67,6 +67,19 @@ test("gameplay: start → tasks (one soft retry) → results → upgrade purchas
     await expect(
       page.getByRole("listitem").filter({ hasText: t.upgrades.sign.name }).getByText(t.upgradeShop.ownedTag),
     ).toBeVisible();
+
+    // The activity feed reflects the two durable shift_log rows this journey
+    // actually produced — the strongest available proof that the discriminator
+    // (upgrade_purchased, not the skills jsonb), the newest-first ordering and
+    // the per-profile scoping all work end to end. Also covers the stacked
+    // reflow: this spec runs in the touch project at 712px too.
+    await page.goto("/app/start");
+    // Substring-matches the counted label "Zmiana ukończona · N zadań", so the
+    // assertion needs no knowledge of the nondeterministic task count.
+    await expect(page.getByText(t.start.activityShift)).toBeVisible();
+    await expect(page.getByText(fill(t.start.activityUpgrade, { name: t.upgrades.sign.name }))).toBeVisible();
+    // NOT t.start.activityToday — "Dzisiaj" is a substring of
+    // t.start.missionHeading on this same page AND appears on both cards.
   } finally {
     await deleteUser(account.id);
   }

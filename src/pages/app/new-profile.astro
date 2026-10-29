@@ -1,7 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import CreateProfileWizard from "@/components/child/CreateProfileWizard";
-import { ShoppingCart } from "lucide-react";
+import BrandRow from "@/components/marketing/BrandRow.astro";
+import { DECOR_COIN_STACK, DECOR_CHART } from "@/data/marketing-art";
 import { t } from "@/i18n";
 
 // Gated: /app/* is in PROTECTED_ROUTES (middleware). An anonymous request never
@@ -13,16 +14,23 @@ const error = Astro.url.searchParams.get("error");
 ---
 
 <Layout title={t.profileWizard.title}>
-  <div class="bg-background min-h-screen px-4 py-8 sm:px-6">
-    <div class="mx-auto w-full max-w-2xl">
-      <div class="mb-6 flex items-center justify-center gap-3">
-        <span
-          class="bg-primary text-primary-foreground inline-flex size-10 items-center justify-center rounded-xl shadow-sm"
-        >
-          <ShoppingCart className="size-5" />
-        </span>
-        <p class="text-foreground text-lg font-extrabold">{t.brand}</p>
-      </div>
+  <div class="bg-background relative flex min-h-screen flex-col justify-center overflow-hidden px-4 py-8 sm:px-6">
+    {
+      /* Ambient decoration (mockup `05`: coins bottom-left, a chart right). Same
+        contract as `AuthShell`'s layer — `aria-hidden`, `pointer-events-none`,
+        desktop-only, `z-0` against the content's `z-10` (never `-z-10`, which
+        would put it behind this container's own painted background), and
+        `overflow-hidden` above so nothing overhanging scrolls the body. The
+        mockup's plant and checklist have no atom in the extraction's SVG set and
+        are not implemented. */
+    }
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 z-0 hidden lg:block">
+      <img src={DECOR_COIN_STACK} alt="" class="absolute bottom-10 left-6 w-28" />
+      <img src={DECOR_CHART} alt="" class="absolute top-24 right-8 w-32 opacity-80" />
+    </div>
+
+    <div class="relative z-10 mx-auto w-full max-w-3xl">
+      <BrandRow size="lg" class="mb-6 justify-center" />
       <CreateProfileWizard serverError={error} client:load />
     </div>
   </div>

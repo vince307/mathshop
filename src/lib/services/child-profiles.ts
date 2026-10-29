@@ -1,8 +1,12 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { ShopState, SkillState } from "@/types";
-import { businessLevelForShifts, earningsForShift } from "@/data/shift";
+import { ceilingForLevel, foldShiftOutcomes, readDifficultyState, type DifficultyState } from "@/data/adaptive";
+import { businessLevelForShifts, profitForShift } from "@/data/shift";
 import { addSkillDelta, readSkillState, type SkillDelta } from "@/data/skills";
-import { type BuyReason, canBuy, getUpgrade, readPurchased } from "@/data/upgrades";
+import type { TaskAttempt } from "@/data/attempts";
+import { type BuyReason, canBuy, getUpgrade, readPurchased, shopEffects } from "@/data/upgrades";
+import { canBuyDecoration, getDecoration, readDecorations } from "@/data/decorations";
+import { worldForTheme } from "@/data/worlds";
 
 export { deriveStartingLevel } from "@/data/leveling";
 
@@ -41,6 +45,10 @@ export interface ChildProfile {
   // Per-competency skill progress (S-07). Pre-S-07 rows may be `{}`; always read
   // through `readSkillState` before use so missing keys normalize to zero.
   skill_state: SkillState;
+  // Continuous per-competency difficulty `d` (P3), held OUTSIDE skill_state so
+  // that column stays monotonic. Pre-P3 rows may be `{}`; always read through
+  // `readDifficultyState`, which needs `starting_level` for the seed + ceiling.
+  difficulty_state: DifficultyState;
   created_at: string;
   updated_at: string;
 }
@@ -117,35 +125,111 @@ export async function deleteChildProfile(client: SupabaseClient, profileId: stri
   return { ok: true };
 }
 
+export type UpdateThemeResult = { ok: true } | { failure: "not-found" } | { error: PostgrestError };
+
+/**
+ * Change one of the parent's own child profiles' world (F5, `/app/worlds`). The
+ * row is reached by `id` under the F-01 `child_profiles_update_own` RLS policy
+ * (`using` + `with check` on `auth.uid() = account_id`), so a non-owner's update
+ * matches 0 rows and reads as `not-found` — never touching another account's row.
+ * No manual `account_id` filter: RLS is the boundary (see the module doc).
+ *
+ * The theme flip is deliberately lossless — `wallet_balance`, `business_level`,
+ * `shop_state.purchased` and `skill_state` are untouched, and nothing in the
+ * upgrade loop reads `theme` — so the screen's promise that the shop and its
+ * upgrades come along is true by construction. The closed slug set is enforced
+ * in zod at the route (`WORLD_SLUGS`); there is no DB CHECK on the column.
+ */
+export async function updateChildProfileTheme(
+  client: SupabaseClient,
+  profileId: string,
+  theme: string,
+): Promise<UpdateThemeResult> {
+  // update().select() returns the updated rows, so 0 rows distinguishes
+  // not-found/not-owned from success without a prior read (deleteChildProfile's idiom).
+  const { data, error } = await client.from("child_profiles").update({ theme }).eq("id", profileId).select("id");
+  if (error) return { error };
+  if (data.length === 0) return { failure: "not-found" };
+  return { ok: true };
+}
+
 /**
  * Append one `shift_log` row (S-07) — the history the parent report reads. Best
  * effort: a log failure must NOT fail an already-persisted shift/purchase (the
  * authoritative profile UPDATE has committed by the time this runs), so its error
  * is swallowed. `account_id` comes from the RLS-verified profile row, never from
  * client input (L-002); the INSERT `with check` policy is the backstop.
+ *
+ * `earned` is the server-computed payout for a SHIFT (`profitForShift`'s `profit`
+ * since E1 — the wallet delta, cost already applied to revenue), and is
+ * omitted — i.e. stored as `null` — for a purchase event and for any caller that
+ * has no payout to record. `null` therefore reads as "unknown / not a shift", never
+ * as "earned nothing" (F4). Because this insert is best effort, `sum(earned)` is a
+ * lower bound on what was actually paid; never present it as an exact total.
  */
 async function appendShiftLog(
   client: SupabaseClient,
-  entry: { accountId: string; profileId: string; skills: SkillDelta; upgradePurchased?: string },
+  entry: { accountId: string; profileId: string; skills: SkillDelta; upgradePurchased?: string; earned?: number },
 ): Promise<void> {
   await client.from("shift_log").insert({
     account_id: entry.accountId,
     profile_id: entry.profileId,
     skills: entry.skills,
     upgrade_purchased: entry.upgradePurchased ?? null,
+    earned: entry.earned ?? null,
   });
 }
 
+/**
+ * Append one `task_attempt` row per task of a completed shift (P1 telemetry) in a
+ * single batched insert. Same best-effort posture as `appendShiftLog`, and for the
+ * same reason: the authoritative profile UPDATE has already committed by the time
+ * this runs, so losing telemetry must never fail a child's shift. That makes this
+ * the third non-atomic write in the path — recorded in the plan's Open Risks.
+ *
+ * `account_id` and `profile_id` come from the RLS-verified profile row, never from
+ * the payload (L-002); the INSERT `with check` policy is the backstop. The array
+ * itself has already been reconciled against taskCount/cleanCount by the route.
+ * A shift with no attempts (nothing to record) skips the round trip entirely.
+ */
+async function appendTaskAttempts(
+  client: SupabaseClient,
+  entry: { accountId: string; profileId: string; attempts: TaskAttempt[] },
+): Promise<void> {
+  if (entry.attempts.length === 0) return;
+  await client.from("task_attempt").insert(
+    entry.attempts.map((attempt) => ({
+      ...attempt,
+      account_id: entry.accountId,
+      profile_id: entry.profileId,
+    })),
+  );
+}
+
 export interface ShiftResult {
+  /**
+   * The amount added to the wallet. Under the profit rule (E1) this **is**
+   * `profit`, and the two fields are equal by construction. `earned` is kept as
+   * the wallet-delta name so `shift_log.earned`'s documented contract ("the
+   * amount added to the wallet") stays literally true with no backfill: every
+   * pre-E1 row is a shift whose cost was zero.
+   */
   earned: number;
+  /** What the shift took in, before the shop's running cost. */
+  revenue: number;
+  /** The shop's running cost for this shift — applied to revenue, NEVER to the wallet. */
+  cost: number;
+  /** `max(0, revenue - cost)` — equal to `earned`. */
+  profit: number;
   businessLevel: number;
   leveledUp: boolean;
 }
 
 /**
- * Persist a completed shift onto the parent's own profile (S-04/S-05). Wallet
- * earnings are recomputed server-side from the reported accuracy (`earningsForShift`),
- * so the client never supplies an amount — it cannot inflate the wallet. The row
+ * Persist a completed shift onto the parent's own profile (S-04/S-05). The wallet
+ * delta is recomputed server-side from the reported accuracy AND the trusted
+ * row's `shop_state` (`profitForShift` over `shopEffects`), so the client never
+ * supplies an amount and cannot claim a margin it has not bought. The row
  * is reached by `id` and the F-01 `child_profiles_update_own` RLS policy gates
  * ownership (a non-owner read returns no row, a non-owner update affects 0 rows);
  * `account_id` is NEVER taken from the caller (L-002). The per-competency `skills`
@@ -157,7 +241,7 @@ export interface ShiftResult {
 export async function recordShiftResult(
   client: SupabaseClient,
   profileId: string,
-  shift: { taskCount: number; cleanCount: number; skills: SkillDelta },
+  shift: { taskCount: number; cleanCount: number; skills: SkillDelta; attempts: TaskAttempt[] },
 ): Promise<ShiftResult | { error: PostgrestError | Error }> {
   // Read the row AS the parent (RLS-scoped): a non-owner sees no row. Use limit(1)
   // + data?.[0] rather than .single() so the result stays typed for the
@@ -167,10 +251,40 @@ export async function recordShiftResult(
   const current = (data[0] as ChildProfile | undefined) ?? null;
   if (!current) return { error: new Error("profile not found") };
 
-  const earned = earningsForShift(shift.taskCount, shift.cleanCount);
+  // The profit rule, computed from the TRUSTED row's `shop_state` (E1). A client
+  // cannot claim a margin it has not bought, because the effects are resolved
+  // here from what the database says the child owns.
+  const { revenue, cost, profit } = profitForShift(
+    shift.taskCount,
+    shift.cleanCount,
+    shopEffects(readPurchased(current.shop_state)),
+  );
+  // The wallet only ever GROWS on this path (FR-008): `profit` is clamped at 0,
+  // so a costly shop can pay nothing but can never take anything away. Never
+  // reach for `wallet - cost` here.
+  const earned = profit;
   const newCount = current.completed_shift_count + 1;
   const businessLevel = businessLevelForShifts(newCount);
   const skillState = addSkillDelta(readSkillState(current.skill_state), shift.skills);
+
+  // Per-competency difficulty (P5) — RECOMPUTED here, never taken from the
+  // client. The attempts array carries a `difficulty` field, but that is
+  // telemetry: what a task was generated at, not what the profile becomes. The
+  // persisted value is folded from the reported OUTCOMES through the very same
+  // `foldShiftOutcomes` the island ran, starting from the stored state and
+  // bounded by this profile's own age band. So the only lie a tampered client
+  // can tell is about how well it did — which moves its own difficulty, inside
+  // its own ceiling, and buys it nothing but harder tasks.
+  //
+  // Folded into the EXISTING update: no extra round trip, and therefore no new
+  // failure mode — it lands exactly when the wallet and the level do. It does
+  // inherit this function's pre-existing read-modify-write window (plan Open
+  // Risks); the cost of losing that race is one shift's drift.
+  const difficultyState = foldShiftOutcomes(
+    readDifficultyState(current.difficulty_state, current.starting_level),
+    shift.attempts.map((a) => ({ index: a.shift_index, competency: a.competency, firstTry: a.first_try })),
+    ceilingForLevel(current.starting_level),
+  );
 
   const { error: updateErr } = await client
     .from("child_profiles")
@@ -179,14 +293,17 @@ export async function recordShiftResult(
       completed_shift_count: newCount,
       business_level: businessLevel,
       skill_state: skillState,
+      difficulty_state: difficultyState,
     })
     .eq("id", profileId);
   if (updateErr) return { error: updateErr };
 
   // History row for the weekly report — account_id from the RLS-verified row (L-002).
-  await appendShiftLog(client, { accountId: current.account_id, profileId, skills: shift.skills });
+  await appendShiftLog(client, { accountId: current.account_id, profileId, skills: shift.skills, earned });
+  // Per-task telemetry (P1) — same owner source, same best-effort posture.
+  await appendTaskAttempts(client, { accountId: current.account_id, profileId, attempts: shift.attempts });
 
-  return { earned, businessLevel, leveledUp: businessLevel > current.business_level };
+  return { earned, revenue, cost, profit, businessLevel, leveledUp: businessLevel > current.business_level };
 }
 
 /** Why a buy could not proceed. `not-found` = the row isn't readable/owned (RLS). */
@@ -247,7 +364,21 @@ export async function buyUpgrade(
     .from("child_profiles")
     .update({
       wallet_balance: walletBalance,
-      shop_state: { ...current.shop_state, purchased: nextPurchased },
+      shop_state: {
+        ...current.shop_state,
+        purchased: nextPurchased,
+        // Record the world this upgrade was bought in (F5, write-only in v1).
+        // The INNER spread is load-bearing: naming `purchasedMeta` as an explicit
+        // key SHADOWS the outer `...current.shop_state`, so without it every
+        // purchase would discard the prior entries. `?? {}` is required for the
+        // same reason `readPurchased` exists — `shop_state` is typed non-optional
+        // but `{}` rows are legal forever. `worldForTheme` normalizes the DB
+        // default 'default' to `kawiarnia`, so 'default' is never stored here.
+        purchasedMeta: {
+          ...(current.shop_state.purchasedMeta ?? {}),
+          [upgrade.id]: { world: worldForTheme(current.theme).slug, at: new Date().toISOString() },
+        },
+      },
       skill_state: nextSkillState,
     })
     .eq("id", profileId);
@@ -262,4 +393,84 @@ export async function buyUpgrade(
   });
 
   return { walletBalance, purchased: nextPurchased };
+}
+
+export type BuyDecorationResult =
+  | { walletBalance: number; decorations: string[] }
+  | { failure: BuyFailure }
+  | { error: PostgrestError | Error };
+
+/**
+ * Purchase a decoration onto the parent's own profile (E1 / D-11) — the SECOND
+ * sanctioned spend path beside `buyUpgrade`, and server-authoritative in exactly
+ * the same way. The row is read by `id` under RLS (a non-owner sees no row →
+ * `not-found`, never A's data); `account_id` is NEVER taken from the caller
+ * (L-002). Ownership, world and affordability are recomputed from the TRUSTED row
+ * via the shared `canBuyDecoration` — the client only names a `decorationId`.
+ *
+ * **FR-008, and it is load-bearing which way this reads.** "Never reduce a
+ * child's funds outside a purchase" governs the SHIFT path, where the profit rule
+ * applies cost to revenue and never to the wallet. This IS a purchase:
+ * `prd-v3.md:62` names "new shelf/sign/**decoration**" as a legitimate visible
+ * change, so v3's own vocabulary contemplates buying one. Reject a wallet debit
+ * in `recordShiftResult`; this debit is correct.
+ *
+ * **Two deliberate departures from `buyUpgrade`, both load-bearing:**
+ *
+ * 1. **No `shift_log` row.** A `{ upgrade_purchased: null, earned: null }` row
+ *    flips `computeWeeklyReport`'s `earningsKnown` false **permanently**, which
+ *    silently suppresses the parent report's earnings tile from then on; and
+ *    tagging it as `upgrade_purchased` would list a decoration among "upgrades
+ *    bought this week". Neither is worth a log line for a purchase that changes
+ *    nothing but a picture.
+ * 2. **No `+1 decisions` credit.** `decisions` is surfaced to the parent and
+ *    gates nothing, so crediting it here would make decoration-spam a way to
+ *    inflate a competency a parent reads. Choosing an UPGRADE is the decision.
+ */
+export async function buyDecoration(
+  client: SupabaseClient,
+  profileId: string,
+  decorationId: string,
+): Promise<BuyDecorationResult> {
+  const decoration = getDecoration(decorationId);
+  // Unknown-id short-circuit: no DB round-trip for a value outside the catalogue.
+  if (!decoration) return { failure: "unknown" };
+
+  const { data, error: readErr } = await client.from("child_profiles").select("*").eq("id", profileId).limit(1);
+  if (readErr) return { error: readErr };
+  const current = (data[0] as ChildProfile | undefined) ?? null;
+  if (!current) return { failure: "not-found" };
+
+  const decorations = readDecorations(current.shop_state);
+  const check = canBuyDecoration(decoration, {
+    walletBalance: current.wallet_balance,
+    // `worldForTheme` normalizes the DB default 'default' to `kawiarnia`, so the
+    // comparison is always against a real slug.
+    world: worldForTheme(current.theme).slug,
+    decorations,
+  });
+  if (!check.ok) return { failure: check.reason };
+
+  const nextDecorations = [...decorations, decoration.id];
+  const walletBalance = current.wallet_balance - decoration.cost;
+
+  const { error: updateErr } = await client
+    .from("child_profiles")
+    .update({
+      wallet_balance: walletBalance,
+      shop_state: {
+        ...current.shop_state,
+        // The INNER spread is load-bearing, exactly as in `buyUpgrade`: naming
+        // `decorations` as an explicit key SHADOWS the outer spread, so
+        // `purchased` and `purchasedMeta` must be carried forward by hand or a
+        // decoration purchase would silently erase the child's whole shop.
+        purchased: readPurchased(current.shop_state),
+        purchasedMeta: current.shop_state.purchasedMeta,
+        decorations: nextDecorations,
+      },
+    })
+    .eq("id", profileId);
+  if (updateErr) return { error: updateErr };
+
+  return { walletBalance, decorations: nextDecorations };
 }

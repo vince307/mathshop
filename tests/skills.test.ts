@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addSkillDelta,
   competencyForTaskType,
+  firstTryPercent,
   readSkillState,
   skillLevel,
   skillLevelsFor,
@@ -121,5 +122,68 @@ describe("skillLevelsFor", () => {
     expect(levels.math).toBe(2);
     expect(levels.money).toBe(1);
     expect(levels.decisions).toBe(0);
+  });
+});
+
+/**
+ * The parent report's first-try share (FR-016). Two traps live here: the
+ * `decisions` inflation (a purchase is 100 % correct by construction) and the
+ * `0/0 → NaN%` render.
+ */
+describe("firstTryPercent", () => {
+  it("ignores decisions so shopping cannot inflate the number", () => {
+    const state = readSkillState({
+      math: { firstTryCorrect: 5, completed: 10 },
+      decisions: { firstTryCorrect: 5, completed: 5 },
+    });
+    // 5/10 over math+money = 50. Folding decisions back in would give 10/15 = 67.
+    expect(firstTryPercent(state)).toBe(50);
+  });
+
+  it("returns null, not 100, for a week of purchases and no tasks", () => {
+    const state = readSkillState({ decisions: { firstTryCorrect: 7, completed: 7 } });
+    expect(firstTryPercent(state)).toBeNull();
+  });
+
+  it("returns null for an all-zero state — never NaN, never a shaming 0", () => {
+    const result = firstTryPercent(readSkillState(null));
+    expect(result).toBeNull();
+    expect(Number.isNaN(result)).toBe(false);
+  });
+
+  it("stays finite for a denormalised state cast to SkillState", () => {
+    const denormalised = {
+      math: { firstTryCorrect: undefined, completed: Number.NaN, misses: 0 },
+      money: { firstTryCorrect: -4, completed: -9, misses: 0 },
+      decisions: { firstTryCorrect: 3, completed: 3, misses: 0 },
+    } as unknown as SkillState;
+    const result = firstTryPercent(denormalised);
+    expect(result).toBeNull();
+    expect(Number.isNaN(result)).toBe(false);
+  });
+
+  it("sums math and money together rather than averaging them", () => {
+    const state = readSkillState({
+      math: { firstTryCorrect: 3, completed: 4 },
+      money: { firstTryCorrect: 1, completed: 4 },
+    });
+    // Summed: 4/8 = 50. Averaged it would be (75 + 25) / 2 = 50 too, so make the
+    // populations uneven to tell them apart.
+    expect(state.math.completed + state.money.completed).toBe(8);
+    const uneven = readSkillState({
+      math: { firstTryCorrect: 6, completed: 6 },
+      money: { firstTryCorrect: 0, completed: 2 },
+    });
+    // Summed: 6/8 = 75. Averaged: (100 + 0) / 2 = 50.
+    expect(firstTryPercent(uneven)).toBe(75);
+  });
+
+  it("rounds to the nearest integer and stays within 0-100", () => {
+    const state = readSkillState({ math: { firstTryCorrect: 1, completed: 3 } });
+    expect(firstTryPercent(state)).toBe(33);
+    const perfect = readSkillState({ money: { firstTryCorrect: 9, completed: 9 } });
+    expect(firstTryPercent(perfect)).toBe(100);
+    const none = readSkillState({ money: { firstTryCorrect: 0, completed: 5 } });
+    expect(firstTryPercent(none)).toBe(0);
   });
 });
