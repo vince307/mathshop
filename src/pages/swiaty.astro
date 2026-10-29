@@ -1,27 +1,35 @@
 ---
 import MarketingCta from "@/components/marketing/MarketingCta.astro";
 import MarketingPageShell from "@/components/marketing/MarketingPageShell.astro";
+import { DEFAULT_WORLD, WORLDS } from "@/data/worlds";
 import { t } from "@/i18n";
 
 const page = t.marketingPages.worlds;
-const worlds = [
-  ["Piekarnia", "/worlds/crops/world-bakery-thumb.png", "/worlds/icons/world-wheat.svg"],
-  ["Kawiarnia", "/worlds/crops/world-cafe-thumb-clean.png", "/worlds/icons/world-cup.svg"],
-  ["Galaktyczna baza", "/worlds/crops/world-galaxy-thumb.png", "/worlds/icons/world-planet.svg"],
-  ["Sklep kolekcjonera", "/worlds/crops/world-collector-thumb.png", "/worlds/icons/world-star.svg"],
-  ["Salon kreatywny", "/worlds/crops/world-creative-thumb.png", "/worlds/icons/world-palette.svg"],
-  ["Laboratorium wynalazków", "/worlds/crops/world-lab-thumb.png", "/worlds/icons/world-gear.svg"],
+// Names come from WORLDS (see e2e/marketing-worlds.spec.ts); only the marketing art lives here.
+const worldArt: Record<string, { image: string; icon: string }> = {
+  piekarnia: { image: "/worlds/crops/world-bakery-thumb.png", icon: "/worlds/icons/world-wheat.svg" },
+  kawiarnia: { image: "/worlds/crops/world-cafe-thumb-clean.png", icon: "/worlds/icons/world-cup.svg" },
+  "galaktyczna-baza": { image: "/worlds/crops/world-galaxy-thumb.png", icon: "/worlds/icons/world-planet.svg" },
+  "sklep-ksiegarnia": { image: "/worlds/crops/world-collector-thumb.png", icon: "/worlds/icons/world-star.svg" },
+  pracownia: { image: "/worlds/crops/world-creative-thumb.png", icon: "/worlds/icons/world-palette.svg" },
+  laboratorium: { image: "/worlds/crops/world-lab-thumb.png", icon: "/worlds/icons/world-gear.svg" },
+};
+// Mockup order (worldArt's keys); a world added to WORLDS without marketing art goes last with its app art.
+const artOrder = Object.keys(worldArt);
+const rank = (slug: string) => (artOrder.includes(slug) ? artOrder.indexOf(slug) : artOrder.length);
+const worlds = [...WORLDS]
+  .sort((a, b) => rank(a.slug) - rank(b.slug))
+  .map((world) => {
+    const art = worldArt[world.slug] as (typeof worldArt)[string] | undefined;
+    return { ...world, image: art?.image ?? world.image, icon: art?.icon };
+  });
+const trustIcons = [
+  "/worlds/cutouts/trust-age-icon.png",
+  "/worlds/cutouts/trust-no-ads-icon.png",
+  "/worlds/cutouts/trust-parent-panel-icon.png",
+  "/worlds/cutouts/trust-growth-icon.png",
 ] as const;
-const trust = [
-  ["6–9 lat", "Dopasowane do wieku dziecka i jego możliwości.", "/worlds/cutouts/trust-age-icon.png"],
-  ["Bez reklam", "Gwarantujemy naukę bez reklam i nieodpowiednich treści.", "/worlds/cutouts/trust-no-ads-icon.png"],
-  ["Panel rodzica", "Pełna kontrola, raporty i bezpieczne ustawienia.", "/worlds/cutouts/trust-parent-panel-icon.png"],
-  [
-    "Poziom rośnie z dzieckiem",
-    "Światy dopasowują się do postępów i motywują do dalszej nauki.",
-    "/worlds/cutouts/trust-growth-icon.png",
-  ],
-] as const;
+const trust = page.trust.map((item, i) => ({ ...item, icon: trustIcons[i] }));
 ---
 
 <MarketingPageShell title={page.title} description={page.description} active="/swiaty">
@@ -49,23 +57,24 @@ const trust = [
         <h1
           class="text-[2.8rem] leading-[1.08] font-extrabold tracking-[-0.04em] text-[#07174f] sm:text-5xl xl:text-[4rem]"
         >
-          Wybierz świat,<br />który <span class="text-primary">wciągnie</span> Twoje dziecko
+          {page.headingLead}<br />{page.headingBefore}<span class="text-primary">{page.headingAccent}</span>{
+            page.headingAfter
+          }
         </h1><p class="text-muted-foreground mx-auto mt-6 max-w-[640px] text-lg leading-relaxed sm:text-xl lg:mx-0">
-          Każdy świat uczy tych samych podstaw matematyki, ekonomii i decyzji. Zmienia się tylko temat, który
-          najbardziej ciekawi dziecko.
+          {page.intro}
         </p><div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
           <a
             href="/auth/signup"
             class="bg-primary text-primary-foreground inline-flex min-h-14 items-center justify-center rounded-2xl px-7 font-extrabold shadow-lg shadow-blue-200 transition hover:-translate-y-0.5"
-            >Załóż konto rodzica</a
+            >{page.primaryCta}</a
           ><a
             href="/jak-to-dziala"
             class="border-primary text-primary inline-flex min-h-14 items-center justify-center rounded-2xl border-2 bg-white/80 px-7 font-extrabold"
-            >Zobacz jak działa</a
+            >{page.secondaryCta}</a
           >
         </div>
       </div>
-      <div class="relative mx-auto w-full max-w-[790px]" role="img" aria-label="Mapa światów MatmaVerse">
+      <div class="relative mx-auto w-full max-w-[790px]" role="img" aria-label={page.heroLabel}>
         <img
           src="/worlds/cutouts/hero-worlds-map-composite.png"
           alt=""
@@ -78,24 +87,24 @@ const trust = [
     <section
       class="relative z-10 rounded-[2rem] border border-blue-100 bg-white/90 px-4 py-6 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:px-8"
     >
-      <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">Światy nauki</h2><div
+      <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">{page.gridHeading}</h2><div
         class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
       >
         {
-          worlds.map(([name, image, icon], index) => (
+          worlds.map(({ slug, name, image, icon }) => (
             <a
               href="/auth/signup"
               class:list={[
                 "group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg",
-                index === 1 ? "border-primary ring-primary/20 ring-2" : "border-blue-100",
+                slug === DEFAULT_WORLD.slug ? "border-primary ring-primary/20 ring-2" : "border-blue-100",
               ]}
             >
               <>
                 <img src={image} alt={name} class="aspect-[1.58] w-full object-cover" />
                 <div class="flex items-center gap-3 px-4 py-3">
-                  <img src={icon} alt="" aria-hidden="true" class="size-7" />
+                  {icon && <img src={icon} alt="" aria-hidden="true" class="size-7" />}
                   <span class="font-extrabold text-[#07174f]">{name}</span>
-                  {index === 1 && (
+                  {slug === DEFAULT_WORLD.slug && (
                     <span class="bg-primary ml-auto flex size-7 items-center justify-center rounded-full text-white">
                       ✓
                     </span>
@@ -113,11 +122,11 @@ const trust = [
     >
       <div class="grid items-center gap-6 lg:grid-cols-[1fr_0.92fr]">
         <div>
-          <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">W kawiarni dziecko ćwiczy</h2><ul
+          <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">{page.featuredHeading}</h2><ul
             class="mt-5 grid gap-3 text-[#07174f]"
           >
             {
-              ["liczenie reszty", "ustalanie cen", "planowanie zakupów", "proste decyzje biznesowe"].map((item) => (
+              page.featuredSkills.map((item) => (
                 <li class="flex items-center gap-3">
                   <span class="flex size-6 items-center justify-center rounded-full bg-green-500 text-sm font-bold text-white">
                     ✓
@@ -127,17 +136,17 @@ const trust = [
               ))
             }
           </ul><div class="mt-6 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-[#34528f]">
-            Bezpieczne środowisko stworzone z myślą o dzieciach.<br />Matematyka i ekonomia przez zabawę.
+            {page.safetyLine1}<br />{page.safetyLine2}
           </div>
         </div><img
           src="/worlds/cutouts/selected-world-cafe-illustration.png"
-          alt="Kawiarnia"
+          alt={DEFAULT_WORLD.name}
           class="mx-auto w-full max-w-sm"
         />
       </div><a
         href="/auth/signup"
         class="bg-primary text-primary-foreground mt-6 flex min-h-14 items-center justify-center rounded-2xl text-lg font-extrabold shadow-lg shadow-blue-200"
-        >Rozpocznij od pierwszego świata <span class="ml-4 text-2xl">→</span></a
+        >{page.featuredCta} <span class="ml-4 text-2xl">→</span></a
       >
     </section>
 
@@ -146,7 +155,7 @@ const trust = [
     >
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {
-          trust.map(([title, text, icon]) => (
+          trust.map(({ title, text, icon }) => (
             <article class="flex items-center gap-3 border-blue-100 px-2 py-2 last:border-r-0 lg:border-r">
               <>
                 <img src={icon} alt="" aria-hidden="true" class="size-14 shrink-0" />
