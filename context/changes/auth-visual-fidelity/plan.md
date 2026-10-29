@@ -1,1322 +1,1296 @@
-# Auth Visual Fidelity Implementation Plan
+# Auth Visual Fidelity — Closing Pass Implementation Plan
+
+> **This is the SECOND plan for this change.** The first one
+> (`plan-2026-08-29-initial.md`, nine phases, all landed through `b6b34ed`) built the
+> right regions with the wrong texture. The maintainer's visual pass on 2026-09-04
+> rejected the result and produced `fidelity-gaps.md`, which is the specification this
+> plan executes. Read that file first; this plan does not restate its audit.
 
 ## Overview
 
-The six auth/onboarding screens were built to the right **structure** but the wrong
-**texture**. Every region of the mockups is present — brand row, hero, feature blocks,
-world strip, cards, security footer — yet the illustrated art the designs lean on was
-substituted with 20 px flat `lucide` glyphs, the feature blocks carry card chrome the
-desktop designs do not have, the form fields use a different field model, and none of
-the ambient background depth exists.
+Six auth/onboarding screens are structurally complete and visually wrong. The gap is not
+a list of small misses — it is four systemic causes (`fidelity-gaps.md` RC1–RC4) plus two
+screens whose composition was never built at all:
 
-**This plan was revised on 2026-08-29, mid-flight, after Phases 1–2 had already landed.**
-Phase 1 sourced its art from `assets/atomic-assets-v3/` and `assets/atomic-assets-v2/`.
-That art is rejected. The maintainer has since produced a **per-screen extraction** —
-`assets/matmaverse-auth-v2-web/` — with one `*-extracted/` folder per mockup plus a
-shared atom set in `00-shared-auth-assets/`. That extraction is now the single source of
-truth for graphic atoms, and the scope grew from one screen to all six.
+- **RC1** — the flat `svg/icons/` set shipped where the mockups render soft-3D
+  `png/cutouts/` art. Every screen reads "vector wireframe" instead of "rendered".
+- **RC2** — everything is smaller and airier than the design, so pages that are
+  single-viewport compositions at 1536×1024 scroll.
+- **RC3** — screens 02 and 04 wear screen 01's marketing panel; their mockups have
+  completely different left panels and no world grid at all.
+- **RC4** — background decoration is missing or drawn in outline style where the mockups
+  scatter soft-3D coins, receipts, plants, backpacks and shields.
+- **Screen 05** is a three-step wizard where the mockup is one screen with app chrome.
+- **Screen 06** is one small card where the mockup is a full onboarding page.
 
-The revision reopens Phase 1 (the atom set is swapped wholesale, its register corrected,
-its test rewritten), keeps landed Phase 2 (the shared marketing components are structurally
-right; only the paths they read change, and those live behind `src/data/marketing-art.ts`),
-re-points Phases 3–4 at the new atoms, and appends one phase per remaining screen.
+The art for all of it is already cut and sitting in `assets/matmaverse-auth-v2-web/`. This
+plan copies it in, resizes the composition to the mockups' own measured geometry, gives
+02 and 04 their own panels, dresses every page, and rebuilds 05 and 06. It ends with the
+same pass at 390×844 against the mobile mockups.
 
 ## Current State Analysis
 
-**Phase 1 shipped six SVGs from the wrong pack.** `public/illustrations/{brand-symbol,
-feature-safety,feature-worlds,feature-progress,parent-lock,decor-chart}.svg` came from
-`assets/atomic-assets-v2/svg/` (commit `8850b18`). They are generic atomic-pack glyphs,
-not the art in these six mockups. All six are retired by this revision. `slice-map.md`'s
-section "Signed-out surface art (auth-visual-fidelity) — 2026-08-29" describes them and
-must be corrected, not appended to — leaving it would make the register describe files
-that no longer exist.
+**The art registry is one file and that is what makes RC1 cheap.** No surface hardcodes an
+art path: everything resolves through `src/data/marketing-art.ts` (`BRAND_SYMBOL`,
+`PARENT_LOCK`, `FEATURE_ICONS`, `BADGE_CHECK`, `HERO_*`, `DECOR_*`). Repointing those
+constants re-dresses `AuthShell`, `Welcome`, `FeatureList`, `TrustBadges`,
+`CreateProfileWizard` and `ParentPinGate` without touching their markup.
 
-**Phase 2 is structurally sound and stays landed.** `BrandRow.astro`, `FeatureList.astro`
-and `SecurityNote.astro` exist, both `AuthShell.astro` and `Welcome.astro` consume them,
-and no surface hardcodes an art path — every path resolves through
-`src/data/marketing-art.ts`. That indirection is what makes the atom swap cheap: repointing
-the constants re-dresses both surfaces with no markup edit. Two sizing constants in those
-components were tuned to the *old* art's viewBox fill and must be re-tuned in the same
-breath (see Phase 1, item 6).
+**The atom set splits by colour authority, and the split stays.** Group A (illustrations,
+fixed design colours) is committed under `public/illustrations/auth/` and rendered
+`<img src>`. Group B (`src/components/icons/authIcons.tsx`) is inlined because it is
+authored with `currentColor`. RC1 moves Group A from SVG to PNG; **Group B does not
+change** — a field gutter glyph and an eye toggle are UI chrome, not illustration.
+`tests/auth-art.test.ts` guards both halves and must keep passing (no `id`, no gradient,
+`currentColor` on every inlined icon).
 
-**The new extraction removes the constraint that forced `<img src>`.** The old plan
-required every glyph to be an `<img>` because `shield-check.svg` and `lock-user.svg` both
-declared `<linearGradient id="g">` and would collide in one document. **No SVG in
-`00-shared-auth-assets/` declares any `id` at all** — verified across all 41 files. Better:
-eleven of them are authored with `stroke="currentColor"` / `fill="currentColor"`
-(`auth-email`, `auth-eye`, `auth-lock`, `auth-lock-filled`, `auth-user-plus`,
-`checkbox-empty`). Those are UI icons that must take the surrounding text colour — as
-`<img>` they would render black, because `currentColor` in a standalone SVG document has
-no inherited colour to resolve against. So the set splits in two, and that split is the
-central design decision of this revision (see "Critical Implementation Details").
+**Measured mockup geometry (screen 01, `01-parent-login-web.png`, 1536×1024).** These are
+the numbers RC2 is missing, read off the mockup with PIL rather than estimated:
 
-**Screens 02–06 have thin breakdowns; screen 01's is the detailed one.** Only
-`01-parent-login-extracted/docs/component-breakdown.md` carries layout, Polish copy,
-breakpoints and a11y notes. The other five carry a component tree, an assets pointer and
-"Screen Notes". For those five the binding sources are the flat `*-web.png` / `*-mobile.png`
-mockups plus the shared atom manifest. Every one of them repeats the same rule: *"Build in
-React/CSS: page grid, cards, shadows, borders, radii, all text and labels, form controls,
-buttons, links, dividers, steppers, toggles and selected states."*
+| Region                    | Mockup box (x0,y0)–(x1,y1) | Size      |
+| ------------------------- | -------------------------- | --------- |
+| Left column               | 40,40 – 817,975            | 777 × 935 |
+| Brand row                 | 40,44 – ~390,115           | h ≈ 71    |
+| `<h1>` "Panel rodzica"    | y 181–237 (cap height)     | ≈ 72 px type |
+| Accent "Zaloguj się"      | y 281–348                  | ≈ 48 px type |
+| Tagline (2 lines)         | y 390–440                  | ≈ 20 px type |
+| Feature icon row          | y 449–524                  | icon ≈ 72–76 |
+| Feature titles            | y 543–558                  | ≈ 16 px type |
+| World tiles (4 in mockup) | y 650–876, tile 176 × 226  | image 176 × 168, label bar 58 |
+| Security strip            | y 915–975                  | h ≈ 60    |
+| **Card**                  | **899,138 – 1469,905**     | **571 × 768**, radius ≈ 32, padding 40 |
+| Card title                | y 185–225                  | ≈ 40 px type |
+| Card hero                 | y 245–355, w ≈ 300         |           |
+| Email field               | y 392–468                  | **h ≈ 76** |
+| Password field            | y 494–571                  | h ≈ 76, gap 26 |
+| Remember / forgot row     | y ≈ 600–630                |           |
+| Primary button            | y 663–735                  | **h ≈ 72** |
+| "lub" divider             | y ≈ 770                    |           |
+| Outline button            | y 803–872                  | h ≈ 70    |
 
-**Several PNG cutouts are keyed by removing near-white pixels, which knocks out white
-content inside the illustration.** Composited on magenta, `hero-email-confirmation.png`
-loses the white letter inside the envelope, `hero-reset-card-top.png` loses its white card,
-`security-shield-card-icon.png` and `status-email-green.png` lose their interiors, and
-`hero-parent-dashboard-desk.png` keeps a residual opaque background block. The holes are
-invisible on a **white card** and visible on the pale-blue page background. This constrains
-which cutouts are usable and where — and is the main reason this plan takes SVG wherever
-the extraction offers both.
+Live today: fields 56 px (`h-14`), primary button ≈ 44, card 542 px wide inside a
+`max-w-6xl` (1152 px) container that leaves ~190 px of dead margin on each side, world
+tiles in a 2×3 grid 226 px tall each, and the security strip below the fold.
 
-**The field model is a design-system concern, not a screen concern.** `FormField.tsx` backs
-all four auth forms and mockups `01`, `02` and `04` use the identical field treatment (no
-visible label, tall input, icon in the left gutter, eye toggle). Changing the shared
-component is what the designs actually ask for.
+**Card boxes for the other screens**, measured the same way:
 
-**Fifteen e2e locators depend on field labels staying in the accessibility tree.**
-`e2e/helpers/accounts.ts` (`signInViaUI`, used by nearly every spec),
-`e2e/onboarding.spec.ts` and `e2e/password-reset.spec.ts` locate fields with
-`page.getByLabel(t.auth.fields.*)`. `sr-only` preserves every one of them; `hidden` or
-`aria-hidden` would break the suite wholesale.
+| Screen | Card box                | Notes                                               |
+| ------ | ----------------------- | --------------------------------------------------- |
+| 02     | 732,55 – 1397,839       | 666 × 784; trust badges y 877–916                    |
+| 03     | 246,160 – 1321,~700     | 1075 wide, two-panel                                 |
+| 04     | 864,128 – 1479,907      | 615 × 779                                            |
+| 05     | 263,123 – 1361,962      | 1098 × 839; sidebar x 0–225; chips y ≈ 20–105        |
+| 06     | PIN 353,300 – 868,843 · settings ~897,300 – 1503,843 · footer 353,871 – 1495,963 · stepper card ~417,31 – 905,175 · sidebar card 32,~640 – 265,~960 | |
 
-**`e2e/parent-surfaces.spec.ts` pins the PIN field as one input.** It fills
-`page.getByLabel(t.parentPin.pinLabel)` with a whole PIN string. Mockup `06` draws four
-separate digit boxes. The product's PIN is 4–6 digits, the mockup's is exactly 4 — so the
-mockup's control cannot represent the product's input. See "What We're NOT Doing".
+**The e2e suite pins three things this plan must move deliberately, not accidentally:**
 
-**Two designed strings were never wired.** `t.auth.signin.noAccount` ("Nie masz konta?")
-and `t.auth.signup.hasAccount` ("Masz już konto?") exist in `src/i18n/pl.ts` and are
-referenced by nothing in `src/`. Both mockups' two-part secondary labels are what they
-were written for.
+- `e2e/onboarding.spec.ts` drives the **three-step wizard** — clicks "Dalej" twice, asserts
+  `t.profileWizard.reviewIntro`, clicks `t.profileWizard.create`. Phase 5 collapses that
+  flow; the spec is rewritten in the same phase or the phase is not done.
+- `e2e/helpers/parent-pin.ts` and `e2e/parent-surfaces.spec.ts` fill the PIN with
+  `getByLabel(t.parentPin.pinLabel).fill(pin)` on a **single input**, sometimes with six
+  digits. Phase 6 makes it segmented; the helper is rewritten with it.
+- Fifteen `getByLabel` + `toHaveAccessibleName` assertions guard `FormField`'s `sr-only`
+  label. Resizing the field must not touch the label.
+
+**Six worlds, four tiles.** Mockup 01 draws four world tiles at 176 px; `WORLDS` has six
+and `e2e/marketing-worlds.spec.ts` exists precisely so the panel cannot advertise fewer
+worlds than the app ships. Two rows of mockup-sized tiles would need 472 px of height and
+push the security strip past 1024. One row of six at ~118 px is the only arrangement that
+is both truthful and single-viewport.
 
 ## Desired End State
 
-All six screens read as their mockups at 1536×1024 and at 390×844, dressed exclusively in
-art taken from `assets/matmaverse-auth-v2-web/` and committed under
-`public/illustrations/auth/` or inlined into `src/components/icons/`. No layout, card,
-field, button, checkbox, stepper or toggle is built from an image. No code resolves a path
-under `assets/`. Every committed file is registered in `public/illustrations/slice-map.md`
-with its source path.
+At 1536×1024, each of `/auth/signin`, `/auth/signup`, `/auth/confirm-email`,
+`/auth/reset-password`, `/app/new-profile`, `/app/parent-pin` is a screenshot of its
+mockup, region for region, within the tolerances in each phase's Manual rows: soft-3D art,
+mockup-scale fields and buttons, its own left panel, its own scattered decorations, no
+vertical scroll. Then the same at 390×844 against `assets/matmaverse-auth-v2-mobile/`.
 
-Verify by loading each route at both widths beside its `*-web.png` / `*-mobile.png`, and by
-a green `npm run lint`, `npm run check`, `npm run test`, `npm run test:e2e`.
+Verify by screenshotting each route at both sizes and comparing side-by-side with the
+mockup, plus the automated gates in every phase.
 
 ### Key Discoveries
 
-- **No SVG in `00-shared-auth-assets/` declares an `id`** (verified across 41 files), so the gradient-id collision that forced `<img>`-only rendering in the old Phase 1 does not exist for the new set.
-- **Six shared icons use `currentColor`** (`auth-email`, `auth-eye`, `auth-lock`, `auth-lock-filled`, `auth-user-plus`, `checkbox-empty`) — these must be inlined, not `<img>`'d, or they render black.
-- **Five more are authored with a hardcoded stroke** (`auth-paper-plane` `#FFFFFF`, `auth-refresh` / `arrow-left` / `arrow-right` `#0B6EFF`, `chevron-right` `#1A8F2A`, `calendar-age` `#7EA2E8`). Inlining them and converting the literal to `currentColor` makes one icon family instead of two colour regimes.
-- **`00-shared-auth-assets/` is the whole SVG supply.** `02`–`06`'s `svg/icons` and `svg/decor` directories are **empty**; those screens ship PNG cutouts only. Only `01-parent-login-extracted/svg/` has per-screen SVGs and they are byte-identical copies of the shared ones.
-- **PNG cutouts are RGBA with real transparency, but keyed by near-white removal.** Clean: the feature glyphs, coins, brand mark, avatars, setting icons, `hero-pin-lock-shield.png`. Holed: `hero-email-confirmation.png`, `hero-reset-card-top.png`, `hero-reset-envelope-lock-large.png`, `security-shield-card-icon.png`, `status-email-green.png`, `next-child-profile-icon.png`, `level-starting-icon.png`, `top-security-shield.png`, `avatar-boy-selected.png`. Residual background: `hero-parent-dashboard-desk.png` (corner alpha 231, not 0).
-- **`01-parent-login-extracted/css/design-tokens.css`** carries the palette (`--mm-color-primary: #126cf0`, `--mm-color-text: #08164f`, `--mm-color-green: #27b65b`, `--mm-color-yellow: #ffc43d`), radii (card 24 px, control 14 px), shadows and `--mm-login-card-width: 542px`. `src/styles/global.css` already samples the same palette in oklch; the two agree to within a hue step, so the theme is **mapped, not replaced** (see Phase 1, item 5).
-- **`public/illustrations/coin.png` / `coin-stack.png` stay.** Four child-facing surfaces (`CoinBoard`, `HudChip`, `UpgradeShop`, `ShiftResults`) hardcode those paths. The auth decor moves to the extraction's SVG coins; the PNGs are untouched.
-- **Unit baseline on this branch is 641 tests in 65 files** (measured 2026-08-29, `main`-parity). Deltas below are relative to that.
-- **`e2e/growth.spec.ts` on `[touch]` fails on `main`** — pre-existing, not this change's. Green for this change reads "1 failed, 1 skipped, 30 passed".
+- `src/data/marketing-art.ts` — `FEATURE_ICONS` (today around `:43`; anchor on the
+  symbol, not the number — L-006) is index-aligned with
+  `t.marketing.features` and pinned by `tests/auth-art.test.ts`; the swap is three string
+  edits, not a component change.
+- `src/components/auth/AuthShell.astro` — the `<h1>` (today around `:89`) deliberately sits OUTSIDE the
+  `hidden lg:block` wrapper (`sr-only lg:not-sr-only`) because a heading in a
+  `display:none` subtree names nothing. Any panel refactor must keep it there.
+- `src/components/child/SelectTile.tsx` is shared with `WorldPicker.tsx` (a child-facing
+  screen out of scope) — screen 05's tile treatment must arrive as a variant, not a
+  rewrite.
+- `src/pages/api/profiles/create.ts` — `createSchema` (today around `:28`) validates `avatar` against `AVATAR_IDS`, derived
+  from `src/data/avatars.ts`; the DB column is a bare `text`. Adding a fifth avatar is
+  purely additive.
+- `public/avatars/slice-map.md` records why the mockup's fifth avatar was skipped: it is
+  drawn wearing its selection ring and check badge. The extraction's
+  `avatar-boy-selected.png` has the same chrome plus keying holes.
+- Playwright's `desktop` project is `devices["Desktop Chrome"]` — 1280×720. Any 1536×1024
+  assertion needs its own `test.use({ viewport })`.
+- `fidelity-gaps.md` is currently **untracked**. Phase 1 commits it; the audit is part of
+  the change record.
 
 ## What We're NOT Doing
 
-Every item here is a place the mockup and the product genuinely disagree. Each is a
-decision, recorded so it does not get rediscovered as drift.
-
-- **Not adding the cross-screen onboarding stepper** ("Krok 1/2/3 z 3" on mockups `02`, `05`, `06`). `/app/new-profile` already renders its **own** three-step stepper for a different three steps ("Dane dziecka / Avatar i świat / Podsumowanie"). Two steppers on one screen, both saying "Krok N z 3", is both a layout collision and an L-007 locator collision.
-- **Not splitting the parent PIN into four digit boxes** (mockup `06`). The product's PIN is 4–6 digits; the mockup's control holds exactly 4. `e2e/parent-surfaces.spec.ts` fills the field as one string. The single field is restyled to the mockup's weight and tracking instead.
-- **Not building mockup `06`'s "Bezpieczne ustawienia" list** (Brak reklam / Dostosowane do wieku / Raport tygodniowy / Kontrola poziomu trudności, each with a toggle). None of those four settings exists in the product. Rendering four always-on toggles would advertise controls that do nothing.
-- **Not building the `05` / `06` left sidebar navigation.** Those are onboarding routes outside `AppShell`; adding a nav is a routing change, not a visual one.
-- **Not adding mockup `02`'s terms-and-privacy checkbox.** There is no regulamin and no polityka prywatności page to link to.
-- **Not changing the avatar set** (mockup `05` shows five faces; `src/data/avatars.ts` ships four). `avatar` ids are validated by zod on `/api/profiles/create`, stored in `child_profiles.avatar`, and `e2e/onboarding.spec.ts` locates `AVATARS[1].alt`. This is a data change, not a visual one.
-- **Not reverting the world strip to the mockups' four cards**, nor swapping world art for the mockups' photo-real interiors. Six worlds in `grid-cols-3` is current and pinned by `e2e/marketing-worlds.spec.ts`.
-- **Not renaming the brand to "MathMarket".** The wordmark stays `t.brand` ("MatmaVerse"); only the *symbol* is adopted.
-- **Not adopting `nav-*.svg`, `world-*.svg`, `setting-*.svg` or `toggle-on.svg`** — the four groups above are the surfaces that would have consumed them.
-- **Not adding Playwright visual-regression baselines.** Asset-existence tests plus Playwright-driven human comparison is the agreed bar.
-- **Not touching `assets/`** — read-only, gitignored, never committed (`CLAUDE.md`).
+- Not renaming the product. Mockups say "MathMarket"; the product is **MatmaVerse**. Only
+  the bicolour treatment of the wordmark is adopted, not the name.
+- Not adding the signup "Imię" field or the terms checkbox (open decision 1, default kept):
+  the product stores no parent name and there is no regulamin page to link to.
+- Not building the screen 06 settings toggles as real preferences (open decision 4): they
+  render as a static, non-interactive panel.
+- Not inventing routes for the screens 05/06 sidebars (open decision 3): static preview
+  chrome, not navigation.
+- Not touching `AppShell.astro`'s hand-rolled brand lockup (signed-in chrome, its own e2e
+  coverage) — still the follow-up `change.md` records.
+- Not adding Playwright visual-regression baselines. Parity is verified by the human pass
+  the Manual rows describe.
+- Not touching `ChangePinSection.tsx` on the report page, `WorldPicker.tsx`, or any
+  child-facing screen.
+- Not re-cutting art that already reads correctly (`hero-email.png`, `hero-pin.png`,
+  `hero-reset.png`, the four committed avatars, the world images).
 
 ## Implementation Approach
 
-Nine phases. Phase 1 lands and pins every atom first, so every later phase references
-paths and components that provably exist. Phase 2 is already landed and is not re-run.
-Phases 3–4 finish screen `01` (field model, then card and composition) because they are the
-widest blast radius — `FormField` backs four forms and fifteen e2e locators — and because
-every later screen inherits them. Phases 5–9 are one per remaining screen, in mockup order,
-each self-contained: a screen's phase touches its page, its i18n keys and nothing else.
+Art lands and is registered first, so every later phase references paths that provably
+exist — the ordering the initial plan established and that worked. Then the cheap global
+levers (scale), then the per-screen panels, then per-screen decoration, then the two
+structural rebuilds, then mobile. Phases 1–4 are presentation-only and cannot break a
+test that is not about looks; phases 5 and 6 change React components under e2e coverage
+and each carries its own spec rewrite. Every phase ends green on the full suite.
 
-Each screen phase ends with a Playwright comparison against both flat mockups at 1536×1024
-and 390×844, with the screenshots written to the run's scratchpad.
+Screens 05 and 06 are last on purpose: they are the only phases that can regress
+behaviour, and by the time they run, the shared vocabulary they should be built from
+(field metrics, stepper, panel chrome, decoration contract) already exists.
 
 ## Critical Implementation Details
 
-**The atom set splits into two groups, and the split is by colour authority, not by file
-type.** An atom whose colours belong to the *design* is a committed file rendered as
-`<img src>`; an atom whose colour belongs to the *context it sits in* is inlined as a React
-component so `currentColor` resolves. Getting this backwards is what makes an email glyph
-render black inside a blue tile.
+**Keying holes decide where a cutout may be placed.** Several PNGs are keyed by removing
+near-white pixels, which punches holes through white content *inside* the illustration:
+`hero-email-confirmation`, `hero-reset-card-top`, `security-shield-card-icon`,
+`status-email-green`, `next-child-profile-icon`, `level-starting-icon`,
+`top-security-shield`, `avatar-boy-selected`. On a white card the hole is invisible; on
+the pale page background it reads as a pale rectangle. Rule for this plan: **a holed
+cutout goes on `bg-card`, or inside an explicit disc/backdrop, or not at all.**
+`hero-parent-dashboard-desk.png` is the inverse — it keeps a residual opaque background,
+so it needs either a light patch behind it or a re-cut from the mockup.
 
-- **Group A — illustrations, `public/illustrations/auth/*`, rendered `<img>`.** Fixed brand colours, decorative or illustrative, never recoloured by a consumer. Always `alt=""` + `aria-hidden="true"` unless it is the only thing naming its region.
-- **Group B — UI icons, `src/components/icons/authIcons.tsx`, inlined.** Sized by `className`, coloured by the parent's `text-*`. Drop-in replacements for the `lucide` components they retire, same call shape.
+**A deliberate break that works by changing a utility class can race Tailwind v4.** Any
+verification that flips a class must confirm the computed style in the browser before
+running the test, or it proves nothing (`change.md`, Phase 3's false green).
 
-**Group B must never gain an `id` or a gradient.** Inlining is only safe because these files
-declare neither; SVG element ids are document-global and two inlined atoms sharing one would
-silently cross-render. `tests/auth-art.test.ts` asserts this on the committed source, so the
-day someone pastes in a gradient-bearing atom the guard fires instead of the page.
+**`*/` inside an Astro frontmatter comment closes it early** and the parse error surfaces
+~60 lines later. Write extraction globs without the slash after the star.
 
-**Labels go `sr-only`, never `hidden` — but NOT for the reason this plan first gave.**
-The original sentence here read "Fifteen e2e locators resolve fields through `getByLabel`;
-any treatment that removes the label from the accessibility tree takes the e2e suite down
-with it." **Both halves are false**, disproved by Phase 3's deliberate break and
-re-verified during the implementation review (2026-08-30) in Chromium against the live
-`/auth/signin`:
+**No inlined SVG may declare an `id`.** SVG ids are document-global; two inlined atoms
+sharing one cross-render silently. `tests/auth-art.test.ts` enforces it — do not work
+around it with a `<mask>`.
 
-```
-as shipped (sr-only)       getByLabel: 1   accessible name: PASS
-label display:none         getByLabel: 1   accessible name: PASS
-label deleted              getByLabel: 0   accessible name: FAIL
-```
-
-`getByLabel` matches the label's DOM **text** and never consults the accessibility tree, so
-it survives any CSS. And the field keeps its accessible name through `display: none`,
-`visibility: hidden` and `aria-hidden` alike, because Chromium resolves a `<label for>`
-association regardless of the label's presentation — it survives even with the placeholder
-removed. Nothing was protecting the field's name; the edit everyone feared was harmless.
-
-The label still goes `sr-only`, because it is the only name a placeholder-only field has
-once the user types. What actually needs guarding is **deleting** the label — the tidy-up on
-an element that renders nothing — and nothing caught that until Phase 3 added
-`toHaveAccessibleName`, now asserted on all four `FormField` routes.
-
-**Background decorations must not create horizontal overflow.** They are absolutely
-positioned near the viewport edges; without `overflow-hidden` on each shell's outer
-container an overhanging decoration makes the body scroll sideways at narrow desktop
-widths. Every decoration is `aria-hidden="true"`, `pointer-events-none`, `hidden lg:block`,
-and behind the content in stacking order.
-
-**Holed cutouts go on white, never on the page background.** `hero-email.png` and
-`hero-reset.png` have white interiors keyed out; they read correctly only on a `bg-card`
-surface. Both are placed inside cards for exactly this reason, and the reason is recorded in
-`slice-map.md` so a later move does not silently reintroduce the hole.
-
-**New user-visible strings get an L-007 substring check before they land.** Several new
-labels (trust-badge titles, panel headings) sit on screens that already render
-`t.marketing.features[*].title`. A new string that contains — or is contained by — an
-existing one makes an unrelated `getByText` ambiguous. Phase 5 ships the programmatic guard.
+**Contrast is measured, not eyeballed.** Re-run the canvas-based probe
+(`.playwright-mcp/verify.mjs`, gitignored — regenerate from `change.md`'s description if
+absent, and keep its positive control). A regex over `getComputedStyle().color` returns
+`oklch(...)` in this theme and fabricates every ratio it prints.
 
 ---
 
-## Phase 1: The auth atom set, re-done from the per-screen extraction
+## Phase 1: The soft-3D art lands, the flat set retires (RC1)
 
 ### Overview
 
-Retire the six atomic-pack SVGs, land the extraction's atoms in their two groups, correct the
-provenance register, re-tune the two consumers whose sizing was fitted to the old art, and
-rewrite the pinning test so it guards both groups.
+Copy every PNG cutout screens 01–04 need out of the extraction into
+`public/illustrations/auth/`, repoint `src/data/marketing-art.ts`, rewrite the
+`slice-map.md` section, extend the art test, and give the brand row its 3D symbol and
+bicolour wordmark. No layout changes — this phase swaps texture only, so the screens get
+visibly better and measurably no taller.
 
 ### Changes Required:
 
-#### 1. Retire the wrong art
+#### 1. Committed art
 
-**Files**: `public/illustrations/{brand-symbol,feature-safety,feature-worlds,feature-progress,parent-lock,decor-chart}.svg` (deleted)
+**Files**: new files under `public/illustrations/auth/`
 
-**Intent**: These came from `assets/atomic-assets-v2/svg/` and are rejected. Deleting rather
-than leaving them orphaned is what keeps `slice-map.md` honest.
+**Intent**: bring the mockups' rendered art into the repo. `assets/` is gitignored, so no
+code may resolve a path under it (`CLAUDE.md`); every file is copied **byte-for-byte**,
+no crop and no re-encode, unless a row below says otherwise.
 
-**Contract**: All six removed. `public/illustrations/coin.png` and `coin-stack.png` are
-**not** touched — `CoinBoard`, `HudChip`, `UpgradeShop` and `ShiftResults` hardcode them.
+**Contract**: output name ← source under `assets/matmaverse-auth-v2-web/`.
 
-#### 2. Group A — committed illustrations
+Shared and screen 01:
 
-**File**: `public/illustrations/auth/` (new directory, 14 files)
+| Output                        | Source                                                        | px      |
+| ----------------------------- | ------------------------------------------------------------- | ------- |
+| `brand-mark.png`              | `00-shared-auth-assets/png/cutouts/brand-mark.png`             | 96×78   |
+| `feature-safety.png`          | `01-parent-login-extracted/png/cutouts/feature-safe-learning.png` | 100×95 |
+| `feature-worlds.png`          | `01-…/png/cutouts/feature-worlds.png`                          | 98×98   |
+| `feature-progress.png`        | `01-…/png/cutouts/feature-child-progress.png`                  | 92×96   |
+| `hero-parent-security.png`    | `01-…/png/cutouts/login-hero-parent-security.png`              | 320×140 |
+| `decor-coin.png`              | `00-shared…/png/cutouts/decor-floating-coin.png`               | 88×88   |
+| `decor-coin-stack.png`        | `00-shared…/png/cutouts/decor-coin-stack.png`                  | 125×110 |
+| `decor-dotted-arrow.png`      | `00-shared…/png/cutouts/decor-dotted-arrow.png`                | 345×79  |
+| `decor-signin-chart.png`      | `01-…/png/cutouts/decor-bottom-chart.png`                      | 121×84  |
+| `decor-signin-security.png`   | `01-…/png/cutouts/decor-top-right-security.png`                | 220×145 |
 
-**Intent**: Ship the extraction's fixed-colour art so it resolves on Vercel and in CI, where
-`assets/` does not exist.
+Screen 02:
 
-**Contract**: Copied byte-for-byte (SVG) or as-is (PNG) from
-`assets/matmaverse-auth-v2-web/`. A subdirectory rather than the flat root because this is
-one coherent set of fourteen and the root already holds four unrelated batches.
+| Output                       | Source (`02-parent-register-extracted/png/cutouts/`) | px      |
+| ---------------------------- | ----------------------------------------------------- | ------- |
+| `callout-shield.png`         | `feature-parent-account-shield.png`                    | 82×85   |
+| `feature-goals.png`          | `feature-learning-goals-target.png`                    | 109×84  |
+| `feature-environment.png`    | `feature-safe-environment-lock.png`                    | 92×86   |
+| `feature-reports.png`        | `feature-progress-report-chart.png`                    | 104×85  |
+| `hero-signup-desk.png`       | `hero-parent-dashboard-desk.png`                       | 555×287 |
+| `decor-signup-backpack.png`  | `decor-right-backpack.png`                             | 158×195 |
+| `decor-signup-coins.png`     | `decor-right-coin-stack.png`                           | 142×125 |
+| `decor-signup-chart.png`     | `decor-top-growth-chart.png`                           | 155×170 |
+| `decor-signup-cloud.png`     | `decor-cloud.png`                                      | 131×17  |
+| `decor-signup-zl.png`        | `decor-big-zl-coin.png`                                | 135×135 |
 
-| Destination (`public/illustrations/auth/`) | Source (under `assets/matmaverse-auth-v2-web/`)              |
-| ------------------------------------------ | ------------------------------------------------------------ |
-| `brand-mark.svg`                            | `00-shared-auth-assets/svg/icons/brand-shop-basket-coin.svg`  |
-| `feature-safety.svg`                        | `00-shared-auth-assets/svg/icons/feature-shield-check.svg`    |
-| `feature-worlds.svg`                        | `00-shared-auth-assets/svg/icons/feature-globe.svg`           |
-| `feature-progress.svg`                      | `00-shared-auth-assets/svg/icons/feature-child-progress.svg`  |
-| `hero-parent-security.svg`                  | `00-shared-auth-assets/svg/icons/security-user-shield.svg`    |
-| `badge-check.svg`                           | `00-shared-auth-assets/svg/icons/check-badge-blue.svg`        |
-| `coin.svg`                                  | `00-shared-auth-assets/svg/icons/coin-zl.svg`                 |
-| `coin-stack.svg`                            | `00-shared-auth-assets/svg/icons/coin-stack-zl.svg`           |
-| `decor-chart.svg`                           | `00-shared-auth-assets/svg/decor/decor-chart-up.svg`          |
-| `decor-receipt.svg`                         | `00-shared-auth-assets/svg/decor/decor-receipt-coins.svg`     |
-| `decor-path.svg`                            | `00-shared-auth-assets/svg/decor/dotted-growth-path.svg`      |
-| `hero-email.png`                            | `03-email-verification-extracted/png/cutouts/hero-email-confirmation.png` |
-| `hero-reset.png`                            | `04-password-reset-extracted/png/cutouts/hero-reset-card-top.png` |
-| `hero-pin.png`                              | `06-parent-pin-security-extracted/png/cutouts/hero-pin-lock-shield.png` |
+Screen 03:
 
-#### 3. Group B — inline UI icons
+| Output                      | Source (`03-email-verification-extracted/png/cutouts/`) | px      |
+| --------------------------- | -------------------------------------------------------- | ------- |
+| `decor-verify-shield.png`   | `decor-right-shield.png`                                  | 135×163 |
+| `decor-verify-envelope.png` | `decor-left-envelope.png`                                 | 135×114 |
+| `decor-verify-document.png` | `decor-right-document.png`                                | 155×160 |
+| `decor-verify-plant.png`    | `decor-left-plant.png`                                    | 155×301 |
+| `decor-verify-books.png`    | `decor-right-books-plant.png`                             | 254×210 |
+| `decor-verify-coins.png`    | `decor-right-coin-stack.png`                              | 155×137 |
+| `decor-verify-chart.png`    | `decor-left-chart.png`                                    | 133×165 |
+| `decor-verify-path.png`     | `decor-top-dotted-path.png`                               | 390×85  |
 
-**File**: `src/components/icons/authIcons.tsx` (new)
+Screen 04:
 
-**Intent**: One icon family for every small glyph that must take its context's colour,
-replacing the `lucide` components the auth surfaces use today. Inlining is what makes
-`currentColor` resolve; an `<img>` of the same file renders black.
+| Output                        | Source (`04-password-reset-extracted/png/cutouts/`) | px      |
+| ----------------------------- | ----------------------------------------------------- | ------- |
+| `feature-reset-account.png`   | `feature-safe-account-shield.png`                      | 93×100  |
+| `feature-reset-data.png`      | `feature-child-data-lock.png`                          | 84×98   |
+| `feature-reset-noads.png`     | `feature-no-ads.png`                                   | 90×96   |
+| `decor-reset-plane.png`       | `decor-paper-plane.png`                                | 93×83   |
+| `decor-reset-shield-bg.png`   | `decor-center-shield-bg.png`                           | 137×155 |
+| `decor-reset-envelope.png`    | `decor-top-envelope.png`                               | 40×49   |
+| `decor-reset-plant.png`       | `decor-left-plant-bg.png`                              | 165×210 |
+| `decor-reset-coins.png`       | `decor-left-coins.png`                                 | 145×102 |
+| `decor-reset-coin-stack.png`  | `decor-right-coin-stack.png`                           | 156×175 |
+| `decor-reset-chart.png`       | `decor-top-right-chart.png`                            | 147×100 |
 
-**Contract**: One named export per icon, each `({ className }: { className?: string })`
-returning an `<svg>` with the source's exact `viewBox` and path data, `aria-hidden="true"`,
-`focusable="false"`, and `className` applied to the root so `size-*` and `text-*` work — the
-same call shape as the `lucide` icons they retire, so every swap is one-for-one.
+World-strip glyphs (SVG, byte-for-byte, from `00-shared-auth-assets/svg/icons/`):
+`world-glyph-bakery.svg` ← `world-bakery.svg`, `world-glyph-cafe.svg` ← `world-cafe.svg`,
+`world-glyph-galaxy.svg` ← `world-galaxy.svg`, `world-glyph-collector.svg` ←
+`world-collector.svg`.
 
-Exports and sources (all under `00-shared-auth-assets/svg/icons/`):
+**Retire in this phase** (nothing references them after item 2):
+`brand-mark.svg`, `feature-safety.svg`, `feature-worlds.svg`, `feature-progress.svg`,
+`hero-parent-security.svg`. The outline decor SVGs (`coin.svg`, `coin-stack.svg`,
+`decor-chart.svg`, `decor-receipt.svg`, `decor-path.svg`) stay until Phase 6 — screens
+05 and 06 still render them until their own phases land.
 
-| Export                | Source                | currentColor in source |
-| --------------------- | --------------------- | ---------------------- |
-| `AuthEmailIcon`       | `auth-email.svg`      | yes                    |
-| `AuthLockIcon`        | `auth-lock.svg`       | yes                    |
-| `AuthLockFilledIcon`  | `auth-lock-filled.svg`| yes                    |
-| `AuthEyeIcon`         | `auth-eye.svg`        | yes                    |
-| `AuthEyeOffIcon`      | `auth-eye.svg` + slash| derived — see below    |
-| `AuthUserPlusIcon`    | `auth-user-plus.svg`  | yes                    |
-| `AuthPaperPlaneIcon`  | `auth-paper-plane.svg`| no (`#FFFFFF`)         |
-| `AuthRefreshIcon`     | `auth-refresh.svg`    | no (`#0B6EFF`)         |
-| `AuthArrowLeftIcon`   | `arrow-left.svg`      | no (`#0B6EFF`)         |
-| `AuthArrowRightIcon`  | `arrow-right.svg`     | no (`#0B6EFF`)         |
-| `AuthChevronRightIcon`| `chevron-right.svg`   | no (`#1A8F2A`)         |
-| `AuthCalendarIcon`    | `calendar-age.svg`    | no (`#7EA2E8`)         |
-| `AuthShieldCheckIcon` | `feature-shield-check.svg` | no (`#39c66a`/`#fff`) |
-
-**Two deliberate derivations, both recorded in the module's header:**
-
-- The five hardcoded strokes become `currentColor`. Each source paints one literal colour that only suits the one place the mockup uses it; as `currentColor` the consumer sets it with a Tailwind `text-*` class and the mockup's colour is reproduced at the call site. This is how the `lucide` icons they replace already behaved.
-- `AuthEyeOffIcon` has no source file — the extraction only draws the open eye, but `PasswordToggle` needs both states. It is `auth-eye.svg` plus one diagonal `<path>` at the source's own stroke weight, so the pair reads as one family. Mixing in a `lucide` `EyeOff` beside an extraction eye would not.
-
-#### 4. The art manifest
+#### 2. The art registry
 
 **File**: `src/data/marketing-art.ts`
 
-**Intent**: Keep the single module that owns every Group A path, so no surface hardcodes one
-and so the atom swap is a one-file edit. Renamed constants would ripple into landed Phase 2
-markup; the existing names are kept where the meaning survives.
+**Intent**: repoint every Group A constant at the PNG cutouts and give the decoration
+layer per-screen groups instead of five loose constants, so Phase 4 has something to
+consume and no page invents its own paths.
 
-**Contract**: `BRAND_SYMBOL` → `/illustrations/auth/brand-mark.svg`. `FEATURE_ICONS` → the
-three `/illustrations/auth/feature-*.svg`, still index-aligned with `t.marketing.features`.
-`PARENT_LOCK` → `/illustrations/auth/hero-parent-security.svg`. `DECOR_COIN` /
-`DECOR_COIN_STACK` / `DECOR_CHART` repoint to the SVG coins and chart under `auth/`. New:
-`DECOR_RECEIPT`, `DECOR_PATH`, `BADGE_CHECK`, `HERO_EMAIL`, `HERO_RESET`, `HERO_PIN`.
-`MARKETING_ART` lists all of them. The module header's long "never inline the SVG" warning is
-replaced: it described a hazard the new set does not have, and the real rule is now the
-Group A / Group B split.
+**Contract**: `BRAND_SYMBOL`, `PARENT_LOCK`, `FEATURE_ICONS` keep their names and change
+extension. Add `DECOR_SIGNIN`, `DECOR_SIGNUP`, `DECOR_VERIFY`, `DECOR_RESET` as readonly
+records of named paths (e.g. `DECOR_SIGNIN.coinStack`), plus `SIGNUP_PANEL_ART` and
+`RESET_PANEL_ART` for the Phase 3 panels. `MARKETING_ART` — the set the test walks — must
+list every new path. Add:
 
-#### 5. Design tokens mapped onto the existing theme
+```ts
+/** Small glyph before a world's name in the auth world strip, keyed by slug. */
+export const WORLD_GLYPHS: Readonly<Record<string, string>>;
+```
 
-**File**: `src/styles/global.css`
+Four of six worlds have an extraction glyph (`kawiarnia`, `piekarnia`,
+`galaktyczna-baza`, `sklep-ksiegarnia`). `pracownia` and `laboratorium` have none and get
+a `lucide` fallback at the call site — the sanctioned deviation `src/data/stages.ts` and
+`ShopGlyph.tsx` already established. Keyed by slug, never index-parallel.
 
-**Intent**: `01-parent-login-extracted/css/design-tokens.css` is the extraction's palette,
-radii and shadows. Map it onto the theme so the values are reachable as Tailwind utilities —
-do **not** scatter hex literals through components, and do **not** replace the oklch palette
-that the whole app is already built on.
-
-**Contract**: Compare token by token and change only where the extraction genuinely
-disagrees with `:root`; record the comparison in a comment. Add what has no home yet: a
-`--shadow-mm-card` (`0 24px 70px rgba(20,78,145,0.14)`) and `--shadow-mm-control`
-(`0 12px 28px rgba(18,108,240,0.18)`) under `@theme inline` so the mockups' soft card lift
-is one utility rather than a per-card guess, and `--mm-login-card-width: 542px` as the auth
-card's max width. Existing `--radius: 0.875rem` (14 px) already equals the extraction's
-control radius; the card radius (24 px) is the existing `rounded-3xl`. No component gets a
-raw hex.
-
-#### 6. Re-tune the two consumers fitted to the old art
-
-**Files**: `src/components/marketing/BrandRow.astro`, `src/components/marketing/FeatureList.astro`
-
-**Intent**: Both carry a sizing constant chosen for the *retired* art and a comment
-explaining that choice. `FeatureList`'s header says the icons are `lg:size-20` because the
-old SVGs "do not fill their 64-unit viewBox — the shield spans about 44 of it". The new
-`feature-*.svg` fill theirs, so the same box now renders oversized.
-
-**Contract**: `FeatureList`'s icon box comes back to the mockup's own scale (`size-11
-sm:size-14 lg:size-16`), and the stale rationale comment is replaced by one sentence saying
-the new atoms fill their viewBox. `BrandRow`'s symbol is a 96×80 viewBox, not a square, so
-its `size-*` classes become explicit width classes with `h-auto` to stop the mark being
-squashed. Both files' header comments lose the gradient-collision paragraph and gain a
-pointer to the Group A / Group B split.
-
-#### 7. Provenance register
+#### 3. Provenance register
 
 **File**: `public/illustrations/slice-map.md`
 
-**Intent**: Record where all 14 Group A files and all 13 Group B icons came from, and correct
-— not append to — the section that describes the retired six.
+**Intent**: the auth section currently describes a 14-file SVG-first set that this phase
+replaces. Rewrite it, do not append — a register that describes deleted files is worse
+than none.
 
-**Contract**: The section "Signed-out surface art (auth-visual-fidelity) — 2026-08-29" is
-**rewritten**, since every file it lists is deleted. Its replacement carries: the two tables
-above (destination ↔ source); a note that the SVGs are byte-for-byte copies and the three
-PNGs are as-is copies (no crop, no resize) of already-cut-out files; the Group A / Group B
-split and why; the two Group B derivations; and the white-knock-out finding with the list of
-holed cutouts and the "on white only" rule it implies. The paragraph explaining the
-gradient-id hazard goes, and one line records that it was specific to the atomic pack and
-does not apply to this extraction.
+**Contract**: keep the "splits by colour authority" explanation (it is still true and now
+also explains why Group B stayed SVG while Group A went PNG); replace the file table with
+the tables above; keep the `hero-reset.png` edit note; add a line recording that the flat
+`svg/icons/` illustrations were retired because they read as vector where the mockup
+renders 3D (RC1).
 
-#### 8. Rewrite the pinning test
+#### 4. Art contract test
 
 **File**: `tests/auth-art.test.ts`
 
-**Intent**: The existing test pins Group A's shape. It must keep doing that, gain the
-subdirectory, and grow a guard for Group B's one real hazard.
+**Intent**: extend the existing guards to the new surface area without weakening them.
 
-**Contract**: Keeps the three existing assertions (every path exists on disk; every path
-serves from `/illustrations/`; one feature icon per `t.marketing.features` entry; no
-duplicate feature icon), with the path regex widened to allow the single `auth/` segment.
-Adds: **every committed Group A SVG is free of `id=` attributes and of `<linearGradient` /
-`<radialGradient>`**, and **every icon exported from `src/components/icons/authIcons.tsx`
-renders an `<svg>` carrying a `viewBox`, no `id`, and at least one `currentColor`** — read by
-rendering each export, not by grepping the file, so a component that exports the wrong thing
-fails too. This is the guard that makes the inlining decision safe to keep: it can go red,
-and it goes red on exactly the mistake that would break it.
+**Contract**: every path in `MARKETING_ART` exists on disk and matches the
+`/illustrations/(auth/)?…` pattern (already asserted — the pattern already permits `png`);
+add: every `WORLDS` slug resolves through `WORLD_GLYPHS` to a file that exists, or is
+absent from the record entirely (the documented fallback case) — no slug may point at a
+missing file. The Group A "no id / no gradient" walk keeps running over whatever SVGs
+remain.
+
+#### 5. Brand lockup
+
+**Files**: `src/components/marketing/BrandRow.astro`, `src/i18n/pl.ts`
+
+**Intent**: the mockup's wordmark is two-coloured ("Math" blue + "Market" green) and the
+symbol is rendered 3D; live is one flat colour and a flat symbol.
+
+**Contract**: add `t.brandParts = { first: "Matma", second: "Verse" }` and assert
+`first + second === t.brand` in `tests/marketing-labels.test.ts`. `BrandRow` renders two
+adjacent `<span>`s with **no whitespace between them**, `text-primary` and
+`text-success-strong`, so the element's text content stays the unbroken "MatmaVerse".
+`brand-mark.png` is 96×78 — keep the `w-* h-auto` sizing, never a square `size-*`.
+`text-success-strong` on the page background must be re-measured with the contrast probe.
+
+#### 6. Feature icon box
+
+**File**: `src/components/marketing/FeatureList.astro`
+
+**Intent**: the mockup's feature icons are 72–76 px; the box is `lg:size-16` (64).
+
+**Contract**: `lg:size-18`. Below `lg` the carded treatment and its smaller sizes stay —
+that is the mobile mockup, not a compromise.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Art test passes: `npx vitest run tests/auth-art.test.ts`
-- Full unit suite passes: `npm run test` — baseline 641 + ~4 new assertions in `tests/auth-art.test.ts`
-- Linting passes: `npm run lint`
+- Unit suite passes: `npm run test` — baseline 641 tests / 65 files plus the new
+  `WORLD_GLYPHS` and `brandParts` assertions
+- Lint passes: `npm run lint`
 - Type/astro check passes: `npm run check`
-- No source file references a retired atomic-pack path: `grep -rn "atomic-assets\|illustrations/brand-symbol\|illustrations/parent-lock\|illustrations/feature-" src tests e2e` returns nothing
-- No source file resolves a path under `assets/`: `grep -rn "assets/matmaverse\|assets/atomic" src e2e | grep -v "^\S*:[0-9]*: *\(\*\|//\|{/\*\)"` returns nothing but comments
+- E2E suite green: `npm run test:e2e` → "1 skipped, 31 passed" (sandbox override required)
+- No code path resolves under `assets/`: `grep -rn "assets/matmaverse" src/ public/*.* --include=*.ts --include=*.tsx --include=*.astro` returns only comments
+- Every retired SVG is gone: `ls public/illustrations/auth/*.svg` lists only
+  `badge-check.svg` and the five decor SVGs Phase 6 retires, plus the four world glyphs
 
-#### Manual:
+#### Manual Verification:
 
-- Each of the 14 Group A files, opened in a browser, reads as its mockup counterpart
-- `slice-map.md` describes only files that exist, and no longer claims these glyphs are rendered with lucide or that they carry colliding gradient ids
-
----
-
-## Phase 2: Shared marketing components — LANDED (`5793073`), not re-run
-
-### Overview
-
-`BrandRow.astro`, `FeatureList.astro` and `SecurityNote.astro` exist and are consumed by both
-`AuthShell.astro` and `Welcome.astro`. The extraction of the duplicated markup is correct and
-survives the revision unchanged — art paths are read from `src/data/marketing-art.ts`, so
-Phase 1's atom swap re-dresses both surfaces with no markup edit here.
-
-Two items that would otherwise belong to this phase are folded into **Phase 1 item 6**: the
-`FeatureList` icon-box size and the `BrandRow` symbol aspect ratio, both tuned to the retired
-art. `SecurityNote`'s `lucide` `Lock` is replaced with `AuthLockFilledIcon` in **Phase 4**,
-where the sign-in card's icon family is settled in one pass.
-
-Its Progress rows stay checked. No commit belongs to this phase in this revision.
+- At 1536×1024 `/auth/signin` shows three soft-3D feature icons, a 3D brand mark and the
+  parent-and-shield hero **with its laurel leaves** — no flat vector remains on the screen
+- The wordmark reads "Matma" blue + "Verse" green, one word, no gap
+- No cutout shows a pale rectangular keying hole on any of the four auth routes
+- The contrast probe reports ≥4.5:1 for the green half of the wordmark and every label it
+  covered before
 
 ---
 
-## Phase 3: The mockup's field model
+## Phase 2: Scale and density — the composition fits 1536×1024 (RC2)
 
 ### Overview
 
-Move `FormField` to the treatment mockups `01`, `02` and `04` share — accessible-but-invisible
-label, tall input, extraction icon in the left gutter, placeholder carrying the field name —
-across all four auth forms, without disturbing the fifteen `getByLabel` locators.
+Resize the shared vocabulary to the measured mockup: container width, column ratio, field
+and button heights, card width and padding, heading sizes, and the world strip from a
+2×3 grid of large tiles to one row of six compact full-bleed tiles. This is the phase that
+stops the pages scrolling.
 
 ### Changes Required:
 
-#### 1. The field
+#### 1. Layout tokens
+
+**File**: `src/styles/global.css`
+
+**Intent**: the card is 571 px in the mockup, not 542.
+
+**Contract**: `--container-auth-card: 571px`. Screens 02 and 04 have wider cards (666 and
+615) — those are per-page `max-w-*` values, not new tokens.
+
+#### 2. The shell's geometry
+
+**File**: `src/components/auth/AuthShell.astro`
+
+**Intent**: the composition is squeezed into `max-w-6xl` (1152 px) and centred, so the
+mockup's 1408 px of content is rendered at 82% scale with dead margins.
+
+**Contract**:
+- Outer container `max-w-[1510px]`, page padding `lg:px-10`. **The arithmetic has to
+  close, so it is written out:** Tailwind's preflight is `box-sizing: border-box`, so
+  `max-w` bounds the border box and the padding comes out of it. The measured mockup needs
+  777 (left column) + 82 (gap) + 571 (card) = **1430 px of content**; 1510 − 80 = 1430, and
+  1510 centred in 1536 reproduces the mockup's own 40 px page gutters (content 40 → 1470).
+  A 1440 px container would leave 1360 and squeeze the left column to 707 — a 9% shrink,
+  which is the exact defect RC2 exists to remove, and it would drop the world tiles from
+  ~118 px to ~104.
+- Grid `lg:grid-cols-[minmax(0,1fr)_var(--container-auth-card)]` with `lg:gap-[82px]`,
+  still `items-start` — the card width comes from the item 1 token, never a second literal.
+- World strip becomes ONE row: `lg:grid-cols-6`, `gap-3`, tile is
+  `overflow-hidden rounded-2xl` with the image **full-bleed** (`aspect-square w-full
+  object-cover`, no padding) and a white label bar carrying `WORLD_GLYPHS[slug]` (or the
+  lucide fallback) before the name at `text-xs leading-tight`, two lines allowed, fixed
+  `min-h`. Six tiles across 777 px ⇒ ~118 px each.
+- Feature row and security strip spacing tuned to land the strip inside 1024 px.
+
+#### 3. The field model at mockup scale
 
 **File**: `src/components/auth/FormField.tsx`
 
-**Intent**: Adopt the mockups' field treatment, keeping the label in the accessibility tree.
+**Intent**: 56 px fields where the mockup draws 76.
 
-**Contract**: The `<Label>` keeps `htmlFor={id}` and gains `sr-only` (never `hidden` /
-`aria-hidden` — see Critical Implementation Details). The input grows from `h-12` to `h-14`
-and keeps `rounded-xl`. The leading icon is the mockups' blue outline glyph in the gutter at
-`size-5 text-primary` — **not** a tinted tile: mockups `01`, `02` and `04` all draw a bare
-blue icon on the field's own background, and the earlier plan's tile was a misreading. Left
-padding widens to clear it. `endContent` stays right-aligned and vertically centred against
-the taller field. `error` and `hint` slots and the prop signature are unchanged, so no call
-site needs editing for this item.
+**Contract**: input `h-19` (76 px), `rounded-2xl`, gutter glyph and padding scaled with it
+(`pl-14`, glyph `size-6`). **The `sr-only` label, `aria-describedby` and the error/hint ids
+are untouched** — fifteen `getByLabel` locators and five `toHaveAccessibleName` assertions
+depend on them.
 
-#### 2. Extraction icons at every call site
+#### 4. Buttons at mockup scale
 
-**Files**: `src/components/auth/{SignInForm,SignUpForm,ResetPasswordForm,UpdatePasswordForm}.tsx`
+**Files**: `src/components/auth/SubmitButton.tsx`, `src/pages/auth/signin.astro`,
+`signup.astro`, `reset-password.astro`, `update-password.astro`, `confirm-email.astro`
 
-**Intent**: The four forms pass `lucide` `Mail` / `Lock` into `FormField`. Swap for Group B.
+**Intent**: the primary action is 72 px tall with a large radius in every mockup; the
+outline secondary is 70.
 
-**Contract**: `Mail` → `AuthEmailIcon`, `Lock` → `AuthLockIcon`, one-for-one, `className`
-unchanged. The `lucide` imports for those two go away in all four files. Submit-button icons
-are Phase 4 (`SignInForm`), Phase 5 (`SignUpForm`) and Phase 7 (the two password forms).
+**Contract**: primary `h-18 rounded-2xl text-lg font-bold`; outline/secondary
+`h-[70px] rounded-2xl`, keeping `bg-card` on cards (the WCAG fix — do not revert to the
+variant's `bg-background`).
 
-#### 3. The eye toggle
+#### 5. Card chrome
 
-**File**: `src/components/auth/PasswordToggle.tsx`
+**Files**: the five auth pages
 
-**Intent**: Keep the control centred and its tap target intact against the taller field, and
-put it in the extraction's icon family.
+**Intent**: cards are under-padded (32) and under-rounded (24) and their headings are
+30 px where the mockup draws 40.
 
-**Contract**: `Eye` / `EyeOff` → `AuthEyeIcon` / `AuthEyeOffIcon`. Positioning updated for
-`h-14`. No behaviour change, no accessible-name change.
+**Contract**: `rounded-[32px]`, `p-10` at `lg`, card heading `text-[40px]` (still `<h2>` on
+the four `AuthShell` routes, whose hero keeps the only `<h1>`; screen 03's card heading
+**stays the `<h1>`** — that route has no hero), sign-in hero `w-[300px]`, per-screen card
+widths: 01 → `max-w-auth-card` (571), 02 → `lg:max-w-[666px]`, 03 → see item 6,
+04 → `lg:max-w-[615px]`.
 
-#### 4. Placeholders carry the field name
+#### 6. Screen 03's own geometry
+
+**File**: `src/pages/auth/confirm-email.astro`
+
+**Intent**: `/auth/confirm-email` is the ONE auth route that does not use `AuthShell` — its
+own file header says so, and its mockup is a single wide centred card rather than a
+two-column split. Every geometry lever in items 2 and 4 therefore misses it, and item 5
+reaches only its radius, padding and heading. Left alone it would exit this phase as the
+one screen RC2 never touched: `max-w-4xl` (896 px) against a measured card of **1075**.
+
+**Contract**: outer wrapper `max-w-[1075px]` (the measured box 246,160 – 1321,~700), the
+two-panel grid unchanged in structure, hero `w-[430px]` at `lg` (it is drawn at ~430 in the
+mockup, `w-72` today), the two footer panels and `TrustBadges` scaled with the wider card.
+It keeps its own decoration layer under the same five rules — Phase 4 already names this
+file. Below `sm` nothing changes; the stack is the mobile mockup.
+
+#### 7. A no-scroll guard
+
+**Files**: `e2e/helpers/viewport.ts` (new), `e2e/smoke.spec.ts`
+
+**Intent**: "the page must not scroll at 1536×1024" is the acceptance criterion this whole
+plan turns on, and nothing checks it. It is cheap to check and it is exactly the
+regression that will come back.
+
+**Contract**: a shared helper
+
+```ts
+/** Assert the current page is a single-viewport composition at the design size. */
+export async function expectFitsAt1536(page: Page): Promise<void>;
+```
+
+which calls `page.setViewportSize({ width: 1536, height: 1024 })`, settles, and asserts
+`document.documentElement.scrollHeight <= 1032` (1024 + 8 px tolerance) and
+`scrollWidth <= 1536`. It lives in a helper — not inline in one spec — because the two
+routes that most need it are behind auth and are checked from **other** specs in Phases 5
+and 6, where an account already exists.
+
+`e2e/smoke.spec.ts` gets ONE desktop-only test that walks the four public auth routes
+through it. Green e2e now reads **"1 skipped, 32 passed"**; Phases 5 and 6 add assertions
+inside existing tests, not new ones, so the count does not move again.
+
+Setting the viewport inside the test rather than `test.use({ viewport })` at file scope is
+deliberate: `test.use` at the top of `smoke.spec.ts` would re-size every test in the file,
+and inside a `describe` it cannot be reused from the authenticated specs at all.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Unit suite passes: `npm run test`
+- Lint passes: `npm run lint`
+- Type/astro check passes: `npm run check`
+- E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- The new no-scroll test fails when reverted (confirm the computed style in the browser
+  first — a Tailwind-class break can race v4's on-demand CSS)
+
+#### Manual Verification:
+
+- `/auth/signin` at 1536×1024 matches the region table in "Current State Analysis" within
+  ±8 px for: card box, both fields, primary button, world strip, security strip — and
+  `/auth/confirm-email`'s card matches its own measured box (1075 wide) within ±8 px
+- All six worlds are visible in one row, images full-bleed, each label carrying a glyph
+- No route scrolls vertically or horizontally at 1536×1024
+- The contrast probe still reports ≥4.5:1 everywhere it did before
+
+---
+
+## Phase 3: Screens 02 and 04 get their own left panels (RC3)
+
+### Overview
+
+`AuthShell` renders one shared marketing panel on all four routes it serves (signin,
+signup, reset-password, update-password — `/auth/confirm-email` is not one of them).
+Mockups 02 and 04 have completely different panels and no world grid. Give the shell a
+panel slot with the current content as fallback, and build the two panels.
+
+### Changes Required:
+
+#### 1. The shell takes a panel
+
+**File**: `src/components/auth/AuthShell.astro`
+
+**Intent**: keep the shell as the layout frame (brand row, `<h1>` handling, card slot,
+decoration layer) and let a screen supply its own panel body.
+
+**Contract**: add `<slot name="panel">` wrapping the features + world strip + security
+strip, with today's content as the slot's **fallback**, so screen 01 changes nothing.
+(Screen 03 is untouched for a different reason: `/auth/confirm-email` does not use
+`AuthShell` at all — it lays down its own layout and decoration layer. The shell serves
+exactly four routes: signin, signup, reset-password, update-password.) Make `accent`
+optional — mockups 02 and 04 draw a single heading with no blue accent line. The `<h1>` stays outside the `hidden lg:block` block with
+`sr-only lg:not-sr-only`.
+
+#### 2. The signup panel
+
+**File**: `src/components/marketing/SignupPanel.astro` (new)
+
+**Intent**: mockup 02's panel — a pale-blue callout box and three feature rows under the
+heading, with the laptop-desk hero at the bottom.
+
+**Contract**: callout = `bg-primary/5 rounded-2xl` with `callout-shield.png` at ~72 px and
+`t.marketing.signup.callout`; three rows, each a ~72 px 3D icon (`feature-goals`,
+`feature-environment`, `feature-reports`) beside a bold title and a two-line description;
+`hero-signup-desk.png` at the panel bottom, ~470 px wide, bleeding left. That cutout keeps
+a residual opaque background — check it at 1536×1024, and if a seam shows, re-cut from
+`02-parent-register-web.png` and record the crop box in `slice-map.md`.
+
+#### 3. The reset panel
+
+**File**: `src/components/marketing/ResetPanel.astro` (new)
+
+**Intent**: mockup 04's panel — the big envelope hero in the middle of the panel (today it
+sits in the card) and three white feature cards at the bottom.
+
+**Contract**: `hero-reset.png` (the committed 402×264 edit) centred at ~430 px; three
+`bg-card rounded-2xl` cards, each a ~72 px icon above a bold title and a two-line body
+(`feature-reset-account`, `feature-reset-data`, `feature-reset-noads`). No world grid.
+The card keeps a smaller copy of the same hero **inside a `bg-primary/10 rounded-full`
+disc** — the disc is both the mockup's treatment and what hides the cutout's keying holes.
+
+#### 4. Panel copy
 
 **File**: `src/i18n/pl.ts`
 
-**Intent**: With the label visually gone, the placeholder is the only thing naming the field
-for a sighted user — so it must be the field's name, as all three mockups show.
+**Intent**: the panels' strings are new and must be Polish, locale-swappable, and free of
+substring collisions (L-007).
 
-**Contract**: `emailPlaceholder` → "Email"; `passwordPlaceholderSignin` → "Hasło";
-`passwordPlaceholderSignup` → "Hasło"; `confirmPlaceholder` → "Powtórz hasło". New
-`passwordRule: "Minimum 6 znaków"` for the hint below. The `*Label` keys are untouched —
-they are what every e2e locator resolves.
+**Contract**: add `t.marketing.signup.{callout, features[3]}` and
+`t.marketing.reset.cards[3]` with the mockups' wording. Add a **new `t.onboarding`
+namespace** — it does not exist today (`grep -n "onboarding" src/i18n/pl.ts` returns
+nothing) — carrying `steps: [ "Konto rodzica", "Profil dziecka", "Bezpieczeństwo" ]`, which
+is what item 5's stepper renders on screens 02, 05 and 06. The third label is the
+reconciliation item 5 settles; it is written here once, so 05 and 06 consume a string
+rather than re-deciding it. Change
+`t.marketing.resetHeading` to the mockup's full two-line "Bezpieczny dostęp do panelu
+rodzica" and add a signup panel heading "Utwórz konto rodzica". **`t.auth.reset.heading`
+("Nie pamiętasz hasła?") does not change** — `e2e/password-reset.spec.ts` pins it in its
+reset-link assertion (today around `:101`).
+`tests/marketing-labels.test.ts` gets the new strings in its collision check.
 
-#### 5. The password rule moves to a persistent hint
+#### 5. The onboarding stepper
 
-**File**: `src/components/auth/SignUpForm.tsx`
+**File**: `src/components/onboarding/OnboardingStepper.tsx` (new)
 
-**Intent**: `passwordPlaceholderSignup` ("Minimum 6 znaków") was the only up-front statement
-of the length rule; renaming it to "Hasło" would leave the rule discoverable only *after* a
-failed attempt. The existing `hint` slot — today conditional, shown only once a too-short
-password has been typed — becomes the rule's permanent home.
+**Intent**: mockups 02, 05 and 06 all draw the same three-step stepper (Konto rodzica →
+Profil dziecka → Bezpieczeństwo). Screen 02's was skipped last time because the wizard on
+05 had its own competing three-step stepper; Phase 5 removes that one, so the collision
+dissolves and open decision 7's default applies — draw it as the mockup does, on every
+entry path.
 
-**Contract**: `passwordHint` renders `t.auth.fields.passwordRule` whenever there is no error,
-and keeps the existing countdown once the user starts typing a short password.
+**Contract**: a React component rendered without a client directive (static HTML from
+Astro and from React alike): `current: 1 | 2 | 3`, discs with a connecting track, done
+steps green with a tick, current blue, future `bg-muted text-foreground` (the
+`text-muted-foreground` pairing measures 4.34:1 — under AA). Labels from
+`t.onboarding.steps`; the third is **"Bezpieczeństwo"** — mockups 05 and 06 disagree
+("Zabezpieczenia" vs "Bezpieczeństwo") and one string has to win; 06 is the screen that
+owns the step and its sidebar says "Bezpieczeństwo". Record the reconciliation in the
+component header. Rendered on `/auth/signup` (step 1) in this phase.
 
-### Success Criteria:
+#### 6. Pages wire their panels
 
-#### Automated Verification:
+**Files**: `src/pages/auth/signup.astro`, `src/pages/auth/reset-password.astro`,
+`src/pages/auth/update-password.astro`
 
-- Unit suite passes, including `tests/signin-form.test.tsx`: `npm run test` — baseline + 0 (no new tests; the existing ones are the regression surface)
-- Full e2e suite passes — the real gate, since `signInViaUI` runs in nearly every spec: `npm run test:e2e` (green = "1 failed, 1 skipped, 30 passed"; the failure is `growth.spec.ts` on `[touch]`, pre-existing on `main`)
-- Linting passes: `npm run lint`
-- Type/astro check passes: `npm run check`
-- No `lucide` mail/lock/eye remains in the auth forms: `grep -rn "Mail\|Lock\|Eye" src/components/auth/*.tsx | grep lucide` returns nothing
+**Intent**: pass the new panels and headings.
 
-#### Manual:
-
-- All four auth screens render tall placeholder-only fields with the extraction's blue gutter icons
-- "Minimum 6 znaków" is visible under the signup password field before typing anything
-- Every field is reachable by tab and still announces its Polish label in the accessibility inspector
-- The eye toggle sits centred in the taller field, both states read as one icon family, and it still shows/hides the password
-
----
-
-## Phase 4: Screen 01 — the sign-in card and page composition
-
-### Overview
-
-Finish `/auth/signin`: illustrated card header, the designed two-part secondary button, hero
-proportions, and the ambient background art — all from the new atoms.
-
-### Changes Required:
-
-#### 1. Card header art
-
-**File**: `src/pages/auth/signin.astro`
-
-**Intent**: Replace the `size-7` lucide `UserRound` in a tinted square with the parent-and-shield
-illustration the mockup puts at the top of the card.
-
-**Contract**: `<img src={PARENT_LOCK}>` (`hero-parent-security.svg`, a 96×64 viewBox) at the
-mockup's scale with `h-auto` so the 3:2 mark is not squashed, `alt=""` `aria-hidden="true"`
-(the `<h1>` beneath names the card). The `UserRound` import goes away.
-
-#### 2. Keep exactly one "Zaloguj się" per viewport
-
-**File**: `src/pages/auth/signin.astro`
-
-**Intent**: The mockup's card carries only "Panel rodzica"; the accent line beside it already
-says "Zaloguj się". But `AuthShell`'s hero is `hidden lg:block`, so below `lg` the card's
-subline is the only thing naming the action.
-
-**Contract**: The card's `<p>{t.auth.signin.heading}</p>` subline gains `lg:hidden`. Above
-`lg` the accent line is the single occurrence; below `lg` the subline is — which also keeps
-the string from resolving to two elements in any one viewport (L-007).
-
-#### 3. The designed secondary button
-
-**File**: `src/pages/auth/signin.astro`
-
-**Intent**: Wire the two-part label the mockup specifies, using `t.auth.signin.noAccount` — a
-string that has existed unused since it was written.
-
-**Contract**: The `/auth/signup` anchor's label becomes `noAccount` in muted weight followed
-by `signupLink` in `font-bold text-primary`, its icon becomes `AuthUserPlusIcon`, and the
-outline variant is tinted blue (`border-primary text-primary`) rather than neutral. Its
-accessible name is therefore "Nie masz konta? Utwórz konto" — the string item 7 pins.
-
-#### 4. Submit button and security note
-
-**Files**: `src/components/auth/SignInForm.tsx`, `src/components/marketing/SecurityNote.astro`
-
-**Intent**: Finish the icon family on this screen. The mockup's submit button carries a white
-filled padlock; the security strip carries a blue one.
-
-**Contract**: `SignInForm`'s `LogIn` → `AuthLockFilledIcon`. `SecurityNote`'s `lucide` `Lock`
-→ `AuthLockFilledIcon`; its header paragraph explaining why `Lock` stayed lucide is replaced,
-since the extraction now supplies the atom that note said did not exist.
-
-#### 5. Hero proportions
-
-**File**: `src/components/auth/AuthShell.astro`
-
-**Intent**: The mockup's card starts near the top of the page and is tall; ours is vertically
-centred and shorter, which is why the screen reads smaller and looser than the design.
-
-**Contract**: The two-column grid switches from `items-center` to top alignment, the hero
-heading scales up one step at `lg`/`xl`, the tagline gets a `max-w-*` so it wraps to two
-lines as in the mockup, and the form slot's `max-w-lg` becomes the extraction's
-`--mm-login-card-width` (542 px). Grid column ratio unchanged.
-
-#### 6. Background decoration
-
-**File**: `src/components/auth/AuthShell.astro`
-
-**Intent**: Restore the ambient depth — one coin is the only decoration today, and it is a
-raster.
-
-**Contract**: `DECOR_COIN` (SVG now), `DECOR_COIN_STACK` bottom-right, `DECOR_CHART`
-top-right, `DECOR_RECEIPT` top-right behind the card, `DECOR_PATH` across the hero — all from
-`src/data/marketing-art.ts`. Every decoration is `aria-hidden="true"`,
-`pointer-events-none`, `hidden lg:block`, absolutely positioned and behind the content. The
-shell's outer container gets `overflow-hidden` so none of them can make the body scroll
-sideways.
-
-#### 7. Pin the button label
-
-**File**: `e2e/smoke.spec.ts`
-
-**Intent**: The `noAccount` half of the label is exactly the kind of thing that was written
-once and silently dropped; an assertion is what makes dropping it again fail.
-
-**Contract**: The existing "anonymous /app redirects to signin" test, which already lands on
-`/auth/signin`, gains one assertion that a link with the accessible name
-`` `${t.auth.signin.noAccount} ${t.auth.signin.signupLink}` `` is visible.
+**Contract**: signup passes `SignupPanel` + `heading="Utwórz konto rodzica"` and no
+`accent`; reset passes `ResetPanel` + the two-line heading and no `accent`;
+`update-password` reuses the reset panel (no mockup of its own — the recovery flow's two
+steps must read as one flow). Signup's card gains the stepper row at its top.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Unit suite passes: `npm run test` — baseline + 0
-- E2E suite passes, including the new smoke assertion: `npm run test:e2e`
-- Linting passes: `npm run lint`
+- Unit suite passes: `npm run test` — plus the new label-collision assertions
+- Lint passes: `npm run lint`
 - Type/astro check passes: `npm run check`
-- Playwright at 1024, 1280, 1536 and 1920 reports `document.documentElement.scrollWidth === clientWidth` on `/auth/signin`
+- E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- Exactly one `<h1>` per route at 1536 and at 390 (assert in the existing smoke coverage)
 
-#### Manual:
+#### Manual Verification:
 
-- `/auth/signin` at 1536×1024 beside `01-parent-login-web.png`: card art, button, hero scale and decorations all read as the design
-- At 390×844 beside `01-parent-login-mobile.png`: no decorations, no world strip, carded features, "Zaloguj się" still named on the card
-- Decorations sit behind the content and never intercept a click on the card or its controls
-- Signing in with the seeded local account still works end to end
+- `/auth/signup` at 1536×1024 shows the callout box, three feature rows and the desk hero
+  — and **no world grid** — matching `02-parent-register-web.png` region for region
+- `/auth/reset-password` shows the big envelope hero in the LEFT panel and three white
+  feature cards below it; the card's hero sits in a pale disc with no visible hole
+- The "Krok 1 z 3" stepper is at the top of the signup card, its track and discs matching
+  the mockup
+- `/auth/signin` is pixel-unchanged from Phase 2, and so is `/auth/confirm-email` —
+  including the wider card Phase 2 item 6 gave it (this phase touches neither)
 
 ---
 
-## Phase 5: Screen 02 — `/auth/signup`
+## Phase 4: Background decoration, per screen (RC4)
 
 ### Overview
 
-Dress the register screen to `02-parent-register-web.png`: its own marketing heading, the
-extraction's icons on the card, the mockup's plain-text secondary line in place of the
-outline button, and the trust-badge row both `02` and `03` close with.
+Replace the three outline SVGs shared by every page with the mockups' own soft-3D
+decoration sets, one per screen.
 
 ### Changes Required:
 
-#### 1. The screen's own marketing heading
+#### 1. The decoration contract stays, its content changes
 
-**Files**: `src/pages/auth/signup.astro`, `src/i18n/pl.ts`
+**Files**: `src/components/auth/AuthShell.astro`, `src/pages/auth/confirm-email.astro`,
+plus a per-screen decoration slot
 
-**Intent**: `AuthShell` is currently told "Panel rodzica" / "Utwórz konto" on this route. The
-mockup's left panel reads "Utwórz konto rodzica" over "Zacznij bezpieczną naukę przez
-praktykę" — a different heading and a different tagline from screen `01`'s.
+**Intent**: `AuthShell` lays down one decoration layer shared by four routes, but the
+mockups scatter different objects on each. Give the layer a slot with screen 01's set as
+fallback, the same shape Phase 3 gave the panel.
 
-**Contract**: New `t.marketing.signupHeading` ("Utwórz konto") and `t.marketing.signupAccent`
-("rodzica") are **not** introduced — splitting a Polish noun phrase across two styled lines
-would not survive translation. Instead `signup.astro` passes `heading={t.auth.signup.heading}`
-(already "Utwórz konto"), `accent={t.marketing.parentPanel}` and a new
-`t.marketing.signupTagline` ("Zacznij bezpieczną naukę przez praktykę") as `tagline`. No new
-component prop is needed; `AuthShell` already takes all three.
+**Contract**: every decoration keeps all five rules — `aria-hidden="true"`, `alt=""`,
+`pointer-events-none`, `hidden lg:block`, `z-0` against the content's `z-10` (never
+`-z-10`, which hides the layer behind the container's own painted background) — inside a
+container with `overflow-hidden`. Nothing may overlap a control's hit area.
 
-#### 2. Card composition
+#### 2. Per-screen sets
 
-**File**: `src/pages/auth/signup.astro`
+**Intent**: place each screen's cutouts where its mockup draws them.
 
-**Intent**: The mockup's card opens straight into the fields — its heading lives in the left
-panel. Ours opens with an icon tile, an `<h1>` and a subtitle, which is right below `lg`
-(where `AuthShell`'s hero is hidden) and redundant above it.
+**Contract** (positions are the mockups', to be matched within ~±16 px):
 
-**Contract**: The icon tile becomes `AuthUserPlusIcon` at the mockup's weight and the whole
-header block gains `lg:hidden`, mirroring what Phase 4 item 2 did on sign-in and for the same
-L-007 reason. The submit button's `lucide` icon becomes `AuthShieldCheckIcon` (mockup `02`
-draws a white shield-check inside the blue button).
-
-#### 3. The mockup's secondary line
-
-**File**: `src/pages/auth/signup.astro`
-
-**Intent**: Mockup `02` closes the card with a centred text line — "Masz już konto?
-**Zaloguj się**" — not with an outline button. It is also where the dead
-`t.auth.signup.hasAccount` string belongs.
-
-**Contract**: The outline `<a>` becomes a centred `<p>` carrying `hasAccount` in muted weight
-and a `/auth/signin` link in `font-bold text-primary` reading `signinLink`. The `LogIn`
-import goes away. The link keeps the role `link` and gains the accessible name "Zaloguj się",
-which is what any locator would reach for.
-
-#### 4. Trust badges
-
-**Files**: `src/components/marketing/TrustBadges.astro` (new), `src/i18n/pl.ts`
-
-**Intent**: Mockups `02` and `03` both close with a row of three reassurance badges. Building
-it once, driven by an `items` prop, is what stops the two screens from drifting — the same
-argument that produced `FeatureList` in Phase 2.
-
-**Contract**: Renders a responsive row (stacked below `sm`, three columns at `sm+`) of
-`{ icon, title, body? }`, each a Group A `<img>` in a white circular tile beside its text.
-Screen `02` passes `t.marketing.trustSignup` — "Chronimy Twoje dane" / "Oddzielne konto
-rodzica i profilu dziecka" / "Zgodne z zasadami bezpiecznego uczenia się", title-only, per the
-mockup. Screen `03` (Phase 6) passes `t.marketing.trustVerify`, which has bodies.
-
-**The two sets are different on purpose.** Mockup `03`'s first badge is titled "Bezpieczna
-nauka", which is *already* `t.marketing.features[0].title`. On `/auth/signup` the `AuthShell`
-renders `FeatureList`, so reusing `03`'s set there would put the same accessible name on the
-page twice and make an unrelated `getByText` ambiguous (L-007). `/auth/confirm-email` has no
-`AuthShell` and no `FeatureList`, so `03`'s wording is safe there — which is also what its
-mockup says.
-
-#### 5. The substring guard
-
-**File**: `tests/marketing-labels.test.ts` (new)
-
-**Intent**: Item 4's collision was caught by reading the dictionary. The next one will not be.
-`tests/nav-labels.test.ts` is the established model for this exact class of guard.
-
-**Contract**: Asserts that no title in `t.marketing.trustSignup` is a substring or superstring
-of any `t.marketing.features[*].title`, in both directions, and the same for
-`t.marketing.trustVerify` against the labels rendered on `/auth/confirm-email`. Modelled on
-`tests/nav-labels.test.ts`, node environment, dictionary-only — no rendering.
-
-#### 6. Decoration
-
-**File**: `src/pages/auth/signup.astro`
-
-**Intent**: The mockup's right edge carries a coin stack and a growth chart, its top-left a
-cloud.
-
-**Contract**: Reuses `AuthShell`'s decoration layer from Phase 4 — no page-level decoration
-is added, because the shell already owns this region for all four auth routes and a second
-absolute layer on one page is how the two get out of step. Recorded here so the mockup's
-backpack-and-shelf art is understood as *not implemented*, not as missed.
+- **01 `/auth/signin`**: `decor-dotted-arrow` top-centre-left (x ≈ 490–830, y ≈ 95–175);
+  `decor-signin-chart` behind it (x ≈ 740–840, y ≈ 150–245); `decor-coin` floating
+  (x ≈ 665–730, y ≈ 290–355); `decor-signin-security` top-right (x ≈ 1290–1490, y ≈ 20–140);
+  `decor-coin-stack` bottom-right (x ≈ 1390–1500, y ≈ 900–1000); a second
+  `decor-signin-chart` bottom-centre (x ≈ 960–1100, y ≈ 930–1010).
+- **02 `/auth/signup`**: `decor-signup-cloud` top-centre-left; `decor-signup-chart` and
+  `decor-signup-backpack` on the right shelf; `decor-signup-coins` right-middle;
+  `decor-signup-zl` bottom-right.
+- **03 `/auth/confirm-email`**: `decor-verify-path` top-centre; `decor-verify-envelope`
+  and `decor-verify-chart` left; `decor-verify-plant` bottom-left;
+  `decor-verify-shield`, `decor-verify-document`, `decor-verify-coins` and
+  `decor-verify-books` right. These replace the current wireframe corner art entirely.
+- **04 `/auth/reset-password`** (+ `update-password`): `decor-reset-shield-bg` behind the
+  panel hero as a watermark; `decor-reset-envelope` top-left; `decor-reset-plant` and
+  `decor-reset-coins` bottom-left; `decor-reset-chart` top-right;
+  `decor-reset-coin-stack` bottom-right; `decor-reset-plane` beside the card hero.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Unit suite passes: `npm run test` — baseline + ~2 (`tests/marketing-labels.test.ts`)
-- New label guard passes on its own: `npx vitest run tests/marketing-labels.test.ts`
-- E2E suite passes, including `e2e/onboarding.spec.ts`, which signs up through the UI: `npm run test:e2e`
-- Linting passes: `npm run lint`
-- Type/astro check passes: `npm run check`
-- Playwright reports no horizontal overflow on `/auth/signup` at 1024, 1280, 1536, 1920
+- Unit suite passes: `npm run test`
+- Lint passes: `npm run lint`; type/astro check passes: `npm run check`
+- E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- The no-scroll test from Phase 2 still passes on all four routes (decoration is the
+  classic cause of a stray scrollbar)
 
-#### Manual:
+#### Manual Verification:
 
-- `/auth/signup` at 1536×1024 beside `02-parent-register-web.png` and at 390×844 beside `02-parent-register-mobile.png`
-- "Masz już konto? Zaloguj się" renders as one centred line, and the link is reachable by tab
-- The trust-badge row reads as the mockup's, and no badge title repeats a feature title on the page
-
----
-
-## Phase 6: Screen 03 — `/auth/confirm-email`
-
-### Overview
-
-Dress the verification screen to `03-email-verification-web.png`: the shared brand row, the
-envelope hero, the extraction's icons on both footer panels and both CTAs, and the trust-badge
-row.
-
-### Changes Required:
-
-#### 1. Shared brand row
-
-**File**: `src/pages/auth/confirm-email.astro`
-
-**Intent**: This page hand-rolls the brand lockup with a `lucide` `ShoppingCart` in a blue
-tile — the exact duplication Phase 2 retired on the other surfaces. It is the last auth route
-still carrying it.
-
-**Contract**: The hand-rolled block is replaced by `<BrandRow size="lg" />`. The
-`ShoppingCart` import goes away.
-
-#### 2. The envelope hero
-
-**File**: `src/pages/auth/confirm-email.astro`
-
-**Intent**: The mockup's left half is one large illustration; ours is a `size-16` lucide
-`MailCheck` in a tinted circle.
-
-**Contract**: `<img src={HERO_EMAIL}>` (`hero-email.png`, 430×400) filling the card's left
-column, `alt=""` `aria-hidden="true"`. **It must stay inside the `bg-card` surface** — its
-white interior is keyed out and would show through on the page background (Critical
-Implementation Details). The `MailCheck` import goes away.
-
-#### 3. Status pill and CTA icons
-
-**File**: `src/pages/auth/confirm-email.astro`
-
-**Intent**: The mockup puts a small green envelope pill above the heading and gives each CTA
-an icon.
-
-**Contract**: A `size-12` `bg-success/10 text-success` circle holding `AuthEmailIcon`, above
-the `<h1>`, `aria-hidden`. The resend button's `RotateCw` → `AuthRefreshIcon`. The primary
-`/auth/signin` link gains `AuthArrowRightIcon`. **Action order is unchanged** — the mockup's
-primary is "Otwórz pocztę", an action this product does not have; ours are resend (outline)
-then continue (primary), and resend is this page's actual job, so it stays first.
-
-#### 4. Footer panel icons
-
-**File**: `src/pages/auth/confirm-email.astro`
-
-**Intent**: The two footer panels already match the mockup's structure and tints; only their
-glyphs are `lucide`.
-
-**Contract**: `UserRoundPlus` → `AuthUserPlusIcon`; `ShieldCheck` → `<img src={BADGE_CHECK}>`
-in the existing white circle. The next-step panel gains a trailing `AuthChevronRightIcon`, as
-the mockup draws it. Both `lucide` imports go away.
-
-#### 5. Trust badges
-
-**Files**: `src/pages/auth/confirm-email.astro`, `src/i18n/pl.ts`
-
-**Intent**: The mockup closes the page with the same three-badge row as `02`, worded
-differently and with bodies.
-
-**Contract**: `<TrustBadges items={t.marketing.trustVerify} />` below the card. New
-`t.marketing.trustVerify`: "Bezpieczna nauka" / "Twoje dane są chronione zgodnie z
-najlepszymi standardami."; "Konto rodzica" / "Oddzielone od profilu dziecka i w pełni
-kontrolowane przez Ciebie."; "Bez reklam" / "Skupiamy się na nauce, nie na reklamach." Safe
-on this route because it renders no `FeatureList` (Phase 5 item 4); the Phase 5 guard covers
-it.
-
-#### 6. Decoration
-
-**File**: `src/pages/auth/confirm-email.astro`
-
-**Intent**: This route does not use `AuthShell`, so it has no decoration layer at all.
-
-**Contract**: A page-level `aria-hidden` `pointer-events-none` `hidden lg:block` layer
-carrying `DECOR_PATH` (top), `DECOR_CHART` (left) and `DECOR_RECEIPT` (right), with
-`overflow-hidden` on the outer container. Same rules as `AuthShell`'s layer; not shared with
-it, because the two pages' geometries differ and a shared component would be all props.
-
-### Success Criteria:
-
-#### Automated Verification:
-
-- Unit suite passes: `npm run test` — baseline + 0
-- E2E suite passes, including `e2e/onboarding.spec.ts`, which asserts this page's heading, trouble hint and continue link: `npm run test:e2e`
-- Linting passes: `npm run lint`
-- Type/astro check passes: `npm run check`
-- No lucide remains on the route: `grep -n "lucide" src/pages/auth/confirm-email.astro` returns nothing
-- Playwright reports no horizontal overflow at 1024, 1280, 1536, 1920
-
-#### Manual:
-
-- `/auth/confirm-email?email=…` at 1536×1024 beside `03-email-verification-web.png` and at 390×844 beside `03-email-verification-mobile.png`
-- The envelope hero shows no pale rectangle or missing white letter against the card
-- Both `?resent=1` and `?error=…` states still render their notices legibly inside the new layout
+- Each of the four routes matches its mockup's decoration placement at 1536×1024
+- No decoration intercepts a click: every field, button and link on all four routes is
+  reachable and focusable
+- No decoration shows a keying hole against the page background
+- Below `lg` no decoration renders at all
 
 ---
 
-## Phase 7: Screen 04 — `/auth/reset-password` and `/auth/update-password`
+## Phase 5: Screen 05 — `/app/new-profile` as one screen with onboarding chrome
 
 ### Overview
 
-Dress the recovery pair to `04-password-reset-web.png`: its own marketing heading, the
-envelope-and-lock card hero, the paper-plane submit, and the protected-access line under the
-back link. `/auth/update-password` has no mockup and inherits the same card treatment, as it
-already does today.
+The three-step wizard becomes the mockup's single screen: page chrome (brand, step chip,
+preview sidebar), one card with the onboarding stepper and two columns, and a footer with
+one forward action. Structural — it rewrites a React component under e2e coverage and its
+spec moves with it.
 
 ### Changes Required:
 
-#### 1. The screen's own marketing heading
+#### 1. Screen 05 art
 
-**Files**: `src/pages/auth/reset-password.astro`, `src/i18n/pl.ts`
+**Files**: `public/illustrations/auth/`, `public/avatars/`, `public/illustrations/slice-map.md`
 
-**Intent**: The mockup's left panel reads "Bezpieczny dostęp do panelu rodzica" over two
-supporting lines — not screen `01`'s "Panel rodzica / Nie pamiętasz hasła?".
+**Contract**: copy from `05-child-profile-extracted/png/cutouts/`:
+`notice-shield-icon.png` (40×35), `level-starting-icon.png` (80×74, **holed** — card only),
+`top-profile-avatar.png` (89×85), `decor-profile-coins.png` ← `decor-left-coins.png`
+(150×120), `decor-profile-star-shield.png` ← `decor-left-star-shield.png` (30×33),
+`decor-profile-chart.png` ← `decor-right-chart.png` (129×143),
+`decor-profile-checklist.png` ← `decor-right-checklist.png` (129×130),
+`decor-profile-plant.png` ← `decor-right-plant.png` (186×195). Register all rows.
 
-**Contract**: New `t.marketing.resetHeading` ("Bezpieczny dostęp"), reusing
-`t.marketing.parentPanel` as the accent ("Panel rodzica"), and `t.marketing.resetTagline`
-("Pomożemy Ci szybko odzyskać dostęp do konta. Twoje dane i postępy dziecka są bezpieczne.").
-Passed to `AuthShell` as `heading` / `accent` / `tagline`. L-007: "Bezpieczny dostęp" is
-checked against the dictionary in both directions by the Phase 5 guard, extended here.
+#### 2. The fifth avatar
 
-#### 2. Card hero
+**Files**: `public/avatars/<id>.png` (new), `src/data/avatars.ts`,
+`public/avatars/slice-map.md`
 
-**Files**: `src/pages/auth/reset-password.astro`, `src/pages/auth/update-password.astro`
+**Intent**: the mockup's avatar row has five faces; the product ships four because the
+fifth is drawn wearing its selection ring and check badge, and the extraction's
+`avatar-boy-selected.png` has the same chrome plus keying holes.
 
-**Intent**: The mockup heads the card with an envelope-and-lock illustration; ours is a
-`size-7` lucide `KeyRound` in a tinted square.
+**Contract**: cut the fifth face from `05-child-profile-web.png` using the recipe
+`public/avatars/slice-map.md` already documents (139 px white disc, 140×140 crop centred
+on the face, mask to the disc), painting out the overlapping check badge; record it as the
+**second edited asset** in this change, with its crop box, beside the `hero-reset.png`
+note. Append it to `AVATARS` — never insert: `AVATAR_IDS` and stored `child_profiles.avatar`
+values must stay stable. Purely additive; `createSchema` in `src/pages/api/profiles/create.ts` picks it up
+from the derived list.
 
-**Contract**: `<img src={HERO_RESET}>` (`hero-reset.png`, 183×166) at the mockup's scale,
-`alt=""` `aria-hidden="true"`, **inside the `bg-card` surface** — its white card interior is
-keyed out. Both routes get it, so the recovery flow's two steps look like one flow. The
-`KeyRound` imports go away.
-
-#### 3. Submit and back-link icons
-
-**Files**: `src/components/auth/ResetPasswordForm.tsx`, `src/components/auth/UpdatePasswordForm.tsx`, `src/pages/auth/reset-password.astro`
-
-**Intent**: The mockup's send button carries a paper plane and its back link a left arrow.
-
-**Contract**: `ResetPasswordForm`'s submit icon becomes `AuthPaperPlaneIcon`;
-`UpdatePasswordForm`'s becomes `AuthLockFilledIcon` (it saves a password, not sends a link).
-The back link's `lucide` `ArrowLeft` → `AuthArrowLeftIcon`.
-
-#### 4. The protected-access line
-
-**Files**: `src/pages/auth/reset-password.astro`, `src/i18n/pl.ts`
-
-**Intent**: The mockup closes the card with a small lock and "Chronimy dostęp do panelu
-rodzica" — the card's own reassurance, distinct from the panel-wide `SecurityNote`.
-
-**Contract**: New `t.auth.reset.protectHint`. Rendered under the back link as a centred
-muted line with `AuthLockFilledIcon`. Checked against `t.marketing.security` for substring
-collision before landing.
-
-#### 5. Keep the `?sent=1` notice inside the new card
-
-**File**: `src/pages/auth/reset-password.astro`
-
-**Intent**: The notice replaces the form and must not lose the card's new hero or its
-conditional wording, which is the route's privacy contract.
-
-**Contract**: Structure unchanged — the hero and heading stay above whichever of
-{form, notice} renders. The notice's ad-hoc green classes move onto the theme's `success`
-tokens so it matches the rest of the redesign, with no wording change.
-
-### Success Criteria:
-
-#### Automated Verification:
-
-- Unit suite passes: `npm run test` — baseline + 0
-- E2E suite passes, including `e2e/password-reset.spec.ts`, which drives both routes: `npm run test:e2e`
-- Linting passes: `npm run lint`
-- Type/astro check passes: `npm run check`
-- Extended label guard passes: `npx vitest run tests/marketing-labels.test.ts`
-- Playwright reports no horizontal overflow on both routes at 1024, 1280, 1536, 1920
-
-#### Manual:
-
-- `/auth/reset-password` at 1536×1024 beside `04-password-reset-web.png` and at 390×844 beside `04-password-reset-mobile.png`
-- `/auth/reset-password?sent=1` still shows the conditional notice, inside the new card
-- `/auth/update-password` reached from a real recovery link looks like the same flow's second step
-- The card hero shows no pale rectangle where its white card should be
-
----
-
-## Phase 8: Screen 05 — `/app/new-profile`
-
-### Overview
-
-Dress the child-profile wizard to `05-child-profile-web.png`: the shared brand row (replacing
-the last `ShoppingCart`), the extraction's field and stepper glyphs, the mockup's selected-tile
-check badge, the illustrated level tile and privacy notice, and a decoration layer.
-
-### Changes Required:
-
-#### 1. Shared brand row
+#### 3. Page chrome
 
 **File**: `src/pages/app/new-profile.astro`
 
-**Intent**: This page hand-rolls a brand lockup with a `lucide` `ShoppingCart` in a blue tile.
-It is one of the two remaining copies (the other is Phase 9's) and the maintainer asked
-specifically that the brand row be consistent across all six screens.
+**Intent**: the mockup frames the card with app chrome the route does not have.
 
-**Contract**: Replaced by `<BrandRow size="lg" class="mb-6 justify-center" />`. The
-`ShoppingCart` import goes away.
+**Contract**: brand row top-left (`size="sm"`); top-right a "Nowy profil / Krok 2 z 3" chip
+with `top-profile-avatar.png` and a progress bar; a left preview sidebar of app nav (Start,
+Zadania, Mój sklep, Postępy, Nagrody, Światy, Panel rodzica) rendered **static and
+non-navigating** with `aria-hidden="true"` on the nav (open decision 3's default) using the
+extraction's `nav-*.svg` glyphs inlined as Group B icons; the screen 05 decoration set under
+the Phase 4 contract. **The mockup's "126 zł" wallet chip is NOT built** — no wallet exists
+before a profile does, and a fabricated balance is a false statement about the product, not
+a visual detail. Record the omission in the page header.
 
-#### 2. Field glyphs
+#### 4. The wizard collapses to a form
 
-**File**: `src/components/child/CreateProfileWizard.tsx`
+**File**: `src/components/child/CreateProfileWizard.tsx` → `CreateProfileForm.tsx`
 
-**Intent**: The mockup draws a person glyph in the name field's gutter and a calendar glyph
-beside the age control.
+**Intent**: three steps become one screen (open decision 6's default: follow the mockup);
+"Podsumowanie" and its recap disappear with it.
 
-**Contract**: The name `<Input>` gains a left gutter icon matching Phase 3's field treatment.
-The extraction has no plain person outline — `auth-user-plus.svg` carries a plus this field
-should not — so the name field keeps `lucide`'s `User`, and the module header records that as
-the one place a `lucide` glyph is deliberate. The age group's `<Label>` gains
-`AuthCalendarIcon`; the age control stays a row of buttons, not the mockup's select, because
-that is an input-model change.
+**Contract**: one `<form>`, unchanged POST to `/api/profiles/create` with the same four
+fields — no route, schema or validation change. `OnboardingStepper current={2}` at the top.
+Two columns split by a vertical rule:
+- left — `<h1>` `t.profileWizard.title`, subtitle, "Imię dziecka" field, "Wiek" as a
+  **native `<select>`** with the calendar glyph and chevron (`t.profileWizard.agePlaceholder`
+  "Wybierz wiek" already exists, written for exactly this control), the five avatars as
+  ~76 px circles, and the privacy notice strip with `notice-shield-icon.png`;
+- right — "Zainteresowania" as world tiles at the mockup's ~200×175, and the "Poziom
+  startowy" info card with `level-starting-icon.png` (holed — it is on `bg-card`, which is
+  where it must stay).
+Footer above a top border: the reassurance line with a shield glyph, and one primary
+`t.profileWizard.next` ("Dalej →") as the submit. Validation stays client-side UX over a
+server that re-validates; errors render per field as today.
 
-#### 3. Selected-tile check badge
+Retire the `t.profileWizard` keys the collapse orphans (`steps`, `back`, `reviewIntro`,
+`create`, `creating`, `stepProgress` if unused) — `npm run check` plus a grep is the guard.
+
+#### 5. Tile variant
 
 **File**: `src/components/child/SelectTile.tsx`
 
-**Intent**: The mockup marks the selected avatar and the selected world with a blue circular
-check badge on the tile's corner. Our tiles signal selection with a border only.
+**Intent**: mockup 05 draws the label INSIDE the tile on a white bar with the image
+full-bleed; today's tile puts the label below and pads the image. `WorldPicker.tsx` shares
+this component and is out of scope.
 
-**Contract**: When `selected`, the tile renders `<img src={BADGE_CHECK}>` absolutely
-positioned at the corner, `aria-hidden="true"` — the state is already carried for assistive
-tech by `aria-pressed`, so the badge is purely visual and must not be announced twice. The
-tile's existing border and ring treatment stays; the badge is additive. `avatar-boy-selected.png`
-from the extraction is **not** used: it bakes the ring and badge into the raster, which is
-exactly what the extraction's own rule forbids.
+**Contract**: add a variant (e.g. `labelPlacement: "below" | "inside"`, default `"below"`)
+so `WorldPicker` is untouched. Selected state keeps `CheckBadge` — the impl-review already
+recorded it as the better outcome than the extraction's badge, and it is the mockup's blue
+circular tick either way.
 
-#### 4. Stepper and review illustrations
+#### 6. The spec moves with the screen
 
-**File**: `src/components/child/CreateProfileWizard.tsx`
+**File**: `e2e/onboarding.spec.ts`
 
-**Intent**: Two of the mockup's illustrated moments have `lucide` stand-ins today.
+**Intent**: the spec drives two "Dalej" clicks and a review step that no longer exist.
 
-**Contract**: The starting-level strip on step 3 becomes the mockup's tile — a
-`<img src="/illustrations/auth/feature-progress.svg">` in a tinted rounded square beside the
-level name and description — on `bg-primary/5`, matching the mockup. `t.profileWizard.note`
-moves into a pale panel headed by `<img src="/illustrations/auth/feature-safety.svg">`, as the
-mockup's "Profil dziecka jest widoczny tylko dla Ciebie" strip does. The stepper's `Check`
-stays `lucide`: it is a 4 px white tick inside a CSS-drawn green disc, and the extraction's
-`step-check.svg` is the whole disc, which the rule says to build in CSS.
+**Contract**: one-screen flow — fill the name, `selectOption` the age, click the avatar by
+its `alt`, click the world by name, click "Dalej", land on `/app/start`. Keep the
+`getByRole("heading", { name: t.profileWizard.title })` assertion (`e2e/smoke.spec.ts`'s
+zero-profiles case uses it too — today around `:89`, anchor on the string). Do not weaken
+the assertions to make the rewrite easy: the spec must still fail if the POST stops
+carrying any of the four fields.
 
-#### 5. Decoration
-
-**File**: `src/pages/app/new-profile.astro`
-
-**Intent**: The mockup's page background carries coins bottom-left and a chart plus a
-checklist right.
-
-**Contract**: A page-level `aria-hidden` `pointer-events-none` `hidden lg:block` layer with
-`DECOR_COIN_STACK` (bottom-left) and `DECOR_CHART` (right), `overflow-hidden` on the outer
-container. The mockup's plant and checklist have no atom in the extraction's SVG set and are
-not implemented.
+**Also**: call `expectFitsAt1536(page)` (Phase 2 item 7) once the form is on screen, before
+filling it. This is the only automated check that `/app/new-profile` — which this phase
+grows from a three-step card into a 1098×839 composition with sidebar, chip and footer — is
+still a single-viewport screen. It is an assertion inside the existing test, not a new
+test, so the suite count stays at "1 skipped, 32 passed".
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Unit suite passes, including `tests/profiles-create.test.ts` and `tests/worlds-picker.test.tsx`: `npm run test` — baseline + 0
-- E2E suite passes, including `e2e/onboarding.spec.ts`, which drives all three wizard steps and locates avatar and world tiles by accessible name: `npm run test:e2e`
-- Linting passes: `npm run lint`
-- Type/astro check passes: `npm run check`
-- Playwright reports no horizontal overflow at 1024, 1280, 1536, 1920
+- Unit suite passes: `npm run test` — including any avatar-registry assertions
+- Lint passes: `npm run lint`; type/astro check passes: `npm run check`
+- E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- No orphaned i18n: `grep -rn "profileWizard\." src e2e` shows a consumer for every
+  surviving key
+- A profile created through the new form appears with the right name, age, avatar and
+  world (the spec asserts the start screen's greeting)
+- `/app/new-profile` fits 1536×1024 without scrolling (`expectFitsAt1536` in the rewritten
+  `e2e/onboarding.spec.ts`), and that assertion fails when the composition is made taller
 
-#### Manual:
+#### Manual Verification:
 
-- `/app/new-profile` at 1536×1024 beside `05-child-profile-web.png` and at 390×844 beside `05-child-profile-mobile.png`
-- The selected avatar and the selected world each show one check badge, and a screen reader announces the selection exactly once
-- All three steps are reachable by keyboard and the step-2 grids still tab in order
+- `/app/new-profile` at 1536×1024 matches `05-child-profile-web.png` region for region:
+  card 1098×839 at (263,123), sidebar, step chip, stepper, two columns, footer
+- Five avatars, the fifth carrying no baked selection chrome and no keying hole
+- The age select opens and commits a value; keyboard-only completion of the whole form
+  works
+- The preview sidebar is not focusable and is not announced
+- Contrast probe ≥4.5:1 on the stepper, the notice strip and the level card
 
 ---
 
-## Phase 9: Screen 06 — `/app/parent-pin`
+## Phase 6: Screen 06 — `/app/parent-pin` as the full onboarding screen
 
 ### Overview
 
-Dress the PIN screen to `06-parent-pin-security-web.png`: the shared brand row, the lock-and-shield
-card hero, the mockup's PIN field weight, the pale note panel, and a decoration layer — without
-changing the PIN's input model.
+The biggest structural gap: one small card becomes the mockup's page — sidebar with the
+step list and the "Bezpieczna nauka" card, a top stepper card, a segmented PIN card, a
+static "Bezpieczne ustawienia" panel and a three-action footer.
 
 ### Changes Required:
 
-#### 1. Shared brand row
+#### 1. Screen 06 art
+
+**Files**: `public/illustrations/auth/`, `public/illustrations/slice-map.md`
+
+**Contract**: copy from `06-parent-pin-security-extracted/png/cutouts/`:
+`sidebar-safe-learning-house.png` (235×123), `setting-no-ads-icon.png`,
+`setting-age-icon.png`, `setting-weekly-report-icon.png`,
+`setting-difficulty-icon.png` (75×~71 each), `decor-pin-path.png` ←
+`decor-dotted-path.png` (185×105), `decor-pin-coins-chart.png` ← `top-coins-chart.png`
+(226×95), `decor-pin-shield.png` ← `top-security-shield.png` (145×135, **holed** — give it
+a soft backdrop or drop it if the holes read at 1536×1024; record whichever). `hero-pin.png`
+is already committed and keys cleanly.
+
+**Also retire here**, now that nothing renders them: `coin.svg`, `coin-stack.svg`,
+`decor-chart.svg`, `decor-receipt.svg`, `decor-path.svg`, and their `DECOR_*` constants.
+
+#### 2. Page composition
 
 **File**: `src/pages/app/parent-pin.astro`
 
-**Intent**: The last hand-rolled `ShoppingCart` brand lockup in the app's signed-out and
-onboarding surfaces.
+**Contract**: a left sidebar (brand row, a three-item step list — 1 Utwórz konto ✓ /
+2 Profil dziecka ✓ / 3 Bezpieczeństwo active — and the "Bezpieczna nauka" card with
+`sidebar-safe-learning-house.png`), a centred stepper card with
+`OnboardingStepper current={3}`, the heading "Zabezpiecz panel rodzica" with its subtitle,
+the two-column area, the footer bar, and the decoration set under the Phase 4 contract.
 
-**Contract**: Replaced by `<BrandRow size="lg" class="mb-6" />`. The `ShoppingCart` import
-goes away. After this phase, `grep -rn "ShoppingCart" src` returns nothing.
+**This heading is an i18n change, not a literal, and it is load-bearing for the suite.**
+`t.parentPin.setHeading` changes value from "Ustaw PIN rodzica" to "Zabezpiecz panel
+rodzica", and a new `t.parentPin.setSubtitle` carries the mockup's second line — no string
+is typed into the `.astro` (L-003). `e2e/helpers/parent-pin.ts` asserts
+`getByRole("heading", { name: t.parentPin.setHeading })`, so it resolves through the
+dictionary and follows the change for free; item 6 covers what does not.
+The step list is static preview chrome (open decision 3): `aria-hidden` on the list, no
+links. **This composition is SET mode only** — the mockup draws no enter mode. In enter
+mode the route keeps a single centred card, restyled to the same vocabulary (hero in a
+disc, mockup-scale controls), which is what a returning parent sees. **Enter mode uses the
+same segmented PIN control as set mode**, with one group instead of two — one input model
+in the product, not two, and a returning parent should not meet a different widget from the
+one they set the PIN with. That decision is what makes item 6's spec rewrite reach the four
+enter-mode call sites in `e2e/parent-surfaces.spec.ts`, not just the set-mode ones.
 
-#### 2. Card hero
-
-**File**: `src/components/parent/ParentPinGate.tsx`
-
-**Intent**: The mockup heads the card with a large padlock-and-shield illustration; ours is a
-`size-7` lucide `KeyRound` in a tinted square.
-
-**Contract**: `<img src={HERO_PIN}>` (`hero-pin.png`, 244×190) at the mockup's scale,
-`alt=""` `aria-hidden="true"`. This cutout keys cleanly, so it is safe on either surface. The
-`KeyRound` import goes away.
-
-#### 3. PIN field weight
-
-**File**: `src/components/parent/ParentPinGate.tsx`
-
-**Intent**: The mockup draws four separate digit boxes. The product's PIN is 4–6 digits and
-`e2e/parent-surfaces.spec.ts` fills the field as one string, so the control stays one input
-(see "What We're NOT Doing") — but its *weight* can match.
-
-**Contract**: The existing single input keeps its `text-center text-2xl font-bold
-tracking-[0.5em]` treatment, restyled to the mockup's card radius and blue focus border, at
-`h-16`. The label stays a real `<label>` carrying `t.parentPin.pinLabel` — it is what the e2e
-locator resolves. A comment records why the mockup's four boxes are not built.
-
-#### 4. Note panel and submit icon
+#### 3. The PIN card
 
 **File**: `src/components/parent/ParentPinGate.tsx`
 
-**Intent**: The mockup closes the card with a pale-blue panel headed by a filled padlock,
-carrying the text `t.parentPin.note` already holds, and gives the submit button a shield.
+**Intent**: one free-text input becomes the mockup's digit boxes, without regressing the
+product's 4–6 digit contract (open decision 5's default).
 
-**Contract**: `t.parentPin.note` moves into a `bg-primary/5` rounded panel with
-`AuthLockFilledIcon` in a tinted tile at the left — the same shape as `SecurityNote`, but not
-that component, because this one lives inside a card and takes its text from
-`t.parentPin`. The submit button gains `AuthShieldCheckIcon`. `ShieldCheck` from `lucide`
-goes away.
+**Contract**: `hero-pin.png` in a `bg-primary/10 rounded-full` disc; "Wpisz 4 cyfry" over a
+segmented control of **four boxes that grow to six as the user types**; "Potwierdź PIN"
+over a second identical control; the info strip below. Each box is an `<input
+inputMode="numeric" maxLength={1}>` with auto-advance, backspace-to-previous and paste
+spreading across boxes; the group is a `<fieldset>` whose `<legend class="sr-only">` is
+`t.parentPin.pinLabel` / `confirmLabel`, each box carrying its own `aria-label` ("Cyfra N").
+**The legend is the only thing that disambiguates a box**: "Cyfra 1" is rendered twice on
+the set-mode screen, so a bare `getByLabel("Cyfra 1")` is ambiguous by construction. Every
+locator goes through the group — `page.getByRole("group", { name: <legend> })` — which is
+what item 6's `fillPin(scope, …)` signature exists to enforce. Enter mode renders exactly
+this control with a single group (item 2).
+Submission still posts the joined string to the same server-authoritative routes and the
+same `/^\d{4,6}$/` client guard runs before it. **The PIN never touches the URL.**
 
-#### 5. Decoration
+#### 4. The settings panel
 
-**File**: `src/pages/app/parent-pin.astro`
+**File**: same component (or a sibling under `src/components/parent/`)
 
-**Intent**: The mockup's top band carries a shield, a dotted path and a coin stack.
+**Intent**: mockup 06's four toggles describe guarantees, not settings — no backing
+preferences exist (open decision 4's default).
 
-**Contract**: A page-level `aria-hidden` `pointer-events-none` `hidden lg:block` layer with
-`DECOR_PATH` (top-centre), `DECOR_COIN_STACK` (top-right) and `DECOR_CHART` (right), plus
-`overflow-hidden` on the outer container.
+**Contract**: a `role="list"` of four rows, each with its 3D icon, title and body from
+`t.parentPin.settings[]`, and a **decorative** toggle: an `aria-hidden` span styled as an
+"on" switch. No `<button>`, no `<input>`, nothing focusable — a disabled real control
+would promise a setting the product does not have. Add a note flagging it to the PRD if it
+should ever become real.
+
+#### 4b. The label-collision guard for the new copy
+
+**File**: `tests/marketing-labels.test.ts`
+
+**Intent**: this phase pours roughly a dozen new strings into `t.parentPin` — four settings
+titles and four bodies (item 4), three footer actions (item 5), a changed `setHeading`, a
+new `setSubtitle`, and "Cyfra N". That namespace carries a standing warning in
+`src/i18n/pl.ts` for exactly this reason: "The three labels must stay mutually
+non-substring: Playwright's getByLabel matches substrings" (L-007). Nothing else in the
+phase looks.
+
+**Contract**: extend the existing collision check to `t.parentPin` — assert that no new
+string is a substring or a superstring of `pinLabel`, `confirmLabel`, `currentPinLabel`,
+`newPinLabel`, `newPinConfirmLabel`, `setSubmit` or `enterSubmit`, in **both** directions.
+Phase 3 already routes its panel copy through this file; this is the same guard applied to
+the namespace that actually has substring-matching locators pointed at it.
+
+#### 5. The footer
+
+**Contract**: three actions — "← Wróć" (ghost, back to `/app/new-profile`), "Pomiń na
+razie" (outline, → `/app/start`: skipping means simply not setting a PIN yet, which is a
+real and safe state since the gate only guards `/app/report`), and "Zakończ konfigurację"
+(primary, shield glyph) as the form's submit. Copy into `t.parentPin` — the back and skip
+actions as new keys, and the primary as a **changed value for `t.parentPin.setSubmit`**
+("Ustaw PIN" → "Zakończ konfigurację") rather than a sixth button label, because
+`e2e/helpers/parent-pin.ts` clicks `getByRole("button", { name: t.parentPin.setSubmit })`
+and that is the same button. `enterSubmit` ("Otwórz panel") is untouched — enter mode keeps
+its own single action.
+
+#### 6. The specs move with the screen
+
+**Files**: `e2e/helpers/parent-pin.ts`, `e2e/parent-surfaces.spec.ts`
+(`e2e/parent-weekly-report.spec.ts` also imports `setPinAndLandOnReport` and inherits the
+rewrite — it is listed so the blast radius is on the page, not so it is edited)
+
+**Intent**: three separate things move at once, and only the first is obvious.
+`getByLabel(pinLabel).fill(pin)` cannot drive a segmented control. But item 2 also changes
+`t.parentPin.setHeading`'s value and item 5 changes `t.parentPin.setSubmit`'s, and
+`setPinAndLandOnReport` both asserts on the heading and clicks the submit. Those two
+resolve through `t`, so they follow the dictionary rather than breaking — **verify that
+rather than assuming it**: the helper must still land on `/app/report`, and the
+Playwright run is the proof.
+
+**Contract**: a shared `fillPin(scope, legend, pin)` helper that resolves
+`scope.getByRole("group", { name: legend })`, focuses its first box and types the digits,
+used by both files. It replaces **six** call sites, not two: the two set-mode fills in the
+helper and the four enter-mode `getByLabel(t.parentPin.pinLabel).fill(...)` calls in
+`e2e/parent-surfaces.spec.ts` (wrong-PIN, correct-PIN, and both halves of the change-PIN
+flow), because item 2 puts the same segmented control in enter mode.
+`t.parentPin.currentPinLabel` / `newPinLabel` / `newPinConfirmLabel` on the report page's
+`ChangePinSection` are NOT segmented and keep their `getByLabel` calls — that component is
+out of scope. **Keep the six-digit case** — one of the existing
+tests sets a six-digit PIN and it is the reason the grow-to-six behaviour exists. Keep the
+wrong-PIN and change-PIN assertions unchanged in meaning.
+
+**Also**: `setPinAndLandOnReport` calls `expectFitsAt1536(page)` (Phase 2 item 7) while the
+set-mode gate is on screen, before it fills anything — the only automated check that
+`/app/parent-pin`, which this phase grows from one small card into a five-region page, is
+still a single-viewport screen. An assertion inside the existing helper, not a new test, so
+the suite count stays at "1 skipped, 32 passed".
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Unit suite passes, including `tests/parent-pin.test.ts` and `tests/change-pin-section.test.tsx`: `npm run test` — baseline + 0
-- E2E suite passes, including `e2e/parent-surfaces.spec.ts`, which sets a PIN, enters a wrong one, and changes it: `npm run test:e2e`
-- Linting passes: `npm run lint`
-- Type/astro check passes: `npm run check`
-- No `ShoppingCart` remains anywhere in `src`: `grep -rn "ShoppingCart" src` returns nothing
-- Playwright reports no horizontal overflow at 1024, 1280, 1536, 1920
+- Unit suite passes: `npm run test` — `tests/parent-pin*.test.ts` unchanged and green (they
+  exercise `src/lib/services/parent-pin`, not the component, so this phase cannot move
+  them), and `tests/marketing-labels.test.ts` covers every new `t.parentPin` string in both
+  substring directions
+- Lint passes: `npm run lint`; type/astro check passes: `npm run check`
+- E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed", including the six-digit PIN
+  path and the wrong-PIN throttle
+- No decor SVG remains: `ls public/illustrations/auth/*.svg` lists only `badge-check.svg`
+  and the four world glyphs
+- `/app/parent-pin` in set mode fits 1536×1024 without scrolling (`expectFitsAt1536` in
+  `e2e/helpers/parent-pin.ts`), and that assertion fails when the page is made taller
 
-#### Manual:
+#### Manual Verification:
 
-- `/app/parent-pin` at 1536×1024 beside `06-parent-pin-security-web.png` and at 390×844 beside `06-parent-pin-security-mobile.png`, in both `set` and `enter` modes
-- The PIN field is reachable by tab, announces "PIN (4–6 cyfr)", and a 6-digit PIN still fits inside it
-- Setting a PIN and then entering it still lands on `/app/report`
+- `/app/parent-pin` in set mode at 1536×1024 matches `06-parent-pin-security-web.png`:
+  sidebar, stepper card, PIN card (353,300–868,843), settings panel, footer bar
+- Typing four digits fills four boxes; a fifth digit grows the control; backspace walks
+  back; pasting "123456" spreads across six
+- Keyboard-only: tab reaches both PIN groups, the three footer actions, and nothing inside
+  the settings panel
+- Enter mode (returning parent) still works and looks like the same product
+- Contrast probe ≥4.5:1 on the settings rows, the step list and the footer buttons
+
+---
+
+## Phase 7: The mobile pass at 390×844
+
+### Overview
+
+Every phase so far was verified at 1536×1024. Screens 05 and 06 are new compositions with
+no mobile treatment at all, and phases 2–4 moved sizes that the phone layout inherits. This
+phase runs the same region-by-region pass against `assets/matmaverse-auth-v2-mobile/`.
+
+### Changes Required:
+
+#### 0. Measure the mobile mockups first — they are NOT 1:1 with CSS pixels
+
+**Files**: none (a measurement pass, recorded in this section)
+
+**Intent**: every desktop phase works against a PIL-measured region table, and that is why
+its Manual rows can say "within ±8 px" instead of "looks right". This phase had no such
+table, which left row 7.4 ("matches region for region") with nothing to match against.
+
+**The trap that makes this mandatory.** The desktop mockups are 1536×1024 — the same
+numbers as the viewport, so a measured pixel IS a CSS pixel. The mobile set is not:
+
+| File | Actual px | CSS px at 390×844 |
+| --- | --- | --- |
+| `01-parent-login-mobile.png` … `05-child-profile-mobile.png` | **853 × 1844** | ÷ ~2.187 |
+| `06-parent-pin-security-mobile.png` | **862 × 1825** | ÷ ~2.19 → ≈ 394 × 833 |
+
+853 / 390 = 2.187 and 1844 / 844 = 2.185: these are 390×844 renders at roughly **2.19×**
+device pixels. Measure one and apply it directly and the phone layout comes out at more
+than twice mockup scale. Divide every measurement by the per-file factor before it enters a
+class name, and record the factor beside the table.
+
+**Contract**: before touching a component, produce a region table per screen in the same
+shape as the desktop one in "Current State Analysis" — card box, field height, primary
+button height, and the vertical order of the regions — in **CSS pixels**, and paste it into
+this section. All six mobile mockups exist, screens 05 and 06 included, so nothing here is
+blocked on a missing asset.
+
+#### 1. Per-screen phone layout
+
+**Files**: `src/components/auth/AuthShell.astro`, `src/components/auth/FormField.tsx`,
+`src/components/auth/SubmitButton.tsx`, `src/components/marketing/{SignupPanel,ResetPanel,
+FeatureList,TrustBadges,BrandRow}.astro`, `src/components/onboarding/OnboardingStepper.tsx`,
+`src/components/child/{CreateProfileForm,SelectTile}.tsx`,
+`src/components/parent/ParentPinGate.tsx`, and the six routes under `src/pages/auth/` and
+`src/pages/app/`
+
+**Contract**: below `lg` no decoration renders (already the contract); the preview sidebars
+and the desktop-only chrome on 05/06 are hidden; 05's two columns stack; 06's PIN and
+settings cards stack and the footer's three actions wrap; cards drop to `p-6` and
+`rounded-3xl`; fields and buttons keep a comfortable touch height. Exactly one `<h1>` per
+route at 390 (L-007) — including the known screen 01 case where `AuthShell`'s hero is
+hidden below `lg` and the card's heading carries the words.
+
+#### 2. The mobile hero question, settled
+
+**Intent**: `change.md` flagged screen 01's mobile hero as unresolved because the fix would
+have to be applied to all four `AuthShell` routes at once and mockups 02/04's phone layouts
+had not been checked. This phase checks them.
+
+**Contract**: decide per the mobile mockups whether the hero heading moves above the card
+below `lg`; whichever way, apply it to all four routes together and keep exactly one `<h1>`
+per viewport.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Unit suite passes: `npm run test`; lint and check pass
+- E2E suite green including the `[touch]` project: `npm run test:e2e` → "1 skipped, 32
+  passed" (the skip is `marketing-worlds.spec.ts [touch]`, by design)
+- No horizontal scroll at 390 on any of the six routes
+
+#### Manual Verification:
+
+- Each of the six routes at 390×844 matches its `0N-*-mobile.png` within ±8 **CSS** px of
+  the item 0 region table (the mockups are ~2.19× renders — compare against the divided
+  numbers, never the raw ones)
+- No desktop-only chrome (sidebars, step chip, decoration) leaks into the phone layout
+- Every control is a comfortable tap target and nothing overlaps
 
 ---
 
 ## Testing Strategy
 
-### Unit Tests
+### Unit tests
 
-- `tests/auth-art.test.ts` (rewritten, Phase 1) — every Group A path exists on disk and serves from `/illustrations/`; no Group A SVG carries an `id` or a gradient; every Group B export renders an `<svg>` with a `viewBox`, no `id`, and `currentColor`; `FEATURE_ICONS` and `t.marketing.features` stay the same length with no duplicate icon.
-- `tests/marketing-labels.test.ts` (new, Phase 5; extended Phase 7) — no new marketing or trust label is a substring or superstring of an existing one. Modelled on `tests/nav-labels.test.ts`.
-- `tests/signin-form.test.tsx` (existing) — must stay green through Phase 3. It locates the checkbox by role + accessible name and the reset link by role, so `sr-only` should not touch it. If it goes red, the label left the accessibility tree.
+- `tests/auth-art.test.ts` — every registered path exists, is served from
+  `/illustrations/`, carries no id/gradient (SVGs), and every world slug resolves to a
+  glyph that exists or to the documented fallback.
+- `tests/marketing-labels.test.ts` — the new panel and settings strings do not collide by
+  substring with anything already on the same page (L-007), and `brandParts` concatenates
+  to `t.brand`.
+- Existing `tests/parent-pin*.test.ts` and profile tests must pass untouched — phases 5
+  and 6 change presentation, not the server contract.
 
-### Integration Tests
+### E2E
 
-- `npm run test:e2e` in full after **every** phase from 3 onward — `signInViaUI` runs in nearly every spec, so the suite as a whole is the field-model and card-composition regression test.
-- `e2e/onboarding.spec.ts` after Phases 5, 6 and 8 — it is the only spec that signs up through the UI, reads the verification page, and drives all three wizard steps.
-- `e2e/password-reset.spec.ts` after Phase 7; `e2e/parent-surfaces.spec.ts` after Phase 9.
-- `e2e/smoke.spec.ts` after Phase 4 — pins the two-part secondary-button label.
+- The Phase 2 no-scroll test at 1536×1024 across the four public auth routes.
+- The rewritten `e2e/onboarding.spec.ts` one-screen profile flow.
+- The rewritten PIN fill helper, exercised through the existing set / wrong / change flows,
+  including the six-digit case.
 
-### Visual Verification (mandatory, per screen phase)
+### Manual
 
-Driven with the Playwright MCP tools against a running dev server, at **1536×1024** against
-`assets/matmaverse-auth-v2-web/0N-*-web.png` and **390×844** against
-`assets/matmaverse-auth-v2-mobile/0N-*-mobile.png`. For each screen, compare region by region
-and check all of:
+The acceptance bar is region-by-region parity, not vibes. Per phase:
 
-1. `document.documentElement.scrollWidth === clientWidth` at 1024, 1280, 1536 and 1920.
-2. Every decoration is `aria-hidden="true"` and `pointer-events-none`, and
-   `document.elementFromPoint` over the card's primary control returns the control.
-3. Body and muted text clear WCAG AA against their actual backgrounds.
-4. A full tab traversal reaches every interactive element in the form, in order, with a
-   visible focus ring on each.
-5. Every input resolves through `getByLabel` with its Polish label — a real `<label>`, not a
-   placeholder standing in for one.
+1. Dev server on `:4321` (the e2e global setup rejects a toolbar-serving stray server —
+   `ASTRO_DEV_TOOLBAR_DISABLED`).
+2. Sign in as `rodzic@mathshop.test` / `haslo123`, PIN `1234`.
+3. Screenshot each affected route at 1536×1024 (and, in Phase 7, 390×844) and compare
+   side-by-side with `assets/matmaverse-auth-v2-{web,mobile}/0N-*.png`.
+4. Re-run `.playwright-mcp/verify.mjs` and confirm its positive control before trusting a
+   ratio.
 
-Screenshots go to the run's scratchpad; each phase's summary states, per region, whether it
-matches the mockup and — where it does not — that the difference is a decision and why.
-
-## Performance Considerations
-
-Group A is eleven SVGs of 176–726 bytes each plus three PNGs (`hero-email.png` 430×400,
-`hero-reset.png` 183×166, `hero-pin.png` 244×190). Group B adds no network requests at all —
-inlined icons ship in the island bundle and replace `lucide` components of comparable size.
-Net page weight is effectively unchanged on the four `AuthShell` routes and rises by one
-mid-size PNG on each of `/auth/confirm-email`, `/auth/reset-password` and `/app/parent-pin`.
-Decorations are `hidden lg:block`, so mobile never fetches them.
+The sandbox blocks localhost: `npm run test`, `npm run test:e2e` and any `curl` at `:4321`
+need the override. `lint` and `check` do not.
 
 ## Migration Notes
 
-None. No schema, no stored data, no route or API contract changes. Every change is
-presentational or in the i18n dictionary; rollback is a revert. `src/data/avatars.ts` and the
-`avatar` / `theme` value spaces are deliberately untouched (see "What We're NOT Doing"), so no
-stored profile is invalidated.
+One data change in the whole plan: a fifth entry appended to `AVATARS` (Phase 5). It is
+additive, the column is a bare `text`, validation derives from the array, and existing
+rows keep their values. Nothing else touches the schema, the API contracts or the routes.
 
 ## References
 
-- **Extraction index**: `assets/matmaverse-auth-v2-web/AUTH_ASSET_EXTRACTION_INDEX.md`
-- **Per-screen specs**: `assets/matmaverse-auth-v2-web/0{1..6}-*-extracted/docs/component-breakdown.md`, with `crop-map.json` beside each for traceability
-- **Shared atoms**: `assets/matmaverse-auth-v2-web/00-shared-auth-assets/` (`manifest.json`, `svg/icons`, `svg/decor`, `png/cutouts`)
-- **Design tokens**: `assets/matmaverse-auth-v2-web/01-parent-login-extracted/css/design-tokens.css`
-- **Flat mockups**: `assets/matmaverse-auth-v2-web/0{1..6}-*-web.png` (1536×1024), `assets/matmaverse-auth-v2-mobile/0{1..6}-*-mobile.png`
-- **Provenance register**: `public/illustrations/slice-map.md`
-- **Test models**: `tests/worlds-art.test.ts` (asset existence), `tests/nav-labels.test.ts` (label substring guard)
-- **Product**: `context/foundation/prd-v2.md`; **rules**: `CLAUDE.md`, `e2e/CLAUDE.md`, `context/foundation/lessons.md` (L-003, L-005, L-006, L-007, L-009)
-- **Prior surface work**: `context/archive/2026-06-27-matmaverse-design-system/`, `context/archive/2026-08-22-web-shell-and-mockup-parity/`
+- Specification: `context/changes/auth-visual-fidelity/fidelity-gaps.md`
+- Implementation notes and traps: `context/changes/auth-visual-fidelity/change.md`
+- The landed first plan: `context/changes/auth-visual-fidelity/plan-2026-08-29-initial.md`
+- Audit screenshots: `.playwright-mcp/fidelity-audit-2026-09-04/` (gitignored)
+- Mockups: `assets/matmaverse-auth-v2-{web,mobile}/` (local only)
 
 ## Progress
 
-> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles. See `references/progress-format.md`.
+> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
-### Phase 1: The auth atom set, re-done from the per-screen extraction
-
-> Reset on 2026-08-29. The rows below were checked against commit `8850b18`, which shipped
-> art from `assets/atomic-assets-v2/`. That art is retired by this revision, so the phase is
-> re-run against `assets/matmaverse-auth-v2-web/`.
+### Phase 1: The soft-3D art lands, the flat set retires (RC1)
 
 #### Automated
 
-- [x] 1.1 Art test passes: `npx vitest run tests/auth-art.test.ts` — ecbcbc9
-- [x] 1.2 Full unit suite passes: `npm run test` (baseline 641 + ~4) — ecbcbc9
-- [x] 1.3 Linting passes: `npm run lint` — ecbcbc9
-- [x] 1.4 Type/astro check passes: `npm run check` — ecbcbc9
-- [x] 1.5 No source file references a retired atomic-pack path — ecbcbc9
-- [x] 1.6 No source file resolves a path under `assets/` — ecbcbc9
+- [ ] 1.1 Unit suite passes: `npm run test`
+- [ ] 1.2 Lint passes: `npm run lint`
+- [ ] 1.3 Type/astro check passes: `npm run check`
+- [ ] 1.4 E2E suite green: `npm run test:e2e` → "1 skipped, 31 passed"
+- [ ] 1.5 No code path resolves under `assets/`
+- [ ] 1.6 Retired SVGs are gone from `public/illustrations/auth/`
 
 #### Manual
 
-- [ ] 1.7 Each of the 14 Group A files reads as its mockup counterpart
-- [ ] 1.8 `slice-map.md` describes only files that exist, with no stale lucide or gradient-id claims
+- [ ] 1.7 `/auth/signin` shows soft-3D feature icons, brand mark and the laurel-leaf hero
+- [ ] 1.8 The wordmark reads "Matma" blue + "Verse" green as one word
+- [ ] 1.9 No keying-hole rectangle on any of the four auth routes
+- [ ] 1.10 Contrast probe ≥4.5:1 on the green wordmark half and every prior label
 
-### Phase 2: Shared marketing components
-
-> Landed as `5793073` and NOT re-run in this revision. The components are structurally
-> correct; only the art paths they read change, and those live in `src/data/marketing-art.ts`
-> (Phase 1). Sizing fitted to the retired art is re-tuned in Phase 1 item 6.
+### Phase 2: Scale and density — the composition fits 1536×1024 (RC2)
 
 #### Automated
 
-- [x] 2.1 Full unit suite passes: `npm run test` — 5793073
-- [x] 2.2 E2E suite passes, including `e2e/marketing-worlds.spec.ts` on both surfaces: `npm run test:e2e` — 5793073
-- [x] 2.3 Linting passes: `npm run lint` — 5793073
-- [x] 2.4 Type/astro check passes: `npm run check` — 5793073
-- [x] 2.5 No lucide feature icons remain in either surface — 5793073
+- [ ] 2.1 Unit suite passes: `npm run test`
+- [ ] 2.2 Lint passes: `npm run lint`
+- [ ] 2.3 Type/astro check passes: `npm run check`
+- [ ] 2.4 E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- [ ] 2.5 The no-scroll test fails when reverted (computed style confirmed first)
 
 #### Manual
 
-- [x] 2.6 At 1536 wide, feature blocks are borderless with large illustrated icons — 5793073
-- [x] 2.7 At 390 wide, the same blocks are carded — 5793073
-- [x] 2.8 `/` shows the same brand row, feature blocks and security panel as `/auth/signin` — 5793073
-- [x] 2.9 The security note renders as a panel, not a bare text line — 5793073
+- [ ] 2.6 `/auth/signin` and `/auth/confirm-email` match their region boxes within ±8 px
+- [ ] 2.7 Six worlds in one row, images full-bleed, each label carrying a glyph
+- [ ] 2.8 No route scrolls vertically or horizontally at 1536×1024
+- [ ] 2.9 Contrast probe still ≥4.5:1 everywhere it was before
 
-### Phase 3: The mockup's field model
+### Phase 3: Screens 02 and 04 get their own left panels (RC3)
 
 #### Automated
 
-- [x] 3.1 Unit suite passes, including `tests/signin-form.test.tsx`: `npm run test` — 39993c5
-- [x] 3.2 Full e2e suite passes: `npm run test:e2e` — 39993c5
-- [x] 3.3 Linting passes: `npm run lint` — 39993c5
-- [x] 3.4 Type/astro check passes: `npm run check` — 39993c5
-- [x] 3.5 No lucide mail/lock/eye remains in the auth forms — 39993c5
+- [ ] 3.1 Unit suite passes: `npm run test`
+- [ ] 3.2 Lint passes: `npm run lint`
+- [ ] 3.3 Type/astro check passes: `npm run check`
+- [ ] 3.4 E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- [ ] 3.5 Exactly one `<h1>` per route at 1536 and at 390
 
 #### Manual
 
-- [ ] 3.6 All four auth screens render tall placeholder-only fields with the extraction's gutter icons
-- [ ] 3.7 "Minimum 6 znaków" is visible under the signup password field before typing
-- [ ] 3.8 Every field is reachable by tab and still announces its Polish label
-- [ ] 3.9 The eye toggle sits centred in the taller field, reads as one family, and still works
+- [ ] 3.6 `/auth/signup` matches mockup 02's panel — callout, three rows, desk hero, no world grid
+- [ ] 3.7 `/auth/reset-password` puts the big hero in the panel and three white cards below
+- [ ] 3.8 The "Krok 1 z 3" stepper heads the signup card
+- [ ] 3.9 `/auth/signin` and `/auth/confirm-email` unchanged from Phase 2 (03 keeps its
+      Phase 2 item 6 width)
 
-### Phase 4: Screen 01 — the sign-in card and page composition
+### Phase 4: Background decoration, per screen (RC4)
 
 #### Automated
 
-- [x] 4.1 Unit suite passes: `npm run test` — fa17a22
-- [x] 4.2 E2E suite passes, including the new smoke assertion: `npm run test:e2e` — fa17a22
-- [x] 4.3 Linting passes: `npm run lint` — fa17a22
-- [x] 4.4 Type/astro check passes: `npm run check` — fa17a22
-- [x] 4.5 No horizontal overflow on `/auth/signin` at 1024, 1280, 1536, 1920 — fa17a22
+- [ ] 4.1 Unit suite passes: `npm run test`
+- [ ] 4.2 Lint passes: `npm run lint`
+- [ ] 4.3 Type/astro check passes: `npm run check`
+- [ ] 4.4 E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- [ ] 4.5 The Phase 2 no-scroll test still passes on all four routes
 
 #### Manual
 
-- [ ] 4.6 `/auth/signin` at 1536×1024 matches `01-parent-login-web.png` region by region
-- [ ] 4.7 At 390×844 it matches `01-parent-login-mobile.png`
-- [ ] 4.8 Decorations sit behind content and never intercept a click
-- [ ] 4.9 Signing in with the seeded local account still works end to end
+- [ ] 4.6 Each of the four routes matches its mockup's decoration placement
+- [ ] 4.7 No decoration intercepts a click; every control is reachable and focusable
+- [ ] 4.8 No decoration shows a keying hole against the page background
+- [ ] 4.9 No decoration renders below `lg`
 
-### Phase 5: Screen 02 — `/auth/signup`
+### Phase 5: Screen 05 — `/app/new-profile` as one screen with onboarding chrome
 
 #### Automated
 
-- [x] 5.1 Unit suite passes: `npm run test` (baseline + ~2) — 4da86c9
-- [x] 5.2 New label guard passes: `npx vitest run tests/marketing-labels.test.ts` — 4da86c9
-- [x] 5.3 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e` — 4da86c9
-- [x] 5.4 Linting passes: `npm run lint` — 4da86c9
-- [x] 5.5 Type/astro check passes: `npm run check` — 4da86c9
-- [x] 5.6 No horizontal overflow on `/auth/signup` at 1024, 1280, 1536, 1920 — 4da86c9
+- [ ] 5.1 Unit suite passes: `npm run test`
+- [ ] 5.2 Lint passes: `npm run lint`
+- [ ] 5.3 Type/astro check passes: `npm run check`
+- [ ] 5.4 E2E suite green: `npm run test:e2e` → "1 skipped, 32 passed"
+- [ ] 5.5 No orphaned `t.profileWizard.*` key remains
+- [ ] 5.6 A profile created through the new form lands with the right name, age, avatar, world
+- [ ] 5.7 `/app/new-profile` fits 1536×1024 without scrolling (`expectFitsAt1536`), and the assertion fails when the composition is made taller
 
 #### Manual
 
-- [ ] 5.7 `/auth/signup` at 1536×1024 matches `02-parent-register-web.png`
-- [ ] 5.8 At 390×844 it matches `02-parent-register-mobile.png`
-- [ ] 5.9 "Masz już konto? Zaloguj się" renders as one centred line and tabs correctly
-- [ ] 5.10 The trust-badge row reads as the mockup's, with no badge title repeating a feature title
+- [ ] 5.8 `/app/new-profile` matches mockup 05 region for region
+- [ ] 5.9 Five avatars, the fifth free of baked selection chrome and keying holes
+- [ ] 5.10 The age select commits a value; keyboard-only completion works
+- [ ] 5.11 The preview sidebar is neither focusable nor announced
+- [ ] 5.12 Contrast probe ≥4.5:1 on stepper, notice strip and level card
 
-### Phase 6: Screen 03 — `/auth/confirm-email`
+### Phase 6: Screen 06 — `/app/parent-pin` as the full onboarding screen
 
 #### Automated
 
-- [x] 6.1 Unit suite passes: `npm run test` — f353aad
-- [x] 6.2 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e` — f353aad
-- [x] 6.3 Linting passes: `npm run lint` — f353aad
-- [x] 6.4 Type/astro check passes: `npm run check` — f353aad
-- [x] 6.5 No lucide remains on the route — f353aad
-- [x] 6.6 No horizontal overflow at 1024, 1280, 1536, 1920 — f353aad
+- [ ] 6.1 Unit suite passes: `npm run test` — including the new `t.parentPin` collision assertions
+- [ ] 6.2 Lint passes: `npm run lint`
+- [ ] 6.3 Type/astro check passes: `npm run check`
+- [ ] 6.4 E2E suite green including the six-digit PIN and the wrong-PIN throttle
+- [ ] 6.5 No decor SVG remains in `public/illustrations/auth/`
+- [ ] 6.6 `/app/parent-pin` in set mode fits 1536×1024 without scrolling (`expectFitsAt1536`), and the assertion fails when the page is made taller
 
 #### Manual
 
-- [ ] 6.7 `/auth/confirm-email?email=…` at 1536×1024 matches `03-email-verification-web.png`
-- [ ] 6.8 At 390×844 it matches `03-email-verification-mobile.png`
-- [ ] 6.9 The envelope hero shows no pale rectangle or missing white letter against the card
-- [ ] 6.10 The `?resent=1` and `?error=…` states still render legibly
+- [ ] 6.7 `/app/parent-pin` in set mode matches mockup 06 region for region
+- [ ] 6.8 Digit boxes: type, grow to six, backspace, paste
+- [ ] 6.9 Keyboard-only reaches both PIN groups and the three footer actions, and nothing in the settings panel
+- [ ] 6.10 Enter mode still works and reads as the same product
+- [ ] 6.11 Contrast probe ≥4.5:1 on settings rows, step list and footer buttons
 
-### Phase 7: Screen 04 — `/auth/reset-password` and `/auth/update-password`
+### Phase 7: The mobile pass at 390×844
 
 #### Automated
 
-- [x] 7.1 Unit suite passes: `npm run test` — b92b40f
-- [x] 7.2 Extended label guard passes: `npx vitest run tests/marketing-labels.test.ts` — b92b40f
-- [x] 7.3 E2E suite passes, including `e2e/password-reset.spec.ts`: `npm run test:e2e` — b92b40f
-- [x] 7.4 Linting passes: `npm run lint` — b92b40f
-- [x] 7.5 Type/astro check passes: `npm run check` — b92b40f
-- [x] 7.6 No horizontal overflow on both routes at 1024, 1280, 1536, 1920 — b92b40f
+- [ ] 7.1 Unit suite passes: `npm run test`; lint and check pass
+- [ ] 7.2 E2E suite green including `[touch]`: "1 skipped, 32 passed"
+- [ ] 7.3 No horizontal scroll at 390 on any of the six routes
 
 #### Manual
 
-- [ ] 7.7 `/auth/reset-password` at 1536×1024 matches `04-password-reset-web.png`
-- [ ] 7.8 At 390×844 it matches `04-password-reset-mobile.png`
-- [ ] 7.9 `?sent=1` still shows the conditional notice inside the new card
-- [ ] 7.10 `/auth/update-password` reads as the same flow's second step
-
-### Phase 8: Screen 05 — `/app/new-profile`
-
-#### Automated
-
-- [x] 8.1 Unit suite passes: `npm run test` — c1d59e2
-- [x] 8.2 E2E suite passes, including `e2e/onboarding.spec.ts`: `npm run test:e2e` — c1d59e2
-- [x] 8.3 Linting passes: `npm run lint` — c1d59e2
-- [x] 8.4 Type/astro check passes: `npm run check` — c1d59e2
-- [x] 8.5 No horizontal overflow at 1024, 1280, 1536, 1920 — c1d59e2
-
-#### Manual
-
-- [ ] 8.6 `/app/new-profile` at 1536×1024 matches `05-child-profile-web.png`
-- [ ] 8.7 At 390×844 it matches `05-child-profile-mobile.png`
-- [ ] 8.8 The selected avatar and world each show one check badge, announced exactly once
-- [ ] 8.9 All three steps are reachable by keyboard and step 2's grids tab in order
-
-### Phase 9: Screen 06 — `/app/parent-pin`
-
-#### Automated
-
-- [x] 9.1 Unit suite passes: `npm run test` — 49ef788
-- [x] 9.2 E2E suite passes, including `e2e/parent-surfaces.spec.ts`: `npm run test:e2e` — 49ef788
-- [x] 9.3 Linting passes: `npm run lint` — 49ef788
-- [x] 9.4 Type/astro check passes: `npm run check` — 49ef788
-- [x] 9.5 No hand-rolled brand lockup remains on the six auth/onboarding screens; `BrandRow` covers all six plus the landing page — 49ef788
-      > Reworded 2026-08-30 (impl review). The row previously read "No `ShoppingCart`
-      > remains anywhere in `src`" and was checked while two uses remained, so the record
-      > certified more than was verified. Both are correct and out of this change's scope:
-      > `AppShell.astro` is the SIGNED-IN shell's own lockup (a seventh surface — follow-up
-      > below), and `WorldPicker.tsx` uses the glyph as the semantic "handel" competency
-      > icon, not as branding.
-- [x] 9.6 No horizontal overflow at 1024, 1280, 1536, 1920 — 49ef788
-
-#### Manual
-
-- [ ] 9.7 `/app/parent-pin` at 1536×1024 matches `06-parent-pin-security-web.png` in both modes
-- [ ] 9.8 At 390×844 it matches `06-parent-pin-security-mobile.png`
-- [ ] 9.9 The PIN field tabs, announces "PIN (4–6 cyfr)", and holds a 6-digit PIN
-- [ ] 9.10 Setting a PIN and then entering it still lands on `/app/report`
+- [ ] 7.4 Each of the six routes matches its `0N-*-mobile.png` within ±8 CSS px of the item 0 region table
+- [ ] 7.5 No desktop-only chrome leaks into the phone layout
+- [ ] 7.6 Every control is a comfortable tap target and nothing overlaps
