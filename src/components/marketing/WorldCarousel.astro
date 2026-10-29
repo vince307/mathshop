@@ -39,7 +39,7 @@ const remainingWorlds = WORLDS.filter((world) => !featuredWorldData.some(({ slug
 <div class="world-carousel relative min-w-0">
   <div
     id="world-carousel"
-    class="world-strip flex min-w-0 snap-x gap-4 overflow-x-auto rounded-[1.75rem] px-1 pt-1 pb-5 lg:gap-6 lg:px-0 lg:pb-0"
+    class="world-strip flex min-w-0 snap-x scroll-px-1 gap-4 overflow-x-auto rounded-[1.75rem] px-1 pt-1 pb-5 lg:scroll-px-0 lg:gap-6 lg:px-0 lg:pb-0"
     role="region"
     aria-label={t.welcome.worlds.carouselLabel}
   >
@@ -137,10 +137,13 @@ const remainingWorlds = WORLDS.filter((world) => !featuredWorldData.some(({ slug
 
     const scrollToCard = (direction: -1 | 1) => {
       const stripLeft = strip.getBoundingClientRect().left;
-      const offsets = Array.from(
+      const cardLefts = Array.from(
         strip.querySelectorAll<HTMLElement>("a"),
         (card) => card.getBoundingClientRect().left - stripLeft + strip.scrollLeft,
       );
+      // Snap positions, not card edges: the strip's scroll-padding equals its padding, so the
+      // first card snaps to scrollLeft 0 and every card sits that far past its own snap point.
+      const offsets = cardLefts.map((left) => left - cardLefts[0]);
       const target =
         direction === 1
           ? offsets.find((offset) => offset > strip.scrollLeft + 2)
