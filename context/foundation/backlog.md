@@ -2,16 +2,16 @@
 title: Feature backlog
 status: living
 created: 2026-08-23
-consumed_by: /10x-autonomous-run
+consumed_by: /autonomous-run
 ---
 
 # Feature backlog
 
-**The single input to an autonomous run.** `/10x-autonomous-run` takes entry ids
-(`/10x-autonomous-run B3 A3 H1`) or `--top N` and starts there.
+**The single input to an autonomous run.** `/autonomous-run` takes entry ids
+(`/autonomous-run B3 A3 H1`) or `--top N` and starts there.
 
 It lives in `context/foundation/` deliberately, and it is **tracked**: a backlog
-carried inside a change folder is buried by `/10x-archive` (which is what happened
+carried inside a change folder is buried by `/archive` (which is what happened
 to the previous one, in `web-shell-and-mockup-parity/handoff.md` §4–§5), and one
 carried inside `.claude/` is invisible to a fresh clone, to CI, and to a cloud
 agent — `.gitignore:37`. This file is the single tracked copy; nothing under
@@ -29,7 +29,7 @@ Every claim is tagged:
   was already computed and thrown away), and one route was already protected when
   the brief said it was not.
 
-`Ready` means: an outsider could take this entry to `/10x-new` today. `Needs
+`Ready` means: an outsider could take this entry to `/new` today. `Needs
 shaping` means product content or a PRD decision is missing and planning would
 invent it. `Parked` means a deliberate non-goal.
 
@@ -39,7 +39,7 @@ invent it. `Parked` means a deliberate non-goal.
 
 **Empty.** E1 and W1 — the two world-economy entries — shipped on 2026-08-27 and
 moved to `## Shipped` below. Nothing here is startable today, and that is a real
-state, not an oversight: `/10x-autonomous-run --top N` correctly finds nothing.
+state, not an oversight: `/autonomous-run --top N` correctly finds nothing.
 
 **What it would take to refill this section.** The three `## Needs shaping` entries
 each need FRs first, and they are blocked on one thing between them: **B2** needs a
@@ -58,7 +58,7 @@ and not a run.
 
 ## Parked pending telemetry
 
-*Not Ready.* `/10x-autonomous-run` must not pick this up. It was previously an
+*Not Ready.* `/autonomous-run` must not pick this up. It was previously an
 `###` nested under `## Ready`, which was harmless only while that section was
 empty; promoted to `##` on 2026-08-27 so the run's `--top N` file-order scan
 cannot reach it.
@@ -207,7 +207,7 @@ returns `session: null` when confirmations are on).
 ## Needs shaping
 
 These are real product tranches, not UI debt. Each needs FRs before it can be
-sliced — send them through `/10x-shape` → `/10x-prd`, not straight into a run.
+sliced — send them through `/shape` → `/prd`, not straight into a run.
 
 ### B2 — `pricing-and-inventory`
 **Mockup:** `assets/matmaverse-ui-v2-{web,mobile}/04-pricing-inventory-*` **[I]**.
@@ -306,8 +306,8 @@ remote side by side and is read-only.
   2026-08-26.** All 14 roadmap items (F-01, S-01…S-13) were verified `done` with an
   archive folder each, and the table was deleted rather than reconciled — it
   duplicated `## At a glance` row for row and its only unique column was the stale
-  one. `roadmap.md` now points here as the single input to `/10x-plan` and
-  `/10x-autonomous-run`. The present-tense "ready now" notes in `## Streams` were
+  one. `roadmap.md` now points here as the single input to `/plan` and
+  `/autonomous-run`. The present-tense "ready now" notes in `## Streams` were
   marked historical at the same time.
 - **`assets/` is gitignored**, so every `[I]` mockup reference above is unverifiable
   in CI or a fresh clone. An entry whose mockup cannot be opened must be planned as

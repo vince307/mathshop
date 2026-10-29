@@ -52,11 +52,9 @@ the plan/research in `context/archive/2026-07-12-testing-e2e-playwright/`.
 
 ## Workflow and tooling boundaries
 
-**Use the `/10x-e2e` skill** — it is the single source of truth for the workflow
-(risk → seed test + rules → generate → review against the five anti-patterns →
-re-prompt → verify). Its `references/` carry the full rules, anti-patterns, seed
-pattern, and prompt-template. The rules above are the hard constraints that hold
-even before you invoke it.
+**Workflow:** risk → seed test + rules → generate → review against the five
+anti-patterns → re-prompt → verify. The rules above are the hard constraints that
+hold at every step.
 
 - **DOM (snapshot) is the default.** Vision (`--caps=vision`) is a supplement for
   visual-only risks (layout, z-index, animation); for pixel regression prefer

@@ -46,3 +46,18 @@ playwright-report/
 test-results/
 blob-report/
 .playwright-mcp/
+
+# Working files from AI skills and agent runs (plans, research, run logs,
+# archives). They stay on the maintainer's machine, out of the repo. Kept in
+# git: context/foundation (product/stack/infra docs CLAUDE.md points at),
+# docs/reference (RLS docs) and the AI-review rubric the review gate reads.
+context/*
+!context/foundation/
+!context/team/
+context/team/*
+!context/team/code-review-dod.md
+docs/superpowers/
+outputs/
+
+# Local skill lockfile
+skills-lock.json

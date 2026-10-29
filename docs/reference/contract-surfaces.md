@@ -128,15 +128,15 @@ How long a signed-in parent stays signed in. The parent chooses it once, at sign
 
 ## Shared-file concurrency contracts
 
-Rules for editing the repo's most-contended files while several changes are in flight — a `/10x-autonomous-run` batch, stacked branches, or two people on one afternoon. **Binding on every step of a concurrent run**; the per-run ownership sweep (`context/runs/<run-id>/ownership.md`) enforces them for that run.
+Rules for editing the repo's most-contended files while several changes are in flight — an autonomous agent batch, stacked branches, or two people on one afternoon. **Binding on every step of a concurrent run**; the per-run ownership sweep (`context/runs/<run-id>/ownership.md`) enforces them for that run.
 
-Moved here from `.claude/skills/10x-autonomous-run/references/lessons-addendum.md` on 2026-08-29 — that file was untracked, so these contracts did not survive a fresh clone. They are process rules, not run mechanics, and they bind hand-written work too.
+Moved here from the autonomous-run skill's lessons addendum on 2026-08-29 — that file was untracked, so these contracts did not survive a fresh clone. They are process rules, not run mechanics, and they bind hand-written work too.
 
 - **`supabase/migrations/` is a serialized lane.** Migrations are timestamp-ordered and applied in sequence. **One migration author per concurrent batch** — two features writing schema at once cannot be ordered safely after the fact. A migration a deployed app already writes against must be applied **before** that app ships: `appendShiftLog` (`src/lib/services/child-profiles.ts:170`) awaits its insert and never reads the returned `error`, and the Supabase client returns errors rather than throwing, so an unmigrated database loses writes with no signal anywhere.
 
 - **`src/i18n/pl.ts` and `src/types.ts` are strictly append-only**, one entry per key. That is what makes the two most-touched files in the repo safe for concurrent appends; restructuring either turns every parallel branch into a conflict. Grep the dictionary in **both** directions before adding a label (L-007 in [`lessons.md`](../../context/foundation/lessons.md)).
 
-- **This file is append-per-section, and conflicts keep both sides.** On a conflict in a surface's _Consumed by_ or _Tests_ line, **keep both symbol sets — never `--ours` or `--theirs`.** Nothing in `tests/`, `e2e/`, `src/` or CI reads this document, so a bad resolution fails silently and permanently. (`/10x-plan-review` reads the H2 headings, which is the one automated consumer — and it cannot detect a dropped bullet inside a section.)
+- **This file is append-per-section, and conflicts keep both sides.** On a conflict in a surface's _Consumed by_ or _Tests_ line, **keep both symbol sets — never `--ours` or `--theirs`.** Nothing in `tests/`, `e2e/`, `src/` or CI reads this document, so a bad resolution fails silently and permanently. (the plan-review skill reads the H2 headings, which is the one automated consumer — and it cannot detect a dropped bullet inside a section.)
 
 - **Shared infrastructure seams land once, before consumers fan out.** When two changes need the same capability in one small factory or service (a client timeout wrapper, a timezone helper, an error classifier), one lands it and the other imports it. Two implementations of the same timezone offset in one codebase is a bug that only appears on the weekend the clocks change.
 

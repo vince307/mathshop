@@ -4,7 +4,7 @@
 > (§1–§5); cookbook patterns at the bottom (§6) fill in as phases ship.
 > Read before writing any new test.
 >
-> Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
+> Refresh: re-run `/test-plan --refresh` when stale (see §8).
 >
 > Last updated: 2026-07-12 (Phases 1–5 complete; e2e layer shipped — see §4 e2e row + §6.7)
 
@@ -23,7 +23,7 @@ Tests follow three non-negotiable principles for this project:
    could fail_ and _why we believe it's likely_ — drawn from documents,
    interview, and codebase _signal_ (churn, structure, test base). It does
    NOT claim to know which line owns the failure. That knowledge is
-   produced by `/10x-research` during each rollout phase. If the plan and
+   produced by `/research` during each rollout phase. If the plan and
    research disagree about where the failure lives, research is the
    ground truth.
 
@@ -55,7 +55,7 @@ to observability/alerting, not a test — see §7.
 
 ### Risk Response Guidance
 
-| Risk | What would prove protection                                                                                                                                                                                         | Must challenge                                                                                                                                                   | Context `/10x-research` must ground                                                                                                 | Likely cheapest layer                                                                       | Anti-pattern to avoid                                                                                                                    |
+| Risk | What would prove protection                                                                                                                                                                                         | Must challenge                                                                                                                                                   | Context `/research` must ground                                                                                                 | Likely cheapest layer                                                                       | Anti-pattern to avoid                                                                                                                    |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | #1   | Account B cannot SELECT / UPDATE / DELETE / INSERT-on-behalf account A's rows on **every** account-owned table, including new ones (shift state, extra profiles)                                                    | "RLS enabled = isolated"; "the SELECT test passing means INSERT is safe"                                                                                         | which tables are account-owned, owner column, all four per-op policies present, the service-role provisioning pattern               | integration (real Postgres RLS via a Supabase test instance)                                | chaining `.select()` on the INSERT-on-behalf attempt (L-002 false green); acting as the service-role client (RLS bypassed)               |
 | #2   | A completed shift's state is durably readable on a fresh fetch in a new session; a replayed/duplicated shift-end does not double-pay                                                                                | "client returned 200 ⇒ row committed"; "supabase-js will not retry my write" (auto-retry lands at v2.102.0; project is on ^2.99.1 today)                         | the shift-end write shape (UPDATE vs ledger/RPC), the idempotency key, where `coins` is derived                                     | integration (write → independent re-fetch round-trip) + unit (payout idempotency on replay) | asserting on the client response object instead of a re-read of durable state; happy-path-only with no replay/failure case               |
@@ -68,7 +68,7 @@ to observability/alerting, not a test — see §7.
 ## 3. Phased Rollout
 
 Each row is a discrete rollout phase that will open its own change folder
-via `/10x-new`. Status moves left-to-right through the values below; the
+via `/new`. Status moves left-to-right through the values below; the
 orchestrator updates Status as artifacts appear on disk.
 
 | #   | Phase name                                   | Goal (one line)                                                                                              | Risks covered | Test types                                                                                             | Status      | Change folder                               |
@@ -234,7 +234,7 @@ References: `e2e/seed.spec.ts` (the exemplar every spec is modeled on) and
 
 ### 6.6 Per-rollout-phase notes
 
-(Optional. After each phase lands, `/10x-implement` appends a 2–3 line note here capturing anything surprising the phase taught.)
+(Optional. After each phase lands, `/implement` appends a 2–3 line note here capturing anything surprising the phase taught.)
 
 **Phase 5 — E2E browser layer (`testing-e2e-playwright`, 2026-07-12):**
 Playwright bootstrapped per §4; four spec files (smoke, onboarding,
@@ -303,7 +303,7 @@ unless the underlying assumption changes.
 - Stack versions last verified: 2026-07-12
 - AI-native tool references last verified: 2026-06-19
 
-Refresh (`/10x-test-plan --refresh`) when:
+Refresh (`/test-plan --refresh`) when:
 
 - a new top-3 risk surfaces from the roadmap or archive,
 - a recommended tool's `checked:` date is older than three months,

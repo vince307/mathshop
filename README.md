@@ -1,8 +1,6 @@
-# 10x Astro Starter
+# MatmaVerse
 
-![](./public/template.png)
-
-A modern, opinionated starter template for building fast, accessible web applications.
+A Polish-language web app that teaches math to children aged 6–9 by letting them run a small shop. Production: https://matmaverse.ariom.cloud
 
 ## Tech Stack
 
@@ -23,8 +21,8 @@ A modern, opinionated starter template for building fast, accessible web applica
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+git clone https://github.com/vince307/mathshop.git
+cd mathshop
 ```
 
 2. Install dependencies:
@@ -190,6 +188,14 @@ Review a branch:
 
 ```bash
 git diff main...HEAD | npx --prefix packages/code-reviewer tsx packages/code-reviewer/review.ts
+```
+
+The PR gate built on it (`.github/workflows/review.yml`) is **switched off** since 2026-10-29: the workflow is disabled in GitHub and `review` is no longer a required check on `main` (only `ci` and `e2e` are). To bring it back:
+
+```bash
+gh workflow enable review.yml
+gh api -X PATCH repos/vince307/mathshop/branches/main/protection/required_status_checks \
+  -F strict=false -f 'contexts[]=ci' -f 'contexts[]=e2e' -f 'contexts[]=review'
 ```
 
 The verdict JSON lands on stdout; progress, scores, token usage, and cost on stderr. Exit codes: `0` pass, `1` fail, `2` setup or budget error (missing key, empty stdin, diff over 4000 post-strip lines) — never a review verdict. Default model is `claude-haiku-4-5`; override with `--model claude-sonnet-4-6` or the `REVIEW_MODEL` env var.
