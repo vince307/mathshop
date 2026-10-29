@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { Mail, Lock, LogIn } from "lucide-react";
+import { AuthEmailIcon, AuthLockIcon, AuthLockFilledIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { PasswordToggle } from "@/components/auth/PasswordToggle";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
 
 interface Props {
@@ -53,7 +56,7 @@ export default function SignInForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.emailPlaceholder}
         error={errors.email}
-        icon={<Mail className="size-4" />}
+        icon={<AuthEmailIcon className="size-5" />}
       />
 
       <FormField
@@ -67,7 +70,7 @@ export default function SignInForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.passwordPlaceholderSignin}
         error={errors.password}
-        icon={<Lock className="size-4" />}
+        icon={<AuthLockIcon className="size-5" />}
         endContent={
           <PasswordToggle
             visible={showPassword}
@@ -78,9 +81,36 @@ export default function SignInForm({ serverError }: Props) {
         }
       />
 
+      {/*
+        Mockup 01-parent-login-web: one row between the password field and the
+        submit button — checkbox + label left, the reset link right (blue, not
+        muted). The link used to live outside the form in `signin.astro`; it
+        moved here so the row exists, and must render exactly once on this page
+        (the `signinLinkLabel` and `heading` keys under `t.auth.reset` hold the
+        same string, so a duplicate would make locators ambiguous — L-007).
+      */}
+      <div className={cn("flex items-center justify-between gap-3")}>
+        <div className="flex items-center gap-2">
+          {/*
+            `name` is load-bearing and easy to lose: Radix always renders its
+            hidden bubble input inside a <form>, but a NAMELESS control is
+            dropped by FormData — so omitting `name` makes the whole feature a
+            silent no-op that every route test still passes. Uncontrolled on
+            purpose: the native form posts it, no React state, no validate().
+          */}
+          <Checkbox id="remember" name="remember" />
+          <Label htmlFor="remember" className="text-muted-foreground cursor-pointer text-sm font-normal">
+            {t.auth.signin.rememberLabel}
+          </Label>
+        </div>
+        <a href="/auth/reset-password" className="text-primary text-sm font-medium hover:underline">
+          {t.auth.reset.signinLinkLabel}
+        </a>
+      </div>
+
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText={t.auth.signin.pending} icon={<LogIn className="size-4" />}>
+      <SubmitButton pendingText={t.auth.signin.pending} icon={<AuthLockFilledIcon className="size-5" />}>
         {t.auth.signin.submit}
       </SubmitButton>
     </form>

@@ -1,0 +1,86 @@
+---
+import { ArrowUp, Check } from "lucide-react";
+import type { ActivityEntry } from "@/data/activity";
+import { childCard } from "@/components/child/childCard";
+import { t, tasksDone, upgradeCopy } from "@/i18n";
+
+/**
+ * Dashboard recent-activity feed (ui-v2 `02-child-dashboard`, bottom of the main
+ * column): up to three of the child's own `shift_log` events, newest first.
+ *
+ * Presentation only — it fetches nothing, calls no `new Date()`, derives
+ * nothing. Every value arrives already resolved from `start.astro`'s
+ * frontmatter, so the day words are fixed at render time and cannot drift
+ * between server and client.
+ *
+ * That is the /app/task hydration lesson, in its accurate form: anything the
+ * SERVER has already rendered must not be re-derived from a nondeterministic
+ * source on the client, because React discards the server tree on a mismatch.
+ * It is not a ban on client-side derivation as such — /app/task now draws tasks
+ * 2…N in the island from a server-supplied seed, precisely because those have no
+ * server markup to contradict. Here there is no equivalent: every row IS
+ * server-rendered, so every value stays resolved in the frontmatter.
+ *
+ * `entries === null` means the query FAILED; `[]` means the child has no
+ * history yet. Those are different facts and are shown differently — a DB error
+ * must never read as "you have not played yet" (D7).
+ *
+ * No `zł` amount on any row: `shift_log` stores no earnings, and the catalogue
+ * `cost` is the CURRENT price, not the price paid (D1). The feed is also not a
+ * reconciliation of the wallet or the shift count — its writer is best-effort,
+ * so an event can legitimately be missing (D7 / R4).
+ */
+interface Props {
+  entries: ActivityEntry[] | null;
+  class?: string;
+}
+
+const { entries, class: className } = Astro.props;
+
+const BADGE = {
+  shift: { icon: Check, tone: "bg-success text-success-foreground" },
+  purchase: { icon: ArrowUp, tone: "bg-primary text-primary-foreground" },
+} as const;
+
+/** The day line: the two drawn words, else the numeric Warsaw `DD.MM` (D6). */
+function dayLabel(entry: ActivityEntry): string {
+  if (entry.bucket === "today") return t.start.activityToday;
+  if (entry.bucket === "yesterday") return t.start.activityYesterday;
+  return entry.dayMonth;
+}
+
+/** A shift degrades to the bare label at 0 tasks; a purchase names the upgrade. */
+function entryLabel(entry: ActivityEntry): string {
+  if (entry.kind === "purchase") {
+    return t.start.activityUpgrade.replace("{name}", upgradeCopy(entry.upgradeId ?? "").name);
+  }
+  if (entry.taskCount <= 0) return t.start.activityShift;
+  return t.start.activityShiftTasks.replace("{tasks}", tasksDone(entry.taskCount));
+}
+---
+
+<section class:list={["flex flex-col gap-4", className]}>
+  <h2 class="text-foreground text-lg font-bold lg:text-xl">{t.start.activityHeading}</h2>
+  {entries === null && <p class="text-muted-foreground text-sm">{t.start.activityError}</p>}
+  {entries !== null && entries.length === 0 && <p class="text-muted-foreground text-sm">{t.start.activityEmpty}</p>}
+  {
+    entries !== null && entries.length > 0 && (
+      <ul class="grid gap-3 sm:grid-cols-3">
+        {entries.map((entry) => {
+          const { icon: Icon, tone } = BADGE[entry.kind];
+          return (
+            <li class:list={[childCard("2xl", "flex items-center gap-3 p-4")]}>
+              <span class:list={["inline-flex size-10 shrink-0 items-center justify-center rounded-full", tone]}>
+                <Icon className="size-5" />
+              </span>
+              <div class="min-w-0">
+                <p class="text-foreground text-sm font-bold break-words">{entryLabel(entry)}</p>
+                <p class="text-muted-foreground mt-0.5 text-xs font-semibold">{dayLabel(entry)}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+</section>

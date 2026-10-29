@@ -1,0 +1,35 @@
+---
+import { AuthLockFilledIcon } from "@/components/icons/authIcons";
+import { t } from "@/i18n";
+
+/**
+ * The reassurance strip closing every signed-out surface (auth-v2 mockup `01`,
+ * bottom of the marketing column): a pale panel with a padlock in a tinted tile.
+ *
+ * Was a bare icon-and-text line in both `AuthShell` and `Welcome`. The mockup
+ * gives it a panel, which is what makes it read as a statement the product is
+ * making rather than as fine print.
+ *
+ * The padlock is `AuthLockFilledIcon`, from the extraction's own icon set. It
+ * used to be a lucide `Lock`, with a note here arguing that small chrome beside a
+ * line of text did not need illustration art — an argument the auth-v2 extraction
+ * settles by simply supplying the glyph (`auth-lock-filled.svg`), so the strip is
+ * now in the same family as every other icon on these screens.
+ *
+ * The text is `text-foreground/85`, not `text-muted-foreground`. Two reasons
+ * that agree: the mockup draws this line in dark slate rather than grey, and
+ * muted-on-`bg-primary/5` measures 4.26:1 — under WCAG AA for 14 px text.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={["bg-primary/5 flex items-center gap-3 rounded-2xl px-4 py-3", className]}>
+  <span class="bg-primary/10 text-primary inline-flex size-9 shrink-0 items-center justify-center rounded-xl">
+    <AuthLockFilledIcon className="size-4" />
+  </span>
+  <p class="text-foreground/85 text-xs sm:text-sm">{t.marketing.security}</p>
+</div>

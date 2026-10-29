@@ -96,7 +96,13 @@ SUPABASE_URL=http://127.0.0.1:54321
 SUPABASE_KEY=<anon key from CLI output>
 ```
 
-5. To stop the stack when done:
+5. Apply the migrations and load the development seed (see below for the credentials it creates):
+
+```bash
+npm run db:reset
+```
+
+6. To stop the stack when done:
 
 ```bash
 npx supabase stop
@@ -104,7 +110,19 @@ npx supabase stop
 
 The local Studio UI is available at `http://localhost:54323`.
 
-No database tables or migrations are required — this project uses Supabase Auth's built-in `auth.users` table only.
+### Seeded local account
+
+`supabase/seed.sql` provisions a ready-to-use account so you never have to sign up by hand after a reset. It is loaded automatically by `npm run db:reset` (and by the first `npx supabase start` on a fresh Docker volume), and can be re-applied on its own with `npm run db:seed` — it deletes and recreates its own rows, so re-running is safe.
+
+| What       | Value                  |
+| ---------- | ---------------------- |
+| E-mail     | `rodzic@mathshop.test` |
+| Password   | `haslo123`             |
+| Parent PIN | `1234`                 |
+
+The account owns two child profiles: **Ola** (age 7, Kawiarnia — a fresh, day-one profile) and **Kuba** (age 9, Galaktyczna baza — mid-progression: 120 zł, business level 3, two upgrades owned, and a week of `shift_log` history so the parent report and activity feed render with real data).
+
+**Local only.** The seed writes a known password straight into `auth.users`; never run it against a hosted project.
 
 ### Using a cloud Supabase project instead
 

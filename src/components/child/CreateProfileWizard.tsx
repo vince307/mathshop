@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CircleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, User } from "lucide-react";
+import { AuthCalendarIcon } from "@/components/icons/authIcons";
+import { FEATURE_ICONS } from "@/data/marketing-art";
 import { AVATARS } from "@/data/avatars";
 import { WORLDS } from "@/data/worlds";
 import { deriveStartingLevel } from "@/data/leveling";
@@ -21,6 +23,7 @@ import { t } from "@/i18n";
  */
 
 const AGES = [6, 7, 8, 9];
+const STEP_LABELS = [t.profileWizard.steps.identity, t.profileWizard.steps.profile, t.profileWizard.steps.confirm];
 const MAX_NAME = 30;
 const TOTAL_STEPS = 3;
 
@@ -98,7 +101,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
       method="POST"
       action="/api/profiles/create"
       onSubmit={handleSubmit}
-      className={childCard("2xl", "text-card-foreground p-6 sm:p-8")}
+      className={childCard("3xl", "text-card-foreground p-6 shadow-md sm:p-8")}
     >
       {/* State carried into the POST regardless of which step is visible. */}
       <input type="hidden" name="name" value={name.trim()} />
@@ -106,15 +109,44 @@ export default function CreateProfileWizard({ serverError }: Props) {
       <input type="hidden" name="avatar" value={avatar} />
       <input type="hidden" name="theme" value={theme} />
 
-      <p className="text-primary text-sm font-semibold">{stepProgress}</p>
-      <h1 className="text-foreground mt-1 text-2xl font-bold">{t.profileWizard.title}</h1>
-      <p className="text-muted-foreground mt-1 text-sm">{t.profileWizard.subtitle}</p>
+      {/* Numbered stepper (mockup `05`): the current step is named, not just filled. */}
+      <ol className="flex items-center gap-2 sm:gap-3">
+        {STEP_LABELS.map((label, i) => {
+          const n = i + 1;
+          return (
+            <li key={label} className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+              {i > 0 && <span className={cn("h-0.5 flex-1 rounded-full", n <= step ? "bg-primary" : "bg-muted")} />}
+              <span
+                aria-current={n === step ? "step" : undefined}
+                className={cn(
+                  "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                  n < step
+                    ? "bg-success text-success-foreground"
+                    : n === step
+                      ? "bg-primary text-primary-foreground"
+                      : // `text-foreground`, not `text-muted-foreground`: on `bg-muted` the
+                        // muted pair measures 4.34:1, under AA for a 14 px numeral.
+                        "bg-muted text-foreground",
+                )}
+              >
+                {n < step ? <Check className="size-4" /> : n}
+              </span>
+              <span
+                className={cn(
+                  "hidden truncate text-sm font-semibold sm:block",
+                  n === step ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
 
-      <div className="mt-4 flex gap-2">
-        {[1, 2, 3].map((n) => (
-          <span key={n} className={cn("h-1.5 flex-1 rounded-full", n <= step ? "bg-primary" : "bg-muted")} />
-        ))}
-      </div>
+      <p className="text-primary mt-6 text-sm font-semibold sm:hidden">{stepProgress}</p>
+      <h1 className="text-foreground mt-1 text-2xl font-extrabold sm:mt-6 sm:text-3xl">{t.profileWizard.title}</h1>
+      <p className="text-muted-foreground mt-1 text-sm">{t.profileWizard.subtitle}</p>
 
       {serverError && (
         <p className="border-destructive/30 text-destructive mt-4 flex items-center gap-2 rounded-lg border bg-red-50 px-3 py-2 text-sm">
@@ -130,18 +162,27 @@ export default function CreateProfileWizard({ serverError }: Props) {
               <Label htmlFor="child-name" className="text-foreground mb-1">
                 {t.profileWizard.nameLabel}
               </Label>
-              <Input
-                id="child-name"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  clearError("name");
-                }}
-                placeholder={t.profileWizard.namePlaceholder}
-                maxLength={MAX_NAME}
-                aria-invalid={Boolean(errors.name)}
-                className="h-12 text-base"
-              />
+              {/* Gutter glyph, matching `FormField`'s treatment on the auth
+                  screens. `lucide`'s `User` on purpose and only here: the
+                  extraction has no plain person outline — its `auth-user-plus`
+                  carries a plus this field must not imply. */}
+              <div className="relative">
+                <span className="text-primary pointer-events-none absolute top-1/2 left-4 z-10 size-5 -translate-y-1/2">
+                  <User className="size-5" />
+                </span>
+                <Input
+                  id="child-name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    clearError("name");
+                  }}
+                  placeholder={t.profileWizard.namePlaceholder}
+                  maxLength={MAX_NAME}
+                  aria-invalid={Boolean(errors.name)}
+                  className="h-14 rounded-xl pl-12 text-base"
+                />
+              </div>
               {errors.name && (
                 <p className="text-destructive mt-1 flex items-center gap-1 text-xs">
                   <CircleAlert className="size-3" />
@@ -151,7 +192,10 @@ export default function CreateProfileWizard({ serverError }: Props) {
             </div>
 
             <div>
-              <Label className="text-foreground mb-2 block">{t.profileWizard.ageLabel}</Label>
+              <Label className="text-foreground mb-2 flex items-center gap-2">
+                <AuthCalendarIcon className="text-primary size-5" />
+                {t.profileWizard.ageLabel}
+              </Label>
               <div className="flex flex-wrap gap-3">
                 {AGES.map((a) => (
                   <button
@@ -184,7 +228,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
         )}
 
         {step === 2 && (
-          <>
+          <div className="grid gap-6 lg:grid-cols-2">
             <div>
               <Label className="text-foreground mb-3 block">{t.profileWizard.avatarLabel}</Label>
               <div className="flex flex-wrap gap-3">
@@ -213,7 +257,13 @@ export default function CreateProfileWizard({ serverError }: Props) {
 
             <div>
               <Label className="text-foreground mb-3 block">{t.profileWizard.interestLabel}</Label>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {/* `sm:grid-cols-3` (not 4) is chosen by the NO-ORPHAN-ROW rule at six
+                  worlds: 4 columns leaves a ragged 4+2 in the `sm`…`lg` band, 3
+                  gives a clean 3×2 there and 2×3 above and below. The `05`
+                  auth-v2 mockup would settle it and could not be consulted —
+                  `assets/` is gitignored and absent from this worktree — so this
+                  is an extrapolation and says so. */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2">
                 {WORLDS.map((w) => (
                   <SelectTile
                     key={w.slug}
@@ -236,7 +286,7 @@ export default function CreateProfileWizard({ serverError }: Props) {
                 </p>
               )}
             </div>
-          </>
+          </div>
         )}
 
         {step === 3 && (
@@ -252,12 +302,31 @@ export default function CreateProfileWizard({ serverError }: Props) {
                 </p>
               </div>
             </div>
-            <div className="bg-accent/15 border-accent/40 flex flex-wrap items-center gap-2 rounded-xl border p-3 text-sm">
-              <span className="text-foreground font-semibold">{t.profileWizard.startingLevelLabel}:</span>
-              <span className="text-primary font-bold">{levelName}</span>
-              <span className="text-muted-foreground">— {t.profileWizard.levelDescription}</span>
+            {/* Mockup `05`'s starting-level tile: an illustrated glyph beside the
+                level name and what it covers, on a pale blue panel. */}
+            <div className="bg-primary/5 flex items-center gap-4 rounded-2xl p-4">
+              <span className="bg-card flex size-14 shrink-0 items-center justify-center rounded-2xl shadow-sm">
+                <img src={FEATURE_ICONS[2]} alt="" aria-hidden="true" width="64" height="64" className="size-8" />
+              </span>
+              <div>
+                <p className="text-muted-foreground text-xs font-semibold">{t.profileWizard.startingLevelLabel}</p>
+                <p className="text-primary text-lg font-bold">{levelName}</p>
+                <p className="text-muted-foreground text-sm">{t.profileWizard.levelDescription}</p>
+              </div>
             </div>
-            <p className="text-muted-foreground text-xs">{t.profileWizard.note}</p>
+
+            {/* The mockup's shield notice, in place of a bare grey line. */}
+            <div className="bg-primary/5 flex items-start gap-3 rounded-2xl p-4">
+              <img
+                src={FEATURE_ICONS[0]}
+                alt=""
+                aria-hidden="true"
+                width="64"
+                height="64"
+                className="mt-0.5 size-6 shrink-0"
+              />
+              <p className="text-foreground/85 text-sm">{t.profileWizard.note}</p>
+            </div>
           </>
         )}
       </div>

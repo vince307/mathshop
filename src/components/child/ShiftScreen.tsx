@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Task } from "@/types";
 import type { World } from "@/data/worlds";
 import CountingTask from "@/components/child/CountingTask";
@@ -7,54 +7,99 @@ import ShiftResults from "@/components/child/ShiftResults";
 import { ChildButton } from "@/components/child/ChildButton";
 import OfflineOverlay from "@/components/child/OfflineOverlay";
 import { useConnectivity } from "@/components/hooks/useConnectivity";
-import { earningsForShift, generateShift, starsForShift } from "@/data/shift";
+import { starsForShift, type ShiftPlan } from "@/data/shift";
+import type { ShopIconKey } from "@/components/child/ShopGlyph";
+import { nextPurchase } from "@/data/decorations";
+import { useShiftEngine } from "@/components/hooks/useShiftEngine";
 import { isNetworkFailure, SHIFT_SAVE_TIMEOUT_MS } from "@/lib/connectivity";
 import { cn } from "@/lib/utils";
-import { nextUpgrade, shiftBonusTasks } from "@/data/upgrades";
+import { nextUpgrade } from "@/data/upgrades";
 import { competencyForTaskType, readSkillState } from "@/data/skills";
-import type { TaskOutcome } from "@/components/hooks/useCoinTask";
+import { buildAttempt } from "@/data/attempts";
 import { t } from "@/i18n";
 
 interface ShiftScreenProps {
-  startingLevel: number;
+  /**
+   * The shift's plan — its fixed length, the seed tasks 2…N are drawn from, and
+   * the difficulty it opened at. Tasks after the first are generated HERE, on
+   * the client, from that seed (`useShiftEngine`), because a task drawn after
+   * the previous one is scored is what P5's adaptation needs.
+   *
+   * The rule that replaced "never generate in the island": **task 1 must stay
+   * server-rendered, everything after it must not be**. Task 1's markup is in
+   * the SSR payload, so redrawing it at hydration would mismatch the server tree
+   * and flash one task into another; tasks 2…N have no server markup to
+   * contradict, and the shared seed makes them reproducible anyway. Nothing is
+   * persisted mid-shift (FR-016): this is render data, not state.
+   */
+  plan: ShiftPlan;
+  /** Task 1, drawn server-side by `openShift` and rendered verbatim — see `plan`. */
+  firstTask: Task;
   world: World;
   profileId: string;
   /** Pre-shift wallet balance — the shift's earnings add to it (S-06 results nudge). */
   walletBalance: number;
   /** Owned-upgrade ids — feed the results nudge's next-upgrade check (S-06). */
   purchased: string[];
+  /**
+   * Owned decoration ids (E1) — so the results nudge survives an exhausted
+   * catalogue. The world it scopes to is the `world` prop above.
+   */
+  decorations: string[];
 }
 
 type Phase = "playing" | "saving" | "results" | "error";
 
 interface Outcome {
+  /** The wallet delta — the SERVER's `profit`, never a locally recomputed number. */
   earned: number;
+  /** What the shift took in, before the shop's running cost (E1). */
+  revenue: number;
+  /** The shop's running cost for this shift; 0 until something with a cost is owned. */
+  cost: number;
   stars: 0 | 1 | 2 | 3;
   leveledUp: boolean;
   /** Whether the post-shift wallet can afford an upgrade — drives the results nudge. */
   canUpgrade: boolean;
   /** The cheapest eligible unowned upgrade + post-shift wallet — the results
       screen's progress card (S-13, presentational only). Null when none. */
-  nextInfo: { id: string; art: string; cost: number; wallet: number } | null;
+  nextInfo: {
+    kind: "upgrade" | "decoration";
+    id: string;
+    art?: string;
+    icon?: ShopIconKey;
+    cost: number;
+    wallet: number;
+  } | null;
 }
 
 /**
- * Shift orchestrator (S-04). Runs a generated sequence of tasks, auto-advancing
+ * Shift orchestrator (S-04). Plays the shift its plan describes, auto-advancing
  * on each task's success beat (a fresh per-task `key` resets the hook state), and
  * accumulates per-task accuracy. When the shift ends it POSTs the result ONCE
  * (wallet earnings recomputed server-side from accuracy) and shows the celebration, or a
  * gentle fallback on persist failure. Mid-shift state is never persisted (FR-016);
  * the only server write is the single shift-end POST.
+ *
+ * The sequence itself is `useShiftEngine`'s: task 1 arrives server-rendered, the
+ * rest are drawn here from the plan's seed. Everything that needs to know how
+ * long the shift is — the progress counter, the segmented bar, shift-end
+ * detection — reads the plan's fixed `total`, never the number of tasks drawn so
+ * far, and the competency/telemetry join stays positional against the engine's
+ * retained `tasks`.
  */
-export default function ShiftScreen({ startingLevel, world, profileId, walletBalance, purchased }: ShiftScreenProps) {
-  // Owned upgrades lengthen the shift (capacity effect, S-06): a busier shop means
-  // more practice + more earning via the unchanged `earningsForShift`.
-  const tasks = useMemo<Task[]>(
-    () => generateShift(startingLevel, shiftBonusTasks(purchased)),
-    [startingLevel, purchased],
-  );
-  const [index, setIndex] = useState(0);
-  const [results, setResults] = useState<TaskOutcome[]>([]);
+export default function ShiftScreen({
+  plan,
+  firstTask,
+  world,
+  profileId,
+  walletBalance,
+  purchased,
+  decorations,
+}: ShiftScreenProps) {
+  // The engine owns the cursor and draws tasks 2…N on demand; `total` is the
+  // plan's fixed length, which is what every site below counts against.
+  const { index, total, task: currentTask, tasks, results, advance } = useShiftEngine(plan, firstTask);
   const [phase, setPhase] = useState<Phase>("playing");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const savedRef = useRef(false);
@@ -62,21 +107,15 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
   // it — discard happens only when the child taps through to /app/start.
   const { offline, markOffline } = useConnectivity();
 
-  const advance = useCallback((o: TaskOutcome) => {
-    setResults((prev) => [...prev, o]);
-    setIndex((i) => i + 1);
-  }, []);
-
   // When the last task completes, persist the shift exactly once (savedRef guards
   // against React strict-mode double-invoke / re-renders).
   useEffect(() => {
-    if (results.length < tasks.length || savedRef.current) return;
+    if (results.length < total || savedRef.current) return;
     savedRef.current = true;
     setPhase("saving");
 
     const taskCount = results.length;
     const cleanCount = results.filter((r) => r.firstTry).length;
-    const earned = earningsForShift(taskCount, cleanCount);
     const stars = starsForShift(taskCount, cleanCount);
 
     // Per-competency skill delta (S-07): pair each task's type with its outcome.
@@ -90,11 +129,18 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
       bucket.misses += r.misses;
     });
 
+    // Per-task telemetry (P1): the SAME positional join as the delta above, kept
+    // as a complete per-task record rather than an aggregate. Rides the single
+    // shift-end POST — no per-task write is added, so S-12's offline halt and
+    // FR-016's no-mid-shift-persistence both stand unchanged.
+    const attempts = results.map((r, i) => buildAttempt(tasks[i], r, i));
+
     const body = new FormData();
     body.set("profileId", profileId);
     body.set("taskCount", String(taskCount));
     body.set("cleanCount", String(cleanCount));
     body.set("skills", JSON.stringify({ math: delta.math, money: delta.money }));
+    body.set("attempts", JSON.stringify(attempts));
 
     // Time-bounded (S-12): a hung network fails fast into the gentle error path
     // instead of stranding the child on "saving" forever.
@@ -104,13 +150,49 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
           setPhase("error");
           return;
         }
-        const data = (await res.json()) as { leveledUp: boolean; businessLevel: number };
+        // The payout is the SERVER's, not a local recomputation (E1). The island
+        // used to call `earningsForShift` here; under the profit rule that number
+        // is revenue, so displaying it would have shown a figure the wallet never
+        // received — and nothing would have failed. There is no optimistic
+        // pre-response render to preserve: the old local value was bound inside
+        // this very `useEffect` and read only after the response resolved.
+        const data = (await res.json()) as {
+          leveledUp: boolean;
+          businessLevel: number;
+          revenue: number;
+          cost: number;
+          profit: number;
+        };
+        const earned = data.profit;
         // Post-shift affordability: does the new wallet cover the cheapest
         // level-eligible unowned upgrade? Drives the (factual) results nudge.
-        const next = nextUpgrade({ businessLevel: data.businessLevel, purchased });
+        // `nextPurchase`, not `nextUpgrade` (E1 / D-11): once the catalogue is
+        // exhausted the nudge names a decoration of the current world instead of
+        // going quiet, which is the whole point of the renewing sink.
+        const next = nextPurchase(
+          { businessLevel: data.businessLevel, purchased, world: world.slug, decorations },
+          nextUpgrade,
+        );
         const canUpgrade = next !== null && walletBalance + earned >= next.cost;
-        const nextInfo = next ? { id: next.id, art: next.art, cost: next.cost, wallet: walletBalance + earned } : null;
-        setOutcome({ earned, stars, leveledUp: data.leveledUp, canUpgrade, nextInfo });
+        const nextInfo = next
+          ? {
+              kind: next.kind,
+              id: next.id,
+              art: next.art,
+              icon: next.icon,
+              cost: next.cost,
+              wallet: walletBalance + earned,
+            }
+          : null;
+        setOutcome({
+          earned,
+          revenue: data.revenue,
+          cost: data.cost,
+          stars,
+          leveledUp: data.leveledUp,
+          canUpgrade,
+          nextInfo,
+        });
         setPhase("results");
       })
       .catch((err: unknown) => {
@@ -122,12 +204,14 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
           setPhase("error");
         }
       });
-  }, [results, tasks, profileId, walletBalance, purchased, markOffline]);
+  }, [results, tasks, total, profileId, walletBalance, purchased, decorations, world, markOffline]);
 
   if (phase === "results" && outcome) {
     return (
       <ShiftResults
         earned={outcome.earned}
+        revenue={outcome.revenue}
+        cost={outcome.cost}
         stars={outcome.stars}
         leveledUp={outcome.leveledUp}
         canUpgrade={outcome.canUpgrade}
@@ -138,7 +222,7 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
 
   if (phase === "error") {
     return (
-      <div className="flex w-full max-w-md flex-col items-center gap-6 text-center" role="status">
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 text-center" role="status">
         <p className="text-foreground text-xl font-bold">{t.results.saveError}</p>
         <ChildButton
           variant="primary"
@@ -152,7 +236,7 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
     );
   }
 
-  const task = phase === "playing" ? tasks[index] : undefined;
+  const task = phase === "playing" ? currentTask : undefined;
 
   // "saving", or the transient render after the last advance (index out of range,
   // before the effect flips the phase).
@@ -167,32 +251,59 @@ export default function ShiftScreen({ startingLevel, world, profileId, walletBal
     );
   }
 
+  // What the current task exercises — the mockup's side panel, derived (never
+  // invented) from the task type the child is actually playing.
+  const competency = competencyForTaskType(task.type);
+
   return (
-    <div className="flex w-full max-w-md flex-col items-center gap-4">
+    <div className="flex w-full flex-col gap-6">
       {offline && <OfflineOverlay />}
+
       {/* Progress strip (S-13): segmented fill driven by index/total — the
-          mockup's mission progress in the wizard's existing step-bar idiom. */}
-      <div className="w-full">
-        <p className="text-muted-foreground text-center text-sm font-semibold">
-          {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(tasks.length))}
-        </p>
-        <div className="mt-2 flex items-center gap-1.5" aria-hidden="true">
-          {tasks.map((_, i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-2 flex-1 rounded-full transition-colors",
-                i < index ? "bg-success" : i === index ? "bg-primary" : "bg-muted",
-              )}
-            />
-          ))}
+          mockup's mission progress bar, in its own card (ui-v2 `03`). Counts
+          against the PLAN's length, not the tasks generated so far: with lazy
+          generation those are the same only at the end of the shift, and a bar
+          that grew a segment per task would tell the child "1 z 1". */}
+      <div className="bg-card border-border rounded-2xl border px-5 py-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <p className="text-muted-foreground shrink-0 text-sm font-bold">
+            {t.results.progress.replace("{current}", String(index + 1)).replace("{total}", String(total))}
+          </p>
+          <div className="flex flex-1 items-center gap-1.5" aria-hidden="true">
+            {Array.from({ length: total }, (_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "h-2 flex-1 rounded-full transition-colors",
+                  i < index ? "bg-success" : i === index ? "bg-primary" : "bg-muted",
+                )}
+              />
+            ))}
+          </div>
         </div>
       </div>
-      {task.type === "counting" ? (
-        <CountingTask key={index} task={task} world={world} onComplete={advance} />
-      ) : (
-        <ChangeMakingTask key={index} task={task} world={world} onComplete={advance} />
-      )}
+
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="flex justify-center lg:col-span-2">
+          {task.type === "counting" ? (
+            <CountingTask key={index} task={task} world={world} onComplete={advance} />
+          ) : (
+            <ChangeMakingTask key={index} task={task} world={world} onComplete={advance} />
+          )}
+        </div>
+
+        {/* Side panel: what this task teaches + a calm, factual encouragement. */}
+        <aside className="flex flex-col gap-4">
+          <div className="bg-card border-border rounded-2xl border p-5 shadow-sm">
+            <p className="text-muted-foreground text-sm font-bold">{t.task.learningHeading}</p>
+            <p className="text-primary mt-1 text-lg font-extrabold">{t.skills[competency]}</p>
+            <p className="text-muted-foreground mt-2 text-sm leading-snug">{t.skills.descriptions[competency]}</p>
+          </div>
+          <div className="bg-success/10 rounded-2xl p-5">
+            <p className="text-foreground text-sm font-semibold">{t.task.encouragement}</p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

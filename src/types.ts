@@ -33,7 +33,13 @@ export interface CountingTask {
   targetCount: number;
   /** Layout hint: ≤ 5 scattered; larger counts grouped into rows of 5 to aid subitizing. */
   arrangement: "scatter" | "rows_of_5";
-  difficultyTier: 1 | 2 | 3;
+  /**
+   * The continuous difficulty `d ∈ [0,1]` this task was generated at
+   * (`src/data/adaptive.ts`), replacing the three frozen tiers. **Transient** —
+   * never persisted and never in an API payload, but it IS JSON-serialized into
+   * the `ShiftScreen` island props, so it is part of the hydration payload.
+   */
+  difficulty: number;
 }
 
 /**
@@ -72,7 +78,8 @@ export interface ChangeMakingTask {
   stockArrangement?: "scatter" | "rows_of_5";
   /** Layout hint for the coin tray: ≤ 5 scattered; larger groups into rows of 5. */
   arrangement: "scatter" | "rows_of_5";
-  difficultyTier: 1 | 2 | 3;
+  /** The continuous difficulty `d ∈ [0,1]` this task was generated at — see `CountingTask.difficulty`. */
+  difficulty: number;
 }
 
 /**
@@ -88,9 +95,33 @@ export type Task = CountingTask | ChangeMakingTask;
  * effects, and progression are all derived from the catalog (`src/data/upgrades.ts`)
  * by id — the catalog is the single source of truth. Pre-S-06 rows default to
  * `{}` (no `purchased`); `readPurchased` normalizes a missing key to `[]`.
+ *
+ * `purchasedMeta` (F5) is **write-only in v1** — written by `buyUpgrade`, read by
+ * nothing, ignorable by every reader. It exists to preserve optionality: from the
+ * moment `/app/worlds` ships, `theme` is MUTABLE, so a purchase recorded without a
+ * world can never afterwards be attributed to one. Purchases stay global across
+ * worlds (the shop and its upgrades come with the child — that is the promise
+ * `/app/worlds` makes); if per-world purchases are ever wanted, this is the
+ * attribution data that change will need. Optional, so every legacy `{}` and
+ * `{ purchased: [] }` row stays valid and `readPurchased` is untouched.
  */
 export interface ShopState {
   purchased: string[];
+  /** Keyed by upgrade id (unique — `canBuy` blocks re-buying). Write-only in v1. */
+  purchasedMeta?: Record<string, { world: string; at: string }>;
+  /**
+   * Ids of owned decorations (E1 / D-11) — **never** catalogue ids.
+   *
+   * The separation is load-bearing, not tidiness: a decoration id in `purchased`
+   * would reach `shopRunningCost` and `canBuy` and recreate the trap the no-trap
+   * invariant exists to forbid, by the back door. Decorations have no economic
+   * effect by construction (`src/data/decorations.ts` has no field for one).
+   *
+   * Optional, on the `purchasedMeta?` precedent, so every legacy `{}` and
+   * `{ purchased: [] }` row stays valid and **no migration is needed**.
+   * `readDecorations` normalizes it exactly as `readPurchased` does.
+   */
+  decorations?: string[];
 }
 
 /**
@@ -103,6 +134,16 @@ export interface ShopState {
  * re-exports it alongside the pure progress logic (mirrors `tasks.ts` → `Task`).
  */
 export type Competency = "math" | "money" | "decisions";
+
+/**
+ * The competencies a shift TASK can exercise. `decisions` is absent because it
+ * accrues at purchase, not from a task — which makes this the key set for
+ * anything derived from task play, notably the per-competency difficulty state
+ * (`src/data/adaptive.ts`). Narrowing `competencyForTaskType`'s return type to
+ * this is what makes "it never returns `decisions`" a fact the compiler checks
+ * rather than a comment.
+ */
+export type PlayCompetency = Extract<Competency, "math" | "money">;
 
 /**
  * Per-competency skill counters. `firstTryCorrect` (tasks nailed with zero misses)
@@ -139,6 +180,19 @@ export interface WeeklyReportUpgrade {
 }
 
 /**
+ * One day of the report week, as the parent-report activity chart consumes it.
+ * `date` is the **Europe/Warsaw civil date** (`YYYY-MM-DD`), `weekday` is
+ * `0` = Monday … `6` = Sunday, and `completed` is that day's tasks summed across
+ * all three competencies — so the seven days are exactly a decomposition of the
+ * "Ukończone zadania" tile. Plain JSON so it survives the SSR→island boundary.
+ */
+export interface WeeklyReportDay {
+  date: string;
+  weekday: number;
+  completed: number;
+}
+
+/**
  * A single child's weekly practice summary (S-07 / FR-016): per-competency practice
  * aggregated from `shift_log` within the current week, plus the upgrades unlocked
  * that week and the skills each exercised. Read-only, non-comparative (guardrail).
@@ -147,4 +201,23 @@ export interface WeeklyReport {
   profileId: string;
   practice: SkillState;
   upgrades: WeeklyReportUpgrade[];
+  /**
+   * The week's daily activity, **always exactly seven entries, Monday-first and
+   * zero-filled** — consumers index it positionally and never null-check.
+   */
+  daily: WeeklyReportDay[];
+  /**
+   * Sum of the week's recorded shift payouts, in zl (F4). A **lower bound**, not a
+   * balance: `appendShiftLog` is best-effort, so a paid shift can lose its log row.
+   * Never label it a total/`suma`/`bilans` and never compare it to `wallet_balance`.
+   */
+  earned: number;
+  /**
+   * False only while a **shift** row in the window has no recorded payout — i.e. a
+   * row written before the `earned` column existed. Consumers suppress the figure
+   * entirely rather than showing an undercount. A purchase row is `null` forever by
+   * design and does NOT clear this flag, so an empty or purchases-only week is
+   * `true` with `earned: 0` — zero is a fact, only unknown is a reason to hide.
+   */
+  earningsKnown: boolean;
 }

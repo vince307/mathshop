@@ -1,89 +1,96 @@
 import { describe, expect, it } from "vitest";
 import {
-  CHANGE_CAP,
-  PAID_MAX,
   STOCK_CHANGE_MAX,
   STOCK_PRICE_MAX,
   generateChangeMakingTask,
   generateStockAndChangeTask,
   isChangeCorrect,
 } from "@/data/change-making-tasks";
+import { TIER_ANCHOR, changeCapFor, paidMaxFor } from "@/data/adaptive";
 import type { ChangeMakingTask } from "@/types";
 
 /**
  * Pure change-making domain logic (S-03). No Supabase / DOM. Locks the
  * generation invariants (change cap, change = paid − price, band ceiling,
  * tray > change) and correctness. The picker is injected for determinism.
+ *
+ * The generator now takes the continuous difficulty `d`, so these exercise the
+ * three tier anchors (`d = 0 / 0.5 / 1`), calibrated to reproduce the old
+ * tier-1/2/3 caps exactly. The scale itself lives in `tests/adaptive.test.ts`.
  */
 
-function assertInvariants(task: ChangeMakingTask, tier: 1 | 2 | 3) {
+const D1 = TIER_ANCHOR[1];
+const D2 = TIER_ANCHOR[2];
+const D3 = TIER_ANCHOR[3];
+
+function assertInvariants(task: ChangeMakingTask, d: number) {
   expect(task.type).toBe("change_making");
   expect(task.scenario).toBe("give_change");
   expect(task.objectType).toBe("coin");
-  expect(task.difficultyTier).toBe(tier);
+  expect(task.difficulty).toBe(d);
   expect(task.change).toBeGreaterThanOrEqual(1);
-  expect(task.change).toBeLessThanOrEqual(CHANGE_CAP[tier]);
+  expect(task.change).toBeLessThanOrEqual(changeCapFor(d));
   expect(task.price).toBeGreaterThanOrEqual(1);
   expect(task.paid).toBe(task.price + task.change);
-  expect(task.paid).toBeLessThanOrEqual(PAID_MAX[tier]);
+  expect(task.paid).toBeLessThanOrEqual(paidMaxFor(d));
   expect(task.availableCount).toBeGreaterThan(task.change);
   expect(task.availableCount).toBeLessThanOrEqual(20);
   expect(task.arrangement).toBe(task.availableCount <= 5 ? "scatter" : "rows_of_5");
 }
 
 describe("generateChangeMakingTask", () => {
-  it("holds invariants across a sweep of injected picks (tier 1)", () => {
+  it("holds invariants across a sweep of injected picks (d = 0)", () => {
     for (let v = 1; v <= 12; v++) {
       assertInvariants(
-        generateChangeMakingTask(1, () => v),
-        1,
+        generateChangeMakingTask(D1, () => v),
+        D1,
       );
     }
   });
 
-  it("holds invariants across a sweep of injected picks (tier 2)", () => {
+  it("holds invariants across a sweep of injected picks (d = 0.5)", () => {
     for (let v = 1; v <= 22; v++) {
       assertInvariants(
-        generateChangeMakingTask(2, () => v),
-        2,
+        generateChangeMakingTask(D2, () => v),
+        D2,
       );
     }
   });
 
-  it("holds invariants across a sweep of injected picks (tier 3, S-08)", () => {
-    // Scenario gate forced off: this sweep pins the single-stage tier-3 band.
+  it("holds invariants across a sweep of injected picks (d = 1, S-08)", () => {
+    // Scenario gate forced off: this sweep pins the single-stage top band.
     for (let v = 1; v <= 32; v++) {
       assertInvariants(
         generateChangeMakingTask(
-          3,
+          D3,
           () => v,
           () => false,
         ),
-        3,
+        D3,
       );
     }
   });
 
-  it("a max picker hits the tier ceiling without overshooting the band", () => {
-    const task = generateChangeMakingTask(2, (_min, max) => max);
-    expect(task.change).toBe(CHANGE_CAP[2]);
-    expect(task.paid).toBe(PAID_MAX[2]);
-    expect(task.price).toBe(PAID_MAX[2] - CHANGE_CAP[2]);
+  it("a max picker hits the band ceiling without overshooting it", () => {
+    const task = generateChangeMakingTask(D2, (_min, max) => max);
+    expect(task.change).toBe(changeCapFor(D2));
+    expect(task.paid).toBe(paidMaxFor(D2));
+    expect(task.price).toBe(paidMaxFor(D2) - changeCapFor(D2));
   });
 
-  it("a max picker hits the tier-3 ceiling (S-08)", () => {
+  it("a max picker hits the top band ceiling (S-08)", () => {
     const task = generateChangeMakingTask(
-      3,
+      D3,
       (_min, max) => max,
       () => false,
     );
-    expect(task.change).toBe(CHANGE_CAP[3]);
-    expect(task.paid).toBe(PAID_MAX[3]);
-    expect(task.price).toBe(PAID_MAX[3] - CHANGE_CAP[3]);
+    expect(task.change).toBe(changeCapFor(D3));
+    expect(task.paid).toBe(paidMaxFor(D3));
+    expect(task.price).toBe(paidMaxFor(D3) - changeCapFor(D3));
   });
 
   it("a min picker floors to the smallest valid task", () => {
-    const task = generateChangeMakingTask(1, (min) => min);
+    const task = generateChangeMakingTask(D1, (min) => min);
     expect(task.change).toBe(1);
     expect(task.price).toBe(1);
     expect(task.paid).toBe(2);
@@ -92,8 +99,8 @@ describe("generateChangeMakingTask", () => {
 
   it("the default RNG stays within the band over many draws", () => {
     for (let i = 0; i < 50; i++) {
-      assertInvariants(generateChangeMakingTask(1), 1);
-      assertInvariants(generateChangeMakingTask(2), 2);
+      assertInvariants(generateChangeMakingTask(D1), D1);
+      assertInvariants(generateChangeMakingTask(D2), D2);
     }
   });
 });
@@ -109,7 +116,7 @@ function assertStockAndChangeInvariants(task: ChangeMakingTask) {
   expect(task.type).toBe("change_making");
   expect(task.scenario).toBe("stock_and_change");
   expect(task.objectType).toBe("coin");
-  expect(task.difficultyTier).toBe(3);
+  expect(task.difficulty).toBe(D3);
   // Stage 1: the tray offers more than the price, so the child must stop at it.
   expect(task.price).toBeGreaterThanOrEqual(1);
   expect(task.price).toBeLessThanOrEqual(STOCK_PRICE_MAX);
@@ -128,12 +135,12 @@ function assertStockAndChangeInvariants(task: ChangeMakingTask) {
 describe("generateStockAndChangeTask", () => {
   it("holds two-stage invariants across a sweep of injected picks", () => {
     for (let v = 1; v <= 18; v++) {
-      assertStockAndChangeInvariants(generateStockAndChangeTask(3, () => v));
+      assertStockAndChangeInvariants(generateStockAndChangeTask(D3, () => v));
     }
   });
 
-  it("a max picker hits the modest per-stage ceilings, not the tier-3 maxima", () => {
-    const task = generateStockAndChangeTask(3, (_min, max) => max);
+  it("a max picker hits the modest per-stage ceilings, not the top single-stage maxima", () => {
+    const task = generateStockAndChangeTask(D3, (_min, max) => max);
     expect(task.price).toBe(STOCK_PRICE_MAX);
     expect(task.change).toBe(STOCK_CHANGE_MAX);
     expect(task.paid).toBe(STOCK_PRICE_MAX + STOCK_CHANGE_MAX);
@@ -143,7 +150,7 @@ describe("generateStockAndChangeTask", () => {
   });
 
   it("a min picker floors to the smallest valid two-stage task", () => {
-    const task = generateStockAndChangeTask(3, (min) => min);
+    const task = generateStockAndChangeTask(D3, (min) => min);
     expect(task.price).toBe(1);
     expect(task.change).toBe(1);
     expect(task.paid).toBe(2);
@@ -153,36 +160,35 @@ describe("generateStockAndChangeTask", () => {
 
   it("the default RNG stays within the two-stage band over many draws", () => {
     for (let i = 0; i < 50; i++) {
-      assertStockAndChangeInvariants(generateStockAndChangeTask(3));
+      assertStockAndChangeInvariants(generateStockAndChangeTask(D3));
     }
   });
 });
 
-describe("generateChangeMakingTask scenario gate (S-08, Phase 3)", () => {
+describe("generateChangeMakingTask scenario gate (S-08)", () => {
   const twoStageOn = () => true;
   const twoStageOff = () => false;
 
-  it("tier 3 with the scenario picker forced on emits the two-stage scenario", () => {
-    const task = generateChangeMakingTask(3, (min) => min, twoStageOn);
+  it("d = 1 with the scenario picker forced on emits the two-stage scenario", () => {
+    const task = generateChangeMakingTask(D3, (min) => min, twoStageOn);
     expect(task.scenario).toBe("stock_and_change");
     assertStockAndChangeInvariants(task);
   });
 
-  it("tier 3 with the scenario picker forced off emits single-stage give_change", () => {
+  it("d = 1 with the scenario picker forced off emits single-stage give_change", () => {
     assertInvariants(
-      generateChangeMakingTask(3, (min) => min, twoStageOff),
-      3,
+      generateChangeMakingTask(D3, (min) => min, twoStageOff),
+      D3,
     );
   });
 
-  it("tiers 1–2 never emit the two-stage scenario, even with the picker forced on", () => {
-    for (const level of [1, 2] as const) {
-      for (let v = 1; v <= 12; v++) {
-        const task = generateChangeMakingTask(level, () => v, twoStageOn);
-        expect(task.scenario).toBe("give_change");
-      }
-    }
-  });
+  // The "young children never meet the two-stage scenario" guarantee used to rest
+  // on the tier veto (`difficultyTier === 3`) that this file asserted here. That
+  // premise is gone: admission is now a threshold on `d`, so the guarantee rests on
+  // `ceilingForLevel(2) < TWO_STAGE_THRESHOLD` instead — proved over the whole
+  // reachable range of `d`, and through the shift mixer, in `tests/adaptive.test.ts`
+  // ("scenario admission — the two-stage guarantee"). Do not re-add a level-shaped
+  // test here; there is no level to veto on any more.
 });
 
 describe("isChangeCorrect", () => {
@@ -195,7 +201,7 @@ describe("isChangeCorrect", () => {
     change: 2,
     availableCount: 4,
     arrangement: "scatter",
-    difficultyTier: 1,
+    difficulty: D1,
   };
 
   it("is true only when the coins given equal the change owed", () => {

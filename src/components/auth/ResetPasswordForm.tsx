@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, Send } from "lucide-react";
+import { AuthEmailIcon, AuthPaperPlaneIcon } from "@/components/icons/authIcons";
 import { FormField } from "@/components/auth/FormField";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { ServerError } from "@/components/auth/ServerError";
@@ -50,12 +50,12 @@ export default function ResetPasswordForm({ serverError }: Props) {
         }}
         placeholder={t.auth.fields.emailPlaceholder}
         error={error}
-        icon={<Mail className="size-4" />}
+        icon={<AuthEmailIcon className="size-5" />}
       />
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText={t.auth.reset.pending} icon={<Send className="size-4" />}>
+      <SubmitButton pendingText={t.auth.reset.pending} icon={<AuthPaperPlaneIcon className="size-5" />}>
         {t.auth.reset.submit}
       </SubmitButton>
     </form>

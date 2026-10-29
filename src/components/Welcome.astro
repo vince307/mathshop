@@ -1,51 +1,103 @@
 ---
-import Topbar from "@/components/Topbar.astro";
-import { Lock, Layers, Code } from "lucide-react";
+import { LogIn, UserPlus, ArrowRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { WORLDS } from "@/data/worlds";
 import { t } from "@/i18n";
+import BrandRow from "@/components/marketing/BrandRow.astro";
+import FeatureList from "@/components/marketing/FeatureList.astro";
+import SecurityNote from "@/components/marketing/SecurityNote.astro";
 
-const featureIcons = [Lock, Layers, Code];
+/**
+ * Signed-out landing (`/`). No mockup exists for this route, so it is built from
+ * the product's own auth-mockup vocabulary — brand row, hero, world cards, the
+ * three feature blocks and the security note — rather than the starter's
+ * developer-facing scaffold copy.
+ *
+ * Those three are now the same components `AuthShell.astro` renders, not a second
+ * copy of their markup: text was already shared through `t.marketing`, but the
+ * markup was duplicated, so the two surfaces could drift apart visually with
+ * nothing noticing. The **world cards are deliberately not shared** — this page
+ * runs them `grid-cols-2` at every width (six absorb as three rows, no breakpoint
+ * needed) while the auth panel runs `hidden lg:grid grid-cols-3`; the counts
+ * answer to different layouts, not to a missing abstraction.
+ *
+ * The cards map `WORLDS` itself, so this page cannot advertise a different set
+ * than the app ships (`e2e/marketing-worlds.spec.ts`).
+ */
+const { user } = Astro.locals;
 ---
 
-<div class="bg-background relative min-h-screen w-full overflow-hidden">
-  <div class="relative z-10 p-4 sm:p-8">
-    <Topbar />
+<div class="bg-background min-h-screen w-full px-4 py-6 sm:px-6 lg:px-10">
+  <div class="mx-auto w-full max-w-6xl">
+    {/* Header: brand + the one action that fits the visitor's state */}
+    <header class="flex items-center justify-between gap-4">
+      <BrandRow />
 
-    <!-- Hero section -->
-    <div class="mx-auto flex max-w-4xl flex-col items-center justify-center px-4 py-24 text-center sm:py-32 lg:py-40">
-      <h1 class="text-foreground mb-6 text-5xl leading-tight font-bold sm:text-6xl lg:text-7xl">{t.brand}</h1>
-      <p class="text-muted-foreground mb-10 max-w-2xl text-lg sm:text-xl">
-        {t.welcome.heroSubtitle}
-      </p>
-      <div class="flex flex-col gap-4 sm:flex-row">
-        <a
-          href="/auth/signin"
-          class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-medium transition-colors"
-        >
-          {t.nav.signIn}
-        </a>
-        <a
-          href="/auth/signup"
-          class="border-input text-foreground hover:bg-muted inline-flex items-center justify-center rounded-lg border px-6 py-3 text-base font-medium transition-colors"
-        >
-          {t.nav.signUp}
-        </a>
+      {
+        user ? (
+          <a href="/app" class:list={buttonVariants({ variant: "default" })}>
+            {t.nav.app}
+            <ArrowRight className="size-4" />
+          </a>
+        ) : (
+          <div class="flex items-center gap-2">
+            {/* Wrapper carries the breakpoint: `hidden` on the anchor itself would
+                collide with the button's own `inline-flex` display utility. */}
+            <div class="hidden sm:block">
+              <a href="/auth/signin" class:list={buttonVariants({ variant: "ghost" })}>
+                {t.nav.signIn}
+              </a>
+            </div>
+            <a href="/auth/signup" class:list={buttonVariants({ variant: "default" })}>
+              <UserPlus className="size-4" />
+              {t.nav.signUp}
+            </a>
+          </div>
+        )
+      }
+    </header>
+
+    {/* Hero */}
+    <div class="relative mt-12 grid items-center gap-10 lg:mt-20 lg:grid-cols-[1.1fr_0.9fr] xl:gap-16">
+      <div class="text-center lg:text-left">
+        <h1 class="text-foreground text-4xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl">
+          {t.brand}
+        </h1>
+        <p class="text-primary mt-2 text-2xl font-bold sm:text-3xl">{t.marketing.heroTagline}</p>
+        <p class="text-muted-foreground mt-4 text-base sm:text-lg">{t.welcome.heroSubtitle}</p>
+
+        {
+          !user && (
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+              <a href="/auth/signup" class:list={buttonVariants({ variant: "default", size: "lg" })}>
+                <UserPlus className="size-4" />
+                {t.nav.signUp}
+              </a>
+              <a href="/auth/signin" class:list={buttonVariants({ variant: "outline", size: "lg" })}>
+                <LogIn className="size-4" />
+                {t.nav.signIn}
+              </a>
+            </div>
+          )
+        }
+      </div>
+
+      {/* World cards — what the child actually runs */}
+      <div class="grid grid-cols-2 gap-3 sm:gap-4">
+        {
+          WORLDS.map((world) => (
+            <div class="bg-card border-border overflow-hidden rounded-2xl border shadow-sm">
+              <img src={world.image} alt={world.name} loading="lazy" class="aspect-square w-full object-cover" />
+              <p class="text-foreground px-2 py-2.5 text-center text-sm font-semibold">{world.name}</p>
+            </div>
+          ))
+        }
       </div>
     </div>
 
-    <!-- Feature cards -->
-    <div class="mx-auto grid max-w-4xl grid-cols-1 gap-6 px-4 pb-24 sm:grid-cols-3">
-      {
-        t.welcome.features.map((feature, i) => {
-          const Icon = featureIcons[i];
-          return (
-            <div class="bg-card border-border rounded-xl border p-6 shadow-sm">
-              <Icon className="text-primary mb-4 size-6" />
-              <h3 class="text-foreground mb-2 text-lg font-semibold">{feature.title}</h3>
-              <p class="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-            </div>
-          );
-        })
-      }
-    </div>
+    {/* Feature blocks */}
+    <FeatureList class="mt-14 sm:grid-cols-3 lg:mt-20" />
+
+    <SecurityNote class="mt-10 mb-10" />
   </div>
 </div>

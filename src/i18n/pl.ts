@@ -18,6 +18,7 @@ export const pl = {
       pending: "Logowanie…",
       noAccount: "Nie masz konta?",
       signupLink: "Utwórz konto",
+      rememberLabel: "Zapamiętaj mnie",
     },
     signup: {
       title: "Rejestracja",
@@ -38,6 +39,10 @@ export const pl = {
       pending: "Wysyłanie…",
       sentNotice: "Jeśli konto z tym adresem istnieje, wysłaliśmy na nie link do zmiany hasła. Sprawdź też spam.",
       backToSignin: "Wróć do logowania",
+      // The card's own closing reassurance (mockup 04), distinct from the
+      // panel-wide `marketing.security` — checked against it for substring
+      // collision in `tests/marketing-labels.test.ts`.
+      protectHint: "Chronimy dostęp do panelu rodzica",
       signinLinkLabel: "Nie pamiętasz hasła?",
     },
     // Set-new-password screen — the page the recovery link lands on. No mockup
@@ -52,14 +57,25 @@ export const pl = {
       submit: "Zapisz nowe hasło",
       pending: "Zapisywanie…",
     },
+    // Field copy. The `*Label` keys are the accessible names — every e2e locator
+    // resolves a field through `getByLabel(t.auth.fields.*)`, so they are a
+    // contract and never change lightly. The `*Placeholder` keys are what a
+    // SIGHTED user sees, and mockups 01/02/04 all put the field's own name there
+    // because the label is visually hidden (see `FormField`). They therefore say
+    // the same thing as the labels rather than giving an example value.
     fields: {
       emailLabel: "Adres e-mail",
-      emailPlaceholder: "ty@przyklad.pl",
+      emailPlaceholder: "Email",
       passwordLabel: "Hasło",
-      passwordPlaceholderSignin: "Twoje hasło",
-      passwordPlaceholderSignup: "Minimum 6 znaków",
+      passwordPlaceholderSignin: "Hasło",
+      passwordPlaceholderSignup: "Hasło",
       confirmLabel: "Powtórz hasło",
-      confirmPlaceholder: "Wpisz hasło ponownie",
+      confirmPlaceholder: "Powtórz hasło",
+      // The length rule used to live in `passwordPlaceholderSignup`. With the
+      // placeholder now naming the field, it moved to the signup field's hint,
+      // where it is visible BEFORE the first attempt rather than only after a
+      // failed one.
+      passwordRule: "Minimum 6 znaków",
     },
     validation: {
       emailRequired: "Podaj adres e-mail",
@@ -95,58 +111,91 @@ export const pl = {
     brandTagline: "Matematyka · Ekonomia · Przyszłość",
     parentPanel: "Panel rodzica",
     heroTagline: "Matematyka przez decyzje, handel i praktykę",
+    // Wording follows the WEB mockup (`01-parent-login-web`). The mobile mockup of
+    // the same screen words two of these differently ("Oddzielne konto rodzica
+    // i dziecka. Bez reklam i zakupów." / "Śledź rozwój, cele i osiągnięcia
+    // w czasie rzeczywistym."). The two disagree; web wins because it is the
+    // layout these three-column blocks are built to, and its shorter lines wrap
+    // cleanly there. Recorded so the difference reads as a decision, not drift.
+    // Icons live in `src/data/marketing-art.ts`, index-aligned with this array.
     features: [
       {
         title: "Bezpieczna nauka",
-        description: "Oddzielne konta rodzica i dziecka oraz nauka bez reklam.",
+        description: "Oddzielone konta rodzica i dziecka. Bez reklam.",
       },
       {
-        title: "Świat zainteresowań",
-        description: "Wybierz tematy bliskie dziecku i motywuj je do nauki.",
+        title: "Światy zainteresowań",
+        description: "Wybierz świat dopasowany do pasji Twojego dziecka.",
       },
       {
         title: "Postępy dziecka",
-        description: "Śledź rozwój, raporty i osiągnięcia w czasie rzeczywistym.",
+        description: "Śledź rozwój, umiejętności i osiągnięcia w czasie.",
       },
-    ],
-    worlds: [
-      { name: "Piekarnia", image: "/illustrations/world-piekarnia.webp" },
-      { name: "Kawiarnia", image: "/illustrations/world-kawiarnia.webp" },
-      { name: "Galaktyczna baza", image: "/illustrations/world-galaktyczna-baza.webp" },
-      { name: "Sklep księgarnia", image: "/illustrations/world-sklep-ksiegarnia.webp" },
     ],
     security: "Twoje dane są chronione zgodnie z najlepszymi standardami bezpieczeństwa.",
     or: "lub",
+
+    // Per-screen headings for the `AuthShell` marketing column. Screen 01 uses
+    // `parentPanel` + `t.auth.signin.heading`; 02 and 04 have their own, because
+    // their mockups lead with a different promise than "log in".
+    signupTagline: "Zacznij bezpieczną naukę przez praktykę",
+    resetHeading: "Bezpieczny dostęp",
+    resetTagline: "Pomożemy Ci szybko odzyskać dostęp do konta. Twoje dane i postępy dziecka są bezpieczne.",
+
+    // Trust badges — the three-across reassurance row mockups 02 and 03 close
+    // with, rendered by `TrustBadges.astro`.
+    //
+    // **The two sets are deliberately different, and the difference is a locator
+    // constraint, not a copywriting whim.** Mockup 03's first badge is titled
+    // "Bezpieczna nauka", which is ALREADY `features[0].title`. `/auth/signup`
+    // renders `AuthShell`, and therefore `FeatureList`, so reusing 03's wording
+    // there would put the same accessible name on the page twice and make an
+    // unrelated `getByText` ambiguous (L-007). `/auth/confirm-email` renders no
+    // `FeatureList`, so 03's wording is safe there — which is also exactly what
+    // its own mockup says. `tests/marketing-labels.test.ts` holds this.
+    trustSignup: [
+      { title: "Chronimy Twoje dane" },
+      { title: "Oddzielne konto rodzica i profilu dziecka" },
+      { title: "Zgodne z zasadami bezpiecznego uczenia się" },
+    ],
+    trustVerify: [
+      { title: "Bezpieczna nauka", body: "Szyfrujemy dane i nie udostępniamy ich nikomu." },
+      { title: "Konto rodzica", body: "Oddzielone od profilu dziecka i w pełni kontrolowane przez Ciebie." },
+      { title: "Bez reklam", body: "Skupiamy się na nauce, nie na reklamach." },
+    ],
   },
 
-  // App chrome / navigation (Topbar).
+  // App chrome / navigation (the landing header + the signed-in AppShell: desktop sidebar,
+  // mobile bottom tab bar). Item labels follow the ui-v2 mockups' sidebar; only
+  // destinations that exist as routes are listed (no dead nav).
   nav: {
     app: "Aplikacja",
     signIn: "Zaloguj się",
     signUp: "Utwórz konto",
     signOut: "Wyloguj się",
     notSignedIn: "Niezalogowany",
+    shellTagline: "Ucz się i zarabiaj",
+    primaryLabel: "Nawigacja główna",
+    items: {
+      dashboard: "Pulpit",
+      missions: "Misje",
+      shop: "Mój sklep",
+      // Deliberately NOT "Rozwój sklepu" (the page's own h1): `getByRole` name
+      // matching is substring-based, so a label that contained the heading — or
+      // vice versa — would make every locator on that screen ambiguous.
+      // "Światy" and "Rozwój świata" coexist safely: neither is a substring of
+      // the other, so both nav locators stay unambiguous.
+      growth: "Rozwój świata",
+      worlds: "Światy",
+      parent: "Panel rodzica",
+    },
   },
 
-  // Unauthenticated `/` scaffold (Welcome.astro). Placeholder landing — no `/`
-  // mockup exists yet; strings live here so the page is Polish + locale-swappable.
+  // Signed-out landing (`/`). No mockup exists for this route; the page reuses
+  // `marketing.*` (shared with the auth split view) plus this one product line.
   welcome: {
     heroSubtitle:
-      "Nauka matematyki przez prowadzenie własnego sklepu — z uwierzytelnianiem i nowoczesnymi narzędziami.",
-    features: [
-      {
-        title: "Gotowe uwierzytelnianie",
-        description: "Wbudowane logowanie Supabase z rejestracją i chronionymi trasami.",
-      },
-      {
-        title: "Nowoczesny stack",
-        description: "Astro, React, Tailwind i TypeScript — najnowsze narzędzia, gotowe do pracy.",
-      },
-      {
-        title: "Komfort pracy",
-        description: "ESLint, Prettier i hooki pre-commit utrzymują porządek w kodzie od pierwszego dnia.",
-      },
-    ],
+      "Dziecko prowadzi własny sklep: liczy monety, wydaje resztę i decyduje, w co zainwestować zarobek. Matematyka w praktyce, nigdy jako suche działanie.",
   },
 
   // Create-first-child-profile wizard (S-01b). Placeholders {current}/{total}/{name}
@@ -187,6 +236,28 @@ export const pl = {
     limitReached: "Masz już maksymalną liczbę profili dzieci.",
   },
 
+  // World-selection screen (`/app/worlds`, F5) — built to the `01-world-selection`
+  // ui-v2 mockups. Makes `profileWizard.note`'s promise ("Świat możesz zmienić
+  // później") true. `sameSkills` + `carryOver` are the screen's whole message and
+  // are honest by construction: nothing in the upgrade loop reads `theme`, so a
+  // switch is provably a no-op for the wallet, the ladder and the owned upgrades.
+  // The competency trio is world-INDEPENDENT by design — that is the point — so it
+  // is deliberately not keyed by slug.
+  worlds: {
+    heading: "Wybierz swój świat",
+    subtitle: "Co chcesz dziś prowadzić?",
+    sameSkills: "Każdy świat uczy tych samych umiejętności",
+    carryOver: "Twój sklep i kupione ulepszenia przenoszą się do nowego świata.",
+    learnHeading: "W tym świecie nauczysz się:",
+    learn: {
+      math: { title: "Matematyka", body: "Dodawaj, odejmuj, licz resztę i pracuj z cenami." },
+      trade: { title: "Handel", body: "Zarządzaj produktami, cenami i zyskami." },
+      decisions: { title: "Decyzje", body: "Planuj inwestycje i rozwijaj swój biznes." },
+    },
+    confirm: "Start",
+    submitting: "Zmieniam…",
+  },
+
   // Child start screen (S-01b). The tap opens the counting task (S-02). The
   // wallet/level HUD (S-04/S-05) surfaces the persisted wallet balance + business
   // level. The wallet ("Portfel") is money saved to grow the shop (S-05); the
@@ -200,6 +271,38 @@ export const pl = {
     levelLabel: "Poziom sklepu {level}",
     upgradesLink: "Rozbuduj sklep",
     worldTagline: "Twój sklep rośnie dzięki matematyce!",
+
+    // Dashboard sections (ui-v2 `02-child-dashboard`). Every tile below reports a
+    // value the profile actually stores — no invented metrics (the mockup's
+    // sales/satisfaction tiles have no data source yet, so they are not rendered).
+    missionHeading: "Dzisiaj nauczysz się",
+    missionBody: "Policz monety i wydaj resztę klientom w swoim sklepie.",
+    nextUpgradeHeading: "Następne ulepszenie",
+    resultsHeading: "Twój sklep — wyniki",
+    statLevel: "Poziom sklepu",
+    statShifts: "Ukończone zmiany",
+    statWallet: "Oszczędności",
+    statUpgrades: "Ulepszenia",
+    amountZl: "{amount} zł",
+    safetyTitle: "Bezpieczna nauka",
+    safetyBody: "Twoje postępy są zapisywane i chronione. Rodzic ma wgląd i kontrolę w panelu rodzica.",
+
+    // Recent-activity feed (ui-v2 `02-child-dashboard`). No `zł` amount on any
+    // row: `shift_log` stores no earnings column, and re-deriving one from the
+    // tunable earn rates — or showing the catalog's *current* upgrade cost as if
+    // it were the price paid — would re-price history. `activityShiftTasks`
+    // deliberately CONTAINS `activityShift` as a prefix so one e2e locator
+    // matches both the counted and the degenerate form; the empty line avoids
+    // the phrase "Ukończone zmiany" (`statShifts`, same page) so a substring
+    // locator cannot double-match.
+    activityHeading: "Ostatnia aktywność",
+    activityShift: "Zmiana ukończona",
+    activityShiftTasks: "Zmiana ukończona · {tasks}",
+    activityUpgrade: "Ulepszenie: {name}",
+    activityToday: "Dzisiaj",
+    activityYesterday: "Wczoraj",
+    activityEmpty: "Jeszcze nic tu nie ma. Twoje zmiany i ulepszenia pojawią się w tym miejscu.",
+    activityError: "Nie udało się wczytać ostatniej aktywności.",
   },
 
   // Counting task in shop narrative (S-02). Copy is keyed by scenario so the
@@ -209,6 +312,11 @@ export const pl = {
   task: {
     check: "Sprawdź",
     tally: "Naliczono: {count}",
+    // Mission chrome (ui-v2 `03-change-mission`): the shell heading and the side
+    // panel that names the competency the current task exercises.
+    missionTitle: "Misja w sklepie",
+    learningHeading: "Uczysz się",
+    encouragement: "Każda poprawna odpowiedź rozwija Twój sklep.",
     retry: "Spróbuj jeszcze raz!",
     hintTitle: "Wskazówka",
     coinLabel: "Moneta {n}",
@@ -246,6 +354,38 @@ export const pl = {
     },
   },
 
+  // Decorations (E1 / D-11) — the renewing sink. Keyed by the globally unique,
+  // world-prefixed decoration id from `src/data/decorations.ts`, so a world's set
+  // can grow without touching another's. Every name says what the CHILD sees;
+  // none of them promises an effect, because a decoration has none.
+  decorations: {
+    "kawiarnia-lampki": "Lampki nad stolikami",
+    "kawiarnia-kwiaty": "Kwiaty na parapecie",
+    "kawiarnia-obrazek": "Obrazek na ścianie",
+    "kawiarnia-fotel": "Wygodny fotel",
+    "piekarnia-wstazki": "Wstążki nad ladą",
+    "piekarnia-rogaliki": "Wystawka z rogalikami",
+    "piekarnia-tort": "Tort na witrynie",
+    "piekarnia-kawiarenka": "Kącik z kawą",
+    "galaktyczna-baza-orbita": "Model orbity",
+    "galaktyczna-baza-satelita": "Mały satelita",
+    "galaktyczna-baza-teleskop": "Teleskop przy oknie",
+    "galaktyczna-baza-rakieta": "Rakieta na podeście",
+    "sklep-ksiegarnia-listek": "Listek w doniczce",
+    "sklep-ksiegarnia-zakladka": "Zakładki z piórkiem",
+    "sklep-ksiegarnia-zwoje": "Stare zwoje",
+    "sklep-ksiegarnia-ksiegozbior": "Regał na zbiory",
+    // Worlds five and six (W1) — appended, one entry per key.
+    "pracownia-naklejki": "Naklejki na szafce",
+    "pracownia-szpulki": "Kolorowe szpulki",
+    "pracownia-paleta": "Paleta z farbami",
+    "pracownia-nozyczki": "Ozdobne nożyczki",
+    "laboratorium-gwiazdki": "Świecące gwiazdki",
+    "laboratorium-kolby": "Kolorowe kolby",
+    "laboratorium-mikroskop": "Mikroskop na półce",
+    "laboratorium-atom": "Model atomu",
+  },
+
   // Upgrade catalog names (S-06). Keyed by upgrade id (`t.upgrades[id]`), so the
   // catalog (src/data/upgrades.ts) carries no literal copy (L-003). Draft Polish —
   // pending native-speaker review.
@@ -256,6 +396,52 @@ export const pl = {
     slot: { name: "Miejsce na produkt", desc: "Dodatkowy produkt w ofercie." },
     storage: { name: "Magazynek", desc: "Zapas towaru pod ręką." },
     customers: { name: "Więcej klientów", desc: "Do sklepu zagląda więcej osób." },
+    // The margin branch (E1). Both descriptions name what CHANGES, never a
+    // percentage — the multiplier is not a number a child sees, and the results
+    // screen shows the real arithmetic instead.
+    precision: { name: "Dokładna obsługa", desc: "Klienci częściej wracają zadowoleni." },
+    margin: { name: "Lepsza marża", desc: "Za każde zadanie dostajesz więcej." },
+  },
+
+  // The growth screen (F4, missing-screens-v3 `01-world-progression`). Deliberately
+  // NOT rendered from that mockup, because nothing in the product stores them:
+  // the XP bar, "Zysk dzienny", "Klienci dziennie", "Zadowolenie %", the
+  // "Następne kroki" goal counters, the achievements button and the notification
+  // bell. Estimating any of them would be invented data. `heading` is world-neutral
+  // ("Rozwój sklepu" + the world name as subtitle) because Polish genitive
+  // declension differs per world and `src/data/worlds.ts` stores nominative names
+  // only — the same solution `upgradeShop` already uses.
+  growth: {
+    title: "Rozwój sklepu",
+    intro: "Rozwijaj swój sklep, odblokowuj nowe możliwości i zarabiaj więcej!",
+    stagesHeading: "Etapy rozwoju",
+    stageOrdinal: "Etap {n}",
+    current: "Aktualnie",
+    // Read out by a screen reader so the state that colour alone conveys is
+    // spoken — the rail this replaces was decorative and `aria-hidden`.
+    stateDone: "Etap ukończony",
+    stateCurrent: "Etap w trakcie",
+    stateLocked: "Etap zablokowany",
+    maxStage: "To najwyższy etap — Twój sklep działa pełną parą.",
+    unlocksHeading: "Co odblokowuje ten etap",
+    noUnlocks: "Ten etap nie odblokowuje nowych ulepszeń.",
+    noNextUpgrade: "Masz już wszystkie ulepszenia dostępne na tym etapie.",
+    upgradesLink: "Zobacz ulepszenia",
+    tipHeading: "Wskazówka",
+    tip: "Każda ukończona zmiana przybliża Twój sklep do kolejnego etapu.",
+  },
+
+  // Growth-stage names (F4). Keyed by stage id (`t.stages[id]`), so the catalogue
+  // (src/data/stages.ts) carries no literal copy (L-003). Draft Polish — pending
+  // native-speaker review. Two entries deviate from the mockup ON PURPOSE, and the
+  // reasons are in `src/data/stages.ts`'s header: `oferta` is world-neutral (the
+  // mockup's "Kawiarnia z ofertą" would call a bakery a café), and `popyt` does not
+  // promise the mockup's demand missions, which do not exist.
+  stages: {
+    stolik: { name: "Mały stolik", desc: "Pierwsze kroki w Twoim sklepie." },
+    stoisko: { name: "Stoisko", desc: "Pierwsze produkty i klienci." },
+    oferta: { name: "Sklep z ofertą", desc: "Więcej produktów i większe zyski!" },
+    popyt: { name: "Popyt i zysk", desc: "Twój sklep działa pełną parą." },
   },
 
   // Per-competency skill labels (S-07). Keyed so components carry no literal copy
@@ -268,6 +454,13 @@ export const pl = {
     decisions: "Decyzje",
     levelLabel: "Poziom {level}",
     maxLabel: "Maks. poziom",
+    // One-line "what this competency is" copy for the dashboard skill cards
+    // (ui-v2 `02-child-dashboard`).
+    descriptions: {
+      math: "Rozwiązuj zadania i licz z łatwością.",
+      money: "Kupuj, sprzedawaj i zarabiaj mądrze.",
+      decisions: "Planuj, porównuj i wybieraj najlepiej.",
+    },
   },
 
   // Dedicated /app/upgrades screen (S-06): choose-and-buy surface. Warm, factual,
@@ -289,6 +482,15 @@ export const pl = {
     unlockedHeading: "Odblokowane!",
     unlockedDismiss: "Super!",
     lockedByLevel: "Dostępne od poziomu sklepu {level}",
+    // The E1 branch gate. Actionable on purpose — it names the one thing to buy
+    // first, rather than a level or a skill the child cannot yet reach.
+    lockedByBranch: "Najpierw kup: {name}",
+    // The decoration section (E1). The hint is the honest promise: an ozdoba is
+    // exactly as useless as it looks, and saying so is what keeps it from
+    // competing with a real upgrade decision.
+    decorationsHeading: "Ozdoby do sklepu",
+    decorationsHint: "Ozdoby nic nie zmieniają w liczeniu — po prostu ładnie wyglądają.",
+    emptyDecorations: "Masz już wszystkie ozdoby w tym świecie.",
     lockedByFunds: "Brakuje {amount} zł",
     lockedBySkill: "Rozwiń umiejętność „{competency}” do poziomu {level}",
     lockedByHistory: "Wykonaj {count} zadań: {competency}",
@@ -321,6 +523,14 @@ export const pl = {
     // (no FOMO/urgency — guardrail).
     upgradesNudge: "Masz dość, żeby coś kupić do sklepu!",
     upgradesNudgeLink: "Zobacz ulepszenia",
+    // The profit breakdown (E1): przychód − koszt = zysk. Shown ONLY when the shop
+    // actually has a running cost, so a child on their first shift is never handed
+    // a subtraction they could not yet have caused. `earnedLabel` above still names
+    // the wallet payout and is the number the wallet actually receives.
+    breakdownHeading: "Rachunek zmiany",
+    revenueLabel: "Przychód: {revenue} zł",
+    costLabel: "Koszt sklepu: {cost} zł",
+    profitLabel: "Zysk: {profit} zł",
   },
 
   // Parent-PIN gate (S-07 / FR-016). A soft gate over the session protecting the
@@ -330,17 +540,33 @@ export const pl = {
     setHeading: "Ustaw PIN rodzica",
     enterHeading: "Podaj PIN rodzica",
     intro: "PIN chroni panel rodzica przed dzieckiem.",
+    // Says what is behind the gate — no promise of settings that do not exist yet.
+    note: "Za PIN-em znajdziesz raport tygodniowy i ustawienia konta.",
     pinLabel: "PIN (4–6 cyfr)",
     confirmLabel: "Powtórz PIN",
     setSubmit: "Ustaw PIN",
     enterSubmit: "Otwórz panel",
     pending: "Sprawdzam…",
+
+    // Change-PIN card on the report page (the parent zone). Changing the PIN
+    // needs the CURRENT one re-proved under the throttle — there is no
+    // forgot-PIN recovery, so a silent change would lock the parent out for
+    // good. The three labels must stay mutually non-substring: Playwright's
+    // getByLabel matches substrings. Draft Polish — pending native-speaker review.
+    changeHeading: "Zmiana PIN-u rodzica",
+    changeIntro: "Podaj obecny PIN, żeby ustawić nowy.",
+    currentPinLabel: "Obecny PIN",
+    newPinLabel: "Nowy PIN (4–6 cyfr)",
+    newPinConfirmLabel: "Powtórz nowy PIN",
+    changeSubmit: "Zmień PIN",
+    changeSuccess: "PIN został zmieniony.",
     errors: {
       invalid: "PIN musi mieć od 4 do 6 cyfr.",
       mismatch: "PIN-y nie są takie same.",
       wrong: "Nieprawidłowy PIN.",
       locked: "Za dużo prób. Spróbuj ponownie za chwilę.",
       generic: "Coś poszło nie tak. Spróbuj ponownie.",
+      sameAsCurrent: "Nowy PIN musi się różnić od obecnego.",
     },
   },
 
@@ -365,6 +591,54 @@ export const pl = {
     loadError: "Nie udało się wczytać raportu tego dziecka. Spróbuj ponownie za chwilę.",
     addChild: "Dodaj profil dziecka",
     back: "Wróć do sklepu",
+
+    // Per-child summary tiles (missing-screens-v3 `05-parent-weekly-report`).
+    // Every figure here is read straight off the week's aggregated shift log:
+    // the two counts, the daily activity chart below them, and the first-try
+    // share. The first-try share is deliberately computed over **math + money
+    // only** — a purchase is 100 % correct by construction, so including
+    // `decisions` would make it rise with shopping (see `ACCURACY_COMPETENCIES`
+    // in `src/data/skills.ts`). Nothing on this page is deferred any more: the
+    // mockup's earnings tile now reads `shift_log.earned` (F4).
+    //
+    // `statEarned` is worded as a description of LOGGED ACTIVITY, never a total.
+    // `appendShiftLog` is best effort and swallows its insert error, so the sum is
+    // permanently a lower bound on what the child actually earned. It must not be
+    // called `suma`, `bilans`, `łącznie` or `wszystkie zarobki`, and it must not be
+    // placed next to, or reconciled against, the wallet balance. The tile is hidden
+    // outright — never zeroed — while a shift row in the week has no recorded
+    // payout; see `earningsKnown` in `src/types.ts`.
+    statTasks: "Ukończone zadania",
+    statUpgrades: "Odblokowane ulepszenia",
+    statEarned: "Zarobione w tym tygodniu",
+    statEarnedValue: "{amount} zł",
+    statFirstTry: "Zadania bez pomyłki",
+    statFirstTryValue: "{percent}%",
+    // Shown instead of a percentage when nothing countable was practised — `0%`
+    // would read as "your child got nothing right", which is not what 0/0 means.
+    statFirstTryNone: "—",
+    statFirstTryNoData: "Brak danych z tego tygodnia",
+    // Weekly activity chart. `chartLegend`'s word order deliberately differs
+    // from `statTasks` so neither string contains the other (substring-matching
+    // locators on this page would otherwise become ambiguous).
+    chartHeading: "Aktywność w tym tygodniu",
+    chartLegend: "Zadania ukończone w danym dniu",
+    chartEmpty: "Brak aktywności w tym tygodniu.",
+    chartDayValue: "{day}: {count}",
+    // Both day arrays are **Monday-first and index-aligned with
+    // `WeeklyReport.daily`** — do not rotate one without the other. The short
+    // forms are the visible axis labels; the long forms are the screen-reader
+    // copy, because "Śr" read aloud is not a weekday.
+    chartDaysShort: ["Pon", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
+    chartDaysLong: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"],
+    // Safety panel — statements of how the product is built, not measurements.
+    safetyHeading: "Bezpieczne środowisko",
+    safetyPoints: [
+      "Brak reklam i zakupów w aplikacji.",
+      "Treści dopasowane do wieku 6–9 lat.",
+      "Panel rodzica chroniony PIN-em.",
+      "Dane dziecka widoczne tylko dla Ciebie.",
+    ],
   },
 
   // Deletion surfaces (MAT-17): child-profile + whole-account deletion. Parent-zone
@@ -428,13 +702,11 @@ export const pl = {
 
   confirmEmail: {
     autoConfirmed: {
-      emoji: "✅",
       heading: "Rejestracja zakończona",
       description: "Twoje konto zostało utworzone. Możesz się teraz zalogować.",
       linkText: "Przejdź do logowania",
     },
     checkEmail: {
-      emoji: "📧",
       heading: "Potwierdź e-mail",
       description: "Wysłaliśmy link aktywacyjny na Twój adres e-mail. Kliknij go, aby aktywować konto.",
       // Shown to everyone, never only to accounts that exist: Supabase answers a
@@ -450,6 +722,13 @@ export const pl = {
       resentNotice: "Link aktywacyjny został wysłany ponownie.",
       resendError: "Nie udało się wysłać linku. Spróbuj ponownie za chwilę.",
     },
+    // Side panel of the verification screen (auth-v2 `03`). The next step is
+    // stated, not linked: /app/new-profile is behind auth, so a parent who has
+    // not confirmed yet would only bounce back to sign-in.
+    nextStepLabel: "Następny krok:",
+    nextStepValue: "dodaj profil dziecka",
+    protectsTitle: "To chroni konto rodzica i dane dziecka",
+    protectsBody: "Bezpieczna nauka zaczyna się od weryfikacji.",
   },
 
   // Authenticated landing (the gated /app surface; built in Phase 5).

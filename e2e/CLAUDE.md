@@ -2,7 +2,7 @@
 
 These rules govern every spec in `e2e/`. They exist so generated tests are
 stable by default — model new specs on `seed.spec.ts` (the exemplar) and follow
-the plan/research in `context/changes/testing-e2e-playwright/`.
+the plan/research in `context/archive/2026-07-12-testing-e2e-playwright/`.
 
 - Use `getByRole`, `getByLabel`, `getByText` as primary locators. Fall back to
   `getByTestId` only when accessibility attributes are ambiguous (none exist in
@@ -17,6 +17,16 @@ the plan/research in `context/changes/testing-e2e-playwright/`.
   3. One positional `.first()` on the world-tile locator in the onboarding spec
      (composite accessible names make "Kawiarnia" ambiguous). Prefer
      `filter()`-scoped locators for any new ambiguity.
+  4. The computed-style walk in `growth.spec.ts`'s nav-fit assertion
+     (`[el, ...el.querySelectorAll("*")]`, Risk E2E-F4-2). It MEASURES a label
+     against its tab, starting from an element `getByRole` located; the
+     descendant is picked by computed style (`text-overflow: ellipsis` +
+     `white-space: nowrap` + hidden overflow), never by tag, class or position,
+     so reparenting or restyling the span cannot silently break it.
+     **The line this draws:** measurement reached from a role-located element is
+     allowed; structural SELECTION is still banned. `querySelectorAll` is not a
+     licence to locate — if you are choosing an element by what it IS rather than
+     reading a number off it, this exception does not cover you.
 - Every user-visible string a locator matches comes from the i18n dictionary via
   `helpers/i18n.ts` (`t`, `fill`, `templateRegex`) — never hardcode Polish
   beyond data the test itself injects (e.g. a child name it typed).
@@ -39,3 +49,18 @@ the plan/research in `context/changes/testing-e2e-playwright/`.
 - Internal boundaries (auth, routing, DB) stay REAL — that's where integration
   risk hides. This app calls no external APIs from these flows; do not mock.
 - Run a single spec with: `npx playwright test e2e/<file> --project=desktop`.
+
+## Workflow and tooling boundaries
+
+**Use the `/10x-e2e` skill** — it is the single source of truth for the workflow
+(risk → seed test + rules → generate → review against the five anti-patterns →
+re-prompt → verify). Its `references/` carry the full rules, anti-patterns, seed
+pattern, and prompt-template. The rules above are the hard constraints that hold
+even before you invoke it.
+
+- **DOM (snapshot) is the default.** Vision (`--caps=vision`) is a supplement for
+  visual-only risks (layout, z-index, animation); for pixel regression prefer
+  deterministic tools (`toMatchSnapshot`, Argos, Lost Pixel).
+- **Healer helps on selectors, harms on logic.** A changed selector → healer
+  re-finds it (route through PR review). A changed business behavior → healer
+  masks the bug, so a failing test there is a finding, not a thing to auto-fix.

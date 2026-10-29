@@ -82,6 +82,21 @@ describe("cross-device economy restore (S-10)", () => {
         taskCount: "6",
         cleanCount: "6",
         skills: JSON.stringify(SHIFT_SKILLS),
+        // P1 telemetry rides the same POST and is reconciled exactly against the
+        // aggregates, so a clean 6-task shift needs 6 first-try counting attempts.
+        attempts: JSON.stringify(
+          Array.from({ length: 6 }, (_unused, i) => ({
+            shift_index: i,
+            task_type: "counting",
+            scenario: "count_till",
+            competency: "math",
+            difficulty: null,
+            params: { targetCount: 5 },
+            first_try: true,
+            misses: 0,
+            duration_ms: 3000,
+          })),
+        ),
       }),
     );
     expect(shiftRes.status).toBe(200);

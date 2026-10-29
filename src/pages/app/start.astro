@@ -1,27 +1,33 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { Check, Lock } from "lucide-react";
+import { Check, Lock, ShieldCheck, Target } from "lucide-react";
+import AppShell from "@/components/app/AppShell.astro";
 import StartShiftButton from "@/components/child/StartShiftButton";
-import ParentControls from "@/components/child/ParentControls.astro";
 import EmptyStateCard from "@/components/child/EmptyStateCard.astro";
-import { AvatarCircle } from "@/components/child/AvatarCircle";
-import { WalletPill, LevelBadge } from "@/components/child/HudChip";
+import SkillCards from "@/components/child/SkillCards.astro";
+import RecentActivity from "@/components/child/RecentActivity.astro";
 import { childCard } from "@/components/child/childCard";
 import { ShopArt } from "@/components/child/ShopArt";
+import { ShopGlyph } from "@/components/child/ShopGlyph";
 import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase";
 import { resolvePageProfile } from "@/lib/services/active-profile";
+import { listRecentActivity } from "@/lib/services/reports";
 import { worldForTheme } from "@/data/worlds";
 import { getAvatar } from "@/data/avatars";
 import { nextUpgrade, readPurchased } from "@/data/upgrades";
-import { t } from "@/i18n";
+import { nextPurchase, readDecorations } from "@/data/decorations";
+import { readSkillState } from "@/data/skills";
+import { toActivityEntry, type ActivityEntry } from "@/data/activity";
+import { purchaseName, t } from "@/i18n";
 
-// Child start screen (S-01b). Gated under /app. Loads the ACTIVE profile (S-11
+// Child dashboard (S-01b). Gated under /app. Loads the ACTIVE profile (S-11
 // fallback ladder: valid selection → sole profile). A 2+ account without a
 // selection bounces to the /app router (→ picker); the no-profile branch below
 // stays as the 0-profile defensive fallback (direct nav).
-// Single themed business + an in-world tap prompt — no map. The coins/level HUD
-// (S-04) surfaces the persisted balance + business level loaded with the profile.
+// Laid out to the ui-v2 dashboard mockups inside the shared AppShell: hero shop,
+// skills, factual result tiles, and a right rail (today's mission, next upgrade,
+// safety note) that stacks under the main column below `lg`.
 // profile.name is consciously-collected PII — rendered ONLY as auto-escaped text
 // (interpolation), never set:html.
 const supabase = createClient(Astro.request.headers, Astro.cookies);
@@ -39,11 +45,36 @@ const greeting = profile ? t.start.greeting.replace("{name}", profile.name) : ""
 // is next (all owned / none eligible) or when it's already affordable (FR-013 —
 // factual, no urgency).
 const purchased = profile ? readPurchased(profile.shop_state) : [];
-const next = profile ? nextUpgrade({ businessLevel: profile.business_level, purchased }) : null;
+const decorations = profile ? readDecorations(profile.shop_state) : [];
+// The "next thing" (E1 / D-11) — the cheapest level-eligible unowned upgrade, or,
+// once the catalogue is exhausted, the cheapest unowned decoration of the CURRENT
+// world. Switching from `nextUpgrade` to `nextPurchase` is what keeps this card a
+// finished thought past the catalogue's end, which was ~13 shifts of ordinary play.
+const next =
+  profile && world
+    ? nextPurchase({ businessLevel: profile.business_level, purchased, world: world.slug, decorations }, nextUpgrade)
+    : null;
+const skillState = readSkillState(profile?.skill_state);
+
+// Recent-activity feed (F2). Resolved HERE, in the frontmatter — the only place
+// non-determinism is allowed on this page: one `now` for the whole list, so all
+// entries bucket against the same instant and the day words are SSR-fixed.
+// A failure yields `null` (the section says so honestly) and is swallowed here
+// rather than rethrown — the feed must never take the dashboard down (D7).
+let activityEntries: ActivityEntry[] | null = [];
+if (supabase && profile) {
+  try {
+    const now = new Date();
+    const rows = await listRecentActivity(supabase, profile.id);
+    activityEntries = rows.map((row) => toActivityEntry(row, now));
+  } catch {
+    activityEntries = null;
+  }
+}
 
 // Milestone path (S-13): a 5-node window around the current business_level
 // (levels are uncapped — 1 + shifts/3), read-only from profile data. Decorative;
-// the LevelBadge above already announces the level.
+// the level badge in the shell header already announces the level.
 const level = profile?.business_level ?? 1;
 const milestoneStart = Math.max(1, level - 2);
 const milestones = [0, 1, 2, 3, 4].map((i) => milestoneStart + i);
@@ -52,98 +83,174 @@ const nextText =
   next && profile
     ? t.upgradeShop.nextProgress
         .replace("{amount}", String(next.cost - profile.wallet_balance))
-        .replace("{name}", t.upgrades[next.id as keyof typeof t.upgrades].name)
+        .replace("{name}", purchaseName(next))
     : "";
+// Saving progress toward that next upgrade — the one bar the data actually supports.
+const savingPercent =
+  next && profile ? Math.max(0, Math.min(100, Math.round((profile.wallet_balance / next.cost) * 100))) : null;
+
+const stats = profile
+  ? [
+      { label: t.start.statLevel, value: String(profile.business_level) },
+      { label: t.start.statShifts, value: String(profile.completed_shift_count) },
+      { label: t.start.statWallet, value: t.start.amountZl.replace("{amount}", String(profile.wallet_balance)) },
+      { label: t.start.statUpgrades, value: String(purchased.length) },
+    ]
+  : [];
 ---
 
 <Layout title={t.brand}>
-  <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
-    {
-      /* Parent controls — subtle, top-right; child controls stay below. The report
-        link sits behind the PIN gate (report route redirects when unverified). */
-    }
-    <ParentControls showReport />
+  {
+    profile && world ? (
+      <AppShell
+        heading={greeting}
+        subtitle={t.start.subtitle}
+        active="dashboard"
+        showAvatar
+        profile={{
+          name: profile.name,
+          avatarImage: avatar?.image ?? null,
+          level: profile.business_level,
+          wallet: profile.wallet_balance,
+        }}
+        progressPercent={savingPercent}
+        progressLabel={showNext ? nextText : null}
+      >
+        <div class="grid items-start gap-6 lg:grid-cols-3">
+          {/* ---------- Hero (main column, first row) ---------- */}
+          <div class="flex flex-col gap-6 lg:col-span-2 lg:col-start-1 lg:row-start-1">
+            {/* Hero: the shop as it visibly stands (base art + owned upgrades).
+                Mockup's wide banner — copy on the left, scene on the right. */}
+            <div
+              class:list={[
+                childCard("3xl", "overflow-hidden"),
+                "from-primary/10 via-primary/5 bg-gradient-to-r to-transparent",
+              ]}
+            >
+              <div class="flex flex-col items-center gap-4 p-5 sm:flex-row sm:gap-6 sm:p-6">
+                <div class="order-2 min-w-0 flex-1 text-center sm:order-1 sm:text-left">
+                  <p class="text-foreground text-2xl font-extrabold lg:text-4xl">{world.name}</p>
+                  <p class="text-muted-foreground mt-2 text-sm font-semibold">{t.start.worldTagline}</p>
+                </div>
+                <div class="order-1 w-full max-w-xs shrink-0 sm:order-2 sm:w-2/5 sm:max-w-sm">
+                  <ShopArt world={world} purchased={purchased} decorations={decorations} />
+                </div>
+              </div>
 
-    {
-      profile && world ? (
-        <div class="w-full max-w-md">
-          {/* Greeting */}
-          <div class="flex items-center gap-3">
-            {avatar && <AvatarCircle src={avatar.image} alt={avatar.alt} size={14} />}
-            <div>
-              <h1 class="text-foreground text-2xl font-extrabold">{greeting}</h1>
-              <p class="text-muted-foreground text-sm">{t.start.subtitle}</p>
-              {
-                /* Mid-session sibling handoff (S-11) — only when there's someone to switch to. */
-                resolved.profileCount >= 2 && (
-                  <a
-                    href="/app/pick-profile"
-                    class="text-muted-foreground hover:text-foreground mt-1 inline-block text-sm underline-offset-2 hover:underline"
-                  >
-                    {t.picker.switchProfile}
-                  </a>
-                )
-              }
+              {/* Milestone path: the level journey — done / current / upcoming */}
+              <div class="flex items-center justify-center pb-6" aria-hidden="true">
+                {milestones.map((lvl, i) => (
+                  <>
+                    {i > 0 && (
+                      <span class:list={["h-0.5 w-5 rounded-full", lvl <= level ? "bg-success" : "bg-muted"]} />
+                    )}
+                    {lvl < level ? (
+                      <span class="bg-success text-success-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
+                        <Check className="size-4" />
+                      </span>
+                    ) : lvl === level ? (
+                      <span class="bg-primary text-primary-foreground ring-primary/25 flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4">
+                        {lvl}
+                      </span>
+                    ) : (
+                      <span class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
+                        <Lock className="size-3.5" />
+                      </span>
+                    )}
+                  </>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Wallet (Portfel) + business-level HUD (S-04/S-05) — persisted, cross-session totals */}
-          <div class="mt-6 flex items-center gap-3">
-            <WalletPill amount={profile.wallet_balance} label={t.start.walletLabel} />
-            <LevelBadge withStar>{t.start.levelLabel.replace("{level}", String(profile.business_level))}</LevelBadge>
-          </div>
-          <p class="text-muted-foreground mt-2 text-sm">{t.start.savingsHint}</p>
+          {/* ---------- Skills + results. Below `lg` these follow the rail, so the
+              mission CTA sits directly under the hero as in the mobile mockup. ---------- */}
+          <div class="order-last flex flex-col gap-6 lg:order-none lg:col-span-2 lg:col-start-1 lg:row-start-2">
+            <SkillCards skillState={skillState} />
 
-          {/* Single themed business — hero treatment (S-13): world name at hero
-              scale + tagline above the bright art (base art + owned badges, S-06) */}
-          <div class:list={childCard("3xl", "mt-8 overflow-hidden")}>
-            <div class="px-4 pt-4 text-center">
-              <p class="text-foreground text-2xl font-extrabold">{world.name}</p>
-              <p class="text-muted-foreground mt-1 text-sm font-semibold">{t.start.worldTagline}</p>
+            {/* Result tiles — persisted values only, no invented metrics */}
+            <section class="flex flex-col gap-4">
+              <h2 class="text-foreground text-lg font-bold lg:text-xl">{t.start.resultsHeading}</h2>
+              <ul class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {stats.map((stat) => (
+                  <li class:list={[childCard("2xl", "p-4")]}>
+                    <p class="text-muted-foreground text-xs font-semibold">{stat.label}</p>
+                    <p class="text-foreground mt-1 text-2xl font-extrabold">{stat.value}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* Recent activity — what the child actually did, from shift_log */}
+            <RecentActivity entries={activityEntries} />
+          </div>
+
+          {/* ---------- Right rail (stacks under the hero below lg) ---------- */}
+          <div class="flex flex-col gap-6 lg:col-start-3 lg:row-span-2 lg:row-start-1">
+            {/* Today's mission */}
+            <div class:list={childCard("3xl", "p-5")}>
+              <p class="text-foreground flex items-center gap-2 text-lg font-extrabold">
+                <span class="bg-primary/10 text-primary inline-flex size-9 items-center justify-center rounded-xl">
+                  <Target className="size-5" />
+                </span>
+                {t.start.missionHeading}
+              </p>
+              <p class="text-muted-foreground mt-3 text-sm">{t.start.missionBody}</p>
+              <div class="mt-4">
+                <StartShiftButton client:load />
+              </div>
             </div>
-            <ShopArt world={world} purchased={purchased} />
-          </div>
 
-          {/* Milestone path (S-13): the level journey — done / current / upcoming */}
-          <div class="mt-4 flex items-center justify-center" aria-hidden="true">
-            {milestones.map((lvl, i) => (
-              <>
-                {i > 0 && <span class:list={["h-0.5 w-5 rounded-full", lvl <= level ? "bg-success" : "bg-muted"]} />}
-                {lvl < level ? (
-                  <span class="bg-success text-success-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
-                    <Check className="size-4" />
-                  </span>
-                ) : lvl === level ? (
-                  <span class="bg-primary text-primary-foreground ring-primary/25 flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ring-4">
-                    {lvl}
-                  </span>
-                ) : (
-                  <span class="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
-                    <Lock className="size-3.5" />
-                  </span>
-                )}
-              </>
-            ))}
-          </div>
+            {/* Next upgrade — factual gap, no urgency (FR-013) */}
+            {next && (
+              <div class:list={childCard("3xl", "bg-success/5 p-5")}>
+                <p class="text-foreground text-lg font-extrabold">{t.start.nextUpgradeHeading}</p>
+                <div class="mt-3 flex items-center gap-4">
+                  <ShopGlyph art={next.art} icon={next.icon} className="size-16 shrink-0" />
+                  <div class="min-w-0 flex-1">
+                    <p class="text-foreground font-bold">{purchaseName(next)}</p>
+                    <p class="text-accent mt-0.5 font-extrabold">
+                      {t.start.amountZl.replace("{amount}", String(next.cost))}
+                    </p>
+                    {savingPercent !== null && (
+                      <div class="bg-secondary mt-2 h-2 w-full overflow-hidden rounded-full" aria-hidden="true">
+                        <div class="bg-success h-full rounded-full" style={`width: ${savingPercent}%`} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {showNext && <p class="text-muted-foreground mt-3 text-sm font-semibold">{nextText}</p>}
+              </div>
+            )}
 
-          {/* In-world tap prompt (coming-soon no-op until S-02+) */}
-          <div class="mt-8 flex justify-center">
-            <StartShiftButton client:load />
-          </div>
-
-          {/* Next-upgrade nudge — factual gap to the next upgrade (S-06, FR-013) */}
-          {showNext && <p class="text-muted-foreground mt-6 text-center text-sm font-semibold">{nextText}</p>}
-
-          {/* Spend the wallet: browse/choose upgrades (S-06) */}
-          <div class="mt-4 flex justify-center">
-            <a href="/app/upgrades" class:list={buttonVariants({ variant: "outline", size: "lg" })}>
+            {/* The one entry to the shop surface — always present, so the child can
+                spend even when every eligible upgrade is already owned. */}
+            <a href="/app/upgrades" class:list={[buttonVariants({ variant: "default", size: "lg" }), "w-full"]}>
               {t.start.upgradesLink}
             </a>
+
+            {/* Mid-session sibling handoff (S-11) — only when there's someone to switch to */}
+            {resolved.profileCount >= 2 && (
+              <a href="/app/pick-profile" class:list={[buttonVariants({ variant: "outline", size: "lg" }), "w-full"]}>
+                {t.picker.switchProfile}
+              </a>
+            )}
+
+            {/* Safety note (mockup's blue panel) */}
+            <div class="bg-primary/5 border-primary/15 flex gap-3 rounded-3xl border p-5">
+              <ShieldCheck className="text-primary size-6 shrink-0" />
+              <div>
+                <p class="text-foreground text-sm font-bold">{t.start.safetyTitle}</p>
+                <p class="text-muted-foreground mt-1 text-xs leading-snug">{t.start.safetyBody}</p>
+              </div>
+            </div>
           </div>
         </div>
-      ) : (
+      </AppShell>
+    ) : (
+      <div class="bg-background flex min-h-screen flex-col items-center px-4 py-10 sm:py-16">
         <EmptyStateCard />
-      )
-    }
-  </div>
+      </div>
+    )
+  }
 </Layout>

@@ -1,4 +1,6 @@
 // @ts-check
+import process from "node:process";
+
 import { defineConfig, envField } from "astro/config";
 
 import react from "@astrojs/react";
@@ -11,6 +13,13 @@ export default defineConfig({
   site: "https://matmaverse.ariom.cloud",
   output: "server",
   integrations: [react(), sitemap()],
+  // The dev toolbar is a fixed overlay anchored to the bottom-centre of the
+  // viewport — exactly where the mobile bottom nav lives. Below `lg` it sits ON
+  // TOP of the tab bar and swallows pointer events, so a real click on whichever
+  // tab happens to fall under it times out while the element itself reports
+  // visible and uniquely located. Playwright's dev server sets this flag; nothing
+  // else changes for ordinary `npm run dev`.
+  devToolbar: { enabled: process.env.ASTRO_DEV_TOOLBAR_DISABLED !== "true" },
   vite: {
     plugins: [tailwindcss()],
     server: {

@@ -1,22 +1,14 @@
 /**
  * Change-making generator + correctness logic (S-03). Pure and client-safe,
- * mirroring `src/data/counting-tasks.ts`. Reuses `tierForLevel` + `SCATTER_MAX`
- * from the counting module so the two task types share one level→tier mapping
- * and one layout threshold.
+ * mirroring `src/data/counting-tasks.ts`. Reuses `SCATTER_MAX` from the counting
+ * module so the two task types share one layout threshold, and drives its number
+ * bands from the same continuous difficulty scale (`src/data/adaptive.ts`) —
+ * `changeCapFor` / `paidMaxFor` replace the old per-tier lookups, reproducing
+ * them exactly at the tier anchors.
  */
 import type { ChangeMakingScenario, ChangeMakingTask } from "@/types";
-import { SCATTER_MAX, tierForLevel } from "@/data/counting-tasks";
-
-/**
- * Max change (paid − price) per tier — kept small so the child taps a manageable
- * number of coins. Tiers 1–2 are grades 1–2; tier 3 (S-08) widens the upper
- * cohort to ≤ 15. Strictly below the paid ceiling so a valid price (≥ 1) always
- * exists. First-guess, tunable.
- */
-export const CHANGE_CAP: Record<1 | 2 | 3, number> = { 1: 5, 2: 10, 3: 15 };
-
-/** Ceiling for the amount paid per tier. Tiers 1–2 = grades 1–2 (≤ 20); tier 3 (S-08) ≤ 30. */
-export const PAID_MAX: Record<1 | 2 | 3, number> = { 1: 10, 2: 20, 3: 30 };
+import { SCATTER_MAX } from "@/data/counting-tasks";
+import { TWO_STAGE_THRESHOLD, changeCapFor, clampDifficulty, clampToBand, paidMaxFor } from "@/data/adaptive";
 
 /** Coins offered beyond the change, so the child must stop at the right number. */
 const EXTRA_TRAY_MIN = 1;
@@ -41,31 +33,37 @@ function defaultPickTwoStage(): boolean {
   return Math.random() < STOCK_AND_CHANGE_RATE;
 }
 
-/** Clamp a picked value into an inclusive range and round it. */
+/** Draw from an inclusive range under the shared absolute-safe-bound clamp. */
 function pickIn(pick: (min: number, max: number) => number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, Math.round(pick(min, max))));
+  return clampToBand(pick(min, max), min, max);
 }
 
 /**
- * Build a change-making task for a child at `startingLevel`. Tier 3 (S-08)
- * occasionally delegates to the two-stage `stock_and_change` generator via
- * `pickTwoStage`; tiers 1–2 always get single-stage `give_change`. For
- * `give_change` the change is kept within the tier cap, the price is rolled so
- * `paid = price + change` never exceeds the band ceiling, and the tray offers a
- * few coins more than the change. `pick`/`pickTwoStage` are injectable for
- * deterministic tests.
+ * Build a change-making task at difficulty `d`. At or above
+ * `TWO_STAGE_THRESHOLD` (S-08) it occasionally delegates to the two-stage
+ * `stock_and_change` generator via `pickTwoStage`; below it, always single-stage
+ * `give_change`. For `give_change` the change is kept within `changeCapFor(d)`,
+ * the price is rolled so `paid = price + change` never exceeds `paidMaxFor(d)`,
+ * and the tray offers a few coins more than the change.
+ * `pick`/`pickTwoStage` are injectable for deterministic tests — and, from P4,
+ * for seeded client-side generation.
+ *
+ * The scenario gate was `difficultyTier === 3`, which made two-stage
+ * *structurally* unreachable below level 3. A threshold makes it reachable by
+ * drift, so the guarantee now rests on `ceilingForLevel(2) < TWO_STAGE_THRESHOLD`
+ * (asserted in `tests/adaptive.test.ts`) — see the constant's own note.
  */
 export function generateChangeMakingTask(
-  startingLevel: number,
+  difficulty: number,
   pick: (min: number, max: number) => number = defaultPick,
   pickTwoStage: () => boolean = defaultPickTwoStage,
 ): ChangeMakingTask {
-  const difficultyTier = tierForLevel(startingLevel);
-  if (difficultyTier === 3 && pickTwoStage()) {
-    return generateStockAndChangeTask(startingLevel, pick);
+  const d = clampDifficulty(difficulty);
+  if (d >= TWO_STAGE_THRESHOLD && pickTwoStage()) {
+    return generateStockAndChangeTask(d, pick);
   }
-  const change = pickIn(pick, 1, CHANGE_CAP[difficultyTier]);
-  const price = pickIn(pick, 1, PAID_MAX[difficultyTier] - change);
+  const change = pickIn(pick, 1, changeCapFor(d));
+  const price = pickIn(pick, 1, paidMaxFor(d) - change);
   const paid = price + change;
   const availableCount = Math.min(TRAY_CAP, change + pickIn(pick, EXTRA_TRAY_MIN, EXTRA_TRAY_MAX));
   const scenario: ChangeMakingScenario = "give_change";
@@ -78,15 +76,18 @@ export function generateChangeMakingTask(
     change,
     availableCount,
     arrangement: availableCount <= SCATTER_MAX ? "scatter" : "rows_of_5",
-    difficultyTier,
+    difficulty: d,
   };
 }
 
 /**
  * Per-stage ceilings for the two-stage `stock_and_change` scenario (S-08).
- * Deliberately below the tier-3 single-stage maxima — the difficulty is the
- * two-step structure, not a huge count — so each stage's tray stays comfortably
- * renderable (≤ 18 coins with the extra-tray margin). First-guess, tunable.
+ * Deliberately below the top single-stage maxima — the difficulty is the two-step
+ * structure, not a huge count — so each stage's tray stays comfortably renderable
+ * (≤ 18 coins with the extra-tray margin). Fixed, NOT functions of `d`: the
+ * scenario's own admission threshold is what scales it, and letting the per-stage
+ * numbers grow too would compound two difficulty sources into one task.
+ * First-guess, tunable.
  */
 export const STOCK_PRICE_MAX = 15;
 export const STOCK_CHANGE_MAX = 10;
@@ -94,15 +95,15 @@ export const STOCK_CHANGE_MAX = 10;
 /**
  * Build a two-stage "stock then sell" task (S-08): stage 1 counts `price` into
  * the register from a tray of `stockCount` (> price), stage 2 gives `change`
- * from `availableCount` (> change), with `paid = price + change`. Standalone in
- * Phase 2 — not reachable from the shift mixer until the Phase 3 turn-on.
- * `pick` is injectable for deterministic tests.
+ * from `availableCount` (> change), with `paid = price + change`. Reached from
+ * `generateChangeMakingTask` once `d >= TWO_STAGE_THRESHOLD`; `pick` is injectable
+ * for deterministic tests.
  */
 export function generateStockAndChangeTask(
-  startingLevel: number,
+  difficulty: number,
   pick: (min: number, max: number) => number = defaultPick,
 ): ChangeMakingTask {
-  const difficultyTier = tierForLevel(startingLevel);
+  const d = clampDifficulty(difficulty);
   const price = pickIn(pick, 1, STOCK_PRICE_MAX);
   const stockCount = Math.min(TRAY_CAP, price + pickIn(pick, EXTRA_TRAY_MIN, EXTRA_TRAY_MAX));
   const change = pickIn(pick, 1, STOCK_CHANGE_MAX);
@@ -120,7 +121,7 @@ export function generateStockAndChangeTask(
     stockCount,
     stockArrangement: stockCount <= SCATTER_MAX ? "scatter" : "rows_of_5",
     arrangement: availableCount <= SCATTER_MAX ? "scatter" : "rows_of_5",
-    difficultyTier,
+    difficulty: d,
   };
 }
 
