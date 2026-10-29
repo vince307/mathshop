@@ -1,0 +1,210 @@
+---
+import MarketingCta from "@/components/marketing/MarketingCta.astro";
+import MarketingPageShell from "@/components/marketing/MarketingPageShell.astro";
+import { t } from "@/i18n";
+
+const page = t.marketingPages.howItWorks;
+const steps = [
+  {
+    number: "1",
+    title: "Wybierz świat",
+    text: "Temat dopasowany do zainteresowań",
+    image: "/how-it-works/crops/step-1-world-card-reference.png",
+  },
+  {
+    number: "2",
+    title: "Rozwiąż zadanie",
+    text: "Matematyka w praktycznym kontekście",
+    image: "/how-it-works/crops/step-2-math-card-reference.png",
+  },
+  {
+    number: "3",
+    title: "Podejmij decyzję",
+    text: "Ceny, zakupy, zysk i wybory",
+    image: "/how-it-works/crops/step-3-decision-card-reference.png",
+  },
+  {
+    number: "4",
+    title: "Zobacz postęp",
+    text: "Raporty i kolejne poziomy",
+    image: "/how-it-works/crops/step-4-progress-card-reference.png",
+  },
+] as const;
+const benefits = [
+  {
+    title: "Realne umiejętności",
+    text: "Matematyka i ekonomia w praktyce.",
+    icon: "/how-it-works/cutouts/bottom-feature-real-skills-icon.png",
+  },
+  {
+    title: "Bezpieczne środowisko",
+    text: "Kontrola rodzica i ochrona na każdym kroku.",
+    icon: "/how-it-works/cutouts/bottom-feature-safe-icon.png",
+  },
+  {
+    title: "Światy, które motywują",
+    text: "Dziecko wybiera, działa i chce więcej.",
+    icon: "/how-it-works/cutouts/bottom-feature-worlds-icon.png",
+  },
+] as const;
+---
+
+<MarketingPageShell title={page.title} description={page.description} active="/jak-to-dziala">
+  <div class="how-page relative overflow-hidden">
+    <img
+      src="/how-it-works/cutouts/decor-top-dotted-path.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-20 left-[30%] hidden w-48 opacity-70 lg:block"
+    />
+    <img
+      src="/how-it-works/cutouts/decor-top-chart.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-28 left-[46%] hidden w-24 opacity-50 xl:block"
+    />
+    <img
+      src="/how-it-works/cutouts/decor-star-yellow-left.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-24 left-[32%] hidden w-8 lg:block"
+    />
+
+    <section class="grid items-center gap-8 pt-12 pb-10 lg:grid-cols-[0.88fr_1.12fr] lg:pt-14">
+      <div class="relative z-10 max-w-[650px] text-center lg:text-left">
+        <h1
+          class="text-[2.7rem] leading-[1.08] font-extrabold tracking-[-0.04em] text-[#07174f] sm:text-5xl xl:text-[4rem]"
+        >
+          Jak dziecko<br />uczy się przez <span class="text-primary">decyzje</span>
+        </h1>
+        <p class="text-muted-foreground mx-auto mt-6 max-w-[620px] text-lg leading-relaxed sm:text-xl lg:mx-0">
+          Zamiast suchych ćwiczeń dziecko działa w wybranym świecie: liczy, planuje, handluje i widzi skutki swoich
+          wyborów.
+        </p>
+        <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+          <a
+            href="/auth/signup"
+            class="bg-primary text-primary-foreground inline-flex min-h-14 items-center justify-center rounded-2xl px-7 text-base font-extrabold shadow-lg shadow-blue-200 transition hover:-translate-y-0.5"
+            >Rozpocznij naukę dziecka</a
+          ><a
+            href="/swiaty"
+            class="border-primary text-primary inline-flex min-h-14 items-center justify-center rounded-2xl border-2 bg-white/80 px-7 text-base font-extrabold transition hover:bg-white"
+            >Zobacz światy</a
+          >
+        </div>
+      </div>
+      <div class="relative mx-auto w-full max-w-[790px]" role="img" aria-label="Podgląd świata nauki MatmaVerse">
+        <img
+          src="/how-it-works/cutouts/hero-learning-world-composite.png"
+          alt=""
+          aria-hidden="true"
+          class="relative z-10 w-full drop-shadow-[0_28px_35px_rgba(49,102,166,0.22)]"
+        />
+      </div>
+    </section>
+
+    <section
+      class="relative z-10 rounded-[2rem] border border-blue-100 bg-white/90 px-4 py-6 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:px-6 lg:px-8"
+    >
+      <h2 class="px-2 text-2xl font-extrabold text-[#07174f] sm:text-3xl">Prosty rytm nauki</h2><div
+        class="mt-5 grid gap-4 lg:grid-cols-4"
+      >
+        {
+          steps.map((step, index) => (
+            <div class="relative flex flex-col">
+              <article class="h-full rounded-2xl border border-blue-100 bg-white p-3 shadow-sm">
+                <>
+                  <div class="flex items-center gap-2 px-1 pb-2 text-sm font-extrabold text-[#07174f]">
+                    <span class="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-full">
+                      {step.number}
+                    </span>
+                    {step.title}
+                  </div>
+                  <img
+                    src={step.image}
+                    alt=""
+                    aria-hidden="true"
+                    class="aspect-[1.55] w-full rounded-xl object-cover"
+                  />
+                  <p class="text-muted-foreground px-2 pt-2 text-center text-sm leading-snug">{step.text}</p>
+                </>
+              </article>
+              {index < steps.length - 1 && (
+                <span class="text-primary absolute top-1/2 -right-4 z-20 hidden text-3xl lg:block">→</span>
+              )}
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section
+      class="relative z-10 mt-6 rounded-[2rem] border border-blue-100 bg-[#eef7ff] px-5 py-7 shadow-sm sm:px-8 lg:px-10"
+    >
+      <div class="grid items-center gap-6 lg:grid-cols-[1fr_1.35fr]">
+        <div class="flex items-center gap-4">
+          <img
+            src="/how-it-works/crops/parent-dashboard-reference.png"
+            alt=""
+            aria-hidden="true"
+            class="hidden w-[48%] rounded-xl shadow-sm sm:block"
+          /><div>
+            <h2 class="text-2xl font-extrabold text-[#07174f]">Rodzic widzi postępy i bezpieczeństwo</h2><p
+              class="mt-2 leading-relaxed text-[#53658a]"
+            >
+              Jasne raporty pokazują, czego dziecko już się nauczyło i jak aktywnie działa.
+            </p>
+          </div>
+        </div><div class="grid gap-3 sm:grid-cols-2">
+          <img
+            src="/how-it-works/crops/parent-dashboard-skills-card.png"
+            alt="Umiejętności dziecka"
+            class="w-full rounded-xl bg-white shadow-sm"
+          /><img
+            src="/how-it-works/crops/parent-dashboard-activity-card.png"
+            alt="Aktywność dziecka"
+            class="w-full rounded-xl bg-white shadow-sm"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="relative z-10 mt-6 mb-10 overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-r from-[#eef7ff] to-[#f6fbff] px-6 py-8 sm:px-10"
+    >
+      <img
+        src="/how-it-works/cutouts/bottom-books-plant-coins.png"
+        alt=""
+        aria-hidden="true"
+        class="absolute bottom-0 left-0 hidden w-48 sm:block"
+      /><img
+        src="/how-it-works/cutouts/bottom-backpack-coins-plant.png"
+        alt=""
+        aria-hidden="true"
+        class="absolute right-0 bottom-0 hidden w-48 sm:block"
+      /><div class="relative mx-auto max-w-4xl">
+        <h2 class="text-center text-2xl font-extrabold text-[#07174f] sm:text-3xl">
+          Daj dziecku przewagę na przyszłość<br class="hidden sm:block" /> z nauką, która wciąga.
+        </h2><div class="mt-6 grid gap-4 sm:grid-cols-3">
+          {
+            benefits.map((benefit) => (
+              <article class="flex items-center gap-3">
+                <>
+                  <img src={benefit.icon} alt="" aria-hidden="true" class="size-12 shrink-0" />
+                  <div>
+                    <>
+                      <h3 class="text-sm font-extrabold text-[#07174f]">{benefit.title}</h3>
+                      <p class="text-muted-foreground mt-1 text-xs leading-snug">{benefit.text}</p>
+                    </>
+                  </div>
+                </>
+              </article>
+            ))
+          }
+        </div><div class="mt-7 text-center">
+          <MarketingCta heading="Załóż konto rodzica" description="To szybkie i bezpieczne." />
+        </div>
+      </div>
+    </section>
+  </div>
+</MarketingPageShell>

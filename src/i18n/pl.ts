@@ -191,11 +191,419 @@ export const pl = {
     },
   },
 
-  // Signed-out landing (`/`). No mockup exists for this route; the page reuses
-  // `marketing.*` (shared with the auth split view) plus this one product line.
+  // Signed-out landing (`/`) — copy follows the auth-v2 landing mockup while the
+  // product name remains MatmaVerse. Kept separate from `marketing.*` because
+  // the auth split view uses shorter, form-supporting messages.
   welcome: {
-    heroSubtitle:
-      "Dziecko prowadzi własny sklep: liczy monety, wydaje resztę i decyduje, w co zainwestować zarobek. Matematyka w praktyce, nigdy jako suche działanie.",
+    brandFirst: "Matma",
+    brandSecond: "Verse",
+    navigation: {
+      label: "Nawigacja strony głównej",
+      homeLabel: "MatmaVerse — strona główna",
+      openMenu: "Otwórz menu",
+      howItWorks: "Jak to działa",
+      worlds: "Światy",
+      forParent: "Dla rodzica",
+    },
+    hero: {
+      lineOne: "Matematyka, ekonomia",
+      lineTwo: "i handel",
+      accent: "przez zabawę",
+      description:
+        "Dziecko uczy się liczyć, planować i podejmować decyzje w bezpiecznych światach dopasowanych do wieku.",
+      previewLabel: "Podgląd świata MatmaVerse",
+      balancePreview: "126 zł",
+    },
+    cta: {
+      start: "Rozpocznij",
+      startFree: "Rozpocznij za darmo",
+      seeWorlds: "Zobacz światy",
+    },
+    features: [
+      { title: "6–9 lat", description: "Dopasowane poziomy trudności do wieku dziecka." },
+      { title: "Bez reklam", description: "Gwarantujemy naukę bez reklam i nieodpowiednich treści." },
+      { title: "Panel rodzica", description: "Pełna kontrola, raporty i bezpieczne ustawienia." },
+      { title: "Światy zainteresowań", description: "Wybierz świat dopasowany do pasji Twojego dziecka." },
+    ],
+    worlds: {
+      heading: "Światy, które uczą i angażują",
+      description: "Dziecko rozwija umiejętności matematyczne, ekonomiczne i społeczne w świecie, który je wciąga.",
+      carouselLabel: "Przewijana lista światów MatmaVerse",
+      previous: "Poprzednie światy",
+      next: "Następne światy",
+    },
+  },
+
+  marketingPages: {
+    footer: {
+      navigationLabel: "Nawigacja w stopce",
+      sectionLabel: "Stopka strony",
+      actionsLabel: "Główne akcje w stopce",
+      legalLabel: "Informacje prawne",
+      trustLabel: "Najważniejsze obietnice produktu",
+      safetyLabel: "Podsumowanie bezpieczeństwa",
+      kicker: "Bezpieczny start w MatmaVerse",
+      heading: "Stwórz pierwszy świat nauki dla swojego dziecka.",
+      description: "Rodzic zakłada konto, wybiera profil dziecka i uruchamia naukę w świecie, który naprawdę wciąga.",
+      startFree: "Rozpocznij za darmo",
+      seeWorlds: "Zobacz światy",
+      tagline: "Matematyka • Ekonomia • Przyszłość",
+      brandDescription:
+        "Webowa aplikacja edukacyjna, w której dziecko ćwiczy matematykę, decyzje i podstawy ekonomii w bezpiecznych światach zabawy.",
+      trustChips: ["6–9 lat", "Bez reklam", "Panel rodzica"],
+      columns: [
+        {
+          title: "Produkt",
+          links: [
+            { label: "Jak to działa", href: "/jak-to-dziala" },
+            { label: "Światy nauki", href: "/swiaty" },
+            { label: "Dla rodzica", href: "/dla-rodzica" },
+            { label: "Pierwszy świat", href: "/auth/signup" },
+          ],
+        },
+        {
+          title: "Konto",
+          links: [
+            { label: "Utwórz konto rodzica", href: "/auth/signup" },
+            { label: "Zaloguj się", href: "/auth/signin" },
+            { label: "Reset hasła", href: "/auth/reset-password" },
+            { label: "PIN rodzica", href: "/app/parent-pin" },
+          ],
+        },
+        {
+          title: "Bezpieczeństwo",
+          links: [
+            { label: "Brak reklam", href: "/dla-rodzica#brak-reklam" },
+            { label: "Raporty tygodniowe", href: "/dla-rodzica#raporty" },
+            { label: "Dopasowanie wieku", href: "/dla-rodzica#wiek" },
+            { label: "Kontrola trudności", href: "/dla-rodzica#trudnosc" },
+          ],
+        },
+      ],
+      safetyHeading: "Najpierw rodzic, potem nauka",
+      safetyDescription: "Dziecko nie rozpoczyna zabawy bez konta rodzica, profilu dziecka i ustawień bezpieczeństwa.",
+      copyright: "© {year} MatmaVerse. Projekt MVP web-first.",
+      legalLinks: [
+        { label: "Prywatność", href: "/privacy" },
+        { label: "Regulamin", href: "/terms" },
+        { label: "Kontakt", href: "/contact" },
+      ],
+    },
+    common: {
+      startFree: "Rozpocznij za darmo",
+      seeWorlds: "Poznaj wszystkie światy",
+    },
+    legal: {
+      shared: {
+        updated: "Ostatnia aktualizacja: 09.09.2026",
+        draft: "Projekt dokumentu MVP",
+        parentLanguage: "Język dla rodzica",
+        tocHeading: "Na tej stronie",
+      },
+      privacy: {
+        title: "Prywatność | MatmaVerse",
+        description: "Poznaj zasady prywatności i bezpieczeństwa danych dziecka w MatmaVerse.",
+        kicker: "Prywatność rodziny",
+        heading: "Prywatność i bezpieczeństwo danych dziecka.",
+        intro:
+          "Prosty, rodzicielski widok zasad: jakie dane są potrzebne, czego nie robimy i jak rodzic zachowuje kontrolę.",
+        summaryHeading: "Najważniejsze zasady",
+        summary: [
+          { icon: "✓", color: "#38b85b", title: "Bez reklam", body: "Brak profilowania reklamowego dziecka" },
+          { icon: "PIN", color: "#0967f6", title: "Kontrola rodzica", body: "Dostęp i ustawienia po stronie opiekuna" },
+          { icon: "i", color: "#ffb52f", title: "Jasne dane", body: "Tylko to, co potrzebne do nauki" },
+        ],
+        noticeTitle: "To jest projekt treści i układu dla MVP.",
+        noticeBody: "Finalna polityka prywatności powinna zostać sprawdzona prawnie przed publikacją produktu.",
+        sections: [
+          {
+            id: "jakie-dane",
+            title: "Jakie dane mogą być potrzebne?",
+            body: "MatmaVerse powinien zbierać tylko dane potrzebne do założenia konta rodzica, utworzenia profilu dziecka i zapisywania postępów edukacyjnych.",
+            pills: [
+              "Dane konta rodzica: e-mail, hasło i ustawienia bezpieczeństwa.",
+              "Profil dziecka: imię lub pseudonim, wiek i preferowany świat nauki.",
+              "Postępy: ukończone zadania, poziom trudności i raporty tygodniowe.",
+              "Ustawienia: reklamy wyłączone, PIN rodzica, zakres wieku i trudności.",
+            ],
+          },
+          {
+            id: "czego-nie-robimy",
+            title: "Czego aplikacja nie powinna robić?",
+            body: "Aplikacja nie powinna sprzedawać danych dzieci, kierować reklam do dziecka ani pozwalać dziecku samodzielnie zarządzać ustawieniami rodzica.",
+          },
+          {
+            id: "kontrola-rodzica",
+            title: "Kontrola rodzica",
+            body: "Rodzic powinien mieć możliwość aktualizacji profilu dziecka, zmiany poziomu trudności, pobrania lub usunięcia danych oraz zabezpieczenia panelu rodzica PIN-em.",
+          },
+          {
+            id: "przechowywanie-danych",
+            title: "Przechowywanie danych",
+            body: "Dane powinny być przechowywane tak długo, jak konto pozostaje aktywne albo jak wymaga tego obsługa produktu. Po usunięciu konta rodzic powinien otrzymać jasną informację, co zostanie usunięte i kiedy.",
+          },
+        ],
+        toc: ["Jakie dane zbieramy", "Czego nie robimy", "Kontrola rodzica", "Przechowywanie"],
+        sideCards: [
+          {
+            title: "Rodzic ma pierwszeństwo",
+            body: "Dziecko nie rozpoczyna nauki bez konta rodzica, profilu dziecka i podstawowych ustawień bezpieczeństwa.",
+          },
+          {
+            title: "Szybkie obietnice",
+            checks: [
+              "Bez reklam w doświadczeniu dziecka",
+              "Raporty i ustawienia dla rodzica",
+              "Język prosty i zrozumiały",
+            ],
+          },
+        ],
+      },
+      terms: {
+        title: "Regulamin | MatmaVerse",
+        description: "Poznaj zasady korzystania z MatmaVerse dla rodzica i dziecka.",
+        kicker: "Regulamin produktu",
+        heading: "Zasady korzystania z MatmaVerse.",
+        intro:
+          "Krótki, zrozumiały regulamin dla rodzica: konto, dostęp dziecka, światy nauki, bezpieczeństwo i odpowiedzialność.",
+        meta: "Aplikacja web-first",
+        summaryHeading: "Regulamin w skrócie",
+        summary: [
+          { icon: "1", color: "#0967f6", title: "Rodzic zakłada konto", body: "Dziecko działa w utworzonym profilu" },
+          { icon: "2", color: "#38b85b", title: "Nauka przez zadania", body: "Światy są kontekstem edukacyjnym" },
+          { icon: "3", color: "#7457e8", title: "Bezpieczne granice", body: "Ustawienia i PIN należą do rodzica" },
+        ],
+        noticeTitle: "To jest projekt treści, nie finalny dokument prawny.",
+        noticeBody:
+          "Przed publikacją regulamin powinien zostać dopasowany do modelu biznesowego, płatności i wymogów prawnych.",
+        sections: [
+          {
+            id: "konto",
+            title: "1. Konto rodzica",
+            body: "Korzystanie z aplikacji rozpoczyna rodzic lub opiekun. Konto rodzica pozwala utworzyć profil dziecka, ustawić poziom trudności, zarządzać bezpieczeństwem i przeglądać postępy.",
+          },
+          {
+            id: "profil-dziecka",
+            title: "2. Profil dziecka",
+            body: "Profil dziecka służy do dopasowania świata nauki, wieku, zadań i raportów. Dziecko korzysta z aplikacji w ramach ustawień zaakceptowanych przez rodzica.",
+          },
+          {
+            id: "swiaty-nauki",
+            title: "3. Światy nauki",
+            body: "Światy, takie jak piekarnia, kawiarnia, galaktyczna baza lub sklep kolekcjonera, są edukacyjnym kontekstem dla matematyki, planowania, prostych decyzji ekonomicznych i handlu.",
+            pills: [
+              "Zadania matematyczne w praktycznym kontekście.",
+              "Poziom trudności rośnie wraz z postępem.",
+              "Rodzic widzi raporty i ustawienia.",
+              "Gra nie zastępuje opieki ani szkoły.",
+            ],
+          },
+          {
+            id: "bezpieczenstwo",
+            title: "4. Bezpieczeństwo",
+            body: "Aplikacja powinna działać bez reklam kierowanych do dzieci i bez treści nieodpowiednich dla wieku. Dostęp do ustawień rodzica powinien być chroniony PIN-em lub innym mechanizmem bezpieczeństwa.",
+          },
+          {
+            id: "platnosci",
+            title: "5. Płatności i przyszłe funkcje",
+            body: "Jeśli w przyszłości pojawią się płatne plany, płatności powinny być dostępne wyłącznie dla rodzica. Dziecko nie powinno mieć możliwości samodzielnego dokonywania zakupów.",
+          },
+          {
+            id: "zmiany",
+            title: "6. Zmiany regulaminu",
+            body: "Rodzic powinien otrzymać jasną informację o istotnych zmianach zasad korzystania z produktu, szczególnie gdy dotyczą prywatności, płatności lub bezpieczeństwa dziecka.",
+          },
+        ],
+        toc: ["Konto rodzica", "Profil dziecka", "Światy nauki", "Bezpieczeństwo", "Płatności", "Zmiany"],
+        sideCards: [
+          {
+            title: "Najważniejsza reguła",
+            body: "Publiczne strony mogą pokazywać światy i mechanikę, ale realna nauka zaczyna się po utworzeniu konta rodzica i przejściu pierwszej konfiguracji.",
+          },
+          {
+            title: "Czytelne zasady",
+            body: "Krótkie bloki, spis treści i prosty język pomagają rodzicowi szybko odnaleźć najważniejsze informacje.",
+          },
+        ],
+      },
+      contact: {
+        title: "Kontakt | MatmaVerse",
+        description: "Skontaktuj się z zespołem MatmaVerse w sprawie konta, bezpieczeństwa, produktu lub współpracy.",
+        kicker: "Kontakt",
+        heading: "Masz pytanie o naukę, bezpieczeństwo albo konto?",
+        intro: "Napisz do zespołu MatmaVerse. Pomożemy w sprawach konta, produktu, bezpieczeństwa i współpracy.",
+        meta: ["Odpowiedź w dni robocze", "Wsparcie dla rodziców", "Bez konta też możesz zapytać"],
+        summaryHeading: "Najczęstsze tematy",
+        summary: [
+          { icon: "@", color: "#0967f6", title: "Konto rodzica", body: "Logowanie, rejestracja, PIN" },
+          { icon: "?", color: "#38b85b", title: "Jak działa nauka", body: "Światy, zadania, raporty" },
+          { icon: "★", color: "#ffb52f", title: "Współpraca", body: "Szkoły, partnerstwa, opinie" },
+        ],
+        methodsHeading: "Wybierz temat",
+        methods: [
+          {
+            icon: "@",
+            color: "#0967f6",
+            title: "Pomoc dla rodzica",
+            email: "hello@ariom.cloud",
+            body: "Logowanie, konto, bezpieczeństwo i pierwsze uruchomienie.",
+          },
+          {
+            icon: "✓",
+            color: "#38b85b",
+            title: "Pytania o produkt",
+            email: "hello@ariom.cloud",
+            body: "Mechanika nauki, światy, raporty i plan rozwoju MVP.",
+          },
+          {
+            icon: "★",
+            color: "#7457e8",
+            title: "Współpraca",
+            email: "hello@ariom.cloud",
+            body: "Szkoły, edukatorzy, testy z rodzicami i partnerstwa.",
+          },
+        ],
+        formHeading: "Formularz kontaktowy",
+        fields: {
+          name: "Imię",
+          namePlaceholder: "Kamil",
+          email: "E-mail",
+          emailPlaceholder: "rodzic@email.pl",
+          subject: "Temat",
+          subjectPlaceholder: "Chcę zapytać o pierwszy świat nauki",
+          message: "Wiadomość",
+          messagePlaceholder:
+            "Napisz, czego potrzebujesz. Im konkretniej opiszesz pytanie, tym łatwiej będzie nam pomóc.",
+        },
+        consent: "Zgadzam się na kontakt zwrotny w sprawie mojego zgłoszenia.",
+        submit: "Napisz wiadomość e-mail",
+        formNote: "Przycisk otworzy domyślny program pocztowy z przygotowaną wiadomością.",
+        quickHeading: "Szybkie odpowiedzi przed kontaktem",
+        quickBody:
+          "Jeśli chcesz najpierw sprawdzić mechanikę produktu, odwiedź strony „Jak to działa”, „Światy” oraz „Dla rodzica”. Formularz służy pytaniom, których te strony nie rozwiązują.",
+        safetyHeading: "Kontakt w sprawach bezpieczeństwa",
+        safetyBody:
+          "Pytania o prywatność, dane dziecka, reklamy, raporty i ustawienia rodzica traktujemy priorytetowo.",
+        sideTitle: "Przyjazny ton obsługi",
+        sideBody:
+          "Odpowiadamy spokojnie i konkretnie. Rodzic przychodzi tu często z pytaniem albo niepewnością, nie po marketing.",
+      },
+    },
+    howItWorks: {
+      title: "Jak to działa | MatmaVerse",
+      description: "Zobacz, jak MatmaVerse zamienia matematykę w prowadzenie własnego sklepu i codzienne decyzje.",
+      eyebrow: "Nauka przez działanie",
+      heading: "Matematyka, która dzieje się w prawdziwych decyzjach",
+      intro:
+        "Zamiast suchych działań dziecko prowadzi własny biznes: obsługuje klientów, liczy monety i decyduje, jak rozwijać swój świat.",
+      stepsHeading: "Od pierwszej monety do własnego świata",
+      steps: [
+        {
+          number: "01",
+          title: "Wybierz ulubiony świat",
+          description: "Piekarnia, kawiarnia, kosmiczna baza lub inny sklep staje się miejscem codziennej nauki.",
+        },
+        {
+          number: "02",
+          title: "Rozwiązuj zadania w historii",
+          description: "Każde działanie ma cel: wydać resztę, policzyć produkty albo zaplanować zakupy do sklepu.",
+        },
+        {
+          number: "03",
+          title: "Rozwijaj swój biznes",
+          description: "Zdobyte monety zmieniają sklep — pojawiają się nowe półki, produkty i dekoracje.",
+        },
+      ],
+      example: {
+        badge: "Przykładowa misja",
+        heading: "Klient kupuje sok za 6 zł",
+        description: "Płaci monetą 10 zł. Ile reszty powinien otrzymać?",
+        payment: "Zapłata klienta",
+        price: "Cena produktu",
+        result: "Reszta dla klienta",
+        paymentValue: "10 zł",
+        priceValue: "6 zł",
+        resultValue: "4 zł",
+        hint: "Matematyka prowadzi do konkretnego działania w sklepie.",
+      },
+      skillsHeading: "Jedna zabawa, wiele umiejętności",
+      skills: [
+        { title: "Liczenie", description: "Monety, produkty i ceny" },
+        { title: "Planowanie", description: "Zakupy i rozwój sklepu" },
+        { title: "Decyzje", description: "Wybory z widocznym skutkiem" },
+      ],
+      ctaHeading: "Gotowi otworzyć pierwszy sklep?",
+      ctaDescription: "Załóż konto rodzica i wybierz świat, który najbardziej zaciekawi Twoje dziecko.",
+    },
+    worlds: {
+      title: "Światy | MatmaVerse",
+      description: "Poznaj edukacyjne światy MatmaVerse i wybierz biznes dopasowany do zainteresowań dziecka.",
+      eyebrow: "Sześć pomysłów na własny biznes",
+      heading: "Każde zainteresowanie może stać się światem nauki",
+      intro:
+        "W każdym świecie dziecko ćwiczy te same ważne umiejętności, ale robi to w otoczeniu, które naprawdę je ciekawi.",
+      sameSkills: "Wspólne umiejętności",
+      sameSkillsDescription:
+        "Liczenie, wydawanie reszty, planowanie i podejmowanie decyzji rozwijają się w każdym świecie.",
+      cards: [
+        { description: "Piecz bułki, planuj zapasy i obsługuj poranny ruch klientów.", skill: "Ceny i zapasy" },
+        { description: "Przygotuj zamówienia, licz rachunki i rozwijaj przytulny lokal.", skill: "Rachunki i reszta" },
+        { description: "Zaopatruj załogę, organizuj misje i rozwijaj kosmiczny handel.", skill: "Planowanie misji" },
+        { description: "Kompletuj kolekcje, wyceniaj skarby i dbaj o zadowolenie klientów.", skill: "Wycena i wybory" },
+        {
+          description: "Twórz nowe produkty, dobieraj materiały i planuj pracę pracowni.",
+          skill: "Materiały i budżet",
+        },
+        { description: "Prowadź eksperymenty, kupuj składniki i inwestuj w wynalazki.", skill: "Koszty i inwestycje" },
+      ],
+      ctaHeading: "Który świat wybierze Twoje dziecko?",
+      ctaDescription: "Po utworzeniu profilu świat można zmienić bez utraty monet ani postępów.",
+    },
+    parent: {
+      title: "Dla rodzica | MatmaVerse",
+      description: "Poznaj bezpieczne środowisko MatmaVerse oraz sposób prezentowania postępów dziecka.",
+      eyebrow: "Spokój rodzica, swoboda dziecka",
+      heading: "Bezpieczna nauka i postępy, które łatwo zrozumieć",
+      intro:
+        "MatmaVerse daje dziecku przestrzeń do samodzielnej zabawy, a rodzicowi jasny obraz rozwoju — bez reklam, presji i niepotrzebnego zbierania danych.",
+      dashboardLabel: "Przykładowy podgląd postępów",
+      dashboard: {
+        heading: "Postępy w tym tygodniu",
+        shifts: "Ukończone zmiany",
+        accuracy: "Poprawne odpowiedzi",
+        growth: "Rozwój sklepu",
+        shiftsValue: "8",
+        accuracyValue: "86%",
+        growthValue: "+2",
+        chartLabel: "Aktywność w dniach tygodnia",
+        days: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
+      },
+      benefitsHeading: "Zaprojektowane z myślą o całej rodzinie",
+      benefits: [
+        {
+          title: "Zero reklam",
+          description: "Żadnych reklam, zakupów w aplikacji ani mechanizmów wywierających presję.",
+        },
+        {
+          title: "Minimum danych",
+          description: "Zbieramy wyłącznie e-mail rodzica. Profil dziecka nie wymaga danych identyfikujących.",
+        },
+        {
+          title: "Łagodne podejście",
+          description: "Błąd oznacza podpowiedź i kolejną próbę — nigdy karę ani utratę zdobytych monet.",
+        },
+        {
+          title: "Postęp przez praktykę",
+          description: "Rozwój widać w coraz bogatszym sklepie, a nie w oderwanych tabelach wyników.",
+        },
+      ],
+      securityHeading: "Dane i profile pozostają pod kontrolą rodzica",
+      securityDescription:
+        "Każde konto widzi wyłącznie własne profile dzieci. Sesje są chronione, a dostęp rodzica do wrażliwych działań wymaga dodatkowego potwierdzenia.",
+      securityPoints: ["Oddzielne profile rodzeństwa", "Szyfrowane połączenie", "Możliwość usunięcia konta i danych"],
+      ctaHeading: "Stwórz bezpieczne miejsce do nauki",
+      ctaDescription: "Założenie konta zajmuje chwilę. Potem dziecko może od razu wybrać swój pierwszy świat.",
+    },
   },
 
   // Create-first-child-profile wizard (S-01b). Placeholders {current}/{total}/{name}

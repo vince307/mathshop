@@ -1,0 +1,124 @@
+---
+import LegalPageShell from "@/components/marketing/LegalPageShell.astro";
+import { t } from "@/i18n";
+
+const page = t.marketingPages.legal.contact;
+---
+
+<LegalPageShell
+  title={page.title}
+  description={page.description}
+  kicker={page.kicker}
+  heading={page.heading}
+  intro={page.intro}
+  meta={page.meta}
+  summaryHeading={page.summaryHeading}
+  summary={page.summary}
+>
+  <section class="legal-contact-layout">
+    <article class="legal-contact-card">
+      <h2>{page.methodsHeading}</h2>
+      <div class="legal-contact-methods">
+        {
+          page.methods.map((method) => (
+            <div class="legal-contact-method">
+              <span class="legal-mini-icon" style={`--legal-icon-color:${method.color}`} aria-hidden="true">
+                {method.icon}
+              </span>
+              <div>
+                <h3>{method.title}</h3>
+                <p>
+                  <a href={`mailto:${method.email}`}>{method.email}</a>
+                  <br />
+                  {method.body}
+                </p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </article>
+
+    <article class="legal-form-card">
+      <h2>{page.formHeading}</h2>
+      <form id="contact-form">
+        <div class="legal-form-grid">
+          <div class="legal-field">
+            <label for="contact-name">{page.fields.name}</label>
+            <input
+              id="contact-name"
+              name="name"
+              autocomplete="name"
+              placeholder={page.fields.namePlaceholder}
+              required
+            />
+          </div>
+          <div class="legal-field">
+            <label for="contact-email">{page.fields.email}</label>
+            <input
+              id="contact-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder={page.fields.emailPlaceholder}
+              required
+            />
+          </div>
+          <div class="legal-field legal-field-full">
+            <label for="contact-subject">{page.fields.subject}</label>
+            <input id="contact-subject" name="subject" placeholder={page.fields.subjectPlaceholder} required />
+          </div>
+          <div class="legal-field legal-field-full">
+            <label for="contact-message">{page.fields.message}</label>
+            <textarea id="contact-message" name="message" placeholder={page.fields.messagePlaceholder} required
+            ></textarea>
+          </div>
+        </div>
+        <label class="legal-consent">
+          <input type="checkbox" name="consent" required />
+          <span>{page.consent}</span>
+        </label>
+        <button class="legal-submit" type="submit">{page.submit}</button>
+        <p class="legal-form-note">{page.formNote}</p>
+      </form>
+    </article>
+  </section>
+
+  <section class="legal-main-panel">
+    <article class="legal-content-card">
+      <section class="legal-section">
+        <h2>{page.quickHeading}</h2>
+        <p>{page.quickBody}</p>
+      </section>
+      <section class="legal-section">
+        <h2>{page.safetyHeading}</h2>
+        <p>{page.safetyBody}</p>
+      </section>
+    </article>
+    <aside class="legal-side-stack">
+      <section class="legal-side-card">
+        <h3>{page.sideTitle}</h3>
+        <p>{page.sideBody}</p>
+      </section>
+    </aside>
+  </section>
+</LegalPageShell>
+
+<script is:inline define:vars={{ recipient: page.methods[1].email }}>
+  const form = document.querySelector("#contact-form");
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+
+    const data = new FormData(form);
+    const subject = String(data.get("subject") ?? "");
+    const body = [
+      `Imię: ${String(data.get("name") ?? "")}`,
+      `E-mail: ${String(data.get("email") ?? "")}`,
+      "",
+      String(data.get("message") ?? ""),
+    ].join("\n");
+
+    window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+</script>

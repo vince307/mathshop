@@ -1,11 +1,28 @@
 ---
 change_id: auth-visual-fidelity
 title: Bring all six auth/onboarding screens up to mockup fidelity from the per-screen auth-v2 extraction
-status: impl_reviewed
+status: plan_reviewed
 created: 2026-08-29
-updated: 2026-08-30
+updated: 2026-09-04
 archived_at: null
 ---
+
+## Maintainer visual pass — 2026-09-04: REJECTED, see `fidelity-gaps.md`
+
+**A second plan now exists for the closing pass: `plan.md` (7 phases, RC1 → RC2 → RC3
+→ RC4 → screen 05 → screen 06 → mobile).** The nine-phase plan that produced the rejected
+state is kept verbatim as `plan-2026-08-29-initial.md` (and `plan-brief-2026-08-29-initial.md`)
+so its Progress rows and commit shas stay readable; `plan.md` and `plan-brief.md` are the
+closing pass.
+
+The maintainer reviewed the landed screens against the mockups and rejected the
+current state — the screens still do not read as `matmaverse-auth-v2`. The plan's
+Manual rows 4.6–9.8 are effectively FAILED for desktop. The full audit (root causes,
+per-screen gap lists, ready-to-use extraction assets, open decisions, verification
+recipe) is in **`fidelity-gaps.md`** in this folder — the closing session starts
+there. Two previously "accepted deviations" below (the shared AuthShell panel on
+screens 02/04, and the wizard-vs-mockup structure on 05) are overridden by that
+verdict.
 
 ## Notes
 

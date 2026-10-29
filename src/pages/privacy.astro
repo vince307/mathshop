@@ -1,0 +1,28 @@
+---
+import LegalContent from "@/components/marketing/LegalContent.astro";
+import LegalPageShell from "@/components/marketing/LegalPageShell.astro";
+import { t } from "@/i18n";
+
+const page = t.marketingPages.legal.privacy;
+const shared = t.marketingPages.legal.shared;
+---
+
+<LegalPageShell
+  title={page.title}
+  description={page.description}
+  kicker={page.kicker}
+  heading={page.heading}
+  intro={page.intro}
+  meta={[shared.draft, shared.updated, shared.parentLanguage]}
+  summaryHeading={page.summaryHeading}
+  summary={page.summary}
+>
+  <LegalContent
+    noticeIcon="i"
+    noticeTitle={page.noticeTitle}
+    noticeBody={page.noticeBody}
+    sections={page.sections}
+    toc={page.toc}
+    sideCards={page.sideCards}
+  />
+</LegalPageShell>

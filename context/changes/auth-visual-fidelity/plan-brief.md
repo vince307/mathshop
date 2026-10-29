@@ -1,93 +1,121 @@
-# Auth Visual Fidelity — Plan Brief
+# Auth Visual Fidelity — Closing Pass — Plan Brief
 
 > Full plan: `context/changes/auth-visual-fidelity/plan.md`
+> Specification (research is done): `context/changes/auth-visual-fidelity/fidelity-gaps.md`
+> Implementation notes and traps: `context/changes/auth-visual-fidelity/change.md`
+> The landed first plan: `context/changes/auth-visual-fidelity/plan-2026-08-29-initial.md`
 
 ## What & Why
 
-`/auth/signin` has the right structure but the wrong texture. Every region of mockup
-`01-parent-login-web` exists on the page, yet the illustrated 3D art the design leans on was
-substituted with 20px flat `lucide` glyphs, the desktop feature blocks carry card chrome the
-design does not have, the fields use a different field model, and the ambient background depth
-is absent. The result reads as the mockup's wireframe rather than the mockup. This change closes
-that gap on the auth surfaces and on the landing page that shares their vocabulary.
+The six auth/onboarding screens shipped with the right regions and the wrong texture, and
+the maintainer's visual pass on 2026-09-04 rejected them: *"to nadal nie wygląda tak jak na
+mockupie, a wszystkie elementy są wycięte i gotowe do użycia."* This plan closes that gap
+against the four systemic causes the audit isolated (flat SVGs where the mockups render
+soft-3D art; everything under-scaled so single-viewport designs scroll; screens 02 and 04
+wearing screen 01's panel; missing or outline-styled decoration) plus the two screens whose
+composition was never built — the child profile and the parent PIN.
 
 ## Starting Point
 
-`AuthShell.astro` (shared by all four auth pages) and `Welcome.astro` (the `/` landing) each
-hand-roll the same brand row, three feature cards and security footer — copy is shared through
-`t.marketing`, markup is duplicated. `FormField.tsx` backs all four auth forms with a
-label-above-input model. `public/illustrations/slice-map.md` records that the flat lucide glyphs
-were a **deliberate** choice ("visually faithful and keeps the asset set lean"). Two designed
-strings, `t.auth.signin.noAccount` and `t.auth.signup.hasAccount`, have existed since they were
-written and are referenced by nothing.
+Nine phases landed through `b6b34ed`. The structure is sound and one file
+(`src/data/marketing-art.ts`) owns every art path, which is what makes the art swap cheap.
+What ships today: 56 px fields where the mockup draws 76, a 44 px primary button where it
+draws 72, a 1152 px container inside a 1536 px design, a 2×3 world grid that pushes the
+security strip below the fold, one shared marketing panel on all four auth routes, three
+outline decorations, a three-step profile wizard and a single-input PIN card.
 
 ## Desired End State
 
-`/auth/signin` at desktop width reads as the mockup: illustrated feature blocks on the bare
-background, an illustrated login card with tall placeholder-only fields, a blue-bordered
-"Nie masz konta? **Utwórz konto**" button, a security panel, and ambient coins and chart art
-behind the content. `/` carries the same brand row, feature blocks and security panel from the
-same components. The other three auth screens inherit the new field model. Below `lg` every
-surface keeps the mobile mockup's carded feature treatment.
+At 1536×1024 each of the six routes is a screenshot of its mockup, region for region —
+rendered art, mockup-scale controls, its own left panel, its own scattered decoration, no
+scroll. `/app/new-profile` is one screen with app chrome; `/app/parent-pin` is the full
+onboarding page with segmented digit boxes and a static settings panel. Then the same pass
+at 390×844 against the mobile mockups.
 
 ## Key Decisions Made
 
-| Decision                       | Choice                                            | Why (1 sentence)                                                                                          |
-| ------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Art source                     | Copy SVGs as-is from `atomic-assets-v2`           | Vector, self-contained, no slicing or alpha-keying — the same move the upgrade icons already made (S-06).  |
-| Field-change blast radius      | Change shared `FormField` globally                | Mockup `02` uses the identical field model, so two parallel field styles would make signin and signup look like different products. |
-| Landing page                   | Extract shared marketing components               | Retires the existing `AuthShell`/`Welcome` duplication instead of paying its cost a second time.           |
-| Field labels                   | `sr-only`, placeholder carries the name           | Faithful to the mockup while keeping all fifteen `getByLabel` e2e locators working.                        |
-| Login-card illustration        | `lock-user.svg` at large scale                    | The mockup's leafy person-and-shield scene is not in the atomic pack, and slicing it would break the vector-only decision. |
-| Background decoration          | Coins + chart, no dashed arrow                    | 80% of the mockup's depth from assets already in the repo; the arrow is a curve fitted to one layout.      |
-| Feature copy                   | Web mockup wording                                | Web and mobile mockups disagree; the web set is what these surfaces are built to.                          |
-| Verification                   | Asset-existence tests + green suite, no VR shots  | Catches the failure classes that already happened here (dead string, missing file) without adding a brittle new test category. |
+| Decision | Choice | Why | Source |
+| --- | --- | --- | --- |
+| Art source | The extraction's `png/cutouts/`, copied byte-for-byte | The mockups render 3D; the flat `svg/icons/` set is what makes every screen read as a wireframe | Gaps (RC1) |
+| Group B icons | Unchanged, still inlined SVG | A gutter glyph and an eye toggle are UI chrome whose colour belongs to the context, not illustration | Plan |
+| Six worlds, four mockup tiles | One row of six compact full-bleed tiles | Two rows of mockup-sized tiles need 472 px and push the security strip past 1024; showing four would regress `e2e/marketing-worlds.spec.ts` | Plan |
+| Geometry | Measured off the mockups with PIL, not estimated | Card 571×768 at (899,138), fields 76 px, primary button 72 px — the plan carries the numbers so "parity" is checkable | Plan |
+| Per-screen panels | `AuthShell` gets a `panel` slot with today's content as fallback | Screens 01/03 change nothing; 02 and 04 supply their own, which is what their mockups draw | Gaps (RC3) |
+| Onboarding stepper | One shared component on 02, 05 and 06 | The collision that blocked it (the wizard's own three-step stepper) disappears when Phase 5 collapses the wizard | Gaps (open decision 7) |
+| Screen 05 wizard | Collapses to one screen; "Podsumowanie" dies with it | The mockup is one screen; open decision 6's default | Gaps |
+| Screen 05 age control | Native `<select>` | The mockup draws a dropdown, and `t.profileWizard.agePlaceholder` ("Wybierz wiek") was written for exactly it | Plan |
+| Screen 05 wallet chip | **Not built** | No wallet exists before a profile does; "126 zł" would be a false statement about the product, not a visual detail | Plan |
+| Fifth avatar | Cut from the mockup with the selection chrome painted out | The extraction's `avatar-boy-selected.png` carries a baked ring, a check badge and keying holes | Plan |
+| Screen 06 PIN | Four digit boxes that grow to six as the user types | Matches the mockup at rest without regressing the product's 4–6 contract; open decision 5's default | Gaps |
+| Screen 06 settings | Static, non-focusable rows with decorative toggles | No backing preferences exist; a disabled real control promises a setting the product does not have | Gaps (open decision 4) |
+| Sidebars on 05/06 | Static, non-navigating preview chrome, `aria-hidden` | Both routes run outside `AppShell`; open decision 3's default | Gaps |
+| "Pomiń na razie" | Links to `/app/start` | Skipping means simply not setting a PIN yet — a real state, since the gate only guards `/app/report` | Plan |
+| Product name | MatmaVerse, with the mockup's bicolour treatment | The mockups say "MathMarket"; only the two-tone lockup is adopted | CLAUDE.md |
 
 ## Scope
 
-**In scope:** six committed SVGs plus a typed art manifest and provenance record; shared
-`BrandRow` / `FeatureList` / `SecurityNote` components used by `AuthShell` and `Welcome`; the
-mockup field model in `FormField` (all four auth forms); the sign-in card's illustration, hero
-proportions, two-part secondary button and background decoration; feature copy aligned to the web
-mockup; one new asset test and one new e2e assertion.
+**In scope:** ~45 PNG/SVG cutouts committed and registered; the art registry and its test;
+the brand lockup; field/button/card/container geometry; the world strip; a panel slot plus
+`SignupPanel` and `ResetPanel`; a shared `OnboardingStepper`; per-screen decoration sets on
+all six routes; `/app/new-profile` rebuilt as one screen with a fifth avatar; `/app/parent-pin`
+rebuilt with segmented PIN entry, a settings panel and a footer; the e2e specs those two
+screens own; a no-scroll guard at 1536×1024; the mobile pass.
 
-**Out of scope:** rebuilding `/auth/signup` to mockup `02`'s 3-step wizard; reverting the world
-strip to four cards or swapping world art; renaming the brand to "MathMarket"; the mockup's
-dashed arrow decoration; Playwright visual-regression baselines; any change under `assets/`.
+**Out of scope:** the product name; signup's "Imię" field and terms checkbox; real settings
+behind screen 06's toggles; invented routes for the preview sidebars; `AppShell.astro`'s own
+brand lockup; `WorldPicker` and every child-facing screen; visual-regression baselines; any
+change under `assets/`.
 
 ## Architecture / Approach
 
-Art lands and is pinned first, so later phases reference paths that provably exist. A single
-`src/data/marketing-art.ts` owns every art path and keeps the feature icons index-aligned with
-`t.marketing.features` by construction — the same "second list drifted" bug class that once let
-the auth panel advertise four worlds while the app shipped six. Three new components under
-`src/components/marketing/` are consumed by both signed-out surfaces. `FormField` changes once
-and four screens follow. The sign-in card and page-level decoration come last, composing
-everything already in place.
+Art lands and is registered first, so every later phase references paths that provably
+exist. Then the cheap global levers (scale), then the per-screen panels, then decoration,
+then the two structural rebuilds, then mobile. Phases 1–4 are presentation-only and cannot
+break a test that is not about looks. Phases 5 and 6 are the only ones that touch behaviour,
+and each carries its own e2e rewrite — by the time they run, the shared vocabulary they
+should be built from already exists.
 
 ## Phases at a Glance
 
-| Phase                            | What it delivers                                                          | Key risk                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 1. Committed art and its register | Six SVGs in `public/`, art manifest, slice-map entry, asset test          | The retired slice-map note must actually be rewritten, not just appended to |
-| 2. Shared marketing components    | `BrandRow` / `FeatureList` / `SecurityNote` consumed by both surfaces     | Extraction silently drops the world strip from one surface               |
-| 3. The mockup's field model       | Tall placeholder-only fields with icon tiles across all four auth screens | A label that leaves the accessibility tree takes the whole e2e suite down |
-| 4. Sign-in card and composition   | Card illustration, two-part button, hero proportions, decorations         | Decorations overflowing into horizontal page scroll                      |
+| Phase | What it delivers | Key risk |
+| --- | --- | --- |
+| 1. Art (RC1) | ~45 cutouts committed and registered, registry repointed, 3D brand lockup | A keyed cutout placed on the page background shows its holes |
+| 2. Scale (RC2) | Mockup geometry everywhere; a no-scroll guard at 1536×1024 | Resizing `FormField` near the `sr-only` label that fifteen e2e locators depend on |
+| 3. Panels (RC3) | `panel` slot + `SignupPanel`, `ResetPanel`, shared `OnboardingStepper` | The `<h1>` must stay outside the `hidden lg:block` block or it names nothing below `lg` |
+| 4. Decoration (RC4) | Per-screen soft-3D decoration on all four auth routes | A decoration that overflows brings back the scrollbar or swallows a click |
+| 5. Screen 05 | One-screen profile form, app chrome, fifth avatar | `e2e/onboarding.spec.ts` drives the wizard being deleted |
+| 6. Screen 06 | Full onboarding page, segmented PIN, settings panel, footer | `getByLabel(...).fill()` cannot drive a segmented control; the six-digit case must survive |
+| 7. Mobile | The same pass at 390×844 across all six | Screens 05/06 have no mobile treatment yet at all |
 
-**Prerequisites:** `assets/` present locally (maintainer's machine only — Phase 1 cannot run in
-CI, a fresh clone, or a worktree); local Supabase stack up for the e2e gates in Phases 2–4.
-**Estimated effort:** ~2–3 sessions across 4 phases.
+**Prerequisites:** `assets/` present — the maintainer's machine only, so **work in the main
+checkout, never a worktree**; local Supabase up for the e2e gates; the sandbox override for
+anything touching localhost.
+**Estimated effort:** ~4–6 sessions across 7 phases; phases 5 and 6 are each about as large
+as phases 1–4 combined.
 
 ## Open Risks & Assumptions
 
-- **Phase 1 is machine-bound.** `assets/` is gitignored and absent everywhere but the maintainer's checkout. Phases 2–4 are safe anywhere once Phase 1's files are committed.
-- **The atomic SVGs are flat vectors, not 3D renders.** They match the mockup's palette and shapes but will read slightly flatter; the chart icon's bars are blue where the mockup's are gold. Accepted as the cost of staying vector.
-- **`sr-only` labels lose the field name once a value is typed** — the known cost of placeholder-as-label. Mitigated for the one case where it carried a rule (signup's 6-character minimum) by moving that to a persistent hint.
-- **The web and mobile mockups disagree on two feature descriptions.** Web wins; recorded in the plan so the difference is not later rediscovered as drift.
-- **This reverses a documented decision.** If the earlier "keep the asset set lean" reasoning still holds for someone, Phase 1 is the place to stop.
+- **Two cutouts fight their own keying.** `hero-parent-dashboard-desk.png` keeps a residual
+  opaque background and `top-security-shield.png` is holed; both sit on the page background
+  in their mockups. Each has a documented fallback (re-cut, or a backdrop), and either way
+  it lands in `slice-map.md`.
+- **Six worlds in one row is an extrapolation from a four-tile mockup.** Labels at ~118 px
+  may need two lines; the alternative arrangements either scroll or under-report the app.
+- **The fifth avatar is the second edited asset in this change.** The mockup draws it wearing
+  its selection chrome; the edit is recorded with its crop box.
+- **Two mockups disagree on one string** — the third onboarding step is "Zabezpieczenia" on
+  05 and "Bezpieczeństwo" on 06. One wins ("Bezpieczeństwo"); recorded, not rediscovered.
+- **The e2e baseline moves** from "1 skipped, 31 passed" to "1 skipped, 32 passed" at Phase 2.
+- Screen 03's "Otwórz pocztę" question (open decision 2) is answered visually only: the
+  mockup's primary/secondary hierarchy is matched, the resend keeps the page's real job.
 
 ## Success Criteria (Summary)
 
-- A parent opening `/auth/signin` sees the designed screen — illustrated, layered, with the security panel and the "Nie masz konta?" prompt — not its wireframe.
-- `/` and `/auth/signin` are visibly the same product, and share the components that make them so.
-- Nothing regresses: full unit and e2e suites green, every field still reachable and announced by name.
+- A parent opening any of the six routes at 1536×1024 sees the mockup — rendered art,
+  mockup-scale controls, the right panel, ambient depth — with no scrolling, and the same at
+  390×844.
+- Nothing regresses: full unit and e2e suites green, every field still reachable and
+  announced by name, one `<h1>` per route at every width, contrast ≥4.5:1 measured, no
+  inlined SVG carrying an `id`.
+- Every asset that ships is committed under `public/` and registered in `slice-map.md`, and
+  no code path resolves anything under `assets/`.

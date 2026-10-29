@@ -114,22 +114,22 @@ SVGs are byte-for-byte copies. `hero-email.png` and `hero-pin.png` are as-is cop
 files the extraction had already cut out — no crop, no resize, no re-encoding by us.
 `hero-reset.png` is the one exception and is documented below.
 
-| Output file                 | Source (under `assets/matmaverse-auth-v2-web/`)                            | What it is                                    |
-| --------------------------- | -------------------------------------------------------------------------- | --------------------------------------------- |
-| `brand-mark.svg`            | `00-shared-auth-assets/svg/icons/brand-shop-basket-coin.svg`                 | Shop front with a basket and a `zł` coin       |
-| `feature-safety.svg`        | `00-shared-auth-assets/svg/icons/feature-shield-check.svg`                   | "Bezpieczna nauka" — green check-shield        |
-| `feature-worlds.svg`        | `00-shared-auth-assets/svg/icons/feature-globe.svg`                          | "Światy zainteresowań" — blue globe            |
-| `feature-progress.svg`      | `00-shared-auth-assets/svg/icons/feature-child-progress.svg`                 | "Postępy dziecka" — rising bars                |
-| `hero-parent-security.svg`  | `00-shared-auth-assets/svg/icons/security-user-shield.svg`                   | Sign-in card header — parent beside a shield   |
-| `badge-check.svg`           | `00-shared-auth-assets/svg/icons/check-badge-blue.svg`                       | Blue circular tick — selected tiles, badges    |
-| `coin.svg`                  | `00-shared-auth-assets/svg/icons/coin-zl.svg`                                | Single `zł` coin, decorative                   |
-| `coin-stack.svg`            | `00-shared-auth-assets/svg/icons/coin-stack-zl.svg`                          | `zł` coin stack, decorative                    |
-| `decor-chart.svg`           | `00-shared-auth-assets/svg/decor/decor-chart-up.svg`                         | Pale rising bar chart, decorative              |
-| `decor-receipt.svg`         | `00-shared-auth-assets/svg/decor/decor-receipt-coins.svg`                    | Pale receipt and coins, decorative             |
-| `decor-path.svg`            | `00-shared-auth-assets/svg/decor/dotted-growth-path.svg`                     | Pale dotted arc with an arrow, decorative      |
-| `hero-email.png`            | `03-email-verification-extracted/png/cutouts/hero-email-confirmation.png`    | 430×400 — open envelope with a green tick      |
-| `hero-reset.png`            | `04-password-reset-extracted/png/cutouts/hero-reset-envelope-lock-large.png` | 402×264 — envelope, padlock shield, coins, plane — **edited, see below** |
-| `hero-pin.png`              | `06-parent-pin-security-extracted/png/cutouts/hero-pin-lock-shield.png`      | 244×190 — padlock beside a green check-shield  |
+| Output file                | Source (under `assets/matmaverse-auth-v2-web/`)                              | What it is                                                               |
+| -------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `brand-mark.svg`           | `00-shared-auth-assets/svg/icons/brand-shop-basket-coin.svg`                 | Shop front with a basket and a `zł` coin                                 |
+| `feature-safety.svg`       | `00-shared-auth-assets/svg/icons/feature-shield-check.svg`                   | "Bezpieczna nauka" — green check-shield                                  |
+| `feature-worlds.svg`       | `00-shared-auth-assets/svg/icons/feature-globe.svg`                          | "Światy zainteresowań" — blue globe                                      |
+| `feature-progress.svg`     | `00-shared-auth-assets/svg/icons/feature-child-progress.svg`                 | "Postępy dziecka" — rising bars                                          |
+| `hero-parent-security.svg` | `00-shared-auth-assets/svg/icons/security-user-shield.svg`                   | Sign-in card header — parent beside a shield                             |
+| `badge-check.svg`          | `00-shared-auth-assets/svg/icons/check-badge-blue.svg`                       | Blue circular tick — selected tiles, badges                              |
+| `coin.svg`                 | `00-shared-auth-assets/svg/icons/coin-zl.svg`                                | Single `zł` coin, decorative                                             |
+| `coin-stack.svg`           | `00-shared-auth-assets/svg/icons/coin-stack-zl.svg`                          | `zł` coin stack, decorative                                              |
+| `decor-chart.svg`          | `00-shared-auth-assets/svg/decor/decor-chart-up.svg`                         | Pale rising bar chart, decorative                                        |
+| `decor-receipt.svg`        | `00-shared-auth-assets/svg/decor/decor-receipt-coins.svg`                    | Pale receipt and coins, decorative                                       |
+| `decor-path.svg`           | `00-shared-auth-assets/svg/decor/dotted-growth-path.svg`                     | Pale dotted arc with an arrow, decorative                                |
+| `hero-email.png`           | `03-email-verification-extracted/png/cutouts/hero-email-confirmation.png`    | 430×400 — open envelope with a green tick                                |
+| `hero-reset.png`           | `04-password-reset-extracted/png/cutouts/hero-reset-envelope-lock-large.png` | 402×264 — envelope, padlock shield, coins, plane — **edited, see below** |
+| `hero-pin.png`             | `06-parent-pin-security-extracted/png/cutouts/hero-pin-lock-shield.png`      | 244×190 — padlock beside a green check-shield                            |
 
 ### `hero-reset.png` is the ONLY edited file, and the edit removes mockup text
 
@@ -169,7 +169,7 @@ Like `hero-email.png`, its white interior is keyed out, so it belongs on a card.
 ### The PNG cutouts are keyed by near-white removal — two of these have holes
 
 Composited on magenta, several of the extraction's cutouts turn out to have had their white
-*interior* content removed along with the white background: `hero-email-confirmation.png`
+_interior_ content removed along with the white background: `hero-email-confirmation.png`
 loses the letter inside the envelope, `hero-reset-card-top.png` loses its white card, and
 the same is true of `security-shield-card-icon.png`, `status-email-green.png`,
 `next-child-profile-icon.png`, `level-starting-icon.png`, `top-security-shield.png` and
@@ -189,21 +189,21 @@ Transcribed path-for-path from `assets/matmaverse-auth-v2-web/00-shared-auth-ass
 No file, so nothing lands in `public/` — the copy INTO the repo is the component source,
 which is what `CLAUDE.md`'s "commit the asset, never the reference" asks for.
 
-| Export                 | Source file                 | Derivation                                     |
-| ---------------------- | --------------------------- | ---------------------------------------------- |
-| `AuthEmailIcon`        | `auth-email.svg`            | verbatim (`currentColor` in source)             |
-| `AuthLockIcon`         | `auth-lock.svg`             | verbatim (`currentColor` in source)             |
-| `AuthLockFilledIcon`   | `auth-lock-filled.svg`      | verbatim (`currentColor` in source)             |
-| `AuthEyeIcon`          | `auth-eye.svg`              | verbatim (`currentColor` in source)             |
-| `AuthEyeOffIcon`       | `auth-eye.svg`              | **derived** — plus one diagonal slash           |
-| `AuthUserPlusIcon`     | `auth-user-plus.svg`        | verbatim (`currentColor` in source)             |
-| `AuthPaperPlaneIcon`   | `auth-paper-plane.svg`      | `#FFFFFF` stroke → `currentColor`               |
-| `AuthRefreshIcon`      | `auth-refresh.svg`          | `#0B6EFF` stroke → `currentColor`               |
-| `AuthArrowLeftIcon`    | `arrow-left.svg`            | `#0B6EFF` stroke → `currentColor`               |
-| `AuthArrowRightIcon`   | `arrow-right.svg`           | `#FFFFFF` stroke → `currentColor`               |
-| `AuthChevronRightIcon` | `chevron-right.svg`         | `#1A8F2A` stroke → `currentColor`               |
-| `AuthCalendarIcon`     | `calendar-age.svg`          | `#7EA2E8` stroke → `currentColor`               |
-| `AuthShieldCheckIcon`  | `feature-shield-check.svg`  | `#39c66a` fill → `currentColor`; tick stays `#fff` |
+| Export                 | Source file                | Derivation                                         |
+| ---------------------- | -------------------------- | -------------------------------------------------- |
+| `AuthEmailIcon`        | `auth-email.svg`           | verbatim (`currentColor` in source)                |
+| `AuthLockIcon`         | `auth-lock.svg`            | verbatim (`currentColor` in source)                |
+| `AuthLockFilledIcon`   | `auth-lock-filled.svg`     | verbatim (`currentColor` in source)                |
+| `AuthEyeIcon`          | `auth-eye.svg`             | verbatim (`currentColor` in source)                |
+| `AuthEyeOffIcon`       | `auth-eye.svg`             | **derived** — plus one diagonal slash              |
+| `AuthUserPlusIcon`     | `auth-user-plus.svg`       | verbatim (`currentColor` in source)                |
+| `AuthPaperPlaneIcon`   | `auth-paper-plane.svg`     | `#FFFFFF` stroke → `currentColor`                  |
+| `AuthRefreshIcon`      | `auth-refresh.svg`         | `#0B6EFF` stroke → `currentColor`                  |
+| `AuthArrowLeftIcon`    | `arrow-left.svg`           | `#0B6EFF` stroke → `currentColor`                  |
+| `AuthArrowRightIcon`   | `arrow-right.svg`          | `#FFFFFF` stroke → `currentColor`                  |
+| `AuthChevronRightIcon` | `chevron-right.svg`        | `#1A8F2A` stroke → `currentColor`                  |
+| `AuthCalendarIcon`     | `calendar-age.svg`         | `#7EA2E8` stroke → `currentColor`                  |
+| `AuthShieldCheckIcon`  | `feature-shield-check.svg` | `#39c66a` fill → `currentColor`; tick stays `#fff` |
 
 **Why two derivations.** Each hardcoded literal suits exactly the one place its mockup uses
 it; as `currentColor` the consumer sets the mockup's colour with a Tailwind class, which is
@@ -225,6 +225,51 @@ either table.
 product — the sidebar, the settings list, the four-box PIN and the mockups' four-world strip
 are all things this change deliberately does not build. See the change's
 `plan.md` § "What We're NOT Doing".
+
+## Shared public footer — 2026-09-09
+
+Copied as-is from the local-only footer extraction under
+`assets/matmaverse-auth-v2-web/00-footer-design/footer-extracted/`. These are the
+canonical component assets referenced by the footer design spec; no crop, resize
+or re-encoding was applied.
+
+| Output file                                                       | Source (under `footer-extracted/`)                      | What it is                              |
+| ----------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------- |
+| `public/footer/illustrations/footer-cta-illustration-cluster.png` | `png/illustrations/footer-cta-illustration-cluster.png` | Shield, family and coin CTA composition |
+| `public/footer/illustrations/footer-brand-mark.png`               | `png/illustrations/footer-brand-mark.png`               | Shop-and-coin brand mark                |
+| `public/footer/icons/cta-plus.svg`                                | `svg/icons/cta-plus.svg`                                | Primary CTA icon                        |
+| `public/footer/icons/cta-play-circle.svg`                         | `svg/icons/cta-play-circle.svg`                         | Worlds CTA icon                         |
+| `public/footer/icons/footer-lock-badge.svg`                       | `svg/icons/footer-lock-badge.svg`                       | Safety-card badge                       |
+| `public/footer/decor/footer-dashed-path.svg`                      | `svg/decor/footer-dashed-path.svg`                      | CTA path decoration                     |
+| `public/footer/decor/footer-stars.svg`                            | `svg/decor/footer-stars.svg`                            | CTA star decoration                     |
+
+## Landing hero CTA icons — 2026-09-12
+
+Vector-redrawn from the flattened source mockup
+`assets/matmaverse-auth-v2-web/00-landing-page-web.png` (1536×1024). The previous
+`public/landing/icons/cta-user-plus.svg` and `cta-play-circle.svg` were approximate
+lucide-like stand-ins; their geometry is **not** the source.
+
+The source design has no separate editable icon export in
+`assets/matmaverse-auth-v2-web/00-landing-page-web-extracted/`, so the icons were
+reconstructed from zoomed crops of the mockup:
+
+- primary CTA crop: `(98, 462, 148, 512)`,
+- secondary CTA crop: `(410, 466, 463, 519)`.
+
+`cta-user-plus.svg` is a filled white shape family: circular head, rounded torso and a
+separate heavy plus. It deliberately has no stroke. `cta-play-circle.svg` uses the
+mockup's filled blue triangle and thicker circular outline; the blue is normalized to
+`#0967F6`, matching the landing/public page palette.
+
+`src/components/Welcome.astro` renders both CTA icons in a `size-8` slot. The larger
+slot keeps the vector redraw visually aligned with the mockup once the preserved icon
+proportions and internal margins are scaled into the actual button.
+
+| Output file                                | Source crop from `00-landing-page-web.png` | Derivation                                      |
+| ------------------------------------------ | ------------------------------------------ | ----------------------------------------------- |
+| `public/landing/icons/cta-user-plus.svg`   | `(98, 462, 148, 512)`                      | Manually redrawn filled white user-plus icon    |
+| `public/landing/icons/cta-play-circle.svg` | `(410, 466, 463, 519)`                     | Manually redrawn blue outlined play-circle icon |
 
 ## Notes
 

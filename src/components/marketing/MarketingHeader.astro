@@ -1,0 +1,112 @@
+---
+import { Menu } from "lucide-react";
+import { t } from "@/i18n";
+
+interface Props {
+  active?: string;
+}
+
+const { active = Astro.url.pathname } = Astro.props;
+const { user } = Astro.locals;
+const items = [
+  { href: "/jak-to-dziala", label: t.welcome.navigation.howItWorks },
+  { href: "/swiaty", label: t.welcome.navigation.worlds },
+  { href: "/dla-rodzica", label: t.welcome.navigation.forParent },
+] as const;
+---
+
+<header class="relative z-40 flex items-center justify-between gap-4">
+  <a href="/" class="flex min-w-0 items-center gap-2 sm:gap-[15px]" aria-label={t.welcome.navigation.homeLabel}>
+    <img
+      src="/landing/cutouts/brand-mark.png"
+      alt=""
+      aria-hidden="true"
+      width="90"
+      height="78"
+      class="h-auto w-11 shrink-0 sm:w-[90px]"
+    />
+    <span class="min-w-0">
+      <span class="block text-xl leading-none font-extrabold tracking-tight sm:text-3xl">
+        <span class="text-primary">{t.welcome.brandFirst}</span><span class="text-[#19983b]"
+          >{t.welcome.brandSecond}</span
+        >
+      </span>
+      <span class="text-muted-foreground mt-1 hidden text-xs sm:block">{t.marketing.brandTagline}</span>
+    </span>
+  </a>
+
+  <nav
+    class="hidden items-center gap-8 text-[15px] font-bold text-[#07174f] lg:flex"
+    aria-label={t.welcome.navigation.label}
+  >
+    {
+      items.map((item) => (
+        <a
+          href={item.href}
+          aria-current={active === item.href ? "page" : undefined}
+          class:list={[
+            "border-b-2 py-2 transition-colors",
+            active === item.href ? "border-primary text-primary" : "hover:text-primary border-transparent",
+          ]}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+    {
+      !user && (
+        <a class="hover:text-primary border-b-2 border-transparent py-2 transition-colors" href="/auth/signin">
+          {t.nav.signIn}
+        </a>
+      )
+    }
+    <a
+      class="bg-primary text-primary-foreground rounded-xl px-6 py-3 shadow-lg shadow-blue-200 transition hover:-translate-y-0.5"
+      href={user ? "/app" : "/auth/signup"}
+    >
+      {user ? t.nav.app : t.welcome.cta.startFree}
+    </a>
+  </nav>
+
+  <div class="flex items-center gap-1 sm:gap-2 lg:hidden">
+    <details class="group relative">
+      <summary
+        class="flex size-11 cursor-pointer list-none items-center justify-center rounded-xl border border-blue-100 bg-white/80 text-[#07174f] shadow-sm [&::-webkit-details-marker]:hidden"
+      >
+        <span class="sr-only">{t.welcome.navigation.openMenu}</span>
+        <Menu className="size-5" aria-hidden="true" />
+      </summary>
+      <nav
+        class="absolute top-14 right-0 grid w-60 gap-1 rounded-2xl border border-blue-100 bg-white p-3 text-sm font-bold text-[#07174f] shadow-xl"
+      >
+        {
+          items.map((item) => (
+            <a
+              href={item.href}
+              aria-current={active === item.href ? "page" : undefined}
+              class:list={[
+                "rounded-xl px-4 py-3",
+                active === item.href ? "text-primary bg-blue-50" : "hover:text-primary hover:bg-blue-50",
+              ]}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+        {
+          !user && (
+            <a class="hover:text-primary rounded-xl px-4 py-3 hover:bg-blue-50" href="/auth/signin">
+              {t.nav.signIn}
+            </a>
+          )
+        }
+      </nav>
+    </details>
+    <a
+      href={user ? "/app" : "/auth/signup"}
+      class="bg-primary text-primary-foreground rounded-xl px-3 py-3 text-xs font-bold shadow-md shadow-blue-200 sm:px-4 sm:text-sm"
+    >
+      {user ? t.nav.app : t.welcome.cta.start}
+    </a>
+  </div>
+</header>
