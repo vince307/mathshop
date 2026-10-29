@@ -262,8 +262,8 @@ The child encounters both rules continuously: every shift is in-world math (Rule
 
 ## Open Questions
 
-1. **v1 budget risk (build-cost creep).** Even as the lead tranche, the economy scope grew during shaping: keeping **all 4 upgrade-requirement types** (FR-010) makes the **skill-path load-bearing** (FR-015), and the **parent weekly report was promoted to must-have** (FR-016). Watch this in `/10x-plan` — if the lead tranche is too big to plan cleanly, the natural split is (a) economy loop [wallet + catalog + choose-upgrade + visible/functional growth], then (b) skill-path-as-gate + parent report. Owner: user. Block: no.
-2. **Tranche ordering.** The Timeline & delivery model lists a rough order (multi-world · grade-3 · pricing/inventory · audio · theme · richer report). Final ordering + dependencies are the roadmap's job (`/10x-roadmap`). Owner: user/roadmap. Block: no.
+1. **v1 budget risk (build-cost creep).** Even as the lead tranche, the economy scope grew during shaping: keeping **all 4 upgrade-requirement types** (FR-010) makes the **skill-path load-bearing** (FR-015), and the **parent weekly report was promoted to must-have** (FR-016). Watch this in `/plan` — if the lead tranche is too big to plan cleanly, the natural split is (a) economy loop [wallet + catalog + choose-upgrade + visible/functional growth], then (b) skill-path-as-gate + parent report. Owner: user. Block: no.
+2. **Tranche ordering.** The Timeline & delivery model lists a rough order (multi-world · grade-3 · pricing/inventory · audio · theme · richer report). Final ordering + dependencies are the roadmap's job (`/roadmap`). Owner: user/roadmap. Block: no.
 3. **Skill-path signal source.** FR-015 derives skill progress from mission attempts; the exact competency taxonomy + progress function is a planning detail. The MathMarket docs suggest math / money / decisions / inventory / profit — v1 needs only the subset the lead-tranche upgrade gates reference. Owner: planning. Block: no.
 
 ## Forward: tech-stack

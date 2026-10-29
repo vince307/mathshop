@@ -46,7 +46,7 @@ atomic asset pack `assets/atomic-assets-v2/png/worlds/` (gitignored). Both carry
 identifies them as the missing two of the PRD's six worlds.
 
 Committed here because `assets/` is gitignored and therefore absent from a fresh
-clone, from CI, and from the git worktrees `/10x-autonomous-run` builds — code that
+clone, from CI, and from agent worktrees — code that
 needs this art cannot reach the source.
 
 | Output file               | Source (`assets/atomic-assets-v2/png/worlds/`) | World        | Resize                |

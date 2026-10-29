@@ -255,18 +255,18 @@ What's in place as of `2026-07-01` (verified). Foundations/slices below assume t
 
 **This section is closed.** Every roadmap item above (F-01, S-01…S-13) is `done`
 and archived under `context/archive/`, so the handoff table that used to live here
-— which still advertised S-05, S-08, S-11 and S-12 as "ready for `/10x-plan`" —
+— which still advertised S-05, S-08, S-11 and S-12 as "ready for `/plan`" —
 was removed on 2026-08-26 rather than reconciled: it duplicated the `## At a glance`
 index row for row, and its only unique column was the stale one.
 
-**Future work does not come from this file.** The single input to `/10x-plan` and
-to `/10x-autonomous-run` is now `context/foundation/backlog.md`. This roadmap stays
+**Future work does not come from this file.** The single input to `/plan` and
+to `/autonomous-run` is now `context/foundation/backlog.md`. This roadmap stays
 as the record of the v3 re-baseline, not as a queue.
 
 ## Open Roadmap Questions
 
 1. **New-surface art + mockups are local-only.** The v3 progression assets and the 5 "missing screens" mockups (world-progression, upgrades, mission-result, product-unlocked, parent-weekly-report) are the design source of truth but are gitignored / not in the repo. Owner: maintainer. Block: no — but any CI/cloud-agent session on S-06/S-09/S-13 needs them supplied (degrade to a described target otherwise).
-2. **Lead-tranche split if S-06 is too big to plan.** Keeping cost+level+skill+task-history gates makes S-06 + S-07 heavy. If `/10x-plan spendable-funds-wallet`→`upgrade-choice-and-growth` reveals S-06 is too large, split it: (a) catalog + choose-UI + visible growth, then (b) functional unlock. Owner: planning. Block: no.
+2. **Lead-tranche split if S-06 is too big to plan.** Keeping cost+level+skill+task-history gates makes S-06 + S-07 heavy. If `/plan spendable-funds-wallet`→`upgrade-choice-and-growth` reveals S-06 is too large, split it: (a) catalog + choose-UI + visible growth, then (b) functional unlock. Owner: planning. Block: no.
 3. **Tranche ordering for the deferred set.** The Parked future tranches (multi-world, grade-3, pricing/inventory, audio, 2nd theme, richer report) need their own FRs (re-shape / PRD) before they can be sliced. Order + dependencies TBD when the economy tranche lands. Owner: user. Block: no.
 4. **"Spend feels like loss" mitigation is unvalidated.** The wallet + owned-upgrades framing is the chosen mitigation; validate with real children and iterate. Owner: user (kid-testing). Block: no.
 

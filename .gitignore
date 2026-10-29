@@ -58,3 +58,6 @@ context/team/*
 !context/team/code-review-dod.md
 docs/superpowers/
 outputs/
+
+# Local skill lockfile
+skills-lock.json

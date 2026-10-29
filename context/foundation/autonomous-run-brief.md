@@ -39,13 +39,13 @@ Efekt: gałąź `matmaverse-v2`, `main` nietknięty.
 ### 2.1 Łańcuch
 
 ```
-/10x-new        → change.md
-/10x-research   → research.md
-/10x-plan       → plan.md (+ ## Progress)
-/10x-plan-review→ reviews/plan-review.md   (+ triaż wprowadzany do plan.md)
-/10x-implement  → kod + commity per faza + odhaczone wiersze Progress
-/10x-impl-review→ reviews/impl-review.md + follow-ups/review-fixes.md
-/10x-e2e        → specki, tylko gdy ryzyko jest naprawdę przeglądarkowe
+/new        → change.md
+/research   → research.md
+/plan       → plan.md (+ ## Progress)
+/plan-review→ reviews/plan-review.md   (+ triaż wprowadzany do plan.md)
+/implement  → kod + commity per faza + odhaczone wiersze Progress
+/impl-review→ reviews/impl-review.md + follow-ups/review-fixes.md
+/e2e        → specki, tylko gdy ryzyko jest naprawdę przeglądarkowe
 ```
 
 Wyjście każdego kroku jest wejściem następnego. **Nie wolno tego skracać** — dwa razy w
@@ -68,12 +68,12 @@ i podejmuje decyzje międzyfunkcyjne, których żaden pojedynczy agent nie widzi
 
 ---
 
-## 3. Adaptacje, bez których skille 10x nie działają autonomicznie
+## 3. Adaptacje, bez których skille nie działają autonomicznie
 
 To jest najważniejsza sekcja tego dokumentu.
 
-1. **Zakaz `AskUserQuestion`.** Skille 10x są projektowane pod człowieka: pytają o zakres,
-   oferują interaktywny triaż, a `/10x-new` wprost mówi „STOP i czekaj". W trybie
+1. **Zakaz `AskUserQuestion`.** Skille są projektowane pod człowieka: pytają o zakres,
+   oferują interaktywny triaż, a `/new` wprost mówi „STOP i czekaj". W trybie
    autonomicznym każdy agent dostaje nadpisanie: **zdecyduj sam, zapisz decyzję pod
    `## Autonomous decisions` wraz z uzasadnieniem i warunkiem odwrócenia.**
    Warunek odwrócenia jest kluczowy — pozwala maintainerowi obalić decyzję jednym zdaniem
@@ -187,7 +187,7 @@ zgłaszania defektów w planach sąsiednich.**
 
 Te pytania są otwarte i wymagają rozstrzygnięcia, zanim powstanie workflow:
 
-1. **Forma.** Skill (`/10x-autonomous-run`), skrypt `Workflow`, czy zestaw szablonów +
+1. **Forma.** Skill (`/autonomous-run`), skrypt `Workflow`, czy zestaw szablonów +
    instrukcja dla orkiestratora? Skrypt daje determinizm, skill daje elastyczność.
 2. **Czyszczenie kontekstu.** Utrwalić model „każdy krok = świeży podagent"? To jedyny
    sposób bez człowieka, ale wymusza dyscyplinę handoffu.

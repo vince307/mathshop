@@ -11,7 +11,7 @@ checkpoint:
   phases_completed: []
   gray_areas_resolved:
     - topic: "artifact destination"
-      decision: "Tranche notes at this scoped path; shape-notes.md and prd-v3.md stay untouched as the governing product shape. Output is a P2 design spec (sibling of the P1+P3 spec), then /10x-new -> /10x-plan. Not a prd-v4."
+      decision: "Tranche notes at this scoped path; shape-notes.md and prd-v3.md stay untouched as the governing product shape. Output is a P2 design spec (sibling of the P1+P3 spec), then /new -> /plan. Not a prd-v4."
     - topic: "sequencing vs telemetry"
       decision: "PARKED 2026-08-26 by the maintainer, at Phase 1. P2 waits for real telemetry. The Socrates challenge raised in Phase 1 - that the low-ceiling argument is arithmetic on constants, never observed on a child - was accepted as blocking. Investigating what 'collect data first' required then surfaced the real blocker: production runs `main`, and the telemetry code is on an unpushed branch. See '## Why this is parked' below."
     - topic: "scope boundary vs backlog B3"

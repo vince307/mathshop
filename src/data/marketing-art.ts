@@ -5,7 +5,7 @@
  * Every file listed here was copied **as-is** out of the local-only, gitignored
  * per-screen extraction `assets/matmaverse-auth-v2-web/` into
  * `public/illustrations/auth/`, because `assets/` is absent from a fresh clone,
- * from CI, and from the worktrees `/10x-autonomous-run` builds — code that needs
+ * from CI, and from agent worktrees — code that needs
  * the art cannot reach the source. Provenance table:
  * `public/illustrations/slice-map.md`.
  *

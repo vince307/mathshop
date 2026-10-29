@@ -1,8 +1,6 @@
-# 10x Astro Starter
+# MatmaVerse
 
-![](./public/template.png)
-
-A modern, opinionated starter template for building fast, accessible web applications.
+A Polish-language web app that teaches math to children aged 6–9 by letting them run a small shop. Production: https://matmaverse.ariom.cloud
 
 ## Tech Stack
 
@@ -23,8 +21,8 @@ A modern, opinionated starter template for building fast, accessible web applica
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+git clone https://github.com/vince307/mathshop.git
+cd mathshop
 ```
 
 2. Install dependencies:

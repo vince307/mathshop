@@ -6,8 +6,8 @@ governing_prd: context/foundation/prd-v3.md
 created: 2026-08-26
 updated: 2026-08-27
 status: shaping-complete — D-1…D-10 closed 2026-08-27, reopened the same day for a game-economy literature benchmark and closed again at D-13; spec + backlog E1/W1 propagated 2026-08-27
-skill: 10x-shape (scoped to this file — see D-2)
-consumed_by: docs/superpowers/specs/ -> backlog.md ## Ready -> /10x-autonomous-run
+skill: shape (scoped to this file — see D-2)
+consumed_by: docs/superpowers/specs/ -> backlog.md ## Ready -> /autonomous-run
 ---
 
 # World expansion + purchase catalogue + virtual economy — brainstorm notes
@@ -19,7 +19,7 @@ the first. Opened 2026-08-26, closed 2026-08-27, reopened 2026-08-27.
 
 The framing below (verified baseline, PRD constraints, the four-layer
 decomposition, D-1) came out of one `superpowers:brainstorming` session. **D-2
-moved this work onto the 10x chain**, and the `/10x-shape` discovery loop then ran
+moved this work onto the skill chain**, and the `/shape` discovery loop then ran
 to the end, scoped to this file: D-3 through D-10 close every question the `##
 Open` section raised. Each was put to the user as a decision and answered by them;
 none was inferred.
@@ -28,7 +28,7 @@ none was inferred.
 sibling of `2026-08-24-adaptive-task-engine-design.md`. It transcribes D-3–D-10;
 it does not re-open them. **It predates D-11 and does not yet carry it** — the
 exact propagation is tabulated at the end of D-11. Then `## Ready` entries in
-`context/foundation/backlog.md`, then `/10x-autonomous-run`.
+`context/foundation/backlog.md`, then `/autonomous-run`.
 
 Read `## The design in one place` for the result; the D-numbered sections carry
 the reasoning and the rejected alternatives.
@@ -126,31 +126,31 @@ reward *for* fluency with money, not a way around it.
 Rejected: option A (every effect must add practice), because the new *kinds* of
 practice it needs are exactly P2, which is parked.
 
-### D-2 (2026-08-26) — the 10x chain, targeting an autonomous run
+### D-2 (2026-08-26) — the skill chain, targeting an autonomous run
 
-Process decision. This work is developed with the **10x skills**, not
-`superpowers:brainstorming`, and it is aimed at `/10x-autonomous-run`:
+Process decision. This work is developed with the **workflow skills**, not
+`superpowers:brainstorming`, and it is aimed at `/autonomous-run`:
 
 ```
-/10x-shape  (scoped to THIS file, not the canonical shape-notes.md)
+/shape  (scoped to THIS file, not the canonical shape-notes.md)
    → tranche spec in docs/superpowers/specs/
    → ## Ready entries in context/foundation/backlog.md
-   → /10x-autonomous-run
+   → /autonomous-run
 ```
 
 **Why a tranche spec and not a `prd-v4`.** This is the path the adaptive task
 engine took — a feature with a new table, an RLS contract and a new difficulty
 model shipped as `docs/superpowers/specs/2026-08-24-adaptive-task-engine-design.md`
-→ `/10x-new` → `/10x-plan`, with no new PRD. `prd-v3.md` stays the governing
-document and takes no churn. A full `/10x-prd` → `prd-v4` re-baseline was
+→ `/new` → `/plan`, with no new PRD. `prd-v3.md` stays the governing
+document and takes no churn. A full `/prd` → `prd-v4` re-baseline was
 considered and rejected as heavier than this tranche needs; revisit only if the
 earnings-rule change turns out to invalidate v3's economy FRs outright.
 
-**Why scoped and not canonical.** `/10x-shape` gates on
+**Why scoped and not canonical.** `/shape` gates on
 `context/foundation/shape-notes.md`, which holds the completed v3 re-baseline
 session (phase 8, accepted) and is the source of `prd-v3.md`. Writing here keeps
-it untouched. The cost is that `/10x-prd` will not auto-route to this file — which
-is fine, because D-2 does not route to `/10x-prd` at all.
+it untouched. The cost is that `/prd` will not auto-route to this file — which
+is fine, because D-2 does not route to `/prd` at all.
 
 ### D-3 (2026-08-27) — a world is a skin over one shared mechanical spine
 
@@ -907,20 +907,20 @@ week, minutes per session), because it is unmeasured, it is not what the economy
 is a function of, and reasoning about elapsed time is the doorway to the timer
 mechanics PRD v3 bans.
 
-### What `/10x-autonomous-run` requires — [V] read from the skill, 2026-08-26
+### What `/autonomous-run` requires — [V] read from the skill, 2026-08-26
 
 The run's intake is `context/foundation/backlog.md` § `## Ready`, and it
 **refuses anything under `## Needs shaping` or `## Parked`** — "a run would invent
 the product content that is deliberately missing". So the whole job of this
 brainstorm, mechanically, is to turn its output into entries that clear the
-backlog's own bar: *"an outsider could take this entry to `/10x-new` today"*,
+backlog's own bar: *"an outsider could take this entry to `/new` today"*,
 each carrying an id, a value/cost line, a migration answer, `[V]`/`[I]`-tagged
 claims, and the open decision a planner would otherwise invent.
 
 Preflight the run also demands (Step 0–1): a clean tree, no stale worktrees, a
 green baseline (`lint`, `check`, `test`, `playwright`) measured on the base
 branch, Supabase up, no stray dev server, and
-`.claude/skills/10x-autonomous-run/scripts/validate-rule-files.sh` green — last
+`.claude/skills/autonomous-run/scripts/validate-rule-files.sh` green — last
 run 2026-08-26: **PASS, 77 paths, 0 missing**.
 
 ## Open — closed 2026-08-27, extended by the literature benchmark the same day
@@ -1000,15 +1000,15 @@ both pure and imported by client and server alike.
 
 ## Quality cross-check — 2026-08-27
 
-Run against `/10x-shape`'s brownfield bar, adapted: this is a **scoped tranche**
-whose handoff is a spec in `docs/superpowers/specs/`, not `/10x-prd` (D-2).
+Run against `/shape`'s brownfield bar, adapted: this is a **scoped tranche**
+whose handoff is a spec in `docs/superpowers/specs/`, not `/prd` (D-2).
 
 | Element | Status |
 |---|---|
 | Access control | **present — no change.** No new table, no new route, no RLS surface. `shop_state` is existing jsonb on `child_profiles`; per-account isolation is untouched. |
 | Business logic (one sentence) | **present.** *A shift's profit is its revenue minus the cost of running the shop, and every purchasable effect is gated by the ability it pays for.* |
 | Project artifacts | present — this file. |
-| Timeline-cost acknowledged | **absent — deliberately.** The tranche is aimed at `/10x-autonomous-run` (D-2), which is unattended, so an after-hours week estimate is not the governing frame. Recorded as a known gap rather than a silent one. |
+| Timeline-cost acknowledged | **absent — deliberately.** The tranche is aimed at `/autonomous-run` (D-2), which is unattended, so an after-hours week estimate is not the governing frame. Recorded as a known gap rather than a silent one. |
 | Non-Goals | **present.** PRD v3 §Non-Goals inherited verbatim, plus the rejections recorded inside D-3 through D-13 (per-world economies, a terminating economy, world-as-purchase, `d`-keyed gates, profit-keyed levels, a global decoration list, a wall-clock pacing model). **One rejection was reversed:** D-4's "no purely decorative entry" is overturned by D-11 — decorative entries are legal again, outside the catalogue and outside the cost basis. |
 | Preserved behaviour | **present and load-bearing.** FR-008 wallet monotonicity; `pl.ts:204–205` world-carry-over copy stays literally true; `canBuy`'s no-retro-lock property; `MAX_SHIFT_TASKS = 17`; no migration. |
 
