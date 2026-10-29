@@ -192,6 +192,14 @@ Review a branch:
 git diff main...HEAD | npx --prefix packages/code-reviewer tsx packages/code-reviewer/review.ts
 ```
 
+The PR gate built on it (`.github/workflows/review.yml`) is **switched off** since 2026-10-29: the workflow is disabled in GitHub and `review` is no longer a required check on `main` (only `ci` and `e2e` are). To bring it back:
+
+```bash
+gh workflow enable review.yml
+gh api -X PATCH repos/vince307/mathshop/branches/main/protection/required_status_checks \
+  -F strict=false -f 'contexts[]=ci' -f 'contexts[]=e2e' -f 'contexts[]=review'
+```
+
 The verdict JSON lands on stdout; progress, scores, token usage, and cost on stderr. Exit codes: `0` pass, `1` fail, `2` setup or budget error (missing key, empty stdin, diff over 4000 post-strip lines) — never a review verdict. Default model is `claude-haiku-4-5`; override with `--model claude-sonnet-4-6` or the `REVIEW_MODEL` env var.
 
 Prove the gate works (five historical commits, two hard assertions, ~$0.05 on Haiku):
