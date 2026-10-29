@@ -1,0 +1,42 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { DECOR_CHART, DECOR_COIN_STACK, DECOR_PATH, DECOR_RECEIPT } from "@/data/marketing-art";
+import MarketingFooter from "@/components/marketing/MarketingFooter.astro";
+import MarketingHeader from "@/components/marketing/MarketingHeader.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  active: string;
+}
+
+const { title, description, active } = Astro.props;
+---
+
+<Layout title={title} description={description}>
+  <div class="marketing-page relative min-h-screen overflow-hidden bg-[#f7fbff]">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      <img src={DECOR_PATH} alt="" class="absolute top-24 left-[30%] hidden w-48 opacity-45 lg:block" />
+      <img src={DECOR_CHART} alt="" class="absolute top-44 -left-5 hidden w-28 opacity-35 xl:block" />
+      <img src={DECOR_RECEIPT} alt="" class="absolute top-24 -right-8 hidden w-40 rotate-6 opacity-30 xl:block" />
+      <img src={DECOR_COIN_STACK} alt="" class="absolute right-4 bottom-20 hidden w-28 opacity-80 lg:block" />
+      <div class="absolute top-0 left-1/2 size-[48rem] -translate-x-1/2 rounded-full bg-blue-100/40 blur-3xl"></div>
+      <div class="absolute bottom-0 left-0 size-96 rounded-full bg-emerald-100/30 blur-3xl"></div>
+    </div>
+    <div class="relative mx-auto w-full max-w-[1480px] px-5 pt-5 sm:px-8 lg:px-12 xl:px-16">
+      <MarketingHeader active={active} />
+      <main>
+        <slot />
+      </main>
+    </div>
+    <MarketingFooter />
+  </div>
+</Layout>
+
+<style>
+  .marketing-page {
+    background-image:
+      radial-gradient(circle at 68% 20%, rgb(222 239 255 / 0.68), transparent 34rem),
+      linear-gradient(145deg, #fbfdff 0%, #f4f9ff 58%, #f8fcff 100%);
+  }
+</style>

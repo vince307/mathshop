@@ -1,103 +1,336 @@
 ---
-import { LogIn, UserPlus, ArrowRight } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Store } from "lucide-react";
 import { WORLDS } from "@/data/worlds";
 import { t } from "@/i18n";
-import BrandRow from "@/components/marketing/BrandRow.astro";
-import FeatureList from "@/components/marketing/FeatureList.astro";
-import SecurityNote from "@/components/marketing/SecurityNote.astro";
+import MarketingHeader from "@/components/marketing/MarketingHeader.astro";
 
-/**
- * Signed-out landing (`/`). No mockup exists for this route, so it is built from
- * the product's own auth-mockup vocabulary — brand row, hero, world cards, the
- * three feature blocks and the security note — rather than the starter's
- * developer-facing scaffold copy.
- *
- * Those three are now the same components `AuthShell.astro` renders, not a second
- * copy of their markup: text was already shared through `t.marketing`, but the
- * markup was duplicated, so the two surfaces could drift apart visually with
- * nothing noticing. The **world cards are deliberately not shared** — this page
- * runs them `grid-cols-2` at every width (six absorb as three rows, no breakpoint
- * needed) while the auth panel runs `hidden lg:grid grid-cols-3`; the counts
- * answer to different layouts, not to a missing abstraction.
- *
- * The cards map `WORLDS` itself, so this page cannot advertise a different set
- * than the app ships (`e2e/marketing-worlds.spec.ts`).
- */
 const { user } = Astro.locals;
+const featureIcons = [
+  "/landing/cutouts/feature-age-6-9-icon.png",
+  "/landing/cutouts/feature-no-ads-icon.png",
+  "/landing/cutouts/feature-parent-panel-icon.png",
+  "/landing/cutouts/feature-worlds-icon.png",
+] as const;
+const featuredWorldData = [
+  {
+    slug: "piekarnia",
+    image: "/landing/crops/world-bakery-thumb.png",
+    icon: "/landing/icons/world-wheat.svg",
+    width: 200,
+  },
+  {
+    slug: "kawiarnia",
+    image: "/landing/crops/world-cafe-thumb.png",
+    icon: "/landing/icons/world-cup.svg",
+    width: 213,
+  },
+  {
+    slug: "galaktyczna-baza",
+    image: "/landing/crops/world-galaxy-thumb.png",
+    icon: "/landing/icons/world-planet.svg",
+    width: 227,
+  },
+  {
+    slug: "sklep-ksiegarnia",
+    image: "/landing/crops/world-collector-thumb.png",
+    icon: "/landing/icons/world-star.svg",
+    width: 219,
+  },
+] as const;
+const featuredWorlds = featuredWorldData.flatMap((featured) => {
+  const world = WORLDS.find(({ slug }) => slug === featured.slug);
+  return world ? [{ ...world, ...featured }] : [];
+});
+const remainingWorlds = WORLDS.filter((world) => !featuredWorldData.some(({ slug }) => slug === world.slug));
 ---
 
-<div class="bg-background min-h-screen w-full px-4 py-6 sm:px-6 lg:px-10">
-  <div class="mx-auto w-full max-w-6xl">
-    {/* Header: brand + the one action that fits the visitor's state */}
-    <header class="flex items-center justify-between gap-4">
-      <BrandRow />
-
-      {
-        user ? (
-          <a href="/app" class:list={buttonVariants({ variant: "default" })}>
-            {t.nav.app}
-            <ArrowRight className="size-4" />
-          </a>
-        ) : (
-          <div class="flex items-center gap-2">
-            {/* Wrapper carries the breakpoint: `hidden` on the anchor itself would
-                collide with the button's own `inline-flex` display utility. */}
-            <div class="hidden sm:block">
-              <a href="/auth/signin" class:list={buttonVariants({ variant: "ghost" })}>
-                {t.nav.signIn}
-              </a>
-            </div>
-            <a href="/auth/signup" class:list={buttonVariants({ variant: "default" })}>
-              <UserPlus className="size-4" />
-              {t.nav.signUp}
-            </a>
-          </div>
-        )
-      }
-    </header>
-
-    {/* Hero */}
-    <div class="relative mt-12 grid items-center gap-10 lg:mt-20 lg:grid-cols-[1.1fr_0.9fr] xl:gap-16">
-      <div class="text-center lg:text-left">
-        <h1 class="text-foreground text-4xl font-extrabold tracking-tight sm:text-5xl xl:text-6xl">
-          {t.brand}
-        </h1>
-        <p class="text-primary mt-2 text-2xl font-bold sm:text-3xl">{t.marketing.heroTagline}</p>
-        <p class="text-muted-foreground mt-4 text-base sm:text-lg">{t.welcome.heroSubtitle}</p>
-
-        {
-          !user && (
-            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
-              <a href="/auth/signup" class:list={buttonVariants({ variant: "default", size: "lg" })}>
-                <UserPlus className="size-4" />
-                {t.nav.signUp}
-              </a>
-              <a href="/auth/signin" class:list={buttonVariants({ variant: "outline", size: "lg" })}>
-                <LogIn className="size-4" />
-                {t.nav.signIn}
-              </a>
-            </div>
-          )
-        }
-      </div>
-
-      {/* World cards — what the child actually runs */}
-      <div class="grid grid-cols-2 gap-3 sm:gap-4">
-        {
-          WORLDS.map((world) => (
-            <div class="bg-card border-border overflow-hidden rounded-2xl border shadow-sm">
-              <img src={world.image} alt={world.name} loading="lazy" class="aspect-square w-full object-cover" />
-              <p class="text-foreground px-2 py-2.5 text-center text-sm font-semibold">{world.name}</p>
-            </div>
-          ))
-        }
-      </div>
-    </div>
-
-    {/* Feature blocks */}
-    <FeatureList class="mt-14 sm:grid-cols-3 lg:mt-20" />
-
-    <SecurityNote class="mt-10 mb-10" />
+<main class="landing-page relative min-h-screen overflow-hidden bg-[#f7fbff]">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    <img
+      src="/landing/cutouts/decor-top-dotted-path.png"
+      alt=""
+      class="absolute top-[100px] left-[calc(50%_-_313px)] hidden w-[199px] opacity-55 lg:block"
+    />
+    <img
+      src="/landing/cutouts/decor-top-chart.png"
+      alt=""
+      class="absolute top-[112px] left-[calc(50%_-_63px)] hidden w-[100px] opacity-45 xl:block"
+    />
+    <img
+      src="/landing/cutouts/decor-top-right-receipt-coins.png"
+      alt=""
+      class="absolute top-[118px] right-0 hidden w-[140px] opacity-35 xl:block"
+    />
+    <img
+      src="/landing/cutouts/decor-left-plant.png"
+      alt=""
+      class="absolute top-[618px] left-[max(0px,calc(50%_-_740px))] hidden w-20 opacity-65 xl:block"
+    />
+    <img
+      src="/landing/cutouts/decor-bottom-left-coins.png"
+      alt=""
+      class="absolute top-[885px] left-0 hidden w-32 opacity-95 xl:block"
+    />
+    <img
+      src="/landing/cutouts/decor-bottom-chart-shield.png"
+      alt=""
+      class="absolute top-[930px] left-[max(150px,calc(50%_-_588px))] hidden w-[180px] opacity-55 xl:block"
+    />
+    <img
+      src="/landing/cutouts/decor-right-checklist.png"
+      alt=""
+      class="absolute top-[720px] right-0 hidden w-[150px] opacity-55 xl:block"
+    />
+    <img
+      src="/landing/cutouts/decor-bottom-right-plant.png"
+      alt=""
+      class="absolute top-[890px] right-0 hidden w-[125px] opacity-65 xl:block"
+    />
+    <div class="absolute top-8 left-1/2 size-[44rem] -translate-x-1/2 rounded-full bg-blue-100/35 blur-3xl"></div>
+    <div class="absolute right-0 bottom-0 size-80 rounded-full bg-emerald-100/35 blur-3xl"></div>
   </div>
-</div>
+
+  <div class="relative mx-auto w-full max-w-[1536px] px-5 py-5 sm:px-8 lg:pt-8">
+    <MarketingHeader active="/" />
+
+    <section
+      id="jak-to-dziala"
+      class="grid items-center gap-10 pt-12 pb-8 lg:grid-cols-[0.88fr_1.12fr] lg:px-10 lg:pt-2 lg:pb-0 xl:grid-cols-[minmax(0,580px)_minmax(0,773px)] xl:justify-between xl:gap-0"
+    >
+      <div class="relative z-10 max-w-[620px] text-center lg:text-left">
+        <h1
+          class="text-[2.55rem] leading-[1.08] font-extrabold tracking-[-0.035em] text-[#07174f] sm:text-5xl lg:text-[clamp(2.5rem,3.25vw,3.15rem)]"
+        >
+          {t.welcome.hero.lineOne}<br />
+          {t.welcome.hero.lineTwo}
+          <span class="text-primary">{t.welcome.hero.accent}</span>
+        </h1>
+        <p
+          class="text-muted-foreground mx-auto mt-6 max-w-[585px] text-lg leading-relaxed sm:text-xl lg:mx-0 xl:text-[1.35rem]"
+        >
+          {t.welcome.hero.description}
+        </p>
+
+        <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+          <a
+            href={user ? "/app" : "/auth/signup"}
+            class="bg-primary text-primary-foreground inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl px-7 text-base font-extrabold shadow-lg shadow-blue-200 transition hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            {
+              user ? (
+                <Store className="size-6 shrink-0" aria-hidden="true" />
+              ) : (
+                <img src="/landing/icons/cta-user-plus.svg" alt="" aria-hidden="true" class="size-8 shrink-0" />
+              )
+            }
+            {user ? t.nav.app : t.welcome.cta.startFree}
+          </a>
+          <a
+            href="#swiaty"
+            class="border-primary text-primary inline-flex min-h-14 items-center justify-center gap-3 rounded-2xl border-2 bg-white/80 px-7 text-base font-extrabold shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+          >
+            <img src="/landing/icons/cta-play-circle.svg" alt="" aria-hidden="true" class="size-8 shrink-0" />
+            {t.welcome.cta.seeWorlds}
+          </a>
+        </div>
+      </div>
+
+      <div class="relative mx-auto w-full max-w-[773px]" role="img" aria-label={t.welcome.hero.previewLabel}>
+        <svg
+          class="pointer-events-none absolute inset-0 h-full w-full drop-shadow-[0_18px_25px_rgba(49,102,166,0.16)]"
+          viewBox="0 0 773 492"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M199 1C177 1 161 15 158 38L125 365C122 392 135 412 162 417L616 466C653 470 678 457 684 427L716 59C720 31 704 16 671 12L199 1Z"
+            fill="white"
+            stroke="#dce9f8"
+            stroke-width="2"></path>
+        </svg>
+        <img
+          src="/landing/cutouts/hero-world-dashboard-composite.png"
+          alt=""
+          aria-hidden="true"
+          class="relative z-10 w-full drop-shadow-[0_28px_35px_rgba(49,102,166,0.22)]"
+        />
+      </div>
+    </section>
+
+    <section
+      id="dla-rodzica"
+      class="relative z-10 mx-auto mt-4 grid max-w-[1280px] overflow-hidden rounded-[1.75rem] border border-white bg-white/90 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:grid-cols-2 lg:-mt-3 lg:grid-cols-4"
+    >
+      {
+        t.welcome.features.map((feature, index) => {
+          return (
+            <article class="relative flex items-center gap-4 px-5 py-5 lg:min-h-[120px] lg:px-7">
+              {index > 0 && (
+                <span class="bg-border absolute top-1/2 left-0 hidden h-16 w-px -translate-y-1/2 lg:block" />
+              )}
+              <span class:list={["flex size-[72px] shrink-0 items-center justify-center rounded-full bg-transparent"]}>
+                <img src={featureIcons[index]} alt="" aria-hidden="true" class="size-[72px] object-contain" />
+              </span>
+              <div>
+                <h2 class="font-extrabold text-[#07174f]">{feature.title}</h2>
+                <p class="text-muted-foreground mt-1 text-sm leading-snug">{feature.description}</p>
+              </div>
+            </article>
+          );
+        })
+      }
+    </section>
+
+    <section
+      id="swiaty"
+      class="relative z-10 mx-auto grid max-w-[1276px] items-center gap-8 pt-10 pb-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:pt-[26px] lg:pb-0 xl:grid-cols-[270px_minmax(0,1fr)] xl:pr-[52px]"
+    >
+      <div class="text-center lg:self-start lg:pt-6 lg:text-left">
+        <h2 class="text-2xl leading-tight font-extrabold text-[#07174f]">{t.welcome.worlds.heading}</h2>
+        <p class="text-muted-foreground mt-3 text-sm leading-relaxed">{t.welcome.worlds.description}</p>
+      </div>
+
+      <div class="world-carousel relative min-w-0">
+        <div
+          id="world-carousel"
+          class="world-strip flex min-w-0 snap-x gap-4 overflow-x-auto rounded-[1.75rem] px-1 pt-1 pb-5 lg:gap-6 lg:px-0 lg:pb-0"
+          role="region"
+          aria-label={t.welcome.worlds.carouselLabel}
+        >
+          {
+            featuredWorlds.map((world) => (
+              <a
+                href="/swiaty"
+                class="group min-w-[74%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-[0_10px_28px_rgba(35,83,136,0.13)] transition hover:-translate-y-1 hover:shadow-xl sm:min-w-[42%] lg:min-w-[var(--world-card-width)]"
+                style={`--world-card-width: ${world.width}px`}
+              >
+                <img
+                  src={world.image}
+                  alt={world.name}
+                  loading="lazy"
+                  class="h-[177px] w-full bg-[#eef6ff] object-cover"
+                />
+                <h3 class="flex min-h-[54px] items-center gap-2 px-4 py-3 text-sm font-extrabold text-[#07174f] sm:text-base">
+                  <img src={world.icon} alt="" aria-hidden="true" class="size-6 object-contain" />
+                  {world.name}
+                </h3>
+              </a>
+            ))
+          }
+          {
+            remainingWorlds.map((world) => (
+              <a
+                href="/swiaty"
+                class="group min-w-[74%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-[0_10px_28px_rgba(35,83,136,0.13)] transition hover:-translate-y-1 hover:shadow-xl sm:min-w-[42%] lg:min-w-[219px]"
+              >
+                <img src={world.image} alt={world.name} loading="lazy" class="h-[177px] w-full object-cover" />
+                <h3 class="flex min-h-[54px] items-center gap-2 px-4 py-3 text-sm font-extrabold text-[#07174f] sm:text-base">
+                  <Store className="text-primary size-5" aria-hidden="true" />
+                  {world.name}
+                </h3>
+              </a>
+            ))
+          }
+        </div>
+        <div
+          class="world-carousel-controls pointer-events-none absolute inset-x-2 top-[45%] z-20 hidden -translate-y-1/2 justify-between sm:inset-x-3"
+        >
+          <button
+            type="button"
+            data-direction="previous"
+            aria-label={t.welcome.worlds.previous}
+            aria-controls="world-carousel"
+            class="text-primary pointer-events-auto flex size-11 items-center justify-center rounded-full border border-blue-100 bg-white/95 shadow-[0_5px_18px_rgba(35,83,136,0.2)] transition hover:bg-white disabled:cursor-default disabled:opacity-45"
+          >
+            <ChevronLeft className="size-6" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            data-direction="next"
+            aria-label={t.welcome.worlds.next}
+            aria-controls="world-carousel"
+            class="text-primary pointer-events-auto flex size-11 items-center justify-center rounded-full border border-blue-100 bg-white/95 shadow-[0_5px_18px_rgba(35,83,136,0.2)] transition hover:bg-white disabled:cursor-default disabled:opacity-45"
+          >
+            <ChevronRight className="size-6" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<style>
+  .landing-page {
+    background-image:
+      radial-gradient(circle at 62% 28%, rgb(222 239 255 / 0.76), transparent 34rem),
+      linear-gradient(145deg, #fbfdff 0%, #f4f9ff 58%, #f8fcff 100%);
+  }
+
+  .world-strip {
+    scrollbar-width: none;
+  }
+
+  .world-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .landing-page a,
+    .landing-page article {
+      transition-duration: 180ms;
+    }
+  }
+</style>
+
+<script>
+  const carousel = document.querySelector<HTMLElement>(".world-carousel");
+  const strip = carousel?.querySelector<HTMLElement>(".world-strip");
+  const controls = carousel?.querySelector<HTMLElement>(".world-carousel-controls");
+  const previous = carousel?.querySelector<HTMLButtonElement>("[data-direction='previous']");
+  const next = carousel?.querySelector<HTMLButtonElement>("[data-direction='next']");
+
+  if (carousel && strip && controls && previous && next) {
+    const updateControls = () => {
+      const maxScroll = strip.scrollWidth - strip.clientWidth;
+      const canScrollLeft = strip.scrollLeft > 2;
+      const canScrollRight = strip.scrollLeft < maxScroll - 2;
+      const scrollable = maxScroll > 2;
+
+      controls.classList.toggle("hidden", !scrollable);
+      controls.classList.toggle("flex", scrollable);
+      strip.style.maskImage =
+        canScrollLeft && canScrollRight
+          ? "linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent)"
+          : canScrollLeft
+            ? "linear-gradient(to right, transparent, #000 48px)"
+            : canScrollRight
+              ? "linear-gradient(to right, #000 calc(100% - 48px), transparent)"
+              : "none";
+      previous.disabled = !canScrollLeft;
+      next.disabled = !canScrollRight;
+    };
+
+    const scrollToCard = (direction: -1 | 1) => {
+      const stripLeft = strip.getBoundingClientRect().left;
+      const offsets = Array.from(
+        strip.querySelectorAll<HTMLElement>("a"),
+        (card) => card.getBoundingClientRect().left - stripLeft + strip.scrollLeft,
+      );
+      const target =
+        direction === 1
+          ? offsets.find((offset) => offset > strip.scrollLeft + 2)
+          : offsets.reverse().find((offset) => offset < strip.scrollLeft - 2);
+
+      strip.scrollTo({
+        left: target ?? (direction === 1 ? strip.scrollWidth : 0),
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    };
+
+    previous.addEventListener("click", () => scrollToCard(-1));
+    next.addEventListener("click", () => scrollToCard(1));
+    strip.addEventListener("scroll", updateControls, { passive: true });
+    window.addEventListener("resize", updateControls);
+    updateControls();
+  }
+</script>

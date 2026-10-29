@@ -1,0 +1,199 @@
+---
+import MarketingCta from "@/components/marketing/MarketingCta.astro";
+import MarketingPageShell from "@/components/marketing/MarketingPageShell.astro";
+import { t } from "@/i18n";
+
+const page = t.marketingPages.parent;
+const benefits = [
+  [
+    "Bez reklam",
+    "Gwarantujemy naukę bez reklam i nieodpowiednich treści.",
+    "/parents/cutouts/benefit-no-ads-icon.png",
+    "brak-reklam",
+  ],
+  [
+    "PIN do panelu rodzica",
+    "Dostęp do ustawień i raportów chroniony PIN-em.",
+    "/parents/cutouts/benefit-pin-lock-icon.png",
+    undefined,
+  ],
+  [
+    "Raport tygodniowy",
+    "Otrzymuj podsumowanie postępów i osiągnięć dziecka.",
+    "/parents/cutouts/benefit-weekly-report-icon.png",
+    "raporty",
+  ],
+  [
+    "Dopasowanie do wieku",
+    "Treści i wyzwania dopasowane do wieku dziecka.",
+    "/parents/cutouts/benefit-age-icon.png",
+    "wiek",
+  ],
+  [
+    "Kontrola trudności",
+    "Ustal poziom trudności i to, czego dziecko się uczy.",
+    "/parents/cutouts/benefit-difficulty-icon.png",
+    "trudnosc",
+  ],
+  [
+    "Oddzielny profil dziecka",
+    "Bezpieczna przestrzeń dziecka z własnym profilem.",
+    "/parents/cutouts/benefit-child-profile-icon.png",
+    undefined,
+  ],
+] as const;
+const settings = [
+  [
+    "Brak reklam",
+    "Gwarantujemy naukę bez reklam i nieodpowiednich treści.",
+    "/parents/cutouts/setting-no-ads-icon.png",
+  ],
+  ["Dostosowane do wieku", "Treści i wyzwania dopasowane do wieku dziecka.", "/parents/cutouts/setting-age-icon.png"],
+  [
+    "Raport tygodniowy",
+    "Otrzymuj podsumowanie postępów i osiągnięć dziecka.",
+    "/parents/cutouts/setting-weekly-report-icon.png",
+  ],
+  [
+    "Kontrola poziomu trudności",
+    "Ty decydujesz, jak trudne będą zadania i wyzwania.",
+    "/parents/cutouts/setting-difficulty-icon.png",
+  ],
+] as const;
+---
+
+<MarketingPageShell title={page.title} description={page.description} active="/dla-rodzica">
+  <div class="parents-page relative overflow-hidden">
+    <img
+      src="/parents/cutouts/decor-dotted-path-hero.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-28 left-[35%] hidden w-48 opacity-70 lg:block"
+    />
+    <img
+      src="/parents/cutouts/decor-star-yellow-top.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-20 left-[40%] hidden w-8 lg:block"
+    />
+    <section class="grid items-center gap-8 pt-12 pb-10 lg:grid-cols-[0.9fr_1.1fr] lg:pt-14">
+      <div class="relative z-10 text-center lg:text-left">
+        <h1
+          class="text-[2.8rem] leading-[1.08] font-extrabold tracking-[-0.04em] text-[#07174f] sm:text-5xl xl:text-[4rem]"
+        >
+          Pełna kontrola rodzica,<br /><span class="text-primary">swoboda nauki dziecka</span>
+        </h1><p class="text-muted-foreground mx-auto mt-6 max-w-[600px] text-lg leading-relaxed sm:text-xl lg:mx-0">
+          Ty ustawiasz bezpieczeństwo i widzisz postępy. Dziecko uczy się w spokojnym środowisku bez reklam i presji.
+        </p><div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+          <a
+            href="/auth/signup"
+            class="bg-primary text-primary-foreground inline-flex min-h-14 items-center justify-center rounded-2xl px-7 font-extrabold shadow-lg shadow-blue-200 transition hover:-translate-y-0.5"
+            >Utwórz konto rodzica</a
+          ><a
+            href="/jak-to-dziala"
+            class="border-primary text-primary inline-flex min-h-14 items-center justify-center rounded-2xl border-2 bg-white/80 px-7 font-extrabold"
+            >Zobacz jak działa nauka</a
+          >
+        </div>
+      </div><div class="relative mx-auto w-full max-w-[790px]" role="img" aria-label={page.dashboardLabel}>
+        <img
+          src="/parents/cutouts/hero-parent-dashboard-composite.png"
+          alt=""
+          aria-hidden="true"
+          class="relative z-10 w-full drop-shadow-[0_28px_35px_rgba(49,102,166,0.22)]"
+        />
+      </div>
+    </section>
+
+    <section
+      class="relative z-10 rounded-[2rem] border border-blue-100 bg-white/90 px-5 py-6 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:px-8"
+    >
+      <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">Co dostaje rodzic</h2><div
+        class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        {
+          benefits.map(([title, text, icon, id]) => (
+            <article
+              id={id}
+              class="flex scroll-mt-6 items-center gap-3 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm"
+            >
+              <>
+                <img src={icon} alt="" aria-hidden="true" class="size-14 shrink-0" />
+                <div>
+                  <>
+                    <h3 class="font-extrabold text-[#07174f]">{title}</h3>
+                    <p class="text-muted-foreground mt-1 text-xs leading-snug">{text}</p>
+                  </>
+                </div>
+              </>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="relative z-10 mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+      <div
+        class="rounded-[2rem] border border-blue-100 bg-white/95 p-5 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:p-8"
+      >
+        <h2 class="text-2xl font-extrabold text-[#07174f]">Postępy w tym tygodniu</h2><img
+          src="/parents/crops/report-chart-reference.png"
+          alt="Wykres aktywności dziecka"
+          class="mt-5 w-full rounded-xl"
+        /><img
+          src="/parents/crops/report-progress-list-reference.png"
+          alt="Lista postępów dziecka"
+          class="mt-3 w-full rounded-xl"
+        />
+      </div><div
+        class="rounded-[2rem] border border-blue-100 bg-white/95 p-5 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:p-8"
+      >
+        <h2 class="text-2xl font-extrabold text-[#07174f]">Bezpieczne ustawienia</h2><div class="mt-5 grid gap-2">
+          {
+            settings.map(([title, text, icon]) => (
+              <div class="flex items-center gap-3 rounded-xl border border-blue-100 p-3">
+                <>
+                  <img src={icon} alt="" aria-hidden="true" class="size-11 shrink-0" />
+                  <div class="min-w-0 flex-1">
+                    <>
+                      <h3 class="text-sm font-extrabold text-[#07174f]">{title}</h3>
+                      <p class="text-muted-foreground mt-1 text-xs leading-snug">{text}</p>
+                    </>
+                  </div>
+                  <img src="/parents/cutouts/toggle-on-reference.png" alt="Włączone" class="w-12 shrink-0" />
+                </>
+              </div>
+            ))
+          }
+        </div><p class="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-xs text-[#34528f]">
+          Bezpieczne środowisko stworzone z myślą o dzieciach. Matematyka i ekonomia przez zabawę.
+        </p>
+      </div>
+    </section>
+
+    <section
+      class="relative z-10 mt-6 mb-10 overflow-hidden rounded-[2rem] border border-blue-100 bg-[#eef7ff] px-6 py-7 sm:px-10"
+    >
+      <img
+        src="/parents/cutouts/bottom-family-laptop.png"
+        alt="Rodzina korzystająca z MatmaVerse"
+        class="absolute bottom-0 left-0 hidden w-64 sm:block"
+      /><img
+        src="/parents/cutouts/bottom-security-shield.png"
+        alt=""
+        aria-hidden="true"
+        class="absolute right-[38%] bottom-3 hidden w-24 md:block"
+      /><div class="relative mx-auto max-w-4xl text-center sm:pl-64 lg:text-left">
+        <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">
+          Zacznij od konta rodzica<br />i ustaw pierwszy profil dziecka.
+        </h2><div class="mt-6">
+          <MarketingCta
+            heading="Rozpocznij za darmo"
+            description="Bezpieczny start w kilka minut."
+            showWorldsLink={false}
+          />
+        </div>
+      </div>
+    </section>
+  </div>
+</MarketingPageShell>

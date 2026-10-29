@@ -1,0 +1,90 @@
+---
+import { t } from "@/i18n";
+
+interface Section {
+  id: string;
+  title: string;
+  body: string;
+  pills?: readonly string[];
+}
+
+interface SideCard {
+  title: string;
+  body?: string;
+  checks?: readonly string[];
+}
+
+interface Props {
+  noticeIcon: string;
+  noticeTitle: string;
+  noticeBody: string;
+  sections: readonly Section[];
+  toc: readonly string[];
+  sideCards: readonly SideCard[];
+}
+
+const { noticeIcon, noticeTitle, noticeBody, sections, toc, sideCards } = Astro.props;
+---
+
+<section class="legal-main-panel">
+  <article class="legal-content-card">
+    <div class="legal-notice">
+      <span class="legal-notice-icon" aria-hidden="true">{noticeIcon}</span>
+      <div>
+        <strong>{noticeTitle}</strong>
+        <p>{noticeBody}</p>
+      </div>
+    </div>
+
+    {
+      sections.map((section) => (
+        <section class="legal-section" id={section.id}>
+          <h2>{section.title}</h2>
+          <p>{section.body}</p>
+          {section.pills && (
+            <div class="legal-pill-grid" role="list">
+              {section.pills.map((pill, index) => (
+                <div class="legal-info-pill" role="listitem">
+                  <span aria-hidden="true">{index + 1}</span>
+                  {pill}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ))
+    }
+  </article>
+
+  <aside class="legal-side-stack">
+    <nav class="legal-side-card legal-toc" aria-label={t.marketingPages.legal.shared.tocHeading}>
+      <h2>{t.marketingPages.legal.shared.tocHeading}</h2>
+      {
+        toc.map((label, index) => (
+          <a href={`#${sections[index]?.id}`}>
+            <span class="legal-dot" aria-hidden="true">
+              {index + 1}
+            </span>
+            {label}
+          </a>
+        ))
+      }
+    </nav>
+    {
+      sideCards.map((card) => (
+        <section class="legal-side-card">
+          <h3>{card.title}</h3>
+          {card.body && <p>{card.body}</p>}
+          {card.checks?.map((check) => (
+            <div class="legal-check-row">
+              <span class="legal-dot" aria-hidden="true">
+                ✓
+              </span>
+              {check}
+            </div>
+          ))}
+        </section>
+      ))
+    }
+  </aside>
+</section>

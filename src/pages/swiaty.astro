@@ -1,0 +1,167 @@
+---
+import MarketingCta from "@/components/marketing/MarketingCta.astro";
+import MarketingPageShell from "@/components/marketing/MarketingPageShell.astro";
+import { t } from "@/i18n";
+
+const page = t.marketingPages.worlds;
+const worlds = [
+  ["Piekarnia", "/worlds/crops/world-bakery-thumb.png", "/worlds/icons/world-wheat.svg"],
+  ["Kawiarnia", "/worlds/crops/world-cafe-thumb-clean.png", "/worlds/icons/world-cup.svg"],
+  ["Galaktyczna baza", "/worlds/crops/world-galaxy-thumb.png", "/worlds/icons/world-planet.svg"],
+  ["Sklep kolekcjonera", "/worlds/crops/world-collector-thumb.png", "/worlds/icons/world-star.svg"],
+  ["Salon kreatywny", "/worlds/crops/world-creative-thumb.png", "/worlds/icons/world-palette.svg"],
+  ["Laboratorium wynalazków", "/worlds/crops/world-lab-thumb.png", "/worlds/icons/world-gear.svg"],
+] as const;
+const trust = [
+  ["6–9 lat", "Dopasowane do wieku dziecka i jego możliwości.", "/worlds/cutouts/trust-age-icon.png"],
+  ["Bez reklam", "Gwarantujemy naukę bez reklam i nieodpowiednich treści.", "/worlds/cutouts/trust-no-ads-icon.png"],
+  ["Panel rodzica", "Pełna kontrola, raporty i bezpieczne ustawienia.", "/worlds/cutouts/trust-parent-panel-icon.png"],
+  [
+    "Poziom rośnie z dzieckiem",
+    "Światy dopasowują się do postępów i motywują do dalszej nauki.",
+    "/worlds/cutouts/trust-growth-icon.png",
+  ],
+] as const;
+---
+
+<MarketingPageShell title={page.title} description={page.description} active="/swiaty">
+  <div class="worlds-page relative overflow-hidden">
+    <img
+      src="/worlds/cutouts/decor-top-dotted-path.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-20 left-[36%] hidden w-48 opacity-70 lg:block"
+    />
+    <img
+      src="/worlds/cutouts/decor-top-chart.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-28 left-[52%] hidden w-20 opacity-50 xl:block"
+    />
+    <img
+      src="/worlds/cutouts/decor-top-right-receipt-coins.png"
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute top-16 -right-4 hidden w-32 opacity-40 xl:block"
+    />
+    <section class="grid items-center gap-8 pt-12 pb-10 lg:grid-cols-[0.9fr_1.1fr] lg:pt-14">
+      <div class="relative z-10 text-center lg:text-left">
+        <h1
+          class="text-[2.8rem] leading-[1.08] font-extrabold tracking-[-0.04em] text-[#07174f] sm:text-5xl xl:text-[4rem]"
+        >
+          Wybierz świat,<br />który <span class="text-primary">wciągnie</span> Twoje dziecko
+        </h1><p class="text-muted-foreground mx-auto mt-6 max-w-[640px] text-lg leading-relaxed sm:text-xl lg:mx-0">
+          Każdy świat uczy tych samych podstaw matematyki, ekonomii i decyzji. Zmienia się tylko temat, który
+          najbardziej ciekawi dziecko.
+        </p><div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+          <a
+            href="/auth/signup"
+            class="bg-primary text-primary-foreground inline-flex min-h-14 items-center justify-center rounded-2xl px-7 font-extrabold shadow-lg shadow-blue-200 transition hover:-translate-y-0.5"
+            >Załóż konto rodzica</a
+          ><a
+            href="/jak-to-dziala"
+            class="border-primary text-primary inline-flex min-h-14 items-center justify-center rounded-2xl border-2 bg-white/80 px-7 font-extrabold"
+            >Zobacz jak działa</a
+          >
+        </div>
+      </div>
+      <div class="relative mx-auto w-full max-w-[790px]" role="img" aria-label="Mapa światów MatmaVerse">
+        <img
+          src="/worlds/cutouts/hero-worlds-map-composite.png"
+          alt=""
+          aria-hidden="true"
+          class="relative z-10 w-full drop-shadow-[0_28px_35px_rgba(49,102,166,0.22)]"
+        />
+      </div>
+    </section>
+
+    <section
+      class="relative z-10 rounded-[2rem] border border-blue-100 bg-white/90 px-4 py-6 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:px-8"
+    >
+      <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">Światy nauki</h2><div
+        class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        {
+          worlds.map(([name, image, icon], index) => (
+            <a
+              href="/auth/signup"
+              class:list={[
+                "group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg",
+                index === 1 ? "border-primary ring-primary/20 ring-2" : "border-blue-100",
+              ]}
+            >
+              <>
+                <img src={image} alt={name} class="aspect-[1.58] w-full object-cover" />
+                <div class="flex items-center gap-3 px-4 py-3">
+                  <img src={icon} alt="" aria-hidden="true" class="size-7" />
+                  <span class="font-extrabold text-[#07174f]">{name}</span>
+                  {index === 1 && (
+                    <span class="bg-primary ml-auto flex size-7 items-center justify-center rounded-full text-white">
+                      ✓
+                    </span>
+                  )}
+                </div>
+              </>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <section
+      class="relative z-10 mt-6 rounded-[2rem] border border-blue-100 bg-white/95 p-5 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:p-8"
+    >
+      <div class="grid items-center gap-6 lg:grid-cols-[1fr_0.92fr]">
+        <div>
+          <h2 class="text-2xl font-extrabold text-[#07174f] sm:text-3xl">W kawiarni dziecko ćwiczy</h2><ul
+            class="mt-5 grid gap-3 text-[#07174f]"
+          >
+            {
+              ["liczenie reszty", "ustalanie cen", "planowanie zakupów", "proste decyzje biznesowe"].map((item) => (
+                <li class="flex items-center gap-3">
+                  <span class="flex size-6 items-center justify-center rounded-full bg-green-500 text-sm font-bold text-white">
+                    ✓
+                  </span>
+                  {item}
+                </li>
+              ))
+            }
+          </ul><div class="mt-6 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-[#34528f]">
+            Bezpieczne środowisko stworzone z myślą o dzieciach.<br />Matematyka i ekonomia przez zabawę.
+          </div>
+        </div><img
+          src="/worlds/cutouts/selected-world-cafe-illustration.png"
+          alt="Kawiarnia"
+          class="mx-auto w-full max-w-sm"
+        />
+      </div><a
+        href="/auth/signup"
+        class="bg-primary text-primary-foreground mt-6 flex min-h-14 items-center justify-center rounded-2xl text-lg font-extrabold shadow-lg shadow-blue-200"
+        >Rozpocznij od pierwszego świata <span class="ml-4 text-2xl">→</span></a
+      >
+    </section>
+
+    <section
+      class="relative z-10 mt-6 mb-10 rounded-[2rem] border border-blue-100 bg-white/90 px-4 py-5 shadow-sm sm:px-8"
+    >
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          trust.map(([title, text, icon]) => (
+            <article class="flex items-center gap-3 border-blue-100 px-2 py-2 last:border-r-0 lg:border-r">
+              <>
+                <img src={icon} alt="" aria-hidden="true" class="size-14 shrink-0" />
+                <div>
+                  <>
+                    <h3 class="font-extrabold text-[#07174f]">{title}</h3>
+                    <p class="text-muted-foreground mt-1 text-xs leading-snug">{text}</p>
+                  </>
+                </div>
+              </>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+  <MarketingCta heading={page.ctaHeading} description={page.ctaDescription} showWorldsLink={false} />
+</MarketingPageShell>
