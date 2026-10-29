@@ -4,49 +4,19 @@ import MarketingPageShell from "@/components/marketing/MarketingPageShell.astro"
 import { t } from "@/i18n";
 
 const page = t.marketingPages.howItWorks;
-const steps = [
-  {
-    number: "1",
-    title: "Wybierz świat",
-    text: "Temat dopasowany do zainteresowań",
-    image: "/how-it-works/crops/step-1-world-card-reference.png",
-  },
-  {
-    number: "2",
-    title: "Rozwiąż zadanie",
-    text: "Matematyka w praktycznym kontekście",
-    image: "/how-it-works/crops/step-2-math-card-reference.png",
-  },
-  {
-    number: "3",
-    title: "Podejmij decyzję",
-    text: "Ceny, zakupy, zysk i wybory",
-    image: "/how-it-works/crops/step-3-decision-card-reference.png",
-  },
-  {
-    number: "4",
-    title: "Zobacz postęp",
-    text: "Raporty i kolejne poziomy",
-    image: "/how-it-works/crops/step-4-progress-card-reference.png",
-  },
+const stepImages = [
+  "/how-it-works/crops/step-1-world-card-reference.png",
+  "/how-it-works/crops/step-2-math-card-reference.png",
+  "/how-it-works/crops/step-3-decision-card-reference.png",
+  "/how-it-works/crops/step-4-progress-card-reference.png",
 ] as const;
-const benefits = [
-  {
-    title: "Realne umiejętności",
-    text: "Matematyka i ekonomia w praktyce.",
-    icon: "/how-it-works/cutouts/bottom-feature-real-skills-icon.png",
-  },
-  {
-    title: "Bezpieczne środowisko",
-    text: "Kontrola rodzica i ochrona na każdym kroku.",
-    icon: "/how-it-works/cutouts/bottom-feature-safe-icon.png",
-  },
-  {
-    title: "Światy, które motywują",
-    text: "Dziecko wybiera, działa i chce więcej.",
-    icon: "/how-it-works/cutouts/bottom-feature-worlds-icon.png",
-  },
+const steps = page.steps.map((step, i) => ({ ...step, number: String(i + 1), image: stepImages[i] }));
+const benefitIcons = [
+  "/how-it-works/cutouts/bottom-feature-real-skills-icon.png",
+  "/how-it-works/cutouts/bottom-feature-safe-icon.png",
+  "/how-it-works/cutouts/bottom-feature-worlds-icon.png",
 ] as const;
+const benefits = page.benefits.map((benefit, i) => ({ ...benefit, icon: benefitIcons[i] }));
 ---
 
 <MarketingPageShell title={page.title} description={page.description} active="/jak-to-dziala">
@@ -75,25 +45,24 @@ const benefits = [
         <h1
           class="text-[2.7rem] leading-[1.08] font-extrabold tracking-[-0.04em] text-[#07174f] sm:text-5xl xl:text-[4rem]"
         >
-          Jak dziecko<br />uczy się przez <span class="text-primary">decyzje</span>
+          {page.headingLead}<br />{page.headingRest}<span class="text-primary">{page.headingAccent}</span>
         </h1>
         <p class="text-muted-foreground mx-auto mt-6 max-w-[620px] text-lg leading-relaxed sm:text-xl lg:mx-0">
-          Zamiast suchych ćwiczeń dziecko działa w wybranym świecie: liczy, planuje, handluje i widzi skutki swoich
-          wyborów.
+          {page.intro}
         </p>
         <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
           <a
             href="/auth/signup"
             class="bg-primary text-primary-foreground inline-flex min-h-14 items-center justify-center rounded-2xl px-7 text-base font-extrabold shadow-lg shadow-blue-200 transition hover:-translate-y-0.5"
-            >Rozpocznij naukę dziecka</a
+            >{page.primaryCta}</a
           ><a
             href="/swiaty"
             class="border-primary text-primary inline-flex min-h-14 items-center justify-center rounded-2xl border-2 bg-white/80 px-7 text-base font-extrabold transition hover:bg-white"
-            >Zobacz światy</a
+            >{page.secondaryCta}</a
           >
         </div>
       </div>
-      <div class="relative mx-auto w-full max-w-[790px]" role="img" aria-label="Podgląd świata nauki MatmaVerse">
+      <div class="relative mx-auto w-full max-w-[790px]" role="img" aria-label={page.heroLabel}>
         <img
           src="/how-it-works/cutouts/hero-learning-world-composite.png"
           alt=""
@@ -106,7 +75,7 @@ const benefits = [
     <section
       class="relative z-10 rounded-[2rem] border border-blue-100 bg-white/90 px-4 py-6 shadow-[0_16px_45px_rgba(39,95,155,0.14)] sm:px-6 lg:px-8"
     >
-      <h2 class="px-2 text-2xl font-extrabold text-[#07174f] sm:text-3xl">Prosty rytm nauki</h2><div
+      <h2 class="px-2 text-2xl font-extrabold text-[#07174f] sm:text-3xl">{page.stepsHeading}</h2><div
         class="mt-5 grid gap-4 lg:grid-cols-4"
       >
         {
@@ -149,20 +118,20 @@ const benefits = [
             aria-hidden="true"
             class="hidden w-[48%] rounded-xl shadow-sm sm:block"
           /><div>
-            <h2 class="text-2xl font-extrabold text-[#07174f]">Rodzic widzi postępy i bezpieczeństwo</h2><p
+            <h2 class="text-2xl font-extrabold text-[#07174f]">{page.parentHeading}</h2><p
               class="mt-2 leading-relaxed text-[#53658a]"
             >
-              Jasne raporty pokazują, czego dziecko już się nauczyło i jak aktywnie działa.
+              {page.parentText}
             </p>
           </div>
         </div><div class="grid gap-3 sm:grid-cols-2">
           <img
             src="/how-it-works/crops/parent-dashboard-skills-card.png"
-            alt="Umiejętności dziecka"
+            alt={page.parentSkillsAlt}
             class="w-full rounded-xl bg-white shadow-sm"
           /><img
             src="/how-it-works/crops/parent-dashboard-activity-card.png"
-            alt="Aktywność dziecka"
+            alt={page.parentActivityAlt}
             class="w-full rounded-xl bg-white shadow-sm"
           />
         </div>
@@ -184,7 +153,7 @@ const benefits = [
         class="absolute right-0 bottom-0 hidden w-48 sm:block"
       /><div class="relative mx-auto max-w-4xl">
         <h2 class="text-center text-2xl font-extrabold text-[#07174f] sm:text-3xl">
-          Daj dziecku przewagę na przyszłość<br class="hidden sm:block" /> z nauką, która wciąga.
+          {page.benefitsHeadingLead}<br class="hidden sm:block" />{page.benefitsHeadingRest}
         </h2><div class="mt-6 grid gap-4 sm:grid-cols-3">
           {
             benefits.map((benefit) => (
@@ -202,7 +171,7 @@ const benefits = [
             ))
           }
         </div><div class="mt-7 text-center">
-          <MarketingCta heading="Załóż konto rodzica" description="To szybkie i bezpieczne." />
+          <MarketingCta heading={page.ctaHeading} description={page.ctaDescription} />
         </div>
       </div>
     </section>

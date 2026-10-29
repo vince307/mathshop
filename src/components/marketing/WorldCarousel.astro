@@ -1,0 +1,161 @@
+---
+import { ChevronLeft, ChevronRight, Store } from "lucide-react";
+import { WORLDS } from "@/data/worlds";
+import { t } from "@/i18n";
+
+const featuredWorldData = [
+  {
+    slug: "piekarnia",
+    image: "/landing/crops/world-bakery-thumb.png",
+    icon: "/landing/icons/world-wheat.svg",
+    width: 200,
+  },
+  {
+    slug: "kawiarnia",
+    image: "/landing/crops/world-cafe-thumb.png",
+    icon: "/landing/icons/world-cup.svg",
+    width: 213,
+  },
+  {
+    slug: "galaktyczna-baza",
+    image: "/landing/crops/world-galaxy-thumb.png",
+    icon: "/landing/icons/world-planet.svg",
+    width: 227,
+  },
+  {
+    slug: "sklep-ksiegarnia",
+    image: "/landing/crops/world-collector-thumb.png",
+    icon: "/landing/icons/world-star.svg",
+    width: 219,
+  },
+] as const;
+const featuredWorlds = featuredWorldData.flatMap((featured) => {
+  const world = WORLDS.find(({ slug }) => slug === featured.slug);
+  return world ? [{ ...world, ...featured }] : [];
+});
+const remainingWorlds = WORLDS.filter((world) => !featuredWorldData.some(({ slug }) => slug === world.slug));
+---
+
+<div class="world-carousel relative min-w-0">
+  <div
+    id="world-carousel"
+    class="world-strip flex min-w-0 snap-x gap-4 overflow-x-auto rounded-[1.75rem] px-1 pt-1 pb-5 lg:gap-6 lg:px-0 lg:pb-0"
+    role="region"
+    aria-label={t.welcome.worlds.carouselLabel}
+  >
+    {
+      featuredWorlds.map((world) => (
+        <a
+          href="/swiaty"
+          class="group min-w-[74%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-[0_10px_28px_rgba(35,83,136,0.13)] transition hover:-translate-y-1 hover:shadow-xl sm:min-w-[42%] lg:min-w-[var(--world-card-width)]"
+          style={`--world-card-width: ${world.width}px`}
+        >
+          <img src={world.image} alt={world.name} loading="lazy" class="h-[177px] w-full bg-[#eef6ff] object-cover" />
+          <h3 class="flex min-h-[54px] items-center gap-2 px-4 py-3 text-sm font-extrabold text-[#07174f] sm:text-base">
+            <img src={world.icon} alt="" aria-hidden="true" class="size-6 object-contain" />
+            {world.name}
+          </h3>
+        </a>
+      ))
+    }
+    {
+      remainingWorlds.map((world) => (
+        <a
+          href="/swiaty"
+          class="group min-w-[74%] shrink-0 snap-start overflow-hidden rounded-2xl bg-white shadow-[0_10px_28px_rgba(35,83,136,0.13)] transition hover:-translate-y-1 hover:shadow-xl sm:min-w-[42%] lg:min-w-[219px]"
+        >
+          <img src={world.image} alt={world.name} loading="lazy" class="h-[177px] w-full object-cover" />
+          <h3 class="flex min-h-[54px] items-center gap-2 px-4 py-3 text-sm font-extrabold text-[#07174f] sm:text-base">
+            <Store className="text-primary size-5" aria-hidden="true" />
+            {world.name}
+          </h3>
+        </a>
+      ))
+    }
+  </div>
+  <div
+    class="world-carousel-controls pointer-events-none absolute inset-x-2 top-[45%] z-20 hidden -translate-y-1/2 justify-between sm:inset-x-3"
+  >
+    <button
+      type="button"
+      data-direction="previous"
+      aria-label={t.welcome.worlds.previous}
+      aria-controls="world-carousel"
+      class="text-primary pointer-events-auto flex size-11 items-center justify-center rounded-full border border-blue-100 bg-white/95 shadow-[0_5px_18px_rgba(35,83,136,0.2)] transition hover:bg-white disabled:cursor-default disabled:opacity-45"
+    >
+      <ChevronLeft className="size-6" aria-hidden="true" />
+    </button>
+    <button
+      type="button"
+      data-direction="next"
+      aria-label={t.welcome.worlds.next}
+      aria-controls="world-carousel"
+      class="text-primary pointer-events-auto flex size-11 items-center justify-center rounded-full border border-blue-100 bg-white/95 shadow-[0_5px_18px_rgba(35,83,136,0.2)] transition hover:bg-white disabled:cursor-default disabled:opacity-45"
+    >
+      <ChevronRight className="size-6" aria-hidden="true" />
+    </button>
+  </div>
+</div>
+
+<style>
+  .world-strip {
+    scrollbar-width: none;
+  }
+
+  .world-strip::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+<script>
+  const carousel = document.querySelector<HTMLElement>(".world-carousel");
+  const strip = carousel?.querySelector<HTMLElement>(".world-strip");
+  const controls = carousel?.querySelector<HTMLElement>(".world-carousel-controls");
+  const previous = carousel?.querySelector<HTMLButtonElement>("[data-direction='previous']");
+  const next = carousel?.querySelector<HTMLButtonElement>("[data-direction='next']");
+
+  if (carousel && strip && controls && previous && next) {
+    const updateControls = () => {
+      const maxScroll = strip.scrollWidth - strip.clientWidth;
+      const canScrollLeft = strip.scrollLeft > 2;
+      const canScrollRight = strip.scrollLeft < maxScroll - 2;
+      const scrollable = maxScroll > 2;
+
+      controls.classList.toggle("hidden", !scrollable);
+      controls.classList.toggle("flex", scrollable);
+      strip.style.maskImage =
+        canScrollLeft && canScrollRight
+          ? "linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent)"
+          : canScrollLeft
+            ? "linear-gradient(to right, transparent, #000 48px)"
+            : canScrollRight
+              ? "linear-gradient(to right, #000 calc(100% - 48px), transparent)"
+              : "none";
+      previous.disabled = !canScrollLeft;
+      next.disabled = !canScrollRight;
+    };
+
+    const scrollToCard = (direction: -1 | 1) => {
+      const stripLeft = strip.getBoundingClientRect().left;
+      const offsets = Array.from(
+        strip.querySelectorAll<HTMLElement>("a"),
+        (card) => card.getBoundingClientRect().left - stripLeft + strip.scrollLeft,
+      );
+      const target =
+        direction === 1
+          ? offsets.find((offset) => offset > strip.scrollLeft + 2)
+          : offsets.reverse().find((offset) => offset < strip.scrollLeft - 2);
+
+      strip.scrollTo({
+        left: target ?? (direction === 1 ? strip.scrollWidth : 0),
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    };
+
+    previous.addEventListener("click", () => scrollToCard(-1));
+    next.addEventListener("click", () => scrollToCard(1));
+    strip.addEventListener("scroll", updateControls, { passive: true });
+    window.addEventListener("resize", updateControls);
+    updateControls();
+  }
+</script>

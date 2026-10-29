@@ -41,7 +41,12 @@ const page = t.marketingPages.legal.contact;
 
     <article class="legal-form-card">
       <h2>{page.formHeading}</h2>
-      <form id="contact-form">
+      <form
+        id="contact-form"
+        data-recipient={page.formRecipient}
+        data-name-label={page.fields.name}
+        data-email-label={page.fields.email}
+      >
         <div class="legal-form-grid">
           <div class="legal-field">
             <label for="contact-name">{page.fields.name}</label>
@@ -104,21 +109,20 @@ const page = t.marketingPages.legal.contact;
   </section>
 </LegalPageShell>
 
-<script is:inline define:vars={{ recipient: page.methods[1].email }}>
-  const form = document.querySelector("#contact-form");
+<script>
+  import { buildContactMailto } from "@/lib/contact-mailto";
+
+  const form = document.querySelector<HTMLFormElement>("#contact-form");
   form?.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (!(form instanceof HTMLFormElement) || !form.reportValidity()) return;
+    if (!form.reportValidity()) return;
 
     const data = new FormData(form);
-    const subject = String(data.get("subject") ?? "");
-    const body = [
-      `Imię: ${String(data.get("name") ?? "")}`,
-      `E-mail: ${String(data.get("email") ?? "")}`,
-      "",
-      String(data.get("message") ?? ""),
-    ].join("\n");
-
-    window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const field = (name: string) => String(data.get(name) ?? "");
+    window.location.href = buildContactMailto(
+      form.dataset.recipient ?? "",
+      { name: form.dataset.nameLabel ?? "", email: form.dataset.emailLabel ?? "" },
+      { name: field("name"), email: field("email"), subject: field("subject"), message: field("message") },
+    );
   });
 </script>
