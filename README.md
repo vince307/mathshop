@@ -1,196 +1,210 @@
+<div align="center">
+
+<img src="public/landing/cutouts/brand-mark.png" alt="" height="72">
+
 # MatmaVerse
 
-A Polish-language web app that teaches math to children aged 6–9 by letting them run a small shop. Production: https://matmaverse.ariom.cloud
+### Matematyka, która dzieje się w sklepie
 
-## Tech Stack
+Dziecko prowadzi własny biznes: obsługuje klientów, liczy monety, wydaje resztę<br>
+i samo decyduje, za co rozbudować sklep. Rachunki przestają być zadaniem z zeszytu.
 
-- [Astro](https://astro.build/) v6 - Modern web framework with server-first rendering
-- [React](https://react.dev/) v19 - UI library for interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS framework
-- [Supabase](https://supabase.com/) - Authentication and backend-as-a-service
-- [@astrojs/node](https://docs.astro.build/en/guides/integrations-guide/node/) - Standalone Node server, shipped as a Docker image to a VPS
+**[Zagraj za darmo →](https://matmaverse.ariom.cloud)** · [Jak to działa](#jak-to-działa) · [Dla rodzica](#dla-rodzica) · [Dla deweloperów](#dla-deweloperów)
 
-## Prerequisites
+<br>
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+<img src="docs/readme/landing.jpg" alt="Strona główna MatmaVerse" width="880">
 
-## Getting Started
+</div>
 
-1. Clone the repository:
+---
+
+## Po co liczyć, skoro nic z tego nie wynika?
+
+Siedmiolatek przy biurku, przed nim „18 − 16 = ?”. Zna odpowiedź, ale nie widzi powodu, żeby ją podawać. To tylko kolejne działanie w kolejnym słupku.
+
+Ten sam siedmiolatek za ladą własnej kawiarni wygląda zupełnie inaczej. Klient płaci 18 zł za zakup za 16 zł i czeka na resztę. Tu odpowiedź ma znaczenie: od niej zależy zadowolony klient, a zarobek idzie na nową półkę w sklepie.
+
+**W MatmaVerse matematyka nigdy nie jest gołym działaniem.** Zawsze jest momentem w biznesie, który dziecko samo prowadzi i rozwija.
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### 🪙 Prawdziwe pieniądze w grze
+
+Dziecko liczy monety w kasie i wydaje resztę klientom. Kwoty są dopasowane do wieku 6–9 lat, a monety się dotyka i odlicza, zamiast tylko wpisywać liczby.
+
+</td>
+<td width="33%" valign="top">
+
+### 🏪 Sklep, który rośnie
+
+Za zarobione złotówki dziecko kupuje ulepszenia: szyld, półkę, lepszą kasę. Każdy zakup to decyzja: co teraz, a na co odłożyć?
+
+</td>
+<td width="33%" valign="top">
+
+### 🌍 Świat, który ciekawi
+
+Kawiarnia, piekarnia, galaktyczna baza, księgarnia, pracownia albo laboratorium. Każdy świat uczy tych samych umiejętności, zmienia się tylko to, co dziecko lubi.
+
+</td>
+</tr>
+</table>
+
+## Twój sklep, twój świat
+
+Po zalogowaniu dziecko widzi swój świat, zarobione złotówki i poziom sklepu. Trzy paski pokazują, jak rosną jego umiejętności: **liczenie**, **pieniądze** i **decyzje**. Jeden przycisk otwiera sklep i zaczyna kolejną zmianę.
+
+<p align="center">
+  <img src="docs/readme/start.png" alt="Pulpit dziecka: świat Galaktyczna baza, saldo 120 zł, poziom sklepu i umiejętności" width="880">
+</p>
+
+## Przykład: klient czeka na resztę
+
+Zmiana to kilka krótkich misji przy ladzie. Tutaj klient zapłacił **18 zł** za zakup za **16 zł**. Dziecko dotyka monety, które chce oddać, a licznik pod spodem pokazuje, ile już odliczyło. Po kliknięciu „Sprawdź” od razu wie, czy klient wychodzi zadowolony.
+
+<p align="center">
+  <img src="docs/readme/task.png" alt="Misja w sklepie: klient zapłacił 18 zł za zakup za 16 zł, dziecko odlicza 2 monety reszty i dostaje pochwałę" width="760">
+</p>
+
+Pomyłka nie kończy gry i nie zabiera monet. Dziecko próbuje jeszcze raz, a po jednej lub dwóch pomyłkach dostaje wskazówkę, np. _„Policz od ceny w górę aż do zapłaconej kwoty”_. Błąd jest tu krokiem w nauce, nie karą.
+
+## Zarobione, więc moje
+
+Za zarobione złotówki dziecko rozbudowuje sklep. Widzi, co może kupić od razu i ile brakuje do kolejnych ulepszeń. To pierwsza lekcja planowania budżetu: lepsza kasa teraz czy magazynek za dwie zmiany?
+
+<p align="center">
+  <img src="docs/readme/upgrades.png" alt="Rozbudowa sklepu: dostępne ulepszenie Lepsza kasa za 100 zł i ulepszenia, na które jeszcze brakuje pieniędzy" width="880">
+</p>
+
+## Sześć światów do wyboru
+
+Każde zainteresowanie może stać się sklepem. Świat można zmienić w każdej chwili: zarobione pieniądze i kupione ulepszenia przechodzą razem z dzieckiem.
+
+<p align="center">
+  <img src="docs/readme/worlds.png" alt="Wybór świata: Kawiarnia, Piekarnia, Galaktyczna baza, Sklep księgarnia, Pracownia, Laboratorium" width="760">
+</p>
+
+## Na telefonie i tablecie
+
+Pełna wersja mobilna z dolną nawigacją. Rodzinny tablet na kanapie, telefon w poczekalni u lekarza: sklep jest zawsze pod ręką.
+
+<p align="center">
+  <img src="docs/readme/mobile-start.png" alt="Pulpit dziecka na telefonie" width="250">
+  &nbsp;
+  <img src="docs/readme/mobile-task.png" alt="Misja na telefonie" width="250">
+  &nbsp;
+  <img src="docs/readme/mobile-worlds.png" alt="Wybór świata na telefonie" width="250">
+</p>
+
+## Dla rodzica
+
+<table>
+<tr>
+<td width="55%" valign="top">
+
+Konto zakłada rodzic. Dziecko gra na swoim profilu z awatarem, bez podawania danych, które by je identyfikowały.
+
+**Panel rodzica** jest chroniony PIN-em, więc dziecko nie zmieni ustawień ani nie usunie profilu. W panelu jest **raport tygodniowy** dla każdego dziecka:
+
+- ile zadań ukończyło i jaki procent bez pomyłki,
+- w które dni grało,
+- które umiejętności ćwiczyło i ile razy,
+- jakie ulepszenia kupiło i czego uczył każdy zakup.
+
+Bez rankingów, porównań z innymi dziećmi i presji. Rodzic dostaje spokojny obraz tego, czego dziecko się nauczyło.
+
+</td>
+<td width="45%" valign="top">
+
+<img src="docs/readme/report.png" alt="Raport tygodniowy w panelu rodzica: 18 zadań, 75% bez pomyłki, wykres aktywności i ćwiczone umiejętności" width="380">
+
+</td>
+</tr>
+</table>
+
+## Jak to działa
+
+1. **Rodzic zakłada konto** na [matmaverse.ariom.cloud](https://matmaverse.ariom.cloud) i potwierdza e-mail.
+2. **Tworzy profil dziecka:** awatar, wiek i pierwszy świat. Poziom zadań dopasuje się sam.
+3. **Dziecko otwiera sklep.** Jedna zmiana to kilka minut i kilka misji. Na koniec widzi, ile zarobiło, i może wydać pieniądze na rozbudowę.
+4. **Rodzic zagląda do raportu**, kiedy chce, za PIN-em.
+
+Poziom trudności rośnie razem z dzieckiem: liczby są większe, reszta trudniejsza, a decyzje zakupowe ciekawsze.
+
+## Bezpieczeństwo i prywatność
+
+- **Bez reklam i bez zakupów w aplikacji.** Złotówki w grze to wyłącznie waluta sklepu.
+- **Dane każdej rodziny są odizolowane** na poziomie bazy (Row Level Security w Postgresie). Jedno konto nigdy nie zobaczy profili dzieci z innego.
+- **Profil dziecka nie wymaga danych osobowych.** Wystarczą awatar, wiek i imię lub pseudonim.
+- **Usunięcie konta usuwa wszystko:** profile dzieci, postępy i raporty.
+
+## Zagraj
+
+**https://matmaverse.ariom.cloud**: załóż konto rodzica, dodaj profil dziecka i otwórzcie pierwszy sklep. Za darmo.
+
+---
+
+## Dla deweloperów
+
+**Stos:** [Astro 6](https://astro.build) (SSR, `@astrojs/node`) · React 19 · Tailwind 4 · shadcn/ui · [Supabase](https://supabase.com) (Postgres, Auth, RLS, self-hosted) · Docker + Caddy na VPS · Vitest · Playwright · GitHub Actions
+
+Zasady pracy z repozytorium i architektura: [`CLAUDE.md`](CLAUDE.md). Produkt: [`context/foundation/prd-v3.md`](context/foundation/prd-v3.md). Wzorce izolacji danych: [`docs/reference/rls-isolation.md`](docs/reference/rls-isolation.md).
+
+### Uruchomienie lokalne
+
+Wymagania: Node.js 22 (`.nvmrc`), Docker Desktop (~7 GB RAM dla stosu Supabase).
 
 ```bash
-git clone https://github.com/vince307/mathshop.git
-cd mathshop
+git clone https://github.com/vince307/mathshop.git && cd mathshop
+npm ci
+npx supabase start          # Postgres, Auth i Mailpit w Dockerze
+cp .env.example .env        # SUPABASE_URL i SUPABASE_KEY (anon) z `npx supabase status`
+npm run db:reset            # migracje + seed z kontem testowym
+npm run dev                 # http://localhost:4321
 ```
 
-2. Install dependencies:
+Seed tworzy konto `rodzic@mathshop.test` / `haslo123` (PIN rodzica `1234`) z dwójką dzieci: **Ola** (7 lat, Kawiarnia, pierwszy dzień) i **Kuba** (9 lat, Galaktyczna baza, 120 zł, poziom sklepu 3, tydzień historii). Seed zapisuje znane hasło wprost do `auth.users`, więc uruchamiaj go **tylko lokalnie**.
 
-```bash
-npm install
-```
+Lokalnie potwierdzanie e-maila jest wyłączone (`enable_confirmations = false`, testy na tym polegają). Maile z lokalnego stosu czyta się w Mailpit: http://localhost:54324.
 
-3. Set up Supabase and configure environment variables — see [Supabase Configuration](#supabase-configuration) below.
+### Komendy
 
-4. Run the development server:
+| Komenda                                | Co robi                                                                          |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| `npm run dev`                          | serwer deweloperski                                                              |
+| `npm run build` / `npm start`          | build produkcyjny i jego uruchomienie (`node dist/server/entry.mjs`)             |
+| `npm run lint` / `npm run format`      | ESLint z regułami opartymi na typach / Prettier                                  |
+| `npm test`                             | Vitest: logika gry, API i izolacja RLS na lokalnym Supabase (wymaga `.env.test`) |
+| `npm run test:e2e`                     | Playwright: pełne ścieżki w przeglądarce (`e2e/CLAUDE.md`)                       |
+| `npm run db:reset` / `npm run db:seed` | baza od zera z migracjami / ponowne wgranie samego seeda                         |
+| `docker build -t matmaverse:local .`   | obraz produkcyjny                                                                |
 
-```bash
-npm run dev
-```
+`.env.test` (z `.env.test.example`) bierze `API_URL`, `ANON_KEY` i `SERVICE_ROLE_KEY` z `npx supabase status -o env`, a do tego `PARENT_SESSION_SECRET`. Klucze lokalnego stosu to publiczne klucze demo, takie same na każdej maszynie. Nigdy nie używaj ich w żadnym wdrożonym środowisku.
 
-## Available Scripts
+### CI/CD
 
-- `npm run dev` - Start development server (Astro/Node)
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint with type-checked rules
-- `npm run lint:fix` - Auto-fix ESLint issues
-- `npm run format` - Run Prettier
+Każdy PR przechodzi `ci` (`astro check`, lint, build, Vitest na lokalnym Supabase, test originu za proxy) i `e2e` (Playwright). Merge do `main` uruchamia `deploy`: obraz `ghcr.io/vince307/matmaverse:<sha>`, migracje (najpierw `--dry-run`) i wdrożenie kontenera na VPS przez Tailscale (Caddy → `https://matmaverse.ariom.cloud`, health check `GET /api/health`, automatyczny powrót do poprzedniego obrazu, gdy ten nie przejdzie). Nie ma wdrożeń podglądowych. Szczegóły: [`context/foundation/infrastructure.md`](context/foundation/infrastructure.md).
 
-## Project Structure
+Produkcyjny Supabase (self-hosted, z potwierdzaniem e-maili i SMTP `hello@ariom.cloud`) jest skonfigurowany w osobnym repozytorium infrastruktury. Szablony maili wysyła aplikacja z `supabase/templates/`.
 
-```md
-.
-├── src/
-│ ├── layouts/ # Astro layouts
-│ ├── pages/ # Astro pages
-│ │ └── api/ # API endpoints
-│ ├── components/ # UI components (Astro & React)
-│ └── assets/ # Static assets
-├── public/ # Public assets
-```
+<details>
+<summary><b>AI code review (wyłączone)</b></summary>
 
-## Supabase Configuration
+<br>
 
-This project uses [Supabase](https://supabase.com/) for authentication. Environment variables are declared via Astro's `astro:env` schema and are treated as **server-only secrets** — they are never exposed to the client.
-
-### First-time setup (local, no cloud project needed)
-
-Requires [Docker](https://www.docker.com/) and ~7 GB RAM.
-
-1. Create your `.env` file:
-
-```bash
-cp .env.example .env
-```
-
-2. Initialize the local Supabase project (creates a `supabase/` config folder):
-
-```bash
-npx supabase init
-```
-
-3. Start the local stack (downloads Docker images on first run):
-
-```bash
-npx supabase start
-```
-
-4. Copy the credentials printed by the CLI into your `.env`:
-
-```
-SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_KEY=<anon key from CLI output>
-```
-
-5. Apply the migrations and load the development seed (see below for the credentials it creates):
-
-```bash
-npm run db:reset
-```
-
-6. To stop the stack when done:
-
-```bash
-npx supabase stop
-```
-
-The local Studio UI is available at `http://localhost:54323`.
-
-### Seeded local account
-
-`supabase/seed.sql` provisions a ready-to-use account so you never have to sign up by hand after a reset. It is loaded automatically by `npm run db:reset` (and by the first `npx supabase start` on a fresh Docker volume), and can be re-applied on its own with `npm run db:seed` — it deletes and recreates its own rows, so re-running is safe.
-
-| What       | Value                  |
-| ---------- | ---------------------- |
-| E-mail     | `rodzic@mathshop.test` |
-| Password   | `haslo123`             |
-| Parent PIN | `1234`                 |
-
-The account owns two child profiles: **Ola** (age 7, Kawiarnia — a fresh, day-one profile) and **Kuba** (age 9, Galaktyczna baza — mid-progression: 120 zł, business level 3, two upgrades owned, and a week of `shift_log` history so the parent report and activity feed render with real data).
-
-**Local only.** The seed writes a known password straight into `auth.users`; never run it against a hosted project.
-
-### Using a cloud Supabase project instead
-
-If you prefer to use a hosted Supabase project, add these variables to your `.env` file:
-
-| Variable       | Description                                                |
-| -------------- | ---------------------------------------------------------- |
-| `SUPABASE_URL` | Project URL from Supabase dashboard → Settings → API       |
-| `SUPABASE_KEY` | `anon` public key from Supabase dashboard → Settings → API |
-
-```
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_KEY=<anon-key>
-```
-
-### Email confirmation
-
-Local and production diverge deliberately (local in `supabase/config.toml`, production in `ariom-infra`):
-
-- **Local**: `enable_confirmations = false` — users sign in immediately after sign-up; the test suite depends on this. To manually test the email round-trip, flip it to `true`, restart the stack (`npx supabase stop && npx supabase start`), sign up, and read the Polish email in the local test inbox (Mailpit) at <http://localhost:54324>; flip back afterwards.
-- **Production**: self-hosted Supabase on the VPS, configured in the `ariom-infra` repo (`server/supabase/matmaverse/compose.yml`: confirmations ON, SMTP from the Hostinger mailbox `hello@ariom.cloud` via `smtp.hostinger.com:465`, site URL and redirect allow-list; credentials in ariom-infra's `/opt/supabase/matmaverse/.env` on the server, never in this repo). GoTrue fetches the Polish templates from `https://matmaverse.ariom.cloud/email-templates/{confirmation,recovery}.html`, which the image serves from `supabase/templates/` (`Dockerfile`), so the templates still ship from this repo with every deploy. There is no `supabase config push` any more.
-
-### Auth routes
-
-| Route                 | Description                                                             |
-| --------------------- | ----------------------------------------------------------------------- |
-| `/auth/signin`        | Email/password sign-in form                                             |
-| `/auth/signup`        | Email/password sign-up form                                             |
-| `/auth/confirm-email` | Post-signup "check your inbox" page                                     |
-| `/dashboard`          | Example protected page (redirects to `/auth/signin` if unauthenticated) |
-
-Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
-
-## Testing
-
-Tests run on [Vitest](https://vitest.dev/). The current suite is an integration test that proves the per-account data-isolation (RLS) contract — one parent's child profiles must never be readable or writable by another (`tests/child-profiles-isolation.test.ts`).
-
-It needs the **local Supabase stack** running. Running the isolation test:
-
-1. Start the stack: `npx supabase start`
-2. Apply migrations to a fresh DB: `npx supabase db reset`
-3. Copy the local keys into `.env.test` (copy `.env.test.example` first), mapping `npx supabase status -o env` output:
-   - `API_URL` → `SUPABASE_URL`
-   - `ANON_KEY` → `SUPABASE_ANON_KEY`
-   - `SERVICE_ROLE_KEY` → `SUPABASE_SERVICE_ROLE_KEY`
-4. Run the suite: `npm run test`
-
-The local-stack anon/service-role keys are fixed **public demo** JWTs (the same on every machine) — they are not secrets, so CI reads them straight from `supabase status` and `.env.test` is gitignored. Never reuse these keys for any deployed environment.
-
-### E2E tests (Playwright)
-
-Browser-level journey specs live in `e2e/` and run against `npm run dev` (:4321) + the local Supabase stack, reusing `.env.test`. One-time setup: `npx playwright install chromium`. Run with `npm run test:e2e` (or `npm run test:e2e:ui`); conventions and rules are in `e2e/CLAUDE.md`, the cookbook in `context/foundation/test-plan.md` §6.7.
-
-## AI code review (local)
-
-A local review agent (`packages/code-reviewer/`, isolated from the app's dependency tree) scores a git diff against the rubric in `context/team/code-review-dod.md` and emits a JSON verdict. It needs `ANTHROPIC_API_KEY` in `.env` (see `.env.example`).
-
-One-time install (root `node_modules` stays untouched):
+`packages/code-reviewer/` to agent, który ocenia diff według rubryki z [`context/team/code-review-dod.md`](context/team/code-review-dod.md) i zwraca werdykt w JSON. Lokalnie:
 
 ```bash
 npm --prefix packages/code-reviewer ci
-```
-
-Review a branch:
-
-```bash
 git diff main...HEAD | npx --prefix packages/code-reviewer tsx packages/code-reviewer/review.ts
 ```
 
-The PR gate built on it (`.github/workflows/review.yml`) is **switched off** since 2026-10-29: the workflow is disabled in GitHub and `review` is no longer a required check on `main` (only `ci` and `e2e` are). To bring it back:
+Wymaga `ANTHROPIC_API_KEY` w `.env`. Kody wyjścia: `0` przeszło, `1` nie przeszło, `2` błąd konfiguracji lub budżetu (nigdy werdykt).
+
+Bramka na PR-ach (`.github/workflows/review.yml`) jest **wyłączona** od 2026-10-29: workflow jest wyłączony w GitHubie, a `review` nie jest już wymaganym checkiem na `main`. Włączenie z powrotem:
 
 ```bash
 gh workflow enable review.yml
@@ -198,42 +212,11 @@ gh api -X PATCH repos/vince307/mathshop/branches/main/protection/required_status
   -F strict=false -f 'contexts[]=ci' -f 'contexts[]=e2e' -f 'contexts[]=review'
 ```
 
-The verdict JSON lands on stdout; progress, scores, token usage, and cost on stderr. Exit codes: `0` pass, `1` fail, `2` setup or budget error (missing key, empty stdin, diff over 4000 post-strip lines) — never a review verdict. Default model is `claude-haiku-4-5`; override with `--model claude-sonnet-4-6` or the `REVIEW_MODEL` env var.
+</details>
 
-Prove the gate works (five historical commits, two hard assertions, ~$0.05 on Haiku):
-
-```bash
-npm --prefix packages/code-reviewer run fixtures
-```
-
-## Deployment
-
-Production runs at **https://matmaverse.ariom.cloud**: a Docker container (`Dockerfile`, `@astrojs/node` standalone,
-port 4401) on the owner's VPS behind Caddy, with self-hosted Supabase on the same VPS. The deploy job applies
-`supabase/migrations` before the new image goes live. Details, secrets and rollback:
-`context/foundation/infrastructure.md` → "Current production: VPS".
-
-Run the production build locally:
-
-```bash
-npm run build
-HOST=127.0.0.1 PORT=4401 npm run start          # node dist/server/entry.mjs
-curl http://127.0.0.1:4401/api/health           # {"status":"ok"}
-docker build -t matmaverse:local .              # the production image
-```
-
-Deploys are automatic: `.github/workflows/deploy.yml` runs after CI is green on `main`, builds and pushes
-`ghcr.io/vince307/matmaverse:<sha>`, and deploys it over Tailscale through the server's `apps-deploy` command (which
-health-checks the new container and falls back to the last good image on its own). To redeploy or roll to a given
-commit, run the Deploy workflow by hand with its full sha. There are no preview deploys.
-
-## CI
-
-GitHub Actions (`.github/workflows/ci.yml`) runs on every push and PR to `main`: `astro check`, lint, build, the
-Vitest suites against a local Supabase stack, the origin-behind-proxy check (`scripts/check-proxy-origin.mjs` against
-the built server), the Playwright e2e suite, and a build of the Docker image. Configure `SUPABASE_URL` and
-`SUPABASE_KEY` as repository secrets for the build step.
-
-## License
-
-MIT
+<div align="center">
+<br>
+<img src="public/landing/cutouts/brand-mark.png" alt="" height="32">
+<br>
+<sub>Matematyka · Ekonomia · Przyszłość</sub>
+</div>
